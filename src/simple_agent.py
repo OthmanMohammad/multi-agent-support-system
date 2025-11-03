@@ -16,6 +16,8 @@ Be:
 
 If you don't know something, say so clearly."""
 
+MAX_HISTORY_MESSAGES = 20  # Keep last 20 messages (10 turns)
+
 
 def chat(message: str, conversation_history: list = None) -> tuple[str, list]:
     """
@@ -40,6 +42,10 @@ def chat(message: str, conversation_history: list = None) -> tuple[str, list]:
         "content": message
     })
     
+    # Trim history if too long (keep most recent messages)
+    if len(conversation_history) > MAX_HISTORY_MESSAGES:
+        conversation_history = conversation_history[-MAX_HISTORY_MESSAGES:]
+    
     # Get response
     response = client.messages.create(
         model="claude-3-haiku-20240307",
@@ -60,7 +66,7 @@ def chat(message: str, conversation_history: list = None) -> tuple[str, list]:
 
 
 def interactive_chat():
-    """Run an interactive chat session"""
+    """Run an interactive chat session with memory"""
     print("Chat Agent Ready! (type 'quit' to exit)")
     print("-" * 50)
     
@@ -70,6 +76,7 @@ def interactive_chat():
         user_input = input("\nYou: ").strip()
         
         if user_input.lower() in ['quit', 'exit', 'q']:
+            print(f"\n📊 Conversation had {len(conversation_history)} messages")
             print("Goodbye!")
             break
             
