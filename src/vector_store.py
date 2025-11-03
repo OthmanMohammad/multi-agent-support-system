@@ -1,5 +1,6 @@
 """
-Vector Store - Qdrant client wrapper for semantic search
+Vector Store - Qdrant Cloud client wrapper for semantic search
+Uses sentence-transformers for local embeddings (no OpenAI needed)
 """
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
@@ -10,6 +11,7 @@ from qdrant_client.models import (
     FieldCondition,
     MatchValue
 )
+from sentence_transformers import SentenceTransformer
 from typing import List, Dict, Optional
 import os
 from dotenv import load_dotenv
@@ -18,13 +20,60 @@ load_dotenv()
 
 
 class VectorStore:
-    """Wrapper for Qdrant vector database operations"""
+    """Wrapper for Qdrant Cloud vector database with local embeddings"""
     
-    def __init__(self, collection_name: str = "kb_articles"):
-        self.collection_name = collection_name
-        self.client = QdrantClient(url=os.getenv("QDRANT_URL", "http://localhost:6333"))
-        self.vector_size = 1536  # OpenAI text-embedding-3-large
+    def __init__(
+        self, 
+        collection_name: str = "kb_articles",
+        embedding_model: str = "all-MiniLM-L6-v2"
+    ):
+        """
+        Initialize vector store with Qdrant Cloud
         
+        Args:
+            collection_name: Qdrant collection name
+            embedding_model: sentence-transformers model name
+                - all-MiniLM-L6-v2: 384 dim, fast, good quality (RECOMMENDED)
+        """
+        self.collection_name = collection_name
+        
+        # Connect to Qdrant Cloud
+        qdrant_url = os.getenv("QDRANT_URL")
+        qdrant_api_key = os.getenv("QDRANT_API_KEY")
+        
+        if not qdrant_url or not qdrant_api_key:
+            raise ValueError(
+                "Missing QDRANT_URL or QDRANT_API_KEY in .env file. "
+                "Please add them from your Qdrant Cloud dashboard."
+            )
+        
+        print(f"Connecting to Qdrant Cloud...")
+        self.client = QdrantClient(
+            url=qdrant_url,
+            api_key=qdrant_api_key,
+            timeout=30  # 30 seconds timeout for cloud
+        )
+        print("✓ Connected to Qdrant Cloud")
+        
+        # Load embedding model (downloads ~80MB first time)
+        print(f"Loading embedding model: {embedding_model}...")
+        self.embedding_model = SentenceTransformer(embedding_model)
+        self.vector_size = self.embedding_model.get_sentence_embedding_dimension()
+        print(f"✓ Model loaded (vector size: {self.vector_size})")
+        
+    def generate_embedding(self, text: str) -> List[float]:
+        """
+        Generate embedding vector for text
+        
+        Args:
+            text: Text to embed
+            
+        Returns:
+            Embedding vector (384-dim for all-MiniLM-L6-v2)
+        """
+        embedding = self.embedding_model.encode(text, convert_to_numpy=True)
+        return embedding.tolist()
+    
     def create_collection(self, recreate: bool = False):
         """Create collection if it doesn't exist"""
         try:
@@ -51,21 +100,27 @@ class VectorStore:
                 print(f"✓ Collection '{self.collection_name}' already exists")
                 
         except Exception as e:
-            print(f"Error creating collection: {e}")
+            print(f"❌ Error creating collection: {e}")
             raise
     
     def upsert_documents(self, documents: List[Dict]):
         """
-        Upload documents to Qdrant
+        Upload documents to Qdrant Cloud
         
         Args:
-            documents: List of dicts with keys: id, embedding, title, content, category, tags
+            documents: List of dicts with keys:
+                - id: unique identifier
+                - embedding: vector (list of floats)
+                - title: article title
+                - content: article content
+                - category: billing/technical/usage
+                - tags: list of tags
         """
         try:
             points = []
             for doc in documents:
                 point = PointStruct(
-                    id=doc["id"],
+                    id=int(doc["id"]),  # Qdrant needs int ID
                     vector=doc["embedding"],
                     payload={
                         "doc_id": doc.get("doc_id", str(doc["id"])),
@@ -78,32 +133,33 @@ class VectorStore:
                 points.append(point)
             
             # Upload in batches
-            batch_size = 100
+            batch_size = 50  # Smaller batches for cloud
             for i in range(0, len(points), batch_size):
                 batch = points[i:i + batch_size]
                 self.client.upsert(
                     collection_name=self.collection_name,
                     points=batch
                 )
+                print(f"  Uploaded {i + len(batch)}/{len(points)} documents...")
             
-            print(f"✓ Uploaded {len(points)} documents to Qdrant")
+            print(f"✓ Uploaded {len(points)} documents to Qdrant Cloud")
             
         except Exception as e:
-            print(f"Error uploading documents: {e}")
+            print(f"❌ Error uploading documents: {e}")
             raise
     
     def search(
         self,
-        query_vector: List[float],
+        query: str,
         category: Optional[str] = None,
         limit: int = 5,
-        score_threshold: float = 0.7
+        score_threshold: float = 0.5
     ) -> List[Dict]:
         """
-        Semantic search using query vector
+        Semantic search using query text
         
         Args:
-            query_vector: Query embedding (1536-dim)
+            query: Search query (plain text)
             category: Filter by category (billing, technical, usage)
             limit: Max results
             score_threshold: Minimum similarity score (0-1)
@@ -112,6 +168,9 @@ class VectorStore:
             List of matched documents with scores
         """
         try:
+            # Generate query embedding
+            query_vector = self.generate_embedding(query)
+            
             # Build filter if category provided
             query_filter = None
             if category:
@@ -142,39 +201,72 @@ class VectorStore:
                     "content": hit.payload["content"],
                     "category": hit.payload["category"],
                     "tags": hit.payload.get("tags", []),
-                    "similarity_score": hit.score
+                    "similarity_score": round(hit.score, 3)
                 })
             
             return documents
             
         except Exception as e:
-            print(f"Error searching: {e}")
+            print(f"❌ Error searching: {e}")
             return []
     
-    def get_collection_info(self):
+    def get_collection_info(self) -> Dict:
         """Get collection statistics"""
         try:
             info = self.client.get_collection(self.collection_name)
             return {
-                "name": info.config.params.vectors.size,
-                "vectors_count": info.vectors_count,
-                "points_count": info.points_count
+                "name": self.collection_name,
+                "vector_size": self.vector_size,
+                "points_count": info.points_count,
+                "status": info.status
             }
         except Exception as e:
-            print(f"Error getting collection info: {e}")
+            print(f"❌ Error getting collection info: {e}")
             return {}
+    
+    def delete_collection(self):
+        """Delete the collection (use with caution!)"""
+        try:
+            self.client.delete_collection(self.collection_name)
+            print(f"✓ Deleted collection: {self.collection_name}")
+        except Exception as e:
+            print(f"❌ Error deleting collection: {e}")
 
 
 if __name__ == "__main__":
     # Test the vector store
-    print("Testing Vector Store")
-    print("=" * 50)
+    print("=" * 60)
+    print("TESTING QDRANT CLOUD CONNECTION")
+    print("=" * 60)
     
-    vs = VectorStore()
-    
-    # Create collection
-    vs.create_collection(recreate=False)
-    
-    # Get info
-    info = vs.get_collection_info()
-    print(f"\nCollection Info: {info}")
+    try:
+        # Initialize (this will test connection)
+        vs = VectorStore()
+        
+        # Create collection
+        print("\n1. Creating collection...")
+        vs.create_collection(recreate=False)
+        
+        # Get info
+        print("\n2. Collection info:")
+        info = vs.get_collection_info()
+        for key, value in info.items():
+            print(f"   {key}: {value}")
+        
+        # Test embedding
+        print("\n3. Testing embedding generation...")
+        test_text = "How do I upgrade my billing plan?"
+        embedding = vs.generate_embedding(test_text)
+        print(f"   Text: {test_text}")
+        print(f"   Embedding dim: {len(embedding)}")
+        print(f"   First 5 values: {embedding[:5]}")
+        
+        print("\n✓ Qdrant Cloud is working perfectly!")
+        
+    except Exception as e:
+        print(f"\n❌ Error: {e}")
+        print("\nTroubleshooting:")
+        print("1. Check your .env file has QDRANT_URL and QDRANT_API_KEY")
+        print("2. Verify the URL starts with https://")
+        print("3. Make sure API key is correct")
+        print("4. Check your cluster is running in Qdrant Cloud dashboard")
