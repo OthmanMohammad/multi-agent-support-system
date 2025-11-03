@@ -3,6 +3,8 @@ Simple chat agent with conversation memory and knowledge base
 """
 from anthropic import Anthropic
 import os
+import json
+from datetime import datetime
 from dotenv import load_dotenv
 from knowledge_base import search_articles
 
@@ -22,6 +24,43 @@ Example: "According to our guide 'How to Create a Project', you can..."
 If you don't know something, say so clearly."""
 
 MAX_HISTORY_MESSAGES = 20
+CONVERSATIONS_DIR = "data/conversations"
+
+
+def ensure_conversations_dir():
+    """Create conversations directory if it doesn't exist"""
+    if not os.path.exists(CONVERSATIONS_DIR):
+        os.makedirs(CONVERSATIONS_DIR)
+
+
+def save_conversation(conversation_history: list, turn_count: int, articles_used: int) -> str:
+    """
+    Save conversation to JSON file
+    
+    Returns:
+        Filename of saved conversation
+    """
+    ensure_conversations_dir()
+    
+    # Generate filename with timestamp
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"conversation_{timestamp}.json"
+    filepath = os.path.join(CONVERSATIONS_DIR, filename)
+    
+    # Prepare conversation data
+    conversation_data = {
+        "timestamp": timestamp,
+        "date": datetime.now().isoformat(),
+        "turns": turn_count,
+        "articles_referenced": articles_used,
+        "messages": conversation_history
+    }
+    
+    # Save to file
+    with open(filepath, 'w', encoding='utf-8') as f:
+        json.dump(conversation_data, f, indent=2, ensure_ascii=False)
+    
+    return filename
 
 
 def chat(message: str, conversation_history: list = None) -> tuple[str, list, list]:
@@ -110,6 +149,11 @@ def interactive_chat():
         user_input = input("\nYou: ").strip()
         
         if user_input.lower() in ['quit', 'exit', 'q']:
+            # Save conversation if there were any turns
+            if turn_count > 0:
+                filename = save_conversation(conversation_history, turn_count, total_articles_used)
+                print(f"\n💾 Conversation saved: {filename}")
+            
             # Show conversation stats
             print("\n" + "=" * 50)
             print("📊 Conversation Summary:")
