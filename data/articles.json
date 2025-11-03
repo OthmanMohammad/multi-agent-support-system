@@ -1,0 +1,74 @@
+{
+  "articles": [
+    {
+      "id": "001",
+      "title": "How to Create a Project",
+      "category": "usage",
+      "content": "To create a project: 1. Click the '+' button in the top right corner. 2. Enter your project name. 3. Choose project visibility (Public or Private). 4. Add team members (optional). 5. Click 'Create Project' button. Your project is now ready!",
+      "tags": ["project", "create", "getting-started"]
+    },
+    {
+      "id": "002",
+      "title": "How to Add Team Members",
+      "category": "usage",
+      "content": "To add team members to your project: 1. Open your project. 2. Click 'Settings' in the top menu. 3. Go to 'Members' tab. 4. Click 'Add Member' button. 5. Enter their email address. 6. Select their role (Admin, Editor, or Viewer). 7. Click 'Send Invite'. They will receive an email invitation.",
+      "tags": ["team", "members", "invite", "collaboration"]
+    },
+    {
+      "id": "003",
+      "title": "Pricing Plans Overview",
+      "category": "billing",
+      "content": "We offer three plans: FREE ($0/month) - Up to 3 projects, 5 team members, 100MB storage. BASIC ($10/month per user) - Unlimited projects, 25 team members, 10GB storage, Priority support. PREMIUM ($25/month per user) - Everything in Basic plus Advanced analytics, Custom workflows, 100GB storage, API access, Dedicated account manager.",
+      "tags": ["pricing", "plans", "billing", "subscription"]
+    },
+    {
+      "id": "004",
+      "title": "How to Upgrade Your Plan",
+      "category": "billing",
+      "content": "To upgrade your plan: 1. Go to Settings > Billing. 2. Click 'Upgrade Plan' button. 3. Select your desired plan (Basic or Premium). 4. Review pricing and features. 5. Enter payment information. 6. Click 'Confirm Upgrade'. You'll be charged prorated amount immediately. Your new features activate instantly.",
+      "tags": ["upgrade", "billing", "payment", "plan"]
+    },
+    {
+      "id": "005",
+      "title": "Troubleshooting Sync Issues",
+      "category": "technical",
+      "content": "If your tasks aren't syncing: 1. Check your internet connection. 2. Force refresh the page (Ctrl+Shift+R on Windows, Cmd+Shift+R on Mac). 3. Clear your browser cache: Settings > Privacy > Clear browsing data. 4. Try opening in incognito/private mode. 5. Check our status page at status.example.com for any outages. 6. If problem persists, contact support with your browser version and error messages.",
+      "tags": ["sync", "technical", "troubleshooting", "bug"]
+    },
+    {
+      "id": "006",
+      "title": "How to Export Your Data",
+      "category": "usage",
+      "content": "To export your project data: 1. Open the project you want to export. 2. Click 'Settings' > 'Export'. 3. Choose export format (CSV, JSON, or PDF). 4. Select what to include: Tasks, Comments, Attachments, Activity log. 5. Click 'Generate Export'. 6. Download will start automatically. Large exports may take a few minutes.",
+      "tags": ["export", "data", "backup", "download"]
+    },
+    {
+      "id": "007",
+      "title": "Refund Policy",
+      "category": "billing",
+      "content": "Our refund policy: 30-day money-back guarantee for annual plans. Monthly plans: Prorated refunds if canceled within first 7 days. No refunds after using service for more than 30 days. To request refund: Contact support at support@example.com with your account email and reason. Refunds processed within 5-7 business days.",
+      "tags": ["refund", "billing", "cancellation", "money-back"]
+    },
+    {
+      "id": "008",
+      "title": "Keyboard Shortcuts",
+      "category": "usage",
+      "content": "Useful keyboard shortcuts: Ctrl/Cmd + N: Create new task. Ctrl/Cmd + /: Open command menu. Ctrl/Cmd + K: Quick search. Ctrl/Cmd + Enter: Save current task. E: Edit selected task. D: Mark task as done. Shift + ?: Show all shortcuts.",
+      "tags": ["shortcuts", "keyboard", "productivity", "tips"]
+    },
+    {
+      "id": "009",
+      "title": "Fixing Login Problems",
+      "category": "technical",
+      "content": "Can't log in? Try these steps: 1. Verify you're using the correct email address. 2. Click 'Forgot Password' to reset. 3. Clear browser cookies: Settings > Privacy > Cookies. 4. Try a different browser or incognito mode. 5. Disable browser extensions temporarily. 6. Check if your account is suspended (billing issue). If still having issues, contact support with: Your email, Browser and version, Error message screenshot.",
+      "tags": ["login", "password", "access", "technical", "authentication"]
+    },
+    {
+      "id": "010",
+      "title": "How to Set Up Notifications",
+      "category": "usage",
+      "content": "To configure notifications: 1. Go to Settings > Notifications. 2. Choose notification channels: Email, Push (browser/mobile), In-app. 3. Select what to get notified about: Task assignments, Comments and mentions, Due date reminders, Project updates. 4. Set quiet hours if desired. 5. Click 'Save Preferences'. You can customize per-project in Project Settings > Notifications.",
+      "tags": ["notifications", "alerts", "settings", "email"]
+    }
+  ]
+}
