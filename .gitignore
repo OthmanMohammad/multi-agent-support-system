@@ -215,6 +215,10 @@ models/
 *.feather
 !data/sample/*.csv
 
+# Generated embeddings (can be regenerated from scripts)
+data/articles_embedded.json
+data/*_embedded.json
+
 # Credentials
 credentials.json
 token.json
