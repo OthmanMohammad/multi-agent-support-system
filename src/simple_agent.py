@@ -15,14 +15,16 @@ Be:
 - Professional but approachable
 - Solution-oriented
 
-If you don't know something, say so clearly.
+IMPORTANT: When you use information from the knowledge base articles provided, you MUST cite the article by mentioning its title in your response.
 
-When you use information from the knowledge base, cite the article title."""
+Example: "According to our guide 'How to Create a Project', you can..."
+
+If you don't know something, say so clearly."""
 
 MAX_HISTORY_MESSAGES = 20
 
 
-def chat(message: str, conversation_history: list = None) -> tuple[str, list]:
+def chat(message: str, conversation_history: list = None) -> tuple[str, list, list]:
     """
     Send a message and get a response with knowledge base search
     
@@ -31,7 +33,7 @@ def chat(message: str, conversation_history: list = None) -> tuple[str, list]:
         conversation_history: List of previous messages
         
     Returns:
-        (response_text, updated_history)
+        (response_text, updated_history, kb_results)
     """
     client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
     
@@ -82,6 +84,19 @@ def chat(message: str, conversation_history: list = None) -> tuple[str, list]:
     return response_text, conversation_history, kb_results
 
 
+def display_sources(kb_results: list):
+    """Display source articles in a nice format"""
+    if not kb_results:
+        return
+    
+    print("\n" + "─" * 50)
+    print("📚 Sources:")
+    for i, article in enumerate(kb_results, 1):
+        print(f"   {i}. {article['title']} ({article['category']})")
+        print(f"      ID: {article['id']}")
+    print("─" * 50)
+
+
 def interactive_chat():
     """Run an interactive chat session with memory and knowledge base"""
     print("🤖 Chat Agent Ready with Knowledge Base! (type 'quit' to exit)")
@@ -89,6 +104,7 @@ def interactive_chat():
     
     conversation_history = []
     turn_count = 0
+    total_articles_used = 0
     
     while True:
         user_input = input("\nYou: ").strip()
@@ -99,6 +115,7 @@ def interactive_chat():
             print("📊 Conversation Summary:")
             print(f"   Turns: {turn_count}")
             print(f"   Total messages: {len(conversation_history)}")
+            print(f"   Articles referenced: {total_articles_used}")
             print("=" * 50)
             print("Goodbye! 👋")
             break
@@ -110,12 +127,16 @@ def interactive_chat():
             response, conversation_history, kb_results = chat(user_input, conversation_history)
             turn_count += 1
             
-            # Show KB articles found
             if kb_results:
-                print(f"\n📚 Found {len(kb_results)} relevant articles")
+                total_articles_used += len(kb_results)
             
             print(f"\nAgent: {response}")
-            print(f"(Turn {turn_count})")
+            
+            # Display sources if KB was used
+            if kb_results:
+                display_sources(kb_results)
+            
+            print(f"\n💬 Turn {turn_count}")
             
         except Exception as e:
             print(f"\n❌ Error: {e}")
