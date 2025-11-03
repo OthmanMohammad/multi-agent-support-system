@@ -1,9 +1,10 @@
 """
-Simple chat agent - MVP with conversation memory
+Simple chat agent with conversation memory and knowledge base
 """
 from anthropic import Anthropic
 import os
 from dotenv import load_dotenv
+from knowledge_base import search_articles
 
 load_dotenv()
 
@@ -14,14 +15,16 @@ Be:
 - Professional but approachable
 - Solution-oriented
 
-If you don't know something, say so clearly."""
+If you don't know something, say so clearly.
 
-MAX_HISTORY_MESSAGES = 20  # Keep last 20 messages (10 turns)
+When you use information from the knowledge base, cite the article title."""
+
+MAX_HISTORY_MESSAGES = 20
 
 
 def chat(message: str, conversation_history: list = None) -> tuple[str, list]:
     """
-    Send a message and get a response
+    Send a message and get a response with knowledge base search
     
     Args:
         message: User's message
@@ -36,13 +39,27 @@ def chat(message: str, conversation_history: list = None) -> tuple[str, list]:
     if conversation_history is None:
         conversation_history = []
     
-    # Add user message to history
+    # Search knowledge base
+    kb_results = search_articles(message, limit=2)
+    
+    # Build context from KB
+    kb_context = ""
+    if kb_results:
+        kb_context = "\n\nRelevant Knowledge Base Articles:\n"
+        for i, article in enumerate(kb_results, 1):
+            kb_context += f"\n{i}. {article['title']}\n{article['content']}\n"
+    
+    # Add user message with KB context to history
+    user_message = message
+    if kb_context:
+        user_message += kb_context
+    
     conversation_history.append({
         "role": "user",
-        "content": message
+        "content": user_message
     })
     
-    # Trim history if too long (keep most recent messages)
+    # Trim history if too long
     if len(conversation_history) > MAX_HISTORY_MESSAGES:
         conversation_history = conversation_history[-MAX_HISTORY_MESSAGES:]
     
@@ -62,12 +79,12 @@ def chat(message: str, conversation_history: list = None) -> tuple[str, list]:
         "content": response_text
     })
     
-    return response_text, conversation_history
+    return response_text, conversation_history, kb_results
 
 
 def interactive_chat():
-    """Run an interactive chat session with memory"""
-    print("🤖 Chat Agent Ready! (type 'quit' to exit)")
+    """Run an interactive chat session with memory and knowledge base"""
+    print("🤖 Chat Agent Ready with Knowledge Base! (type 'quit' to exit)")
     print("-" * 50)
     
     conversation_history = []
@@ -90,10 +107,16 @@ def interactive_chat():
             continue
             
         try:
-            response, conversation_history = chat(user_input, conversation_history)
+            response, conversation_history, kb_results = chat(user_input, conversation_history)
             turn_count += 1
+            
+            # Show KB articles found
+            if kb_results:
+                print(f"\n📚 Found {len(kb_results)} relevant articles")
+            
             print(f"\nAgent: {response}")
-            print(f"(Turn {turn_count}, History: {len(conversation_history)} msgs)")
+            print(f"(Turn {turn_count})")
+            
         except Exception as e:
             print(f"\n❌ Error: {e}")
 
