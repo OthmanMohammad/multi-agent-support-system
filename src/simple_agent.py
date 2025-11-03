@@ -1,10 +1,9 @@
 """
-Simple chat agent with conversation memory and knowledge base
+Simple chat agent with conversation memory and vector-based knowledge base
+semantic search powered by Qdrant Cloud
 """
 from anthropic import Anthropic
 import os
-import json
-from datetime import datetime
 from dotenv import load_dotenv
 from knowledge_base import search_articles
 
@@ -17,50 +16,11 @@ Be:
 - Professional but approachable
 - Solution-oriented
 
-IMPORTANT: When you use information from the knowledge base articles provided, you MUST cite the article by mentioning its title in your response.
-
-Example: "According to our guide 'How to Create a Project', you can..."
+When you use information from the knowledge base, cite the article title.
 
 If you don't know something, say so clearly."""
 
 MAX_HISTORY_MESSAGES = 20
-CONVERSATIONS_DIR = "data/conversations"
-
-
-def ensure_conversations_dir():
-    """Create conversations directory if it doesn't exist"""
-    if not os.path.exists(CONVERSATIONS_DIR):
-        os.makedirs(CONVERSATIONS_DIR)
-
-
-def save_conversation(conversation_history: list, turn_count: int, articles_used: int) -> str:
-    """
-    Save conversation to JSON file
-    
-    Returns:
-        Filename of saved conversation
-    """
-    ensure_conversations_dir()
-    
-    # Generate filename with timestamp
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"conversation_{timestamp}.json"
-    filepath = os.path.join(CONVERSATIONS_DIR, filename)
-    
-    # Prepare conversation data
-    conversation_data = {
-        "timestamp": timestamp,
-        "date": datetime.now().isoformat(),
-        "turns": turn_count,
-        "articles_referenced": articles_used,
-        "messages": conversation_history
-    }
-    
-    # Save to file
-    with open(filepath, 'w', encoding='utf-8') as f:
-        json.dump(conversation_data, f, indent=2, ensure_ascii=False)
-    
-    return filename
 
 
 def chat(message: str, conversation_history: list = None) -> tuple[str, list, list]:
@@ -80,8 +40,9 @@ def chat(message: str, conversation_history: list = None) -> tuple[str, list, li
     if conversation_history is None:
         conversation_history = []
     
-    # Search knowledge base
-    kb_results = search_articles(message, limit=2)
+    # Search knowledge base with vector search
+    print(f"🔍 Searching KB for: '{message[:50]}...'")
+    kb_results = search_articles(message, limit=3, use_vector=True)
     
     # Build context from KB
     kb_context = ""
@@ -89,6 +50,10 @@ def chat(message: str, conversation_history: list = None) -> tuple[str, list, li
         kb_context = "\n\nRelevant Knowledge Base Articles:\n"
         for i, article in enumerate(kb_results, 1):
             kb_context += f"\n{i}. {article['title']}\n{article['content']}\n"
+            kb_context += f"   (Relevance: {article['similarity_score']:.2%})\n"
+        print(f"✓ Found {len(kb_results)} relevant articles")
+    else:
+        print("⚠ No relevant articles found")
     
     # Add user message with KB context to history
     user_message = message
@@ -104,7 +69,7 @@ def chat(message: str, conversation_history: list = None) -> tuple[str, list, li
     if len(conversation_history) > MAX_HISTORY_MESSAGES:
         conversation_history = conversation_history[-MAX_HISTORY_MESSAGES:]
     
-    # Get response
+    # Get response from Claude
     response = client.messages.create(
         model="claude-3-haiku-20240307",
         max_tokens=1024,
@@ -123,44 +88,27 @@ def chat(message: str, conversation_history: list = None) -> tuple[str, list, li
     return response_text, conversation_history, kb_results
 
 
-def display_sources(kb_results: list):
-    """Display source articles in a nice format"""
-    if not kb_results:
-        return
-    
-    print("\n" + "─" * 50)
-    print("📚 Sources:")
-    for i, article in enumerate(kb_results, 1):
-        print(f"   {i}. {article['title']} ({article['category']})")
-        print(f"      ID: {article['id']}")
-    print("─" * 50)
-
-
 def interactive_chat():
-    """Run an interactive chat session with memory and knowledge base"""
-    print("🤖 Chat Agent Ready with Knowledge Base! (type 'quit' to exit)")
-    print("-" * 50)
+    """Run an interactive chat session with memory and vector search"""
+    print("=" * 60)
+    print("🤖 AI Customer Support Agent (Vector Search Enabled!)")
+    print("=" * 60)
+    print("Type 'quit' to exit")
+    print("-" * 60)
     
     conversation_history = []
     turn_count = 0
-    total_articles_used = 0
     
     while True:
         user_input = input("\nYou: ").strip()
         
         if user_input.lower() in ['quit', 'exit', 'q']:
-            # Save conversation if there were any turns
-            if turn_count > 0:
-                filename = save_conversation(conversation_history, turn_count, total_articles_used)
-                print(f"\n💾 Conversation saved: {filename}")
-            
             # Show conversation stats
-            print("\n" + "=" * 50)
+            print("\n" + "=" * 60)
             print("📊 Conversation Summary:")
             print(f"   Turns: {turn_count}")
             print(f"   Total messages: {len(conversation_history)}")
-            print(f"   Articles referenced: {total_articles_used}")
-            print("=" * 50)
+            print("=" * 60)
             print("Goodbye! 👋")
             break
             
@@ -168,22 +116,26 @@ def interactive_chat():
             continue
             
         try:
-            response, conversation_history, kb_results = chat(user_input, conversation_history)
+            response, conversation_history, kb_results = chat(
+                user_input, 
+                conversation_history
+            )
             turn_count += 1
             
+            # Show which articles were used
             if kb_results:
-                total_articles_used += len(kb_results)
+                print(f"\n📚 Using {len(kb_results)} KB articles:")
+                for i, article in enumerate(kb_results, 1):
+                    score_pct = article['similarity_score'] * 100
+                    print(f"   {i}. {article['title']} ({score_pct:.0f}% relevant)")
             
             print(f"\nAgent: {response}")
-            
-            # Display sources if KB was used
-            if kb_results:
-                display_sources(kb_results)
-            
-            print(f"\n💬 Turn {turn_count}")
+            print(f"\n(Turn {turn_count})")
             
         except Exception as e:
             print(f"\n❌ Error: {e}")
+            import traceback
+            traceback.print_exc()
 
 
 if __name__ == "__main__":
