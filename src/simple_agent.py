@@ -67,17 +67,23 @@ def chat(message: str, conversation_history: list = None) -> tuple[str, list]:
 
 def interactive_chat():
     """Run an interactive chat session with memory"""
-    print("Chat Agent Ready! (type 'quit' to exit)")
+    print("🤖 Chat Agent Ready! (type 'quit' to exit)")
     print("-" * 50)
     
     conversation_history = []
+    turn_count = 0
     
     while True:
         user_input = input("\nYou: ").strip()
         
         if user_input.lower() in ['quit', 'exit', 'q']:
-            print(f"\n📊 Conversation had {len(conversation_history)} messages")
-            print("Goodbye!")
+            # Show conversation stats
+            print("\n" + "=" * 50)
+            print("📊 Conversation Summary:")
+            print(f"   Turns: {turn_count}")
+            print(f"   Total messages: {len(conversation_history)}")
+            print("=" * 50)
+            print("Goodbye! 👋")
             break
             
         if not user_input:
@@ -85,9 +91,11 @@ def interactive_chat():
             
         try:
             response, conversation_history = chat(user_input, conversation_history)
+            turn_count += 1
             print(f"\nAgent: {response}")
+            print(f"(Turn {turn_count}, History: {len(conversation_history)} msgs)")
         except Exception as e:
-            print(f"\nError: {e}")
+            print(f"\n❌ Error: {e}")
 
 
 if __name__ == "__main__":
