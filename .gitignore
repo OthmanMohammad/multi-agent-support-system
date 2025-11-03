@@ -219,3 +219,5 @@ models/
 credentials.json
 token.json
 service_account.json
+
+data/conversations/*.json
