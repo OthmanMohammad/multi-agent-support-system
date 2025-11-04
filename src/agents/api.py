@@ -30,7 +30,7 @@ class APIAgent(BaseAgent):
     def __init__(self):
         super().__init__(
             agent_type="api",
-            model="claude-3-5-sonnet-20241022",  # Better for code generation
+            model="claude-3-haiku-20240307",
             temperature=0.2  # Low temp for accurate, consistent code
         )
         

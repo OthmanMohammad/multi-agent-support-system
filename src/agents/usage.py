@@ -27,7 +27,7 @@ class UsageAgent(BaseAgent):
     def __init__(self):
         super().__init__(
             agent_type="usage",
-            model="claude-3-5-sonnet-20241022",
+            model="claude-3-haiku-20240307",  # ✅ CHANGED TO HAIKU
             temperature=0.4
         )
     

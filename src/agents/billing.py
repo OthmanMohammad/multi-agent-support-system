@@ -1,4 +1,3 @@
-
 """
 Billing Agent - Handles payments, subscriptions, invoices, refunds
 """
@@ -27,7 +26,7 @@ class BillingAgent(BaseAgent):
     def __init__(self):
         super().__init__(
             agent_type="billing",
-            model="claude-3-5-sonnet-20241022",  # Better reasoning
+            model="claude-3-haiku-20240307",  # ✅ CHANGED TO HAIKU
             temperature=0.3
         )
     
