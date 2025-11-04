@@ -55,8 +55,8 @@ class Message(BaseModel):
         index=True
     )
     
-    # Relationships
-    conversation = relationship("Message", back_populates="messages")
+    # Relationships - FIXED: Changed "Message" to "Conversation"
+    conversation = relationship("Conversation", back_populates="messages")
     
     # Constraints and Indexes
     __table_args__ = (
