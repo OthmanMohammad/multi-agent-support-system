@@ -2,9 +2,13 @@
 Conversation Pydantic schemas - Data Transfer Objects
 """
 from pydantic import BaseModel, Field, ConfigDict
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from datetime import datetime
 from uuid import UUID
+
+# Use TYPE_CHECKING to avoid circular imports
+if TYPE_CHECKING:
+    from database.schemas.message import MessageInDB
 
 
 class ConversationBase(BaseModel):
@@ -53,8 +57,9 @@ class ConversationResponse(ConversationInDB):
 
 class ConversationWithMessages(ConversationInDB):
     """Conversation with related messages"""
-    from database.schemas.message import MessageInDB
-    messages: list[MessageInDB] = Field(default_factory=list)
+    messages: list['MessageInDB'] = Field(default_factory=list)
+    
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ConversationStatistics(BaseModel):
@@ -64,3 +69,8 @@ class ConversationStatistics(BaseModel):
     by_intent: dict[str, int] = Field(default_factory=dict)
     avg_resolution_time_seconds: float = 0.0
     avg_sentiment: float = 0.0
+
+
+# Update forward references after all classes are defined
+from database.schemas.message import MessageInDB
+ConversationWithMessages.model_rebuild()
