@@ -2,9 +2,13 @@
 Customer Pydantic schemas - Data Transfer Objects
 """
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from datetime import datetime
 from uuid import UUID
+
+# Use TYPE_CHECKING to avoid circular imports
+if TYPE_CHECKING:
+    from database.schemas.conversation import ConversationInDB
 
 
 class CustomerBase(BaseModel):
@@ -43,5 +47,11 @@ class CustomerResponse(CustomerInDB):
 
 class CustomerWithConversations(CustomerInDB):
     """Customer with related conversations"""
-    from database.schemas.conversation import ConversationInDB
-    conversations: list[ConversationInDB] = Field(default_factory=list)
+    conversations: list['ConversationInDB'] = Field(default_factory=list)
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+# Update forward references after all classes are defined
+from database.schemas.conversation import ConversationInDB
+CustomerWithConversations.model_rebuild()
