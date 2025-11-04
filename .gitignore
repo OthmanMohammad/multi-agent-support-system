@@ -207,7 +207,7 @@ desktop.ini
 # Large model files
 *.bin
 *.safetensors
-models/
+
 
 # Data files
 *.csv
