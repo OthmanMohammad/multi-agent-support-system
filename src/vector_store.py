@@ -9,7 +9,8 @@ from qdrant_client.models import (
     PointStruct,
     Filter,
     FieldCondition,
-    MatchValue
+    MatchValue,
+    PayloadSchemaType
 )
 from sentence_transformers import SentenceTransformer
 from typing import List, Dict, Optional
@@ -96,6 +97,15 @@ class VectorStore:
                     )
                 )
                 print("✓ Collection created successfully")
+                
+                # Create index for category field (for filtering)
+                print("Creating index for category field...")
+                self.client.create_payload_index(
+                    collection_name=self.collection_name,
+                    field_name="category",
+                    field_schema=PayloadSchemaType.KEYWORD
+                )
+                print("✓ Category index created")
             else:
                 print(f"✓ Collection '{self.collection_name}' already exists")
                 
@@ -109,18 +119,18 @@ class VectorStore:
         
         Args:
             documents: List of dicts with keys:
-                - id: unique identifier
+                - id: unique identifier (can be string)
                 - embedding: vector (list of floats)
                 - title: article title
                 - content: article content
-                - category: billing/technical/usage
+                - category: billing/technical/usage/api
                 - tags: list of tags
         """
         try:
             points = []
-            for doc in documents:
+            for i, doc in enumerate(documents):
                 point = PointStruct(
-                    id=int(doc["id"]),  # Qdrant needs int ID
+                    id=i,  # Use index as integer ID
                     vector=doc["embedding"],
                     payload={
                         "doc_id": doc.get("doc_id", str(doc["id"])),
@@ -140,7 +150,7 @@ class VectorStore:
                     collection_name=self.collection_name,
                     points=batch
                 )
-                print(f"  Uploaded {i + len(batch)}/{len(points)} documents...")
+                print(f"  Uploaded {min(i + len(batch), len(points))}/{len(points)} documents...")
             
             print(f"✓ Uploaded {len(points)} documents to Qdrant Cloud")
             
@@ -160,7 +170,7 @@ class VectorStore:
         
         Args:
             query: Search query (plain text)
-            category: Filter by category (billing, technical, usage)
+            category: Filter by category (billing, technical, usage, api)
             limit: Max results
             score_threshold: Minimum similarity score (0-1)
             

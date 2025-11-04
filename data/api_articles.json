@@ -1,0 +1,109 @@
+{
+  "articles": [
+    {
+      "id": "api_001",
+      "title": "Getting Started with the API",
+      "category": "api",
+      "content": "To use our API: 1. Get API key from Settings > API. 2. Include in Authorization header as 'Bearer YOUR_KEY'. 3. Base URL is https://api.example.com/v1. 4. All requests must use HTTPS. 5. Responses are in JSON format. 6. Content-Type should be application/json for POST/PUT requests.",
+      "tags": ["api", "authentication", "getting-started", "basics"]
+    },
+    {
+      "id": "api_002",
+      "title": "API Authentication Methods",
+      "category": "api",
+      "content": "We support two authentication methods: 1. API Keys (recommended for server-to-server). Generate from Settings > API. Include in header: Authorization: Bearer YOUR_API_KEY. 2. OAuth 2.0 (for user-facing apps). Supports authorization code flow. Never expose keys in client-side code or version control. Rotate keys regularly.",
+      "tags": ["api", "authentication", "oauth", "security", "api-keys"]
+    },
+    {
+      "id": "api_003",
+      "title": "Creating Projects via API",
+      "category": "api",
+      "content": "POST /api/v1/projects with JSON body: {name: string (required), description: string (optional), visibility: 'public' or 'private' (default: private)}. Returns 201 with project object containing id, name, created_at. Rate limit: 100 requests/hour. Example: curl -X POST https://api.example.com/v1/projects -H 'Authorization: Bearer KEY' -H 'Content-Type: application/json' -d '{\"name\":\"My Project\"}'",
+      "tags": ["api", "projects", "create", "post", "endpoints"]
+    },
+    {
+      "id": "api_004",
+      "title": "Webhook Events and Subscriptions",
+      "category": "api",
+      "content": "Subscribe to webhooks: POST /api/v1/webhooks with {url: string (HTTPS only), events: array, secret: string (optional)}. Supported events: project.created, project.updated, project.deleted, task.created, task.updated, task.completed, task.deleted, team.member_added, team.member_removed. Webhook payload includes: event (type), timestamp (ISO 8601), data (event-specific object), webhook_id. Delivery retries: 3 attempts with exponential backoff.",
+      "tags": ["api", "webhooks", "events", "notifications", "subscriptions"]
+    },
+    {
+      "id": "api_005",
+      "title": "API Rate Limits and Throttling",
+      "category": "api",
+      "content": "Rate limits by plan: Free (100 req/hour, 1000 req/day), Basic (500 req/hour, 10k req/day), Premium (2000 req/hour, 50k req/day), Enterprise (custom). Response headers: X-RateLimit-Limit (total allowed), X-RateLimit-Remaining (requests left), X-RateLimit-Reset (unix timestamp when limit resets). Returns 429 Too Many Requests when exceeded with Retry-After header. Implement exponential backoff: wait = 2^attempt seconds.",
+      "tags": ["api", "rate-limiting", "limits", "429", "throttling"]
+    },
+    {
+      "id": "api_006",
+      "title": "Error Codes and Response Format",
+      "category": "api",
+      "content": "HTTP status codes: 200 OK (success), 201 Created (resource created), 204 No Content (success, no body), 400 Bad Request (invalid input, check validation errors), 401 Unauthorized (missing or invalid API key), 403 Forbidden (insufficient permissions for resource), 404 Not Found (resource doesn't exist), 422 Unprocessable Entity (semantic errors), 429 Too Many Requests (rate limit), 500 Internal Server Error (retry with backoff), 503 Service Unavailable (maintenance). Error response format: {error: {type: string, message: string, code: string, details: object}}",
+      "tags": ["api", "errors", "troubleshooting", "status-codes", "http"]
+    },
+    {
+      "id": "api_007",
+      "title": "Pagination and List Endpoints",
+      "category": "api",
+      "content": "List endpoints support pagination with query params: ?page=1&limit=50 (page-based) or ?cursor=xxx&limit=50 (cursor-based for large datasets). Default limit: 20, max: 100. Response format: {data: array, pagination: {total: number, page: number, pages: number, limit: number, next_cursor: string, prev_cursor: string}}. Use Link header for next/prev URLs: Link: <url>; rel=\"next\". Cursor-based recommended for real-time data.",
+      "tags": ["api", "pagination", "lists", "limit", "cursors"]
+    },
+    {
+      "id": "api_008",
+      "title": "Webhook Signature Verification",
+      "category": "api",
+      "content": "Verify webhook authenticity using HMAC-SHA256 to prevent spoofing. Header: X-Webhook-Signature. Algorithm: 1. Get secret from webhook creation response. 2. Compute HMAC-SHA256(secret, request_body). 3. Compare with signature header using constant-time comparison. 4. Reject requests with invalid or missing signatures within 5-minute timestamp window. Signature format: sha256=<hex_digest>. Prevent replay attacks by checking X-Webhook-Timestamp header.",
+      "tags": ["api", "webhooks", "security", "verification", "hmac", "signatures"]
+    },
+    {
+      "id": "api_009",
+      "title": "API Versioning and Compatibility",
+      "category": "api",
+      "content": "Current version: v1. Version specified in URL: /api/v1/endpoint (recommended) or Accept header: application/vnd.example.v1+json. Breaking changes will increment version to v2. Non-breaking changes (new fields, optional params) stay in same version. Deprecated versions supported for minimum 12 months with sunset warnings. Set Accept header to specify response format: application/json (default), application/xml. Check X-API-Version response header for actual version used.",
+      "tags": ["api", "versioning", "compatibility", "deprecation"]
+    },
+    {
+      "id": "api_010",
+      "title": "Bulk Operations and Batch Requests",
+      "category": "api",
+      "content": "POST /api/v1/batch for batch operations. Max 100 items per request. Request format: {requests: [{method: 'GET', path: '/projects/123'}, {method: 'POST', path: '/projects', body: {...}}]}. Response: {responses: [{status: 200, body: {...}}, ...], succeeded: number, failed: number}. Operations are NOT atomic by default - use transaction: true for atomic batches. Reduces API calls by 10x. Useful for syncing, imports, bulk updates.",
+      "tags": ["api", "bulk", "batch", "performance", "optimization"]
+    },
+    {
+      "id": "api_011",
+      "title": "Advanced Filtering and Sorting",
+      "category": "api",
+      "content": "Filter with query params using operators: ?status=active (equals), ?created_after=2024-01-01 (date comparison), ?priority_gte=5 (greater than or equal), ?name_contains=project (substring), ?tags_in=urgent,bug (array contains). Supported operators: eq, ne, gt, lt, gte, lte, in, nin, contains, startswith, endswith. Sort with ?sort=created_at&order=desc. Multiple sorts: ?sort=priority,created_at&order=desc,asc. Combine: ?status=active&sort=priority&order=desc&limit=20",
+      "tags": ["api", "filtering", "sorting", "queries", "search"]
+    },
+    {
+      "id": "api_012",
+      "title": "Idempotency for Safe Retries",
+      "category": "api",
+      "content": "Use Idempotency-Key header for safe retries on network errors: UUID unique per logical request. If duplicate key detected within 24 hours, returns cached response (same status code, body, headers). Recommended for POST, PUT, DELETE. Not needed for GET (naturally idempotent). Example header: Idempotency-Key: 550e8400-e29b-41d4-a716-446655440000. Generate client-side using UUID v4. Store for 24h, then safe to reuse.",
+      "tags": ["api", "idempotency", "retry", "safety", "reliability"]
+    },
+    {
+      "id": "api_013",
+      "title": "Testing in Sandbox Environment",
+      "category": "api",
+      "content": "Sandbox environment: https://sandbox-api.example.com/v1. Use test API keys with prefix sk_test_XXXXXXXX. All operations are safe, data deleted nightly at 00:00 UTC. Rate limits relaxed to 10x production limits. No charges for operations. Separate database from production. Use for integration testing, CI/CD pipelines, development. Switch to production keys (sk_live_) when ready. Test webhooks work normally in sandbox.",
+      "tags": ["api", "testing", "sandbox", "development", "environment"]
+    },
+    {
+      "id": "api_014",
+      "title": "GraphQL API Beta",
+      "category": "api",
+      "content": "GraphQL endpoint: POST /api/graphql. Single endpoint for all queries/mutations. Introspection enabled in sandbox. Example query: {projects(limit: 10, status: ACTIVE) {id name created_at tasks {id title status}}}. Mutations: mutation {createProject(input: {name: \"New Project\"}) {id name}}. Supports fragments, variables, subscriptions (WebSocket). Schema available at /api/graphql/schema or via introspection. Currently in beta - subject to changes.",
+      "tags": ["api", "graphql", "beta", "queries", "mutations"]
+    },
+    {
+      "id": "api_015",
+      "title": "Real-time Updates with WebSockets",
+      "category": "api",
+      "content": "Connect to WebSocket: wss://api.example.com/ws?token=YOUR_API_KEY. After connection, subscribe to channels: {type: 'subscribe', channel: 'projects:123'}. Available channels: projects:id, tasks:id, team:id, user:me (personal updates). Receive real-time events: {type: 'event', channel: 'projects:123', event: 'task.updated', data: {task object}, timestamp: '2024-01-15T10:30:00Z'}. Send ping every 30s to maintain connection: {type: 'ping'}. Server responds with pong. Connection closes after 5 min inactivity.",
+      "tags": ["api", "websockets", "realtime", "events", "streaming"]
+    }
+  ]
+}
