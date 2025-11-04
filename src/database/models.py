@@ -21,7 +21,7 @@ class Customer(Base):
     email = Column(String(255), unique=True, nullable=False, index=True)
     name = Column(String(255))
     plan = Column(String(50), default="free", nullable=False, index=True)
-    metadata = Column(JSONB, default={})
+    extra_metadata = Column(JSONB, default={})
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
@@ -56,7 +56,7 @@ class Conversation(Base):
     agents_involved = Column(ARRAY(String), default=[])
     sentiment_avg = Column(Float)
     kb_articles_used = Column(ARRAY(String), default=[])
-    metadata = Column(JSONB, default={})
+    extra_metadata = Column(JSONB, default={})
     started_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     ended_at = Column(DateTime(timezone=True))
     resolution_time_seconds = Column(Integer)
@@ -101,7 +101,7 @@ class Message(Base):
     sentiment = Column(Float)
     confidence = Column(Float)
     tokens_used = Column(Integer)
-    metadata = Column(JSONB, default={})
+    extra_metadata = Column(JSONB, default={})
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     
     # Relationships
@@ -136,7 +136,7 @@ class AgentPerformance(Base):
     avg_confidence = Column(Float)
     avg_sentiment = Column(Float)
     avg_response_time_ms = Column(Integer)
-    metadata = Column(JSONB, default={})
+    extra_metadata = Column(JSONB, default={})
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     __table_args__ = (
