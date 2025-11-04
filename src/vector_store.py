@@ -18,7 +18,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
 class VectorStore:
     """Wrapper for Qdrant Cloud vector database with local embeddings"""
     
@@ -118,9 +117,9 @@ class VectorStore:
         """
         try:
             points = []
-            for doc in documents:
+            for i, doc in enumerate(documents):
                 point = PointStruct(
-                    id=int(doc["id"]),  # Qdrant needs int ID
+                    id=i,  # ✅ Use index as integer ID
                     vector=doc["embedding"],
                     payload={
                         "doc_id": doc.get("doc_id", str(doc["id"])),
