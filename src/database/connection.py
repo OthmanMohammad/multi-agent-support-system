@@ -8,14 +8,17 @@ from sqlalchemy.ext.asyncio import (
 )
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
+from sqlalchemy import text
 import os
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Get database URL from environment
 DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql+asyncpg://postgres:postgres@localhost:5432/support_agent"
+    "DATABASE_URL"
 )
-
 # Create async engine
 engine = create_async_engine(
     DATABASE_URL,
@@ -69,7 +72,7 @@ if __name__ == "__main__":
     async def test():
         print("Testing database connection...")
         async with get_db_session() as session:
-            result = await session.execute("SELECT version()")
+            result = await session.execute(text("SELECT version()"))
             version = result.scalar()
             print(f"✓ Connected to: {version}")
     
