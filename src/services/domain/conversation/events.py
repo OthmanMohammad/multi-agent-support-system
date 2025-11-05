@@ -8,7 +8,7 @@ NOTE: Domain services create these events but DO NOT publish them.
       Application services are responsible for publishing.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from uuid import UUID
 from typing import Optional, List
 from core.events import DomainEvent
@@ -17,71 +17,71 @@ from core.events import DomainEvent
 @dataclass
 class ConversationCreatedEvent(DomainEvent):
     """Conversation was created"""
-    conversation_id: UUID
-    customer_id: UUID
-    initial_message: str
-    customer_plan: str
+    conversation_id: UUID = field(default=None)
+    customer_id: UUID = field(default=None)
+    initial_message: str = field(default="")
+    customer_plan: str = field(default="free")
 
 
 @dataclass
 class ConversationResolvedEvent(DomainEvent):
     """Conversation was resolved"""
-    conversation_id: UUID
-    customer_id: UUID
-    resolution_time_seconds: int
-    primary_intent: Optional[str]
-    agents_involved: List[str]
-    sentiment_avg: Optional[float]
+    conversation_id: UUID = field(default=None)
+    customer_id: UUID = field(default=None)
+    resolution_time_seconds: int = field(default=0)
+    primary_intent: Optional[str] = field(default=None)
+    agents_involved: List[str] = field(default_factory=list)
+    sentiment_avg: Optional[float] = field(default=None)
 
 
 @dataclass
 class ConversationEscalatedEvent(DomainEvent):
     """Conversation was escalated to human"""
-    conversation_id: UUID
-    customer_id: UUID
-    priority: str  # low, medium, high, critical
-    reason: str
-    agents_involved: List[str]
+    conversation_id: UUID = field(default=None)
+    customer_id: UUID = field(default=None)
+    priority: str = field(default="medium")
+    reason: str = field(default="")
+    agents_involved: List[str] = field(default_factory=list)
 
 
 @dataclass
 class ConversationReopenedEvent(DomainEvent):
     """Resolved conversation was reopened"""
-    conversation_id: UUID
-    customer_id: UUID
-    reason: str
-    previous_status: str
+    conversation_id: UUID = field(default=None)
+    customer_id: UUID = field(default=None)
+    reason: str = field(default="")
+    previous_status: str = field(default="resolved")
 
 
 @dataclass
 class MessageAddedEvent(DomainEvent):
     """Message was added to conversation"""
-    conversation_id: UUID
-    customer_id: UUID
-    message_id: UUID
-    role: str  # user, assistant, system
-    agent_name: Optional[str]
-    sentiment: Optional[float]
-    confidence: Optional[float]
+    conversation_id: UUID = field(default=None)
+    customer_id: UUID = field(default=None)
+    message_id: UUID = field(default=None)
+    role: str = field(default="user")
+    agent_name: Optional[str] = field(default=None)
+    sentiment: Optional[float] = field(default=None)
+    confidence: Optional[float] = field(default=None)
 
 
 @dataclass
 class LowConfidenceDetectedEvent(DomainEvent):
     """Low confidence response detected"""
-    conversation_id: UUID
-    customer_id: UUID
-    message_id: UUID
-    confidence: float
-    agent_name: str
-    threshold: float = 0.5
+    conversation_id: UUID = field(default=None)
+    customer_id: UUID = field(default=None)
+    message_id: UUID = field(default=None)
+    confidence: float = field(default=0.0)
+    agent_name: str = field(default="")
+    threshold: float = field(default=0.5)
 
 
 @dataclass
 class NegativeSentimentDetectedEvent(DomainEvent):
     """Negative sentiment detected in conversation"""
-    conversation_id: UUID
-    customer_id: UUID
-    message_id: UUID
-    sentiment: float
-    agent_name: Optional[str]
-    threshold: float = -0.5
+    conversation_id: UUID = field(default=None)
+    customer_id: UUID = field(default=None)
+    message_id: UUID = field(default=None)
+    sentiment: float = field(default=0.0)
+    agent_name: Optional[str] = field(default=None)
+    threshold: float = field(default=-0.5)
