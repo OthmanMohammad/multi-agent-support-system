@@ -4,7 +4,7 @@ All repositories inherit from this
 """
 from typing import TypeVar, Generic, Optional, List, Type, Any
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete, func, and_
+from sqlalchemy import select, update, delete, func, and_, or_
 from sqlalchemy.orm import DeclarativeMeta
 from uuid import UUID
 from datetime import datetime
@@ -18,10 +18,11 @@ class BaseRepository(Generic[ModelType]):
     
     Features:
     - Basic CRUD (Create, Read, Update, Delete)
+    - Soft delete support with audit trail
     - Bulk operations
-    - Soft delete support
     - Pagination helpers
     - Existence checks
+    - Query filtering
     """
     
     def __init__(self, model: Type[ModelType], session: AsyncSession):
@@ -35,32 +36,45 @@ class BaseRepository(Generic[ModelType]):
         self.model = model
         self.session = session
     
-    async def create(self, **kwargs) -> ModelType:
+    async def create(self, created_by: Optional[UUID] = None, **kwargs) -> ModelType:
         """
-        Create a new record
+        Create a new record with audit trail
         
         Args:
+            created_by: UUID of user creating the record
             **kwargs: Field values for the new record
             
         Returns:
             Created model instance
         """
+        if created_by and hasattr(self.model, 'created_by'):
+            kwargs['created_by'] = created_by
+        
         instance = self.model(**kwargs)
         self.session.add(instance)
         await self.session.flush()
         await self.session.refresh(instance)
         return instance
     
-    async def bulk_create(self, items: List[dict]) -> List[ModelType]:
+    async def bulk_create(
+        self, 
+        items: List[dict],
+        created_by: Optional[UUID] = None
+    ) -> List[ModelType]:
         """
         Create multiple records in one transaction
         
         Args:
             items: List of dicts with field values
+            created_by: UUID of user creating the records
             
         Returns:
             List of created instances
         """
+        if created_by and hasattr(self.model, 'created_by'):
+            for item in items:
+                item['created_by'] = created_by
+        
         instances = [self.model(**item) for item in items]
         self.session.add_all(instances)
         await self.session.flush()
@@ -71,19 +85,28 @@ class BaseRepository(Generic[ModelType]):
         
         return instances
     
-    async def get_by_id(self, id: UUID) -> Optional[ModelType]:
+    async def get_by_id(
+        self, 
+        id: UUID,
+        include_deleted: bool = False
+    ) -> Optional[ModelType]:
         """
         Get record by ID
         
         Args:
             id: Record UUID
+            include_deleted: Include soft deleted records if True
             
         Returns:
             Model instance or None
         """
-        result = await self.session.execute(
-            select(self.model).where(self.model.id == id)
-        )
+        query = select(self.model).where(self.model.id == id)
+        
+        # Exclude soft deleted by default
+        if not include_deleted and hasattr(self.model, 'deleted_at'):
+            query = query.where(self.model.deleted_at.is_(None))
+        
+        result = await self.session.execute(query)
         return result.scalar_one_or_none()
     
     async def get_all(
@@ -91,7 +114,8 @@ class BaseRepository(Generic[ModelType]):
         limit: int = 100,
         offset: int = 0,
         order_by: str = "created_at",
-        ascending: bool = False
+        ascending: bool = False,
+        exclude_deleted: bool = True
     ) -> List[ModelType]:
         """
         Get all records with pagination
@@ -101,11 +125,16 @@ class BaseRepository(Generic[ModelType]):
             offset: Number of records to skip
             order_by: Field to order by
             ascending: Sort ascending if True, descending if False
+            exclude_deleted: Exclude soft deleted records if True
             
         Returns:
             List of model instances
         """
-        query = select(self.model).limit(limit).offset(offset)
+        query = select(self.model)
+        
+        # Exclude soft deleted
+        if exclude_deleted and hasattr(self.model, 'deleted_at'):
+            query = query.where(self.model.deleted_at.is_(None))
         
         # Apply ordering
         if hasattr(self.model, order_by):
@@ -115,15 +144,23 @@ class BaseRepository(Generic[ModelType]):
             else:
                 query = query.order_by(order_column.desc())
         
+        query = query.limit(limit).offset(offset)
+        
         result = await self.session.execute(query)
         return list(result.scalars().all())
     
-    async def update(self, id: UUID, **kwargs) -> Optional[ModelType]:
+    async def update(
+        self, 
+        id: UUID,
+        updated_by: Optional[UUID] = None,
+        **kwargs
+    ) -> Optional[ModelType]:
         """
-        Update record by ID
+        Update record by ID with audit trail
         
         Args:
             id: Record UUID
+            updated_by: UUID of user updating the record
             **kwargs: Fields to update
             
         Returns:
@@ -134,6 +171,10 @@ class BaseRepository(Generic[ModelType]):
         
         if not update_data:
             return await self.get_by_id(id)
+        
+        # Add audit trail
+        if updated_by and hasattr(self.model, 'updated_by'):
+            update_data['updated_by'] = updated_by
         
         await self.session.execute(
             update(self.model)
@@ -148,6 +189,9 @@ class BaseRepository(Generic[ModelType]):
         """
         Hard delete record by ID
         
+        WARNING: This permanently removes the record.
+        Consider using soft_delete_by_id() instead.
+        
         Args:
             id: Record UUID
             
@@ -160,52 +204,125 @@ class BaseRepository(Generic[ModelType]):
         await self.session.flush()
         return result.rowcount > 0
     
-    async def soft_delete(self, id: UUID) -> Optional[ModelType]:
+    async def soft_delete_by_id(
+        self,
+        id: UUID,
+        deleted_by: Optional[UUID] = None
+    ) -> Optional[ModelType]:
         """
-        Soft delete record (if model has deleted_at field)
+        Soft delete record (mark as deleted without removing)
+        
+        Args:
+            id: Record UUID
+            deleted_by: UUID of user deleting the record
+            
+        Returns:
+            Updated model instance or None
+            
+        Raises:
+            NotImplementedError: If model doesn't support soft delete
+        """
+        if not hasattr(self.model, 'deleted_at'):
+            raise NotImplementedError(
+                f"{self.model.__name__} does not support soft delete. "
+                "Add deleted_at field or use delete() for hard delete."
+            )
+        
+        update_data = {
+            'deleted_at': datetime.utcnow()
+        }
+        
+        if deleted_by and hasattr(self.model, 'deleted_by'):
+            update_data['deleted_by'] = deleted_by
+        
+        return await self.update(id, **update_data)
+    
+    async def restore(self, id: UUID) -> Optional[ModelType]:
+        """
+        Restore a soft deleted record
         
         Args:
             id: Record UUID
             
         Returns:
-            Updated model instance or None
+            Restored model instance or None
         """
         if not hasattr(self.model, 'deleted_at'):
             raise NotImplementedError(
                 f"{self.model.__name__} does not support soft delete"
             )
         
-        return await self.update(id, deleted_at=datetime.utcnow())
+        return await self.update(
+            id,
+            deleted_at=None,
+            deleted_by=None
+        )
     
-    async def exists(self, id: UUID) -> bool:
+    async def get_deleted(
+        self,
+        limit: int = 100,
+        offset: int = 0
+    ) -> List[ModelType]:
+        """
+        Get soft deleted records
+        
+        Args:
+            limit: Maximum records to return
+            offset: Number of records to skip
+            
+        Returns:
+            List of soft deleted records
+        """
+        if not hasattr(self.model, 'deleted_at'):
+            return []
+        
+        query = (
+            select(self.model)
+            .where(self.model.deleted_at.isnot(None))
+            .order_by(self.model.deleted_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
+    
+    async def exists(self, id: UUID, include_deleted: bool = False) -> bool:
         """
         Check if record exists
         
         Args:
             id: Record UUID
+            include_deleted: Include soft deleted records if True
             
         Returns:
             True if exists, False otherwise
         """
-        result = await self.session.execute(
-            select(func.count())
-            .select_from(self.model)
-            .where(self.model.id == id)
-        )
+        query = select(func.count()).select_from(self.model).where(self.model.id == id)
+        
+        if not include_deleted and hasattr(self.model, 'deleted_at'):
+            query = query.where(self.model.deleted_at.is_(None))
+        
+        result = await self.session.execute(query)
         count = result.scalar()
         return count > 0
     
-    async def count(self, **filters) -> int:
+    async def count(self, exclude_deleted: bool = True, **filters) -> int:
         """
         Count records with optional filters
         
         Args:
+            exclude_deleted: Exclude soft deleted records if True
             **filters: Field filters (field_name=value)
             
         Returns:
             Number of matching records
         """
         query = select(func.count()).select_from(self.model)
+        
+        # Exclude soft deleted
+        if exclude_deleted and hasattr(self.model, 'deleted_at'):
+            query = query.where(self.model.deleted_at.is_(None))
         
         # Apply filters
         for key, value in filters.items():
@@ -215,17 +332,26 @@ class BaseRepository(Generic[ModelType]):
         result = await self.session.execute(query)
         return result.scalar_one()
     
-    async def find_by(self, **filters) -> List[ModelType]:
+    async def find_by(
+        self,
+        exclude_deleted: bool = True,
+        **filters
+    ) -> List[ModelType]:
         """
         Find records by field values
         
         Args:
+            exclude_deleted: Exclude soft deleted records if True
             **filters: Field filters (field_name=value)
             
         Returns:
             List of matching records
         """
         query = select(self.model)
+        
+        # Exclude soft deleted
+        if exclude_deleted and hasattr(self.model, 'deleted_at'):
+            query = query.where(self.model.deleted_at.is_(None))
         
         # Build WHERE conditions
         conditions = []
@@ -239,15 +365,20 @@ class BaseRepository(Generic[ModelType]):
         result = await self.session.execute(query)
         return list(result.scalars().all())
     
-    async def find_one_by(self, **filters) -> Optional[ModelType]:
+    async def find_one_by(
+        self,
+        exclude_deleted: bool = True,
+        **filters
+    ) -> Optional[ModelType]:
         """
         Find single record by field values
         
         Args:
+            exclude_deleted: Exclude soft deleted records if True
             **filters: Field filters (field_name=value)
             
         Returns:
             Model instance or None
         """
-        results = await self.find_by(**filters)
+        results = await self.find_by(exclude_deleted=exclude_deleted, **filters)
         return results[0] if results else None
