@@ -5,6 +5,7 @@ This package provides:
 - SQLAlchemy ORM models (database/models/)
 - Pydantic schemas for validation (database/schemas/)
 - Repository pattern for data access (database/repositories/)
+- Unit of Work for transaction management (database/unit_of_work.py)
 - Connection management with pooling (database/connection.py)
 - Alembic migrations for schema versioning
 
@@ -18,7 +19,15 @@ Usage:
     # Import repositories
     from database.repositories import CustomerRepository
     
-    # Get database session
+    # Import Unit of Work (RECOMMENDED)
+    from database import get_unit_of_work
+    
+    async with get_unit_of_work() as uow:
+        customer = await uow.customers.create(...)
+        conversation = await uow.conversations.create(...)
+        # Transaction commits automatically
+    
+    # Legacy: Get database session
     from database.connection import get_db_session
     
     async with get_db_session() as session:
@@ -30,6 +39,8 @@ Usage:
 from database.models import (
     Base,
     BaseModel,
+    TimestampMixin,
+    AuditMixin,
     Customer,
     Conversation,
     Message,
@@ -56,6 +67,13 @@ from database.repositories import (
     AgentPerformanceRepository,
 )
 
+# Unit of Work (NEW - RECOMMENDED)
+from database.unit_of_work import (
+    UnitOfWork,
+    get_unit_of_work,
+    get_uow,
+)
+
 # Connection
 from database.connection import (
     get_db_session,
@@ -71,6 +89,8 @@ __all__ = [
     # Models
     "Base",
     "BaseModel",
+    "TimestampMixin",
+    "AuditMixin",
     "Customer",
     "Conversation",
     "Message",
@@ -89,6 +109,10 @@ __all__ = [
     "ConversationRepository",
     "MessageRepository",
     "AgentPerformanceRepository",
+    # Unit of Work (NEW)
+    "UnitOfWork",
+    "get_unit_of_work",
+    "get_uow",
     # Connection
     "get_db_session",
     "init_db",
