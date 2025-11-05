@@ -3,14 +3,15 @@ Base Service - Foundation for all service classes
 
 Provides common functionality for service layer including:
 - Result-based error handling
-- Transaction awareness
+- Async/await support for database operations
+- Transaction awareness via Unit of Work
 - Logging
 - Common helper methods
 
 All service classes should inherit from BaseService.
 """
 
-from typing import TypeVar, Generic, Optional, Callable, Any
+from typing import TypeVar, Generic, Optional, Callable, Any, Awaitable
 from uuid import UUID
 import logging
 from functools import wraps
@@ -25,9 +26,9 @@ T = TypeVar("T")
 
 def handle_exceptions(operation_name: str = "operation"):
     """
-    Decorator to handle exceptions and convert to Result
+    Decorator to handle exceptions in async methods and convert to Result
     
-    Wraps service methods to catch exceptions and return Result.fail()
+    Wraps async service methods to catch exceptions and return Result.fail()
     instead of raising. This enables Railway Oriented Programming.
     
     Args:
@@ -36,15 +37,15 @@ def handle_exceptions(operation_name: str = "operation"):
     Example:
         >>> class MyService(BaseService):
         ...     @handle_exceptions("create_user")
-        ...     def create_user(self, email: str) -> Result[User]:
-        ...         user = User(email=email)
+        ...     async def create_user(self, email: str) -> Result[User]:
+        ...         user = await self.user_repo.create(email=email)
         ...         return Result.ok(user)
     """
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        def wrapper(*args, **kwargs) -> Result:
+        async def async_wrapper(*args, **kwargs) -> Result:
             try:
-                return func(*args, **kwargs)
+                return await func(*args, **kwargs)
             except Exception as e:
                 # Get logger from first arg (self)
                 logger = getattr(args[0], 'logger', logging.getLogger(__name__))
@@ -57,7 +58,29 @@ def handle_exceptions(operation_name: str = "operation"):
                     operation=operation_name,
                     component=args[0].__class__.__name__
                 ))
-        return wrapper
+        
+        @wraps(func)
+        def sync_wrapper(*args, **kwargs) -> Result:
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                logger = getattr(args[0], 'logger', logging.getLogger(__name__))
+                logger.error(
+                    f"Error in {operation_name}: {e}",
+                    exc_info=True
+                )
+                return Result.fail(InternalError(
+                    message=f"Failed to {operation_name}",
+                    operation=operation_name,
+                    component=args[0].__class__.__name__
+                ))
+        
+        # Return appropriate wrapper based on whether function is async
+        import inspect
+        if inspect.iscoroutinefunction(func):
+            return async_wrapper
+        return sync_wrapper
+    
     return decorator
 
 
@@ -71,17 +94,20 @@ class BaseService:
     
     Features:
     - Result-based error handling (no exceptions in business logic)
+    - Async/await support for database operations
     - Structured logging with service context
     - Common helper methods
     - Transaction awareness (when used with UnitOfWork)
     
     Example:
+        >>> from database.unit_of_work import UnitOfWork
+        >>> 
         >>> class CustomerService(BaseService):
-        ...     def __init__(self, customer_repo: CustomerRepository):
+        ...     def __init__(self, uow: UnitOfWork):
         ...         super().__init__()
-        ...         self.customer_repo = customer_repo
+        ...         self.uow = uow
         ...     
-        ...     def create_customer(self, email: str) -> Result[Customer]:
+        ...     async def create_customer(self, email: str) -> Result[Customer]:
         ...         # Validation
         ...         if not self.is_valid_email(email):
         ...             return Result.fail(ValidationError(
@@ -91,7 +117,7 @@ class BaseService:
         ...             ))
         ...         
         ...         # Business logic
-        ...         customer = self.customer_repo.create(email=email)
+        ...         customer = await self.uow.customers.create(email=email)
         ...         return Result.ok(customer)
     """
     
@@ -179,16 +205,59 @@ class BaseService:
             extra={"operation": operation, "success": success, **context}
         )
     
+    async def execute_async(
+        self,
+        operation: Callable[[], Awaitable[T]],
+        operation_name: str = "operation"
+    ) -> Result[T]:
+        """
+        Execute async operation and wrap result
+        
+        Catches exceptions and converts them to Result.fail().
+        Use this for async operations that might raise exceptions.
+        
+        Args:
+            operation: Async callable that returns a value
+            operation_name: Name for error messages
+        
+        Returns:
+            Result wrapping the operation outcome
+        
+        Example:
+            >>> async def do_something_risky():
+            ...     # ... async code that might raise ...
+            ...     return await db.query(...)
+            >>> 
+            >>> result = await self.execute_async(do_something_risky, "db_query")
+            >>> if result.is_success:
+            ...     value = result.value
+        """
+        try:
+            value = await operation()
+            self.log_operation(operation_name, success=True)
+            return Result.ok(value)
+        except Exception as e:
+            self.logger.error(
+                f"Error in {operation_name}: {e}",
+                exc_info=True
+            )
+            self.log_operation(operation_name, success=False, error=str(e))
+            return Result.fail(InternalError(
+                message=f"Failed to {operation_name}",
+                operation=operation_name,
+                component=self.__class__.__name__
+            ))
+    
     def execute(
         self,
         operation: Callable[[], T],
         operation_name: str = "operation"
     ) -> Result[T]:
         """
-        Execute operation and wrap result
+        Execute synchronous operation and wrap result
         
         Catches exceptions and converts them to Result.fail().
-        Use this for operations that might raise exceptions.
+        Use this for sync operations that might raise exceptions.
         
         Args:
             operation: Callable that returns a value
@@ -285,6 +354,8 @@ class BaseService:
 
 
 if __name__ == "__main__":
+    import asyncio
+    
     # Self-test
     print("=" * 70)
     print("BASE SERVICE - SELF TEST")
@@ -294,8 +365,13 @@ if __name__ == "__main__":
         """Test service for demonstration"""
         
         def test_success(self) -> Result[str]:
-            """Operation that succeeds"""
+            """Sync operation that succeeds"""
             return Result.ok("success")
+        
+        async def test_async_success(self) -> Result[str]:
+            """Async operation that succeeds"""
+            await asyncio.sleep(0.01)  # Simulate async work
+            return Result.ok("async_success")
         
         def test_failure(self) -> Result[str]:
             """Operation that fails"""
@@ -307,67 +383,90 @@ if __name__ == "__main__":
         
         @handle_exceptions("risky_operation")
         def test_exception(self) -> Result[str]:
-            """Operation that raises exception"""
+            """Sync operation that raises exception"""
             raise ValueError("Test exception")
+        
+        @handle_exceptions("risky_async_operation")
+        async def test_async_exception(self) -> Result[str]:
+            """Async operation that raises exception"""
+            await asyncio.sleep(0.01)
+            raise ValueError("Test async exception")
     
-    # Test service creation
-    print("\n1. Testing service creation...")
-    service = TestService()
-    print(f"   ✓ {service}")
+    async def run_tests():
+        # Test service creation
+        print("\n1. Testing service creation...")
+        service = TestService()
+        print(f"   ✓ {service}")
+        
+        # Test successful operation
+        print("\n2. Testing successful sync operation...")
+        result = service.test_success()
+        assert result.is_success
+        assert result.value == "success"
+        print(f"   ✓ Success: {result.value}")
+        
+        # Test successful async operation
+        print("\n3. Testing successful async operation...")
+        result = await service.test_async_success()
+        assert result.is_success
+        assert result.value == "async_success"
+        print(f"   ✓ Async Success: {result.value}")
+        
+        # Test failed operation
+        print("\n4. Testing failed operation...")
+        result = service.test_failure()
+        assert result.is_failure
+        assert result.error.code == "VALIDATION_ERROR"
+        print(f"   ✓ Failure: {result.error}")
+        
+        # Test sync exception handling
+        print("\n5. Testing sync exception handling...")
+        result = service.test_exception()
+        assert result.is_failure
+        assert result.error.code == "INTERNAL_ERROR"
+        print(f"   ✓ Exception caught: {result.error}")
+        
+        # Test async exception handling
+        print("\n6. Testing async exception handling...")
+        result = await service.test_async_exception()
+        assert result.is_failure
+        assert result.error.code == "INTERNAL_ERROR"
+        print(f"   ✓ Async exception caught: {result.error}")
+        
+        # Test email validation
+        print("\n7. Testing email validation...")
+        assert service.is_valid_email("user@example.com")
+        assert not service.is_valid_email("invalid")
+        assert not service.is_valid_email("@example.com")
+        print(f"   ✓ Email validation works")
+        
+        # Test UUID validation
+        print("\n8. Testing UUID validation...")
+        from uuid import uuid4
+        assert service.is_valid_uuid(str(uuid4()))
+        assert not service.is_valid_uuid("not-a-uuid")
+        print(f"   ✓ UUID validation works")
+        
+        # Test require_not_none
+        print("\n9. Testing require_not_none...")
+        result = service.require_not_none("value", "test_field")
+        assert result.is_success
+        result = service.require_not_none(None, "test_field")
+        assert result.is_failure
+        print(f"   ✓ require_not_none works")
+        
+        # Test require_not_empty
+        print("\n10. Testing require_not_empty...")
+        result = service.require_not_empty("value", "test_field")
+        assert result.is_success
+        result = service.require_not_empty("", "test_field")
+        assert result.is_failure
+        result = service.require_not_empty("   ", "test_field")
+        assert result.is_failure
+        print(f"   ✓ require_not_empty works")
+        
+        print("\n" + "=" * 70)
+        print("✓ ALL TESTS PASSED")
+        print("=" * 70)
     
-    # Test successful operation
-    print("\n2. Testing successful operation...")
-    result = service.test_success()
-    assert result.is_success
-    assert result.value == "success"
-    print(f"   ✓ Success: {result.value}")
-    
-    # Test failed operation
-    print("\n3. Testing failed operation...")
-    result = service.test_failure()
-    assert result.is_failure
-    assert result.error.code == "VALIDATION_ERROR"
-    print(f"   ✓ Failure: {result.error}")
-    
-    # Test exception handling
-    print("\n4. Testing exception handling...")
-    result = service.test_exception()
-    assert result.is_failure
-    assert result.error.code == "INTERNAL_ERROR"
-    print(f"   ✓ Exception caught: {result.error}")
-    
-    # Test email validation
-    print("\n5. Testing email validation...")
-    assert service.is_valid_email("user@example.com")
-    assert not service.is_valid_email("invalid")
-    assert not service.is_valid_email("@example.com")
-    print(f"   ✓ Email validation works")
-    
-    # Test UUID validation
-    print("\n6. Testing UUID validation...")
-    from uuid import uuid4
-    assert service.is_valid_uuid(str(uuid4()))
-    assert not service.is_valid_uuid("not-a-uuid")
-    print(f"   ✓ UUID validation works")
-    
-    # Test require_not_none
-    print("\n7. Testing require_not_none...")
-    result = service.require_not_none("value", "test_field")
-    assert result.is_success
-    result = service.require_not_none(None, "test_field")
-    assert result.is_failure
-    print(f"   ✓ require_not_none works")
-    
-    # Test require_not_empty
-    print("\n8. Testing require_not_empty...")
-    result = service.require_not_empty("value", "test_field")
-    assert result.is_success
-    result = service.require_not_empty("", "test_field")
-    assert result.is_failure
-    result = service.require_not_empty("   ", "test_field")
-    assert result.is_failure
-    print(f"   ✓ require_not_empty works")
-    
-    print("\n" + "=" * 70)
-    print("✓ ALL TESTS PASSED")
-    print("=" * 70)
+    asyncio.run(run_tests())
