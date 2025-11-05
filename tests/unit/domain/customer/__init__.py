@@ -1,0 +1,3 @@
+"""
+Customer domain tests package
+"""
