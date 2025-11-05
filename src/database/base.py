@@ -2,9 +2,9 @@
 Base repository with comprehensive CRUD operations
 All repositories inherit from this
 """
-from typing import TypeVar, Generic, Optional, List, Type, Any
+from typing import TypeVar, Generic, Optional, List, Type
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete, func, and_, or_
+from sqlalchemy import select, update, delete, func, and_
 from sqlalchemy.orm import DeclarativeMeta
 from uuid import UUID
 from datetime import datetime
@@ -23,6 +23,12 @@ class BaseRepository(Generic[ModelType]):
     - Pagination helpers
     - Existence checks
     - Query filtering
+    
+    Design Principles:
+    - Single Responsibility: Each method does one thing well
+    - Defensive Programming: Handles edge cases gracefully
+    - Type Safety: Full type hints for IDE support
+    - Audit Trail: Tracks who did what and when
     """
     
     def __init__(self, model: Type[ModelType], session: AsyncSession):
@@ -153,6 +159,7 @@ class BaseRepository(Generic[ModelType]):
         self, 
         id: UUID,
         updated_by: Optional[UUID] = None,
+        _allow_none: bool = False,
         **kwargs
     ) -> Optional[ModelType]:
         """
@@ -161,36 +168,51 @@ class BaseRepository(Generic[ModelType]):
         Args:
             id: Record UUID
             updated_by: UUID of user updating the record
+            _allow_none: If True, allows setting fields to NULL (for restoration)
             **kwargs: Fields to update
             
         Returns:
             Updated model instance or None
+            
+        Note:
+            By default, None values are filtered out to distinguish between
+            "field not provided" and "field set to NULL". Use _allow_none=True
+            for operations like restore() that need to explicitly set NULL.
         """
-        # Filter out None values
-        update_data = {k: v for k, v in kwargs.items() if v is not None}
+        # Filter out None values unless explicitly allowed
+        if _allow_none:
+            update_data = kwargs.copy()
+        else:
+            update_data = {k: v for k, v in kwargs.items() if v is not None}
         
         if not update_data:
-            return await self.get_by_id(id)
+            return await self.get_by_id(id, include_deleted=True)
         
         # Add audit trail
         if updated_by and hasattr(self.model, 'updated_by'):
             update_data['updated_by'] = updated_by
         
-        await self.session.execute(
+        result = await self.session.execute(
             update(self.model)
             .where(self.model.id == id)
             .values(**update_data)
         )
+        
+        # Check if record was found
+        if result.rowcount == 0:
+            return None
+        
         await self.session.flush()
         
-        return await self.get_by_id(id)
+        # Include deleted records in case we're operating on soft-deleted data
+        return await self.get_by_id(id, include_deleted=True)
     
     async def delete(self, id: UUID) -> bool:
         """
         Hard delete record by ID
         
         WARNING: This permanently removes the record.
-        Consider using soft_delete_by_id() instead.
+        Consider using soft_delete_by_id() instead for audit trail.
         
         Args:
             id: Record UUID
@@ -239,13 +261,16 @@ class BaseRepository(Generic[ModelType]):
     
     async def restore(self, id: UUID) -> Optional[ModelType]:
         """
-        Restore a soft deleted record
+        Restore a soft deleted record by setting deleted_at and deleted_by to NULL
         
         Args:
             id: Record UUID
             
         Returns:
-            Restored model instance or None
+            Restored model instance or None if record doesn't exist
+            
+        Raises:
+            NotImplementedError: If model doesn't support soft delete
         """
         if not hasattr(self.model, 'deleted_at'):
             raise NotImplementedError(
@@ -255,7 +280,8 @@ class BaseRepository(Generic[ModelType]):
         return await self.update(
             id,
             deleted_at=None,
-            deleted_by=None
+            deleted_by=None,
+            _allow_none=True  # Explicitly allow NULL values for restoration
         )
     
     async def get_deleted(
