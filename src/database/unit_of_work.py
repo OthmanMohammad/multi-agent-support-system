@@ -1,17 +1,7 @@
 """
 Unit of Work Pattern - Manages database transactions across repositories
-
-The Unit of Work pattern ensures that multiple repository operations
-happen within a single database transaction, providing ACID guarantees.
-
-Usage:
-    async with get_unit_of_work() as uow:
-        customer = await uow.customers.create(...)
-        conversation = await uow.conversations.create(...)
-        # Transaction commits automatically on success
-        # Rolls back automatically on exception
 """
-from typing import Optional, AsyncContextManager
+from typing import Optional, AsyncIterator
 from contextlib import asynccontextmanager
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
@@ -116,7 +106,7 @@ class UnitOfWork:
 @asynccontextmanager
 async def get_unit_of_work(
     current_user_id: Optional[UUID] = None
-) -> AsyncContextManager[UnitOfWork]:
+) -> AsyncIterator[UnitOfWork]:
     """
     Context manager for Unit of Work pattern
     
@@ -149,9 +139,13 @@ async def get_unit_of_work(
 
 
 # Convenience function for backward compatibility
-async def get_uow(current_user_id: Optional[UUID] = None) -> AsyncContextManager[UnitOfWork]:
+@asynccontextmanager
+async def get_uow(
+    current_user_id: Optional[UUID] = None
+) -> AsyncIterator[UnitOfWork]:
     """Alias for get_unit_of_work"""
-    return get_unit_of_work(current_user_id)
+    async with get_unit_of_work(current_user_id) as uow:
+        yield uow
 
 
 if __name__ == "__main__":
