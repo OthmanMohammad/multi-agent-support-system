@@ -24,16 +24,8 @@ from api.models import (
     HealthResponse,
     MetricsResponse
 )
-from api.dependencies import (
-    get_conversation_repo,
-    get_message_repo,
-    get_customer_repo
-)
-from database.repositories import (
-    ConversationRepository,
-    MessageRepository,
-    CustomerRepository
-)
+from api.dependencies import get_uow
+from database.unit_of_work import UnitOfWork
 from database.connection import init_db, close_db
 from graph import SupportGraph
 
@@ -41,7 +33,7 @@ from graph import SupportGraph
 app = FastAPI(
     title="Multi-Agent Customer Support API",
     description="Production-ready multi-agent support system with LangGraph",
-    version="1.0.0"
+    version="2.0.0"
 )
 
 # CORS (allow all for development)
@@ -87,7 +79,7 @@ async def root():
     """Root endpoint"""
     return {
         "message": "Multi-Agent Customer Support API",
-        "version": "1.0.0",
+        "version": "2.0.0",
         "docs": "/docs",
         "health": "/health"
     }
@@ -106,7 +98,7 @@ async def health_check():
     
     return HealthResponse(
         status="healthy" if graph is not None else "unhealthy",
-        version="1.0.0",
+        version="2.0.0",
         agents_loaded=["router", "billing", "technical", "usage", "api", "escalation"],
         qdrant_connected=qdrant_connected,
         timestamp=datetime.now().isoformat()
@@ -116,51 +108,66 @@ async def health_check():
 @app.post("/chat", response_model=ChatResponse)
 async def chat(
     request: ChatRequest,
-    conv_repo: ConversationRepository = Depends(get_conversation_repo),
-    msg_repo: MessageRepository = Depends(get_message_repo),
-    customer_repo: CustomerRepository = Depends(get_customer_repo)
+    uow: UnitOfWork = Depends(get_uow)
 ):
     """
-    Chat endpoint with database persistence
+    Chat endpoint with database persistence using Unit of Work
+    
+    All database operations happen in a single transaction:
+    - Get or create customer
+    - Create or get conversation
+    - Save user message
+    - Run agent graph (no DB operations)
+    - Save agent response
+    - Update conversation metadata
     
     Args:
         request: ChatRequest with message and optional conversation_id
+        uow: Unit of Work for transaction management
         
     Returns:
         ChatResponse with agent's response
+        
+    Raises:
+        HTTPException: On validation or processing errors
     """
     if graph is None:
         raise HTTPException(status_code=503, detail="System not ready")
     
     try:
-        # Get or create customer
-        customer = await customer_repo.get_or_create_by_email(
+        # ===== TRANSACTION START =====
+        # All operations below are in a single atomic transaction
+        
+        # 1. Get or create customer
+        customer = await uow.customers.get_or_create_by_email(
             email=request.customer_id  # Using email as customer_id
         )
         
-        # Create or get conversation
+        # 2. Create or get conversation
         if request.conversation_id:
             try:
                 conversation_uuid = UUID(request.conversation_id)
-                conversation = await conv_repo.get_by_id(conversation_uuid)
+                conversation = await uow.conversations.get_by_id(conversation_uuid)
                 if not conversation:
                     raise HTTPException(404, "Conversation not found")
             except ValueError:
                 raise HTTPException(400, "Invalid conversation_id format")
         else:
-            conversation = await conv_repo.create_with_customer(
+            conversation = await uow.conversations.create_with_customer(
                 customer_id=customer.id,
-                status="active"
+                status="active",
+                created_by=uow.current_user_id  # Audit trail
             )
         
-        # Save user message to database
-        await msg_repo.create_message(
+        # 3. Save user message to database
+        user_message = await uow.messages.create_message(
             conversation_id=conversation.id,
             role="user",
-            content=request.message
+            content=request.message,
+            created_by=uow.current_user_id  # Audit trail
         )
         
-        # Run through graph (existing logic)
+        # 4. Run through graph (NO database operations inside)
         result = graph.run(request.message, conversation_id=str(conversation.id))
         
         # Extract response data
@@ -177,35 +184,39 @@ async def chat(
             for article in result.get("kb_results", [])
         ]
         
-        # Save agent response to database
+        # 5. Save agent response to database
         agent_name = agent_path[-1] if agent_path else "unknown"
-        await msg_repo.create_message(
+        agent_message = await uow.messages.create_message(
             conversation_id=conversation.id,
             role="assistant",
             content=response_text,
             agent_name=agent_name,
             intent=intent,
             sentiment=sentiment,
-            confidence=confidence
+            confidence=confidence,
+            created_by=uow.current_user_id  # Audit trail
         )
         
-        # Update conversation metadata
-        await conv_repo.update(
+        # 6. Update conversation metadata
+        await uow.conversations.update(
             conversation.id,
             primary_intent=intent,
             agents_involved=agent_path,
             sentiment_avg=sentiment,
-            kb_articles_used=kb_articles
+            kb_articles_used=kb_articles,
+            updated_by=uow.current_user_id  # Audit trail
         )
         
-        # Mark as resolved if done
+        # 7. Mark as resolved or escalated if done
         if status == "resolved":
             resolution_time = int(
                 (datetime.utcnow() - conversation.started_at).total_seconds()
             )
-            await conv_repo.mark_resolved(conversation.id, resolution_time)
+            await uow.conversations.mark_resolved(conversation.id, resolution_time)
         elif status == "escalated":
-            await conv_repo.mark_escalated(conversation.id)
+            await uow.conversations.mark_escalated(conversation.id)
+        
+        # ===== TRANSACTION COMMITS HERE (automatic via UoW context manager) =====
         
         return ChatResponse(
             conversation_id=str(conversation.id),
@@ -218,22 +229,32 @@ async def chat(
             timestamp=datetime.now().isoformat()
         )
         
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
     except Exception as e:
+        # Any exception triggers automatic rollback via UoW
+        print(f"Error in chat endpoint: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/chat/stream")
 async def chat_stream(
     request: ChatRequest,
-    conv_repo: ConversationRepository = Depends(get_conversation_repo),
-    msg_repo: MessageRepository = Depends(get_message_repo),
-    customer_repo: CustomerRepository = Depends(get_customer_repo)
+    uow: UnitOfWork = Depends(get_uow)
 ):
     """
     Streaming chat endpoint - returns Server-Sent Events
     
+    NOTE: This endpoint still uses UoW but handles transactions differently
+    because of the streaming nature. Consider refactoring for proper
+    transaction boundaries.
+    
     Args:
         request: ChatRequest with stream=True
+        uow: Unit of Work (limited use due to streaming)
         
     Returns:
         SSE stream with response chunks
@@ -244,8 +265,11 @@ async def chat_stream(
     async def generate_response() -> AsyncGenerator[str, None]:
         """Generate SSE events"""
         try:
+            # NOTE: Using separate UoW context for streaming
+            # This is not ideal but necessary for streaming responses
+            
             # Get or create customer
-            customer = await customer_repo.get_or_create_by_email(
+            customer = await uow.customers.get_or_create_by_email(
                 email=request.customer_id
             )
             
@@ -253,13 +277,13 @@ async def chat_stream(
             if request.conversation_id:
                 try:
                     conversation_uuid = UUID(request.conversation_id)
-                    conversation = await conv_repo.get_by_id(conversation_uuid)
+                    conversation = await uow.conversations.get_by_id(conversation_uuid)
                 except:
-                    conversation = await conv_repo.create_with_customer(
+                    conversation = await uow.conversations.create_with_customer(
                         customer_id=customer.id
                     )
             else:
-                conversation = await conv_repo.create_with_customer(
+                conversation = await uow.conversations.create_with_customer(
                     customer_id=customer.id
                 )
             
@@ -270,7 +294,7 @@ async def chat_stream(
             }
             
             # Add user message
-            await msg_repo.create_message(
+            await uow.messages.create_message(
                 conversation_id=conversation.id,
                 role="user",
                 content=request.message
@@ -315,7 +339,7 @@ async def chat_stream(
             
             # Save to database
             agent_name = agent_path[-1] if agent_path else "unknown"
-            await msg_repo.create_message(
+            await uow.messages.create_message(
                 conversation_id=conversation.id,
                 role="assistant",
                 content=response_text,
@@ -326,7 +350,7 @@ async def chat_stream(
             )
             
             # Update conversation
-            await conv_repo.update(
+            await uow.conversations.update(
                 conversation.id,
                 primary_intent=intent,
                 agents_involved=agent_path,
@@ -351,13 +375,14 @@ async def chat_stream(
 @app.get("/conversations/{conversation_id}", response_model=ConversationResponse)
 async def get_conversation(
     conversation_id: str,
-    conv_repo: ConversationRepository = Depends(get_conversation_repo)
+    uow: UnitOfWork = Depends(get_uow)
 ):
     """
     Get full conversation history from database
     
     Args:
         conversation_id: Conversation ID
+        uow: Unit of Work
         
     Returns:
         Full conversation with messages
@@ -367,7 +392,7 @@ async def get_conversation(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid conversation_id format")
     
-    conversation = await conv_repo.get_with_messages(conversation_uuid)
+    conversation = await uow.conversations.get_with_messages(conversation_uuid)
     
     if not conversation:
         raise HTTPException(status_code=404, detail="Conversation not found")
@@ -399,8 +424,7 @@ async def get_conversation(
 async def list_conversations(
     customer_id: str = None,
     limit: int = 50,
-    conv_repo: ConversationRepository = Depends(get_conversation_repo),
-    customer_repo: CustomerRepository = Depends(get_customer_repo)
+    uow: UnitOfWork = Depends(get_uow)
 ):
     """
     List conversations from database
@@ -408,18 +432,19 @@ async def list_conversations(
     Args:
         customer_id: Optional customer email filter
         limit: Max results (default 50)
+        uow: Unit of Work
         
     Returns:
         List of conversations
     """
     if customer_id:
         # Get customer by email
-        customer = await customer_repo.get_by_email(customer_id)
+        customer = await uow.customers.get_by_email(customer_id)
         if not customer:
             return []
-        conversations = await conv_repo.get_by_customer(customer.id, limit=limit)
+        conversations = await uow.conversations.get_by_customer(customer.id, limit=limit)
     else:
-        conversations = await conv_repo.get_all(limit=limit)
+        conversations = await uow.conversations.get_all(limit=limit)
     
     return [
         ConversationResponse(
@@ -438,7 +463,7 @@ async def list_conversations(
 
 @app.get("/metrics", response_model=MetricsResponse)
 async def get_metrics(
-    conv_repo: ConversationRepository = Depends(get_conversation_repo)
+    uow: UnitOfWork = Depends(get_uow)
 ):
     """
     Get system metrics from database
@@ -447,7 +472,7 @@ async def get_metrics(
         System statistics
     """
     # Get statistics from database
-    stats = await conv_repo.get_statistics(days=7)
+    stats = await uow.conversations.get_statistics(days=7)
     
     # Calculate uptime
     uptime = time.time() - start_time
@@ -465,14 +490,24 @@ async def get_metrics(
 @app.delete("/conversations/{conversation_id}")
 async def delete_conversation(
     conversation_id: str,
-    conv_repo: ConversationRepository = Depends(get_conversation_repo)
+    uow: UnitOfWork = Depends(get_uow)
 ):
-    """Delete a conversation (for testing)"""
+    """
+    Soft delete a conversation
+    
+    Args:
+        conversation_id: Conversation ID to delete
+        uow: Unit of Work
+        
+    Returns:
+        Success message
+    """
     try:
         conversation_uuid = UUID(conversation_id)
-        deleted = await conv_repo.delete(conversation_uuid)
+        # Use soft delete instead of hard delete
+        deleted = await uow.conversations.soft_delete_by_id(conversation_uuid)
         if deleted:
-            return {"message": "Conversation deleted"}
+            return {"message": "Conversation deleted (soft delete)"}
         raise HTTPException(status_code=404, detail="Conversation not found")
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid conversation_id format")
@@ -482,7 +517,11 @@ if __name__ == "__main__":
     import uvicorn
     
     print("=" * 70)
-    print("🚀 Starting Multi-Agent Support API")
+    print("Starting Multi-Agent Support API v2.0")
+    print("=" * 70)
+    print("NEW: Unit of Work transaction management")
+    print("NEW: Audit trail support")
+    print("NEW: Soft delete functionality")
     print("=" * 70)
     print("Documentation: http://localhost:8000/docs")
     print("Health Check: http://localhost:8000/health")
@@ -492,6 +531,6 @@ if __name__ == "__main__":
         "main:app",
         host="0.0.0.0",
         port=8000,
-        reload=True,  # Auto-reload on code changes
+        reload=True,
         log_level="info"
     )
