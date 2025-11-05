@@ -1,7 +1,7 @@
 """
 Database models package
 """
-from database.models.base import Base, BaseModel, TimestampMixin
+from database.models.base import Base, BaseModel, TimestampMixin, AuditMixin
 from database.models.customer import Customer
 from database.models.conversation import Conversation
 from database.models.message import Message
@@ -11,6 +11,7 @@ __all__ = [
     "Base",
     "BaseModel",
     "TimestampMixin",
+    "AuditMixin",
     "Customer",
     "Conversation",
     "Message",
