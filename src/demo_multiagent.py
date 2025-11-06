@@ -7,7 +7,7 @@ project_root = Path(__file__).parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from graph import SupportGraph
+from workflow.graph import SupportGraph
 from uuid import uuid4
 
 
@@ -16,7 +16,7 @@ def demo_conversation():
     print("=" * 70)
     print("🤖 MULTI-AGENT CUSTOMER SUPPORT SYSTEM")
     print("=" * 70)
-    print("Router Agent + Billing Agent")
+    print("Router Agent + Specialist Agents (Billing, Technical, Usage, API, Escalation)")
     print("Type 'quit' to exit, 'new' to start new conversation")
     print("=" * 70)
     
@@ -104,6 +104,18 @@ def demo_batch_test():
         ("I need a refund for last month", "billing"),
         ("Can you send me an invoice?", "billing"),
         
+        # Technical queries
+        ("My tasks are not syncing", "technical"),
+        ("I'm getting an error when I login", "technical"),
+        
+        # Usage queries
+        ("How do I create a project?", "usage"),
+        ("How do I invite team members?", "usage"),
+        
+        # API queries
+        ("How do I authenticate with the API?", "api"),
+        ("Show me a Python example for the API", "api"),
+        
         # Will route to END (router answers directly)
         ("What are keyboard shortcuts?", "direct"),
         ("Hello, how are you?", "direct"),
@@ -137,7 +149,7 @@ def demo_batch_test():
                 'agents': agent_path,
                 'status': status,
                 'success': (
-                    ('billing' in agent_path and expected_type == 'billing') or
+                    (expected_type in agent_path) or
                     (len(agent_path) == 1 and expected_type == 'direct')
                 )
             })

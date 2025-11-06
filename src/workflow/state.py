@@ -1,7 +1,11 @@
 """
 Agent State - Shared state passed between agents in LangGraph
+
+This module defines the state structure that flows through the
+agent workflow. It contains all context needed for agent decisions
+and responses.
 """
-from typing import TypedDict, List, Dict, Optional, Literal
+from typing import TypedDict, List, Dict, Optional, Literal, Any
 from datetime import datetime
 
 
@@ -15,7 +19,7 @@ AgentType = Literal[
     "escalation"
 ]
 
-# Intent categories (13 total from spec)
+# Intent categories (15 total from spec)
 IntentCategory = Literal[
     "billing_upgrade",
     "billing_downgrade", 
@@ -48,6 +52,14 @@ class AgentState(TypedDict, total=False):
     State passed between agents in LangGraph.
     
     Total=False means all fields are optional (safer for gradual updates)
+    
+    This state structure supports:
+    - Multi-turn conversations
+    - Agent routing and history tracking
+    - Intent classification
+    - Knowledge base integration
+    - Escalation handling
+    - Confidence tracking
     """
     
     # ===== CONVERSATION =====
@@ -64,11 +76,11 @@ class AgentState(TypedDict, total=False):
     # ===== CLASSIFICATION =====
     primary_intent: Optional[IntentCategory]  # What user wants
     intent_confidence: float  # 0-1 confidence score
-    entities: Dict[str, any]  # Extracted entities (plan_type, feature, etc.)
+    entities: Dict[str, Any]  # Extracted entities (plan_type, feature, etc.)
     sentiment: float  # -1 (negative) to 1 (positive)
     
     # ===== CONTEXT =====
-    customer_metadata: Dict[str, any]  # plan, account_age, tier, etc.
+    customer_metadata: Dict[str, Any]  # plan, account_age, tier, etc.
     kb_results: List[Dict]  # Knowledge base search results
     
     # ===== RESPONSE =====
@@ -87,23 +99,36 @@ class AgentState(TypedDict, total=False):
 def create_initial_state(
     message: str,
     conversation_id: str = None,
-    customer_id: str = "default_customer"
+    customer_id: str = "default_customer",
+    context: Optional[Dict[str, Any]] = None
 ) -> AgentState:
     """
-    Create initial state for a new conversation
+    Create initial state for a new conversation or turn
     
     Args:
-        message: User's first message
-        conversation_id: Optional conversation ID
+        message: User's message
+        conversation_id: Optional conversation ID (generated if not provided)
         customer_id: Customer identifier
+        context: Optional additional context (customer metadata, history, etc.)
         
     Returns:
-        Initial AgentState
+        Initial AgentState ready for workflow execution
     """
     from uuid import uuid4
     
     if conversation_id is None:
         conversation_id = str(uuid4())
+    
+    # Extract context if provided
+    customer_metadata = {}
+    if context:
+        customer_metadata = context.get("customer_metadata", {})
+    
+    # Set defaults for customer metadata
+    if "plan" not in customer_metadata:
+        customer_metadata["plan"] = "free"
+    if "account_age_days" not in customer_metadata:
+        customer_metadata["account_age_days"] = 0
     
     return AgentState(
         # Conversation
@@ -131,10 +156,7 @@ def create_initial_state(
         sentiment=0.0,
         
         # Context
-        customer_metadata={
-            "plan": "free",  # Default
-            "account_age_days": 0
-        },
+        customer_metadata=customer_metadata,
         kb_results=[],
         
         # Response
@@ -156,6 +178,7 @@ if __name__ == "__main__":
     print("Testing AgentState creation...")
     print("=" * 60)
     
+    # Test basic state creation
     state = create_initial_state(
         message="I want to upgrade my plan",
         customer_id="test_user_123"
@@ -166,5 +189,22 @@ if __name__ == "__main__":
     print(f"Current Agent: {state['current_agent']}")
     print(f"Status: {state['status']}")
     print(f"Messages: {len(state['messages'])}")
+    print(f"Customer Plan: {state['customer_metadata']['plan']}")
+    
+    # Test with context
+    print("\n" + "=" * 60)
+    print("Testing with custom context...")
+    state2 = create_initial_state(
+        message="How do I export data?",
+        context={
+            "customer_metadata": {
+                "plan": "premium",
+                "account_age_days": 365
+            }
+        }
+    )
+    
+    print(f"Customer Plan: {state2['customer_metadata']['plan']}")
+    print(f"Account Age: {state2['customer_metadata']['account_age_days']} days")
     
     print("\n✓ AgentState working correctly!")

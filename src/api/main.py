@@ -27,7 +27,7 @@ from api.models import (
 from api.dependencies import get_uow
 from database.unit_of_work import UnitOfWork
 from database.connection import init_db, close_db
-from graph import SupportGraph
+from workflow.graph import SupportGraph
 
 # Initialize
 app = FastAPI(

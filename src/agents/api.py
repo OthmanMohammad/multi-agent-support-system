@@ -9,7 +9,7 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from state import AgentState
+from workflow.state import AgentState
 from agents.base import BaseAgent
 from knowledge_base import search_articles
 
@@ -135,172 +135,6 @@ class APIAgent(BaseAgent):
         # Default to Python (most common)
         return "python"
     
-    def generate_code_example(
-        self,
-        endpoint: str,
-        method: str,
-        language: str,
-        description: str = "API request"
-    ) -> str:
-        """
-        Generate a code example in the requested language
-        
-        Args:
-            endpoint: API endpoint URL
-            method: HTTP method (GET, POST, PUT, DELETE)
-            language: Programming language
-            description: What the code does
-            
-        Returns:
-            Formatted code example as string
-        """
-        method_upper = method.upper()
-        
-        templates = {
-            "python": f'''```python
-import requests
-
-# {description}
-url = "{endpoint}"
-headers = {{
-    "Authorization": "Bearer YOUR_API_KEY",
-    "Content-Type": "application/json"
-}}
-
-# Make the request
-response = requests.{method.lower()}(
-    url,
-    headers=headers,
-    json={{"key": "value"}}  # Request body (for POST/PUT)
-)
-
-# Handle the response
-if response.status_code == 200:
-    data = response.json()
-    print(data)
-else:
-    print(f"Error: {{response.status_code}} - {{response.text}}")
-```''',
-            
-            "javascript": f'''```javascript
-// {description}
-fetch('{endpoint}', {{
-  method: '{method_upper}',
-  headers: {{
-    'Authorization': 'Bearer YOUR_API_KEY',
-    'Content-Type': 'application/json'
-  }},
-  body: JSON.stringify({{key: 'value'}})  // Request body (for POST/PUT)
-}})
-.then(response => {{
-  if (!response.ok) {{
-    throw new Error(`HTTP ${{response.status}}: ${{response.statusText}}`);
-  }}
-  return response.json();
-}})
-.then(data => {{
-  console.log('Success:', data);
-}})
-.catch(error => {{
-  console.error('Error:', error);
-}});
-```''',
-            
-            "node": f'''```javascript
-// {description}
-const axios = require('axios');
-
-async function makeRequest() {{
-  try {{
-    const response = await axios.{{
-      method: '{method.lower()}',
-      url: '{endpoint}',
-      headers: {{
-        'Authorization': 'Bearer YOUR_API_KEY',
-        'Content-Type': 'application/json'
-      }},
-      data: {{key: 'value'}}  // Request body (for POST/PUT)
-    }});
-    
-    console.log('Success:', response.data);
-  }} catch (error) {{
-    if (error.response) {{
-      console.error('Error:', error.response.status, error.response.data);
-    }} else {{
-      console.error('Error:', error.message);
-    }}
-  }}
-}}
-
-makeRequest();
-```''',
-            
-            "curl": f'''```bash
-# {description}
-curl -X {method_upper} '{endpoint}' \\
-  -H 'Authorization: Bearer YOUR_API_KEY' \\
-  -H 'Content-Type: application/json' \\
-  -d '{{"key": "value"}}'
-```''',
-            
-            "ruby": f'''```ruby
-require 'net/http'
-require 'json'
-
-# {description}
-uri = URI('{endpoint}')
-http = Net::HTTP.new(uri.host, uri.port)
-http.use_ssl = true
-
-request = Net::HTTP::{method.capitalize}.new(uri.path)
-request['Authorization'] = 'Bearer YOUR_API_KEY'
-request['Content-Type'] = 'application/json'
-request.body = {{"key" => "value"}}.to_json
-
-response = http.request(request)
-
-if response.code == '200'
-  data = JSON.parse(response.body)
-  puts data
-else
-  puts "Error: #{{response.code}} - #{{response.body}}"
-end
-```''',
-            
-            "php": f'''```php
-<?php
-// {description}
-
-$url = "{endpoint}";
-$data = json_encode(array("key" => "value"));
-
-$ch = curl_init($url);
-curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "{method_upper}");
-curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-    'Authorization: Bearer YOUR_API_KEY',
-    'Content-Type: application/json',
-    'Content-Length: ' . strlen($data)
-));
-
-$response = curl_exec($ch);
-$httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-curl_close($ch);
-
-if ($httpcode == 200) {{
-    $data = json_decode($response, true);
-    print_r($data);
-}} else {{
-    echo "Error: $httpcode - $response";
-}}
-?>
-```'''
-        }
-        
-        # Return template for requested language, fallback to Python
-        return templates.get(language, templates["python"])
-    
     def generate_api_response(
         self,
         message: str,
@@ -381,7 +215,7 @@ if __name__ == "__main__":
     print("TESTING API AGENT")
     print("=" * 60)
     
-    from state import create_initial_state
+    from workflow.state import create_initial_state
     
     # Test case 1: Python API request
     print("\n" + "=" * 60)
@@ -402,26 +236,9 @@ if __name__ == "__main__":
     print(f"Confidence: {result['response_confidence']}")
     print(f"Response:\n{result['agent_response']}")
     
-    # Test case 2: Webhook setup
+    # Test case 2: Language detection
     print("\n\n" + "=" * 60)
-    print("TEST 2: Webhook Setup")
-    print("=" * 60)
-    
-    state2 = create_initial_state("How do I set up webhooks for project updates?")
-    state2["primary_intent"] = "integration_webhook"
-    state2["agent_history"] = ["router"]
-    
-    result2 = agent.process(state2)
-    
-    print(f"\n{'='*60}")
-    print("RESULT")
-    print(f"{'='*60}")
-    print(f"Status: {result2['status']}")
-    print(f"Response:\n{result2['agent_response'][:300]}...")
-    
-    # Test case 3: Language detection
-    print("\n\n" + "=" * 60)
-    print("TEST 3: Language Detection")
+    print("TEST 2: Language Detection")
     print("=" * 60)
     
     test_messages = [

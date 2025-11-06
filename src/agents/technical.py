@@ -7,7 +7,7 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from state import AgentState
+from workflow.state import AgentState
 from agents.base import BaseAgent
 from knowledge_base import search_articles
 
@@ -26,7 +26,7 @@ class TechnicalAgent(BaseAgent):
     def __init__(self):
         super().__init__(
             agent_type="technical",
-            model="claude-3-haiku-20240307",  # ✅ CHANGED TO HAIKU
+            model="claude-3-haiku-20240307",
             temperature=0.3
         )
     
@@ -94,7 +94,7 @@ Provide troubleshooting steps."""
 
 
 if __name__ == "__main__":
-    from state import create_initial_state
+    from workflow.state import create_initial_state
     
     state = create_initial_state("My tasks are not syncing")
     state["primary_intent"] = "technical_sync"
