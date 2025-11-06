@@ -7,7 +7,7 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from state import AgentState
+from workflow.state import AgentState
 from agents.base import BaseAgent
 from knowledge_base import search_articles
 
@@ -26,7 +26,7 @@ class BillingAgent(BaseAgent):
     def __init__(self):
         super().__init__(
             agent_type="billing",
-            model="claude-3-haiku-20240307",  # ✅ CHANGED TO HAIKU
+            model="claude-3-haiku-20240307",
             temperature=0.3
         )
     
@@ -145,7 +145,7 @@ if __name__ == "__main__":
     print("TESTING BILLING AGENT")
     print("=" * 60)
     
-    from state import create_initial_state
+    from workflow.state import create_initial_state
     
     # Create test state (as if routed from router)
     state = create_initial_state("I want to upgrade to premium plan")
