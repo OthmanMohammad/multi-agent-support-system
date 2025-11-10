@@ -34,6 +34,12 @@ def sample_timestamp():
     return datetime.utcnow()
 
 
+@pytest.fixture
+def sample_email():
+    """Generate a unique test email address"""
+    return f"test_{uuid4().hex[:8]}@example.com"
+
+
 # ===== Result Pattern Fixtures =====
 
 @pytest.fixture
@@ -106,10 +112,21 @@ def captured_events():
     return EventCapture()
 
 
+# ===== Async Test Helpers =====
+
+@pytest.fixture
+def anyio_backend():
+    """Configure anyio backend for async tests"""
+    return 'asyncio'
+
+
 # ===== Pytest Configuration =====
 
 def pytest_configure(config):
     """Configure pytest with custom markers"""
+    config.addinivalue_line(
+        "markers", "asyncio: mark test as async test"
+    )
     config.addinivalue_line(
         "markers", "unit: mark test as a unit test"
     )
@@ -127,3 +144,7 @@ def pytest_collection_modifyitems(config, items):
         # Add 'unit' marker to tests in unit/ directory
         if "unit" in str(item.fspath):
             item.add_marker(pytest.mark.unit)
+        
+        # Add 'integration' marker to tests in integration/ directory
+        if "integration" in str(item.fspath):
+            item.add_marker(pytest.mark.integration)
