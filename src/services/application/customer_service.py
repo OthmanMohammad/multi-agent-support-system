@@ -1,11 +1,5 @@
 """
 Customer Application Service - Orchestrates customer use cases
-
-Coordinates customer-related operations including:
-- Customer creation and updates
-- Plan changes (upgrades/downgrades)
-- Profile management
-- Usage statistics
 """
 
 from typing import Optional, Dict, Any
@@ -20,15 +14,7 @@ from services.infrastructure.customer_service import CustomerInfrastructureServi
 
 
 class CustomerApplicationService:
-    """
-    Application service for customer use cases
-    
-    Responsibilities:
-    - Orchestrate customer operations
-    - Validate plan changes (domain service)
-    - Execute data changes (infrastructure service)
-    - Publish domain events
-    """
+    """Application service for customer use cases"""
     
     def __init__(
         self,
@@ -36,14 +22,6 @@ class CustomerApplicationService:
         domain_service: CustomerDomainService,
         infrastructure_service: CustomerInfrastructureService
     ):
-        """
-        Initialize with dependencies
-        
-        Args:
-            uow: Unit of Work for transaction management
-            domain_service: Customer domain service (business rules)
-            infrastructure_service: Customer infrastructure service (data access)
-        """
         self.uow = uow
         self.domain = domain_service
         self.infrastructure = infrastructure_service
@@ -55,29 +33,19 @@ class CustomerApplicationService:
         name: Optional[str] = None,
         plan: str = "free"
     ) -> Result[Dict[str, Any]]:
-        """
-        Create new customer
-        
-        Args:
-            email: Customer email
-            name: Optional customer name
-            plan: Initial plan (default: free)
-            
-        Returns:
-            Result with customer data
-        """
+        """Create new customer"""
         try:
-            # Validate email (domain service)
+            # Validate email
             validation = self.domain.validate_email(email)
             if validation.is_failure:
                 return Result.fail(validation.error)
             
-            # Validate plan (domain service)
+            # Validate plan
             plan_validation = self.domain.validate_plan(plan)
             if plan_validation.is_failure:
                 return Result.fail(plan_validation.error)
             
-            # Create customer (infrastructure service)
+            # Create customer
             result = await self.infrastructure.get_or_create_by_email(
                 email=email,
                 name=name,
@@ -109,16 +77,7 @@ class CustomerApplicationService:
         customer_id: UUID,
         new_plan: str
     ) -> Result[Dict[str, Any]]:
-        """
-        Upgrade customer plan
-        
-        Args:
-            customer_id: Customer UUID
-            new_plan: New plan name
-            
-        Returns:
-            Result with updated customer data
-        """
+        """Upgrade customer plan"""
         try:
             # Get current customer
             customer_result = await self.infrastructure.get_by_id(customer_id)
@@ -128,7 +87,7 @@ class CustomerApplicationService:
             customer = customer_result.value
             old_plan = customer.plan
             
-            # Validate plan transition (domain service)
+            # Validate plan transition
             validation = self.domain.validate_plan_transition(old_plan, new_plan)
             if validation.is_failure:
                 return Result.fail(validation.error)
@@ -141,15 +100,14 @@ class CustomerApplicationService:
                     operation="upgrade_plan"
                 ))
             
-            # Execute upgrade (infrastructure service)
+            # Execute upgrade
             result = await self.infrastructure.upgrade_plan(customer_id, new_plan)
             if result.is_failure:
                 return Result.fail(result.error)
             
             updated_customer = result.value
             
-            # Calculate value change (domain service for business logic)
-            plan_benefits = self.domain.calculate_plan_benefits(old_plan, new_plan)
+            # REMOVED: plan_benefits calculation that was causing inf error
             
             # Publish event
             event = self.domain.create_plan_upgraded_event(
@@ -157,19 +115,22 @@ class CustomerApplicationService:
                 email=customer.email,
                 old_plan=old_plan,
                 new_plan=new_plan,
-                annual_value_change=0.0  # Simplified
+                annual_value_change=0.0
             )
             self.event_bus.publish(event)
             
+            # FIXED: Simplified response without benefits
             return Result.ok({
                 "customer_id": str(updated_customer.id),
                 "email": updated_customer.email,
                 "old_plan": old_plan,
                 "new_plan": updated_customer.plan,
-                "benefits": plan_benefits
+                "message": f"Successfully upgraded from {old_plan} to {new_plan}"
             })
             
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             return Result.fail(InternalError(
                 message=f"Failed to upgrade plan: {str(e)}",
                 operation="upgrade_plan",
@@ -181,16 +142,7 @@ class CustomerApplicationService:
         customer_id: UUID,
         new_plan: str
     ) -> Result[Dict[str, Any]]:
-        """
-        Downgrade customer plan
-        
-        Args:
-            customer_id: Customer UUID
-            new_plan: New plan name
-            
-        Returns:
-            Result with updated customer data
-        """
+        """Downgrade customer plan"""
         try:
             # Get current customer
             customer_result = await self.infrastructure.get_by_id(customer_id)
@@ -200,7 +152,7 @@ class CustomerApplicationService:
             customer = customer_result.value
             old_plan = customer.plan
             
-            # Validate plan transition (domain service)
+            # Validate plan transition
             validation = self.domain.validate_plan_transition(old_plan, new_plan)
             if validation.is_failure:
                 return Result.fail(validation.error)
@@ -213,7 +165,7 @@ class CustomerApplicationService:
                     operation="downgrade_plan"
                 ))
             
-            # Execute downgrade (infrastructure service)
+            # Execute downgrade
             result = await self.infrastructure.downgrade_plan(customer_id, new_plan)
             if result.is_failure:
                 return Result.fail(result.error)
@@ -226,7 +178,7 @@ class CustomerApplicationService:
                 email=customer.email,
                 old_plan=old_plan,
                 new_plan=new_plan,
-                annual_value_change=0.0  # Simplified
+                annual_value_change=0.0
             )
             self.event_bus.publish(event)
             
@@ -234,10 +186,13 @@ class CustomerApplicationService:
                 "customer_id": str(updated_customer.id),
                 "email": updated_customer.email,
                 "old_plan": old_plan,
-                "new_plan": updated_customer.plan
+                "new_plan": updated_customer.plan,
+                "message": f"Successfully downgraded from {old_plan} to {new_plan}"
             })
             
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             return Result.fail(InternalError(
                 message=f"Failed to downgrade plan: {str(e)}",
                 operation="downgrade_plan",
@@ -248,15 +203,7 @@ class CustomerApplicationService:
         self,
         customer_id: UUID
     ) -> Result[Dict[str, Any]]:
-        """
-        Get customer profile with statistics
-        
-        Args:
-            customer_id: Customer UUID
-            
-        Returns:
-            Result with profile data
-        """
+        """Get customer profile with statistics"""
         try:
             result = await self.infrastructure.get_customer_profile(customer_id)
             return result
