@@ -1,24 +1,10 @@
 """
 Conversation Application Service - Orchestrates conversation use cases
-
-This is the orchestration layer that coordinates:
-- Domain services (business rules)
-- Infrastructure services (data access)
-- Workflow engine (AI processing)
-- Event publishing
-- Transaction management
-
-ARCHITECTURE:
-    API Controller
-        ↓
-    ConversationApplicationService ← YOU ARE HERE
-        ↓ ↓ ↓ ↓
-    Domain Service + Infrastructure Service + Workflow Engine + Event Bus
 """
 
 from typing import Optional, Dict, Any
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone  # ADDED timezone
 
 from core.result import Result, Error
 from core.errors import ValidationError, BusinessRuleError, NotFoundError, InternalError
@@ -31,21 +17,7 @@ from workflow.engine import AgentWorkflowEngine
 
 
 class ConversationApplicationService:
-    """
-    Application service for conversation use cases
-    
-    Responsibilities:
-    - Orchestrate use cases (coordinates multiple services)
-    - Manage transactions (via UoW)
-    - Publish domain events
-    - Error handling and logging
-    
-    Architecture:
-    - Calls Domain Services for business logic
-    - Calls Infrastructure Services for data access
-    - Calls Agent Workflow Engine for AI responses
-    - Publishes events when operations complete
-    """
+    """Application service for conversation use cases"""
     
     def __init__(
         self,
@@ -55,16 +27,6 @@ class ConversationApplicationService:
         workflow_engine: AgentWorkflowEngine,
         analytics_service: Optional[AnalyticsService] = None
     ):
-        """
-        Initialize with dependencies
-        
-        Args:
-            uow: Unit of Work for transaction management
-            domain_service: Conversation domain service (business rules)
-            customer_service: Customer infrastructure service (data access)
-            workflow_engine: Agent workflow engine (AI coordination)
-            analytics_service: Optional analytics service for tracking
-        """
         self.uow = uow
         self.domain = domain_service
         self.customer_service = customer_service
@@ -77,41 +39,14 @@ class ConversationApplicationService:
         customer_email: str,
         message: str
     ) -> Result[Dict[str, Any]]:
-        """
-        Create a new conversation with initial message
-        
-        This orchestrates the full flow:
-        1. Validate message (domain service)
-        2. Get/create customer (infrastructure service)
-        3. Check rate limits (domain service + infrastructure data)
-        4. Create conversation (infrastructure via UoW)
-        5. Run through agents (workflow engine)
-        6. Save response (infrastructure via UoW)
-        7. Publish events
-        
-        Args:
-            customer_email: Customer email
-            message: Initial message
-            
-        Returns:
-            Result with conversation data dict containing:
-                - conversation_id: str
-                - customer_id: str
-                - message: str (agent response)
-                - intent: str
-                - confidence: float
-                - sentiment: float
-                - agent_path: List[str]
-                - kb_articles_used: List[str]
-                - status: str
-        """
+        """Create a new conversation with initial message"""
         try:
-            # ===== VALIDATION (Domain Service) =====
+            # Validate message
             validation_result = self.domain.validate_message(message)
             if validation_result.is_failure:
                 return Result.fail(validation_result.error)
             
-            # ===== DATA RETRIEVAL (Infrastructure Service) =====
+            # Get/create customer
             customer_result = await self.customer_service.get_or_create_by_email(
                 customer_email
             )
@@ -120,27 +55,25 @@ class ConversationApplicationService:
             
             customer = customer_result.value
             
-            # Get today's conversation count (for rate limiting)
+            # Get today's conversation count
             count_result = await self.customer_service.get_conversation_count_for_date(
                 customer.id,
-                datetime.utcnow()
+                datetime.now(timezone.utc)  # FIXED
             )
             if count_result.is_failure:
                 return Result.fail(count_result.error)
             
             today_count = count_result.value
             
-            # ===== BUSINESS RULE VALIDATION (Domain Service) =====
+            # Check rate limits
             can_create = self.domain.validate_conversation_creation(
                 customer_plan=customer.plan,
                 today_conversation_count=today_count,
-                customer_blocked=customer.extra_metadata.get("blocked", False)
+                customer_blocked=customer.extra_metadata.get("blocked", False) if customer.extra_metadata else False
             )
             
             if can_create.is_failure:
                 return Result.fail(can_create.error)
-            
-            # ===== TRANSACTION START (via UoW) =====
             
             # Create conversation
             conversation = await self.uow.conversations.create_with_customer(
@@ -157,7 +90,7 @@ class ConversationApplicationService:
                 created_by=self.uow.current_user_id
             )
             
-            # ===== AI PROCESSING (Workflow Engine) =====
+            # Run through workflow
             agent_result = await self.workflow_engine.execute(
                 message=message,
                 context={
@@ -207,14 +140,13 @@ class ConversationApplicationService:
             if status == "resolved":
                 resolution_time = self.domain.calculate_resolution_time(
                     conversation.started_at,
-                    datetime.utcnow()
+                    datetime.now(timezone.utc)  # FIXED
                 )
                 await self.uow.conversations.mark_resolved(
                     conversation.id,
                     resolution_time
                 )
                 
-                # Create and publish event
                 event = self.domain.create_conversation_resolved_event(
                     conversation_id=conversation.id,
                     customer_id=customer.id,
@@ -228,15 +160,13 @@ class ConversationApplicationService:
             elif status == "escalated":
                 await self.uow.conversations.mark_escalated(conversation.id)
                 
-                # Determine priority (domain service)
                 priority = self.domain.determine_escalation_priority(
                     customer_plan=customer.plan,
                     urgency="high",
                     sentiment_avg=sentiment,
-                    annual_value=customer.extra_metadata.get("annual_value", 0)
+                    annual_value=customer.extra_metadata.get("annual_value", 0) if customer.extra_metadata else 0
                 )
                 
-                # Create and publish escalation event
                 event = self.domain.create_conversation_escalated_event(
                     conversation_id=conversation.id,
                     customer_id=customer.id,
@@ -246,15 +176,13 @@ class ConversationApplicationService:
                 )
                 self.event_bus.publish(event)
             
-            # Track analytics (optional - fire and forget)
+            # Track analytics
             if self.analytics_service and agent_name:
                 await self.analytics_service.track_agent_interaction(
                     agent_name=agent_name,
                     success=(status == "resolved"),
                     confidence=confidence
                 )
-            
-            # ===== TRANSACTION COMMITS HERE (automatic via UoW) =====
             
             return Result.ok({
                 "conversation_id": str(conversation.id),
@@ -265,10 +193,13 @@ class ConversationApplicationService:
                 "sentiment": sentiment,
                 "agent_path": agent_path,
                 "kb_articles_used": kb_articles,
-                "status": status
+                "status": status,
+                "timestamp": datetime.now(timezone.utc).isoformat()  # FIXED
             })
             
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             return Result.fail(InternalError(
                 message=f"Failed to create conversation: {str(e)}",
                 operation="create_conversation",
@@ -280,23 +211,12 @@ class ConversationApplicationService:
         conversation_id: UUID,
         message: str
     ) -> Result[Dict[str, Any]]:
-        """
-        Add message to existing conversation and get agent response
-        
-        Args:
-            conversation_id: Conversation UUID
-            message: User's message
-            
-        Returns:
-            Result with response data
-        """
+        """Add message to existing conversation"""
         try:
-            # Validate message
             validation_result = self.domain.validate_message(message)
             if validation_result.is_failure:
                 return Result.fail(validation_result.error)
             
-            # Get conversation
             conversation = await self.uow.conversations.get_by_id(conversation_id)
             if not conversation:
                 return Result.fail(NotFoundError(
@@ -304,7 +224,6 @@ class ConversationApplicationService:
                     identifier=str(conversation_id)
                 ))
             
-            # Check if conversation is active
             if conversation.status != "active":
                 return Result.fail(BusinessRuleError(
                     message=f"Cannot add message to {conversation.status} conversation",
@@ -312,7 +231,6 @@ class ConversationApplicationService:
                     entity="Conversation"
                 ))
             
-            # Save user message
             await self.uow.messages.create_message(
                 conversation_id=conversation.id,
                 role="user",
@@ -320,7 +238,6 @@ class ConversationApplicationService:
                 created_by=self.uow.current_user_id
             )
             
-            # Run through workflow
             agent_result = await self.workflow_engine.execute(
                 message=message,
                 context={
@@ -329,7 +246,6 @@ class ConversationApplicationService:
                 }
             )
             
-            # Extract response data
             response_text = agent_result.get("agent_response", "")
             intent = agent_result.get("primary_intent")
             confidence = agent_result.get("intent_confidence", 0.0)
@@ -337,7 +253,6 @@ class ConversationApplicationService:
             agent_path = agent_result.get("agent_history", [])
             status = agent_result.get("status", "active")
             
-            # Save agent response
             agent_name = agent_path[-1] if agent_path else "router"
             await self.uow.messages.create_message(
                 conversation_id=conversation.id,
@@ -350,7 +265,6 @@ class ConversationApplicationService:
                 created_by=self.uow.current_user_id
             )
             
-            # Update conversation
             await self.uow.conversations.update(
                 conversation.id,
                 status=status,
@@ -365,10 +279,13 @@ class ConversationApplicationService:
                 "confidence": confidence,
                 "sentiment": sentiment,
                 "agent_path": agent_path,
-                "status": status
+                "status": status,
+                "timestamp": datetime.now(timezone.utc).isoformat()  # FIXED
             })
             
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             return Result.fail(InternalError(
                 message=f"Failed to add message: {str(e)}",
                 operation="add_message",
@@ -379,15 +296,7 @@ class ConversationApplicationService:
         self,
         conversation_id: UUID
     ) -> Result[Dict[str, Any]]:
-        """
-        Get conversation with messages
-        
-        Args:
-            conversation_id: Conversation UUID
-            
-        Returns:
-            Result with conversation data
-        """
+        """Get conversation with messages"""
         try:
             conversation = await self.uow.conversations.get_with_messages(
                 conversation_id
@@ -404,6 +313,7 @@ class ConversationApplicationService:
                 "customer_id": str(conversation.customer_id),
                 "status": conversation.status,
                 "started_at": conversation.started_at.isoformat(),
+                "last_updated": conversation.updated_at.isoformat() if conversation.updated_at else conversation.started_at.isoformat(),
                 "messages": [
                     {
                         "role": msg.role,
@@ -428,15 +338,7 @@ class ConversationApplicationService:
         self,
         conversation_id: UUID
     ) -> Result[None]:
-        """
-        Mark conversation as resolved
-        
-        Args:
-            conversation_id: Conversation UUID
-            
-        Returns:
-            Result with None on success
-        """
+        """Mark conversation as resolved"""
         try:
             conversation = await self.uow.conversations.get_by_id(conversation_id)
             
@@ -446,24 +348,20 @@ class ConversationApplicationService:
                     identifier=str(conversation_id)
                 ))
             
-            # Validate can resolve (domain service)
             can_resolve = self.domain.can_resolve(conversation)
             if can_resolve.is_failure:
                 return Result.fail(can_resolve.error)
             
-            # Calculate resolution time
             resolution_time = self.domain.calculate_resolution_time(
                 conversation.started_at,
-                datetime.utcnow()
+                datetime.now(timezone.utc)  # FIXED
             )
             
-            # Mark as resolved
             await self.uow.conversations.mark_resolved(
                 conversation.id,
                 resolution_time
             )
             
-            # Publish event
             event = self.domain.create_conversation_resolved_event(
                 conversation_id=conversation.id,
                 customer_id=conversation.customer_id,
@@ -488,16 +386,7 @@ class ConversationApplicationService:
         conversation_id: UUID,
         reason: str
     ) -> Result[None]:
-        """
-        Escalate conversation to human
-        
-        Args:
-            conversation_id: Conversation UUID
-            reason: Reason for escalation
-            
-        Returns:
-            Result with None on success
-        """
+        """Escalate conversation to human"""
         try:
             conversation = await self.uow.conversations.get_by_id(conversation_id)
             
@@ -507,12 +396,10 @@ class ConversationApplicationService:
                     identifier=str(conversation_id)
                 ))
             
-            # Validate can escalate (domain service)
             can_escalate = self.domain.can_escalate(conversation)
             if can_escalate.is_failure:
                 return Result.fail(can_escalate.error)
             
-            # Get customer for priority calculation
             customer_result = await self.customer_service.get_by_id(
                 conversation.customer_id
             )
@@ -521,18 +408,15 @@ class ConversationApplicationService:
             
             customer = customer_result.value
             
-            # Determine priority (domain service)
             priority = self.domain.determine_escalation_priority(
                 customer_plan=customer.plan,
                 urgency="high",
                 sentiment_avg=conversation.sentiment_avg,
-                annual_value=customer.extra_metadata.get("annual_value", 0)
+                annual_value=customer.extra_metadata.get("annual_value", 0) if customer.extra_metadata else 0
             )
             
-            # Mark as escalated
             await self.uow.conversations.mark_escalated(conversation.id)
             
-            # Publish event
             event = self.domain.create_conversation_escalated_event(
                 conversation_id=conversation.id,
                 customer_id=conversation.customer_id,
@@ -557,22 +441,11 @@ class ConversationApplicationService:
         status: Optional[str] = None,
         limit: int = 50
     ) -> Result[list]:
-        """
-        List conversations with filters
-        
-        Args:
-            customer_email: Optional filter by customer email
-            status: Optional filter by status
-            limit: Max results
-            
-        Returns:
-            Result with list of conversation summaries
-        """
+        """List conversations with filters"""
         try:
             conversations = []
             
             if customer_email:
-                # Get customer first
                 customer_result = await self.customer_service.get_by_email(
                     customer_email
                 )
@@ -583,16 +456,15 @@ class ConversationApplicationService:
                 if customer:
                     conversations = await self.uow.conversations.get_by_customer(
                         customer.id,
-                        limit=limit
+                        limit=limit,
+                        status=status
                     )
             else:
                 conversations = await self.uow.conversations.get_all(limit=limit)
             
-            # Filter by status if provided
-            if status:
+            if status and not customer_email:
                 conversations = [c for c in conversations if c.status == status]
             
-            # Format results
             result_list = [
                 {
                     "conversation_id": str(conv.id),
@@ -600,6 +472,7 @@ class ConversationApplicationService:
                     "status": conv.status,
                     "primary_intent": conv.primary_intent,
                     "started_at": conv.started_at.isoformat(),
+                    "last_updated": conv.updated_at.isoformat() if conv.updated_at else conv.started_at.isoformat(),
                     "agent_history": conv.agents_involved or []
                 }
                 for conv in conversations
