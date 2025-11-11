@@ -1,10 +1,6 @@
 """
 Conversation routes - HTTP endpoints for conversations
-
-Thin controllers that delegate to ConversationApplicationService.
-Each endpoint is < 20 lines.
 """
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from uuid import UUID
 from typing import Optional
@@ -22,13 +18,9 @@ async def create_conversation(
     request: ChatRequest,
     service: ConversationApplicationService = Depends(get_conversation_application_service)
 ):
-    """
-    Create new conversation with initial message
-    
-    This is a THIN CONTROLLER - all logic is in the application service
-    """
+    """Create new conversation with initial message"""
     result = await service.create_conversation(
-        customer_email=request.customer_id,  # Using email as customer_id
+        customer_email=request.customer_id,
         message=request.message
     )
     
@@ -99,7 +91,8 @@ async def escalate_conversation(
     return {"status": "escalated", "conversation_id": str(conversation_id)}
 
 
-@router.get("", response_model=list[ConversationResponse])
+# FIXED: Return dict directly instead of ConversationResponse
+@router.get("")
 async def list_conversations(
     customer_email: Optional[str] = Query(None, description="Filter by customer email"),
     status: Optional[str] = Query(None, description="Filter by status"),
@@ -116,5 +109,5 @@ async def list_conversations(
     if result.is_failure:
         raise map_error_to_http(result.error)
     
-    # Convert to response models
-    return [ConversationResponse(**conv) for conv in result.value]
+    # Return the list directly (it's already formatted as dicts)
+    return result.value
