@@ -1,7 +1,8 @@
 """
-FastAPI dependencies for database access
-Provides repository instances and Unit of Work to API endpoints
+FastAPI dependencies for database access and services
+Provides repository instances, Unit of Work, and Application Services to API endpoints
 """
+
 from typing import AsyncGenerator, Optional
 from fastapi import Depends, Header
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,6 +16,17 @@ from database.repositories import (
     CustomerRepository,
     AgentPerformanceRepository
 )
+
+# NEW: Import application services
+from services.application.conversation_service import ConversationApplicationService
+from services.application.customer_service import CustomerApplicationService
+
+# NEW: Import domain and infrastructure services
+from services.domain.conversation.domain_service import ConversationDomainService
+from services.domain.customer.domain_service import CustomerDomainService
+from services.infrastructure.customer_service import CustomerInfrastructureService
+from services.infrastructure.analytics_service import AnalyticsService
+from workflow.engine import AgentWorkflowEngine
 
 
 # ===== CURRENT USER EXTRACTION =====
@@ -67,6 +79,74 @@ async def get_uow(
         yield uow
 
 
+# ===== APPLICATION SERVICE DEPENDENCIES (NEW) =====
+
+async def get_conversation_application_service(
+    uow: UnitOfWork = Depends(get_uow)
+) -> ConversationApplicationService:
+    """
+    Get conversation application service with all dependencies
+    
+    This is where dependency injection happens for the orchestration layer.
+    
+    Returns:
+        ConversationApplicationService ready to use
+    """
+    # Create domain service (pure, no dependencies)
+    domain_service = ConversationDomainService()
+    
+    # Create infrastructure services
+    customer_service = CustomerInfrastructureService(uow)
+    analytics_service = AnalyticsService(uow)
+    
+    # Create workflow engine
+    workflow_engine = AgentWorkflowEngine()
+    
+    # Create and return application service
+    return ConversationApplicationService(
+        uow=uow,
+        domain_service=domain_service,
+        customer_service=customer_service,
+        workflow_engine=workflow_engine,
+        analytics_service=analytics_service
+    )
+
+
+async def get_customer_application_service(
+    uow: UnitOfWork = Depends(get_uow)
+) -> CustomerApplicationService:
+    """
+    Get customer application service with all dependencies
+    
+    Returns:
+        CustomerApplicationService ready to use
+    """
+    # Create domain service (pure, no dependencies)
+    domain_service = CustomerDomainService()
+    
+    # Create infrastructure service
+    infrastructure_service = CustomerInfrastructureService(uow)
+    
+    # Create and return application service
+    return CustomerApplicationService(
+        uow=uow,
+        domain_service=domain_service,
+        infrastructure_service=infrastructure_service
+    )
+
+
+async def get_analytics_service(
+    uow: UnitOfWork = Depends(get_uow)
+) -> AnalyticsService:
+    """
+    Get analytics service
+    
+    Returns:
+        AnalyticsService ready to use
+    """
+    return AnalyticsService(uow)
+
+
 # ===== LEGACY DEPENDENCIES (Backward Compatibility) =====
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
@@ -74,14 +154,6 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     Dependency to get database session (legacy)
     
     DEPRECATED: Use get_uow instead for better transaction management
-    
-    Usage:
-        @app.get("/endpoint")
-        async def endpoint(session: AsyncSession = Depends(get_db)):
-            # Use session
-    
-    Yields:
-        Async database session
     """
     async with get_db_session() as session:
         yield session
@@ -90,69 +162,26 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 async def get_customer_repo(
     session: AsyncSession = Depends(get_db)
 ) -> CustomerRepository:
-    """
-    Dependency to get customer repository (legacy)
-    
-    DEPRECATED: Use get_uow().customers instead
-    """
+    """DEPRECATED: Use get_uow().customers instead"""
     return CustomerRepository(session)
 
 
 async def get_conversation_repo(
     session: AsyncSession = Depends(get_db)
 ) -> ConversationRepository:
-    """
-    Dependency to get conversation repository (legacy)
-    
-    DEPRECATED: Use get_uow().conversations instead
-    """
+    """DEPRECATED: Use get_uow().conversations instead"""
     return ConversationRepository(session)
 
 
 async def get_message_repo(
     session: AsyncSession = Depends(get_db)
 ) -> MessageRepository:
-    """
-    Dependency to get message repository (legacy)
-    
-    DEPRECATED: Use get_uow().messages instead
-    """
+    """DEPRECATED: Use get_uow().messages instead"""
     return MessageRepository(session)
 
 
 async def get_agent_performance_repo(
     session: AsyncSession = Depends(get_db)
 ) -> AgentPerformanceRepository:
-    """
-    Dependency to get agent performance repository (legacy)
-    
-    DEPRECATED: Use get_uow().agent_performance instead
-    """
+    """DEPRECATED: Use get_uow().agent_performance instead"""
     return AgentPerformanceRepository(session)
-
-
-# ===== COMPOSITE DEPENDENCY (Legacy) =====
-
-class DatabaseRepositories:
-    """
-    Container for all repositories (legacy)
-    
-    DEPRECATED: Use UnitOfWork instead
-    """
-    
-    def __init__(self, session: AsyncSession):
-        self.customer = CustomerRepository(session)
-        self.conversation = ConversationRepository(session)
-        self.message = MessageRepository(session)
-        self.agent_performance = AgentPerformanceRepository(session)
-
-
-async def get_all_repos(
-    session: AsyncSession = Depends(get_db)
-) -> DatabaseRepositories:
-    """
-    Dependency to get all repositories at once (legacy)
-    
-    DEPRECATED: Use get_uow instead
-    """
-    return DatabaseRepositories(session)
