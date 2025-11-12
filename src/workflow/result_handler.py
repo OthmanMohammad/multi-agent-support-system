@@ -6,12 +6,10 @@ consumption by application services. Ensures results are complete
 and valid before returning to callers.
 """
 from typing import Dict, Any, List, Optional
-import logging
 
 from workflow.state import AgentState
 from workflow.exceptions import InvalidStateError
-
-logger = logging.getLogger(__name__)
+from utils.logging.setup import get_logger
 
 
 class AgentResultHandler:
@@ -33,7 +31,8 @@ class AgentResultHandler:
     
     def __init__(self):
         """Initialize result handler"""
-        logger.debug("ResultHandler initialized")
+        self.logger = get_logger(__name__)
+        self.logger.debug("result_handler_initialized")
     
     def parse_result(self, state: AgentState) -> Dict[str, Any]:
         """
@@ -59,7 +58,7 @@ class AgentResultHandler:
                 - metadata: Additional metadata
                 - raw_state: Sanitized state (for debugging)
         """
-        logger.debug("Parsing result from final state")
+        self.logger.debug("parsing_result_from_final_state")
         
         # Extract core response data
         result = {
@@ -98,10 +97,11 @@ class AgentResultHandler:
             "raw_state": self._sanitize_state(state)
         }
         
-        logger.debug(
-            f"Result parsed: intent={result['primary_intent']}, "
-            f"confidence={result['intent_confidence']:.2f}, "
-            f"status={result['status']}"
+        self.logger.debug(
+            "result_parsed",
+            intent=result['primary_intent'],
+            confidence=round(result['intent_confidence'], 2),
+            status=result['status']
         )
         
         return result
@@ -143,7 +143,7 @@ class AgentResultHandler:
         Raises:
             InvalidStateError: If result is invalid or incomplete
         """
-        logger.debug("Validating result")
+        self.logger.debug("validating_result")
         
         # Check required fields exist
         required_fields = [
@@ -162,7 +162,7 @@ class AgentResultHandler:
         
         # Validate response not empty (warning only)
         if not result.get("agent_response") or not result["agent_response"].strip():
-            logger.warning("Agent response is empty - this may indicate a problem")
+            self.logger.warning("agent_response_empty", message="This may indicate a problem")
         
         # Validate confidence range
         confidence = result.get("intent_confidence", 0.0)
@@ -206,9 +206,12 @@ class AgentResultHandler:
         
         # Validate agent history not empty (should have at least router)
         if not result.get("agent_history"):
-            logger.warning("agent_history is empty - workflow may not have executed properly")
+            self.logger.warning(
+                "agent_history_empty",
+                message="Workflow may not have executed properly"
+            )
         
-        logger.debug("Result validation passed")
+        self.logger.debug("result_validation_passed")
     
     def get_kb_articles(self, state: AgentState) -> List[Dict]:
         """

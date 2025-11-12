@@ -6,12 +6,10 @@ Ensures state integrity throughout the workflow execution.
 """
 from typing import Dict, Any, Optional, List
 from copy import deepcopy
-import logging
 
 from workflow.state import AgentState, create_initial_state
 from workflow.exceptions import InvalidStateError
-
-logger = logging.getLogger(__name__)
+from utils.logging.setup import get_logger
 
 
 class WorkflowStateManager:
@@ -38,10 +36,11 @@ class WorkflowStateManager:
         Args:
             enable_history: Track state snapshots for debugging
         """
+        self.logger = get_logger(__name__)
         self.enable_history = enable_history
         self.state_history: List[Dict[str, Any]] = []
         
-        logger.debug(f"StateManager initialized (history={enable_history})")
+        self.logger.debug("state_manager_initialized", history_enabled=enable_history)
     
     def create_initial_state(
         self,
@@ -62,7 +61,10 @@ class WorkflowStateManager:
         Returns:
             Initial AgentState
         """
-        logger.debug(f"Creating initial state for message: '{message[:50]}...'")
+        self.logger.debug(
+            "creating_initial_state",
+            message_preview=message[:50]
+        )
         
         # Extract context parameters
         conversation_id = context.get("conversation_id") if context else None
@@ -80,14 +82,21 @@ class WorkflowStateManager:
         try:
             self.validate_state(state)
         except InvalidStateError as e:
-            logger.error(f"Initial state validation failed: {e}")
+            self.logger.error(
+                "initial_state_validation_failed",
+                error=str(e),
+                exc_info=True
+            )
             raise
         
         # Track history if enabled
         if self.enable_history:
             self._track_state(state, "initial")
         
-        logger.debug(f"Initial state created: conversation_id={state['conversation_id']}")
+        self.logger.debug(
+            "initial_state_created",
+            conversation_id=state['conversation_id']
+        )
         
         return state
     
@@ -109,20 +118,24 @@ class WorkflowStateManager:
         Raises:
             InvalidStateError: If updates create invalid state
         """
-        logger.debug(f"Updating state with {len(updates)} fields")
+        self.logger.debug("updating_state", field_count=len(updates))
         
         # Apply updates
         for key, value in updates.items():
             if key in state or key in AgentState.__annotations__:
                 state[key] = value
             else:
-                logger.warning(f"Unknown state field: {key}")
+                self.logger.warning("unknown_state_field", field=key)
         
         # Validate updated state
         try:
             self.validate_state(state)
         except InvalidStateError as e:
-            logger.error(f"State validation failed after update: {e}")
+            self.logger.error(
+                "state_validation_failed_after_update",
+                error=str(e),
+                exc_info=True
+            )
             raise
         
         # Track history if enabled
