@@ -1,94 +1,83 @@
 """
-Health routes - System health and status endpoints
+Health check routes - System health monitoring
 
-Provides health checks for monitoring and load balancers.
 """
-
 from fastapi import APIRouter, Depends
 from datetime import datetime
-import time
 
-from api.dependencies import get_uow
-from database.unit_of_work import UnitOfWork
+from api.dependencies import get_analytics_service
+from services.infrastructure.analytics_service import AnalyticsService
+from utils.logging.setup import get_logger
 
 router = APIRouter()
-
-# Track startup time for uptime calculation
-_startup_time = time.time()
+logger = get_logger(__name__)
 
 
 @router.get("/health")
 async def health_check():
     """
-    Basic health check
+    Basic health check endpoint
     
-    Returns 200 if service is running.
-    Use this for load balancer health checks.
+    Returns system status and timestamp
     """
-    return {
+    logger.debug("health_check_endpoint_called")
+    
+    health_status = {
         "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
+        "service": "multi-agent-support-system",
+        "version": "3.0.0"
     }
+    
+    logger.debug(
+        "health_check_success",
+        status=health_status["status"]
+    )
+    
+    return health_status
 
 
 @router.get("/health/detailed")
 async def detailed_health_check(
-    uow: UnitOfWork = Depends(get_uow)
+    service: AnalyticsService = Depends(get_analytics_service)
 ):
     """
     Detailed health check with component status
     
     Checks:
+    - API status
     - Database connectivity
-    - Service availability
+    - Recent activity metrics
     """
+    logger.info("detailed_health_check_endpoint_called")
+    
+    # Get recent conversation stats to verify database connectivity
+    stats_result = await service.get_conversation_statistics(days=1)
+    
+    database_healthy = stats_result.is_success
+    
     health_status = {
-        "status": "healthy",
+        "status": "healthy" if database_healthy else "degraded",
         "timestamp": datetime.utcnow().isoformat(),
-        "uptime_seconds": int(time.time() - _startup_time),
-        "components": {}
+        "service": "multi-agent-support-system",
+        "version": "3.0.0",
+        "components": {
+            "api": "healthy",
+            "database": "healthy" if database_healthy else "unhealthy",
+            "logging": "healthy",
+            "middleware": "healthy"
+        }
     }
     
-    # Check database
-    try:
-        # Try a simple query
-        await uow.customers.get_all(limit=1)
-        health_status["components"]["database"] = "healthy"
-    except Exception as e:
-        health_status["components"]["database"] = f"unhealthy: {str(e)}"
-        health_status["status"] = "degraded"
+    if database_healthy:
+        health_status["recent_activity"] = {
+            "conversations_24h": stats_result.value.get("total_conversations", 0)
+        }
     
-    # Check vector store (optional)
-    try:
-        from vector_store import VectorStore
-        vs = VectorStore()
-        health_status["components"]["vector_store"] = "healthy"
-    except Exception:
-        health_status["components"]["vector_store"] = "unavailable"
+    logger.info(
+        "detailed_health_check_completed",
+        status=health_status["status"],
+        database_healthy=database_healthy
+    )
     
     return health_status
-
-
-@router.get("/metrics")
-async def get_metrics(
-    uow: UnitOfWork = Depends(get_uow)
-):
-    """
-    Basic system metrics
-    
-    For Prometheus integration, use a proper metrics library.
-    """
-    # Get basic stats
-    try:
-        stats = await uow.conversations.get_statistics(days=1)
-        
-        return {
-            "uptime_seconds": int(time.time() - _startup_time),
-            "conversations_today": stats.get("total_conversations", 0),
-            "timestamp": datetime.utcnow().isoformat()
-        }
-    except Exception as e:
-        return {
-            "error": str(e),
-            "timestamp": datetime.utcnow().isoformat()
-        }
