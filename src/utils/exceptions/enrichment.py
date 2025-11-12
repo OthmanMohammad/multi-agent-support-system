@@ -101,78 +101,133 @@ def get_exception_context(exc: Exception) -> Dict[str, Any]:
             await operation()
         except Exception as e:
             context = get_exception_context(e)
+            # context = {"correlation_id": "...", "customer_id": "..."}
             logger.error("operation_failed", **context)
     """
     context = {}
     
-    # Extract context attributes if present
-    if hasattr(exc, 'correlation_id'):
-        context['correlation_id'] = exc.correlation_id
+    # Extract enriched attributes
+    if hasattr(exc, "correlation_id"):
+        context["correlation_id"] = exc.correlation_id
     
-    if hasattr(exc, 'conversation_id'):
-        context['conversation_id'] = exc.conversation_id
+    if hasattr(exc, "conversation_id"):
+        context["conversation_id"] = exc.conversation_id
     
-    if hasattr(exc, 'customer_id'):
-        context['customer_id'] = exc.customer_id
+    if hasattr(exc, "customer_id"):
+        context["customer_id"] = exc.customer_id
     
-    if hasattr(exc, 'agent_name'):
-        context['agent_name'] = exc.agent_name
+    if hasattr(exc, "agent_name"):
+        context["agent_name"] = exc.agent_name
     
-    # Add exception type and message
-    context['error_type'] = type(exc).__name__
-    context['error_message'] = str(exc)
+    # Add exception details
+    context["error_type"] = type(exc).__name__
+    context["error_message"] = str(exc)
     
-    # Track if enriched
-    context['is_enriched'] = getattr(exc, '_enriched', False)
+    # Check if enriched
+    context["was_enriched"] = getattr(exc, "_enriched", False)
     
     return context
 
 
 def is_enriched(exc: Exception) -> bool:
     """
-    Check if exception has been enriched with context
+    Check if exception has been enriched
     
     Args:
         exc: Exception to check
     
     Returns:
-        True if exception has been enriched
+        True if exception has been enriched with context
     """
-    return getattr(exc, '_enriched', False)
+    return getattr(exc, "_enriched", False)
 
 
-def enrich_and_log(exc: Exception, message: str = "exception_occurred") -> Exception:
+class EnrichedExceptionMixin:
     """
-    Enrich exception and log it in one step
+    Mixin for custom exceptions to support enrichment
     
-    Convenience function that enriches the exception with context
-    and logs it with structured logging.
+    Use this mixin if you want to create custom exception classes
+    that explicitly support enrichment and provide helper methods.
     
-    Args:
-        exc: Exception to enrich and log
-        message: Log message (event name)
-    
-    Returns:
-        Enriched exception
+    This is OPTIONAL - enrich_exception() works with any exception.
+    This mixin just provides convenience methods.
     
     Example:
+        class CustomError(EnrichedExceptionMixin, Exception):
+            '''Custom error with enrichment support'''
+            pass
+        
         try:
-            await risky_operation()
-        except ValueError as e:
-            enriched = enrich_and_log(e, "risky_operation_failed")
-            raise enriched
+            raise CustomError("Something went wrong")
+        except CustomError as e:
+            e.enrich()  # Uses mixin method
+            logger.error("error", **e.get_context())
     """
-    # Enrich exception
-    enriched = enrich_exception(exc)
     
-    # Extract context
-    context = get_exception_context(enriched)
+    def enrich(self) -> "EnrichedExceptionMixin":
+        """
+        Enrich this exception with current context
+        
+        Returns:
+            Self (for chaining)
+        """
+        enrich_exception(self)
+        return self
     
-    # Log with context
-    logger.error(
-        message,
-        **context,
-        exc_info=True
-    )
+    def get_context(self) -> Dict[str, Any]:
+        """
+        Get context from this exception
+        
+        Returns:
+            Dictionary of context attributes
+        """
+        return get_exception_context(self)
     
-    return enriched
+    def is_enriched(self) -> bool:
+        """
+        Check if this exception is enriched
+        
+        Returns:
+            True if enriched
+        """
+        return is_enriched(self)
+    
+    @property
+    def correlation_id(self) -> Optional[str]:
+        """Get correlation ID if available"""
+        return getattr(self, "_correlation_id", None)
+    
+    @correlation_id.setter
+    def correlation_id(self, value: str):
+        """Set correlation ID"""
+        self._correlation_id = value
+    
+    @property
+    def conversation_id(self) -> Optional[str]:
+        """Get conversation ID if available"""
+        return getattr(self, "_conversation_id", None)
+    
+    @conversation_id.setter
+    def conversation_id(self, value: str):
+        """Set conversation ID"""
+        self._conversation_id = value
+    
+    @property
+    def customer_id(self) -> Optional[str]:
+        """Get customer ID if available"""
+        return getattr(self, "_customer_id", None)
+    
+    @customer_id.setter
+    def customer_id(self, value: str):
+        """Set customer ID"""
+        self._customer_id = value
+    
+    @property
+    def agent_name(self) -> Optional[str]:
+        """Get agent name if available"""
+        return getattr(self, "_agent_name", None)
+    
+    @agent_name.setter
+    def agent_name(self, value: str):
+        """Set agent name"""
+        self._agent_name = value
