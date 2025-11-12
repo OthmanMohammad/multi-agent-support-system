@@ -1,5 +1,11 @@
 """
 FastAPI Application - REST API for multi-agent support system
+
+Configured with:
+- Structured logging with structlog
+- Sentry error monitoring
+- Enhanced exception handling
+- Request/response logging middleware
 """
 
 from fastapi import FastAPI
@@ -9,10 +15,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.routes import conversations, customers, health, analytics
 from api.error_handlers import setup_error_handlers
 
+# Import middleware (Phase 5)
+from api.middleware import CorrelationMiddleware, LoggingMiddleware
+
 # Import initialization functions
-from utils.logging.setup import setup_logging
+from utils.logging.setup import setup_logging, get_logger
 from utils.monitoring.sentry_config import init_sentry
 from database.connection import init_db, close_db
+
+
+# Initialize logger for this module
+logger = get_logger(__name__)
 
 
 # Create FastAPI application
@@ -24,6 +37,12 @@ app = FastAPI(
     redoc_url="/api/redoc",
 )
 
+
+# Add correlation ID middleware (MUST be first to set context)
+app.add_middleware(CorrelationMiddleware)
+
+# Add logging middleware (MUST be after correlation middleware)
+app.add_middleware(LoggingMiddleware, log_body=False)
 
 # Configure CORS
 app.add_middleware(
@@ -52,28 +71,36 @@ async def startup_event():
     Initialize services on application startup
     
     Initialization order is critical:
-    1. Logging (Phase 1) - Must be first so other services can log
-    2. Sentry (Phase 2) - Captures errors during startup
+    1. Logging - Must be first so other services can log
+    2. Sentry - Captures errors during startup
     3. Database - Required for API operations
     """
-    print("🚀 Starting Multi-Agent Support System v3.0...")
+    logger.info(
+        "application_startup_initiated",
+        version="3.0.0",
+        phase="startup"
+    )
     
-    # Phase 1: Initialize structured logging
-    print("📝 Initializing structured logging...")
+    # Initialize structured logging
+    logger.info("logging_initialization_started")
     setup_logging()
-    print("✓ Logging initialized")
+    logger.info("logging_initialized")
     
-    # Phase 2: Initialize Sentry error tracking
-    print("📊 Initializing Sentry monitoring...")
+    # Initialize Sentry error tracking
+    logger.info("sentry_initialization_started")
     init_sentry()
-    print("✓ Sentry monitoring ready")
+    logger.info("sentry_initialized")
     
     # Initialize database
-    print("💾 Initializing database connection...")
+    logger.info("database_initialization_started")
     await init_db()
-    print("✓ Database connected")
+    logger.info("database_initialized")
     
-    print("✅ API ready to accept requests!")
+    logger.info(
+        "application_startup_completed",
+        status="ready",
+        message="Multi-Agent Support System v3.0 ready to accept requests"
+    )
 
 
 @app.on_event("shutdown")
@@ -81,14 +108,17 @@ async def shutdown_event():
     """
     Cleanup on application shutdown
     """
-    print("👋 Shutting down Multi-Agent Support System...")
+    logger.info("application_shutdown_initiated")
     
     # Close database connections
-    print("💾 Closing database connections...")
+    logger.info("database_shutdown_started")
     await close_db()
-    print("✓ Database connections closed")
+    logger.info("database_connections_closed")
     
-    print("✅ Shutdown complete")
+    logger.info(
+        "application_shutdown_completed",
+        message="Shutdown complete"
+    )
 
 
 @app.get("/")
@@ -99,6 +129,8 @@ async def root():
     Returns:
         API information and status
     """
+    logger.debug("root_endpoint_accessed")
+    
     return {
         "name": "Multi-Agent Support System",
         "version": "3.0.0",
@@ -116,6 +148,8 @@ async def api_root():
     Returns:
         Available API endpoints
     """
+    logger.debug("api_root_endpoint_accessed")
+    
     return {
         "message": "Multi-Agent Support System API v3.0",
         "endpoints": {

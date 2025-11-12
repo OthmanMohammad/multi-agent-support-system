@@ -13,13 +13,12 @@ from typing import AsyncGenerator, Optional
 from sqlalchemy import text, event
 from sqlalchemy.pool import Pool
 import os
-import logging
 
 from dotenv import load_dotenv
+from utils.logging.setup import get_logger
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Initialize logger
+logger = get_logger(__name__)
 
 load_dotenv()
 
@@ -70,11 +69,11 @@ def create_engine() -> AsyncEngine:
     # Log connection pool events (useful for debugging)
     @event.listens_for(engine.sync_engine, "connect")
     def receive_connect(dbapi_conn, connection_record):
-        logger.debug("Database connection established")
+        logger.debug("database_connection_established")
     
     @event.listens_for(engine.sync_engine, "checkout")
     def receive_checkout(dbapi_conn, connection_record, connection_proxy):
-        logger.debug("Connection checked out from pool")
+        logger.debug("connection_checked_out_from_pool")
     
     return engine
 
@@ -90,9 +89,9 @@ def get_engine() -> AsyncEngine:
     if _engine is None:
         _engine = create_engine()
         logger.info(
-            f"Database engine created: "
-            f"pool_size={DB_POOL_SIZE}, "
-            f"max_overflow={DB_MAX_OVERFLOW}"
+            "database_engine_created",
+            pool_size=DB_POOL_SIZE,
+            max_overflow=DB_MAX_OVERFLOW
         )
     return _engine
 
@@ -138,7 +137,12 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
             await session.commit()
         except Exception as e:
             await session.rollback()
-            logger.error(f"Database session error: {e}")
+            logger.error(
+                "database_session_error",
+                error=str(e),
+                error_type=type(e).__name__,
+                exc_info=True
+            )
             raise
         finally:
             await session.close()
@@ -151,12 +155,13 @@ async def init_db():
     """
     from database.models import Base
     
+    logger.info("database_initialization_started")
     engine = get_engine()
     
     async with engine.begin() as conn:
         # Create all tables
         await conn.run_sync(Base.metadata.create_all)
-        logger.info("Database tables created/verified")
+        logger.info("database_tables_created")
 
 
 async def close_db():
@@ -166,8 +171,9 @@ async def close_db():
     """
     global _engine
     if _engine is not None:
+        logger.info("database_connections_closing")
         await _engine.dispose()
-        logger.info("Database connections closed")
+        logger.info("database_connections_closed")
         _engine = None
 
 
@@ -196,13 +202,24 @@ async def check_db_health() -> dict:
                 "total": pool.size() + pool.overflow()
             }
             
+            logger.debug(
+                "database_health_check_passed",
+                pool_size=pool_status["size"],
+                checked_out=pool_status["checked_out"]
+            )
+            
             return {
                 "status": "healthy",
                 "database": "postgresql",
                 "pool": pool_status
             }
     except Exception as e:
-        logger.error(f"Database health check failed: {e}")
+        logger.error(
+            "database_health_check_failed",
+            error=str(e),
+            error_type=type(e).__name__,
+            exc_info=True
+        )
         return {
             "status": "unhealthy",
             "error": str(e)
@@ -220,9 +237,14 @@ async def get_db_version() -> str:
         async with get_db_session() as session:
             result = await session.execute(text("SELECT version()"))
             version = result.scalar()
+            logger.debug("database_version_retrieved", version_info=version[:50])
             return version
     except Exception as e:
-        logger.error(f"Failed to get database version: {e}")
+        logger.error(
+            "database_version_retrieval_failed",
+            error=str(e),
+            error_type=type(e).__name__
+        )
         return "unknown"
 
 

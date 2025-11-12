@@ -1,5 +1,6 @@
 """
 Escalation Agent - Hands off to human agents
+
 """
 import sys
 from pathlib import Path
@@ -9,6 +10,7 @@ if str(project_root) not in sys.path:
 
 from workflow.state import AgentState
 from agents.base import BaseAgent
+from utils.logging.setup import get_logger
 
 
 class EscalationAgent(BaseAgent):
@@ -20,6 +22,7 @@ class EscalationAgent(BaseAgent):
     - Complex issues beyond AI capability
     - Angry customers (negative sentiment)
     - Unclear intents
+    
     """
     
     def __init__(self):
@@ -28,21 +31,29 @@ class EscalationAgent(BaseAgent):
             model="claude-3-haiku-20240307",
             temperature=0.3
         )
+        self.logger = get_logger(__name__)
     
     def process(self, state: AgentState) -> AgentState:
         """Process escalation"""
-        print(f"\n{'='*60}")
-        print(f"🚨 ESCALATION AGENT PROCESSING")
-        print(f"{'='*60}")
+        message = state["current_message"]
+        reason = state.get("escalation_reason", "Low confidence")
+        
+        self.logger.warning(
+            "escalation_agent_processing_started",
+            reason=reason,
+            message_preview=message[:100]
+        )
         
         state = self.add_to_history(state)
         state["turn_count"] = state.get("turn_count", 0) + 1
         
-        message = state["current_message"]
-        reason = state.get("escalation_reason", "Low confidence")
-        
-        print(f"Message: {message[:100]}...")
-        print(f"Reason: {reason}")
+        self.logger.info(
+            "escalation_details",
+            turn_count=state["turn_count"],
+            reason=reason,
+            sentiment=state.get("sentiment", 0.0),
+            confidence=state.get("intent_confidence", 0.0)
+        )
         
         # Generate handoff message
         response = self.generate_handoff_message(message, reason, state)
@@ -52,12 +63,22 @@ class EscalationAgent(BaseAgent):
         state["next_agent"] = None
         state["status"] = "escalated"
         
-        print(f"✓ Escalated to human")
+        self.logger.warning(
+            "conversation_escalated_to_human",
+            reason=reason,
+            status="escalated",
+            response_length=len(response)
+        )
         
         return state
     
     def generate_handoff_message(self, message: str, reason: str, state: AgentState) -> str:
         """Generate friendly escalation message"""
+        self.logger.debug(
+            "escalation_handoff_message_generation_started",
+            reason=reason
+        )
+        
         system_prompt = """You are creating a handoff message to a human agent.
 
 Be:
@@ -74,7 +95,14 @@ Escalation reason: {reason}
 
 Create a friendly handoff message."""
 
-        return self.call_llm(system_prompt, user_prompt, max_tokens=200)
+        response = self.call_llm(system_prompt, user_prompt, max_tokens=200)
+        
+        self.logger.debug(
+            "escalation_handoff_message_generated",
+            response_length=len(response)
+        )
+        
+        return response
 
 
 if __name__ == "__main__":

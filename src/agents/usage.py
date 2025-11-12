@@ -1,5 +1,6 @@
 """
 Usage Agent - Teaches users how to use features
+
 """
 import sys
 from pathlib import Path
@@ -10,6 +11,7 @@ if str(project_root) not in sys.path:
 from workflow.state import AgentState
 from agents.base import BaseAgent
 from knowledge_base import search_articles
+from utils.logging.setup import get_logger
 
 
 class UsageAgent(BaseAgent):
@@ -22,6 +24,7 @@ class UsageAgent(BaseAgent):
     - How to export data
     - Keyboard shortcuts
     - Best practices
+    
     """
     
     def __init__(self):
@@ -30,12 +33,11 @@ class UsageAgent(BaseAgent):
             model="claude-3-haiku-20240307",
             temperature=0.4
         )
+        self.logger = get_logger(__name__)
     
     def process(self, state: AgentState) -> AgentState:
         """Process feature usage questions"""
-        print(f"\n{'='*60}")
-        print(f"📖 USAGE AGENT PROCESSING")
-        print(f"{'='*60}")
+        self.logger.info("usage_agent_processing_started")
         
         state = self.add_to_history(state)
         state["turn_count"] = state.get("turn_count", 0) + 1
@@ -43,15 +45,28 @@ class UsageAgent(BaseAgent):
         message = state["current_message"]
         intent = state.get("primary_intent", "feature_create")
         
-        print(f"Message: {message[:100]}...")
-        print(f"Intent: {intent}")
+        self.logger.debug(
+            "usage_processing_message",
+            message_preview=message[:100],
+            intent=intent,
+            turn_count=state["turn_count"]
+        )
         
         # Search usage KB articles
         kb_results = search_articles(message, category="usage", limit=3)
         state["kb_results"] = kb_results
         
         if kb_results:
-            print(f"✓ Found {len(kb_results)} usage articles")
+            self.logger.info(
+                "usage_kb_articles_found",
+                count=len(kb_results),
+                top_score=kb_results[0].get("similarity_score", 0) if kb_results else 0
+            )
+        else:
+            self.logger.warning(
+                "usage_no_kb_articles_found",
+                intent=intent
+            )
         
         # Generate tutorial-style response
         response = self.generate_response(message, intent, kb_results)
@@ -61,12 +76,22 @@ class UsageAgent(BaseAgent):
         state["next_agent"] = None
         state["status"] = "resolved"
         
-        print(f"✓ Response generated")
+        self.logger.info(
+            "usage_response_generated",
+            response_length=len(response),
+            status="resolved"
+        )
         
         return state
     
     def generate_response(self, message: str, intent: str, kb_results: list) -> str:
         """Generate step-by-step tutorial response"""
+        self.logger.debug(
+            "usage_response_generation_started",
+            intent=intent,
+            kb_articles_count=len(kb_results)
+        )
+        
         kb_context = ""
         if kb_results:
             kb_context = "\n\nRelevant how-to articles:\n"
@@ -91,7 +116,14 @@ Intent: {intent}
 
 Provide a helpful how-to guide."""
 
-        return self.call_llm(system_prompt, user_prompt, max_tokens=500)
+        response = self.call_llm(system_prompt, user_prompt, max_tokens=500)
+        
+        self.logger.debug(
+            "usage_llm_response_received",
+            response_length=len(response)
+        )
+        
+        return response
 
 
 if __name__ == "__main__":

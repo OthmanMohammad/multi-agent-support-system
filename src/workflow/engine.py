@@ -14,11 +14,10 @@ This engine is called by application services which handle:
 - Transaction management
 - Database persistence
 - Business logic orchestration
+
 """
 import asyncio
 from typing import Dict, Any, Optional
-import logging
-from datetime import datetime
 
 from workflow.graph import SupportGraph
 from workflow.state import AgentState, create_initial_state
@@ -30,8 +29,7 @@ from workflow.exceptions import (
     RoutingError,
     InvalidStateError
 )
-
-logger = logging.getLogger(__name__)
+from utils.logging.setup import get_logger
 
 
 class AgentWorkflowEngine:
@@ -53,7 +51,7 @@ class AgentWorkflowEngine:
     - No instance state between calls
     - No database access
     - Pure AI coordination
-    
+        
     Example usage:
         engine = AgentWorkflowEngine(timeout=30, max_retries=2)
         result = await engine.execute(
@@ -86,9 +84,13 @@ class AgentWorkflowEngine:
         self.result_handler = AgentResultHandler()
         self.state_manager = WorkflowStateManager()
         
-        logger.info(
-            f"AgentWorkflowEngine initialized "
-            f"(timeout={timeout}s, retries={max_retries})"
+        # Phase 5: Structured logger
+        self.logger = get_logger(__name__)
+        
+        self.logger.info(
+            "workflow_engine_initialized",
+            timeout_seconds=timeout,
+            max_retries=max_retries
         )
     
     async def execute(
@@ -117,25 +119,7 @@ class AgentWorkflowEngine:
                 - conversation_history: Previous messages
                 
         Returns:
-            Dict with:
-                - agent_response: str - Agent's response text
-                - agent_history: List[str] - Agents involved in order
-                - current_agent: str - Last agent that processed
-                - primary_intent: str - Classified intent
-                - intent_confidence: float - Confidence (0-1)
-                - sentiment: float - Sentiment (-1 to 1)
-                - kb_results: List[Dict] - KB articles used
-                - kb_articles_used: List[str] - KB article titles
-                - status: str - Conversation status (active/resolved/escalated)
-                - should_escalate: bool - Escalation needed
-                - escalation_reason: str - Why escalate (if applicable)
-                - response_confidence: float - Response confidence (0-1)
-                - turn_count: int - Number of turns
-                - tools_used: List[str] - Tools called
-                - entities: Dict - Extracted entities
-                - conversation_id: str - Conversation ID
-                - customer_id: str - Customer ID
-                - raw_state: Dict - Sanitized state for debugging
+            Dict with agent response, intent, confidence, etc.
                 
         Raises:
             AgentTimeoutError: If workflow exceeds timeout after all retries
@@ -152,8 +136,12 @@ class AgentWorkflowEngine:
             )
             print(result["agent_response"])
         """
-        if self.enable_logging:
-            logger.info(f"Executing workflow for message: '{message[:50]}...'")
+        self.logger.info(
+            "workflow_execution_started",
+            message_preview=message[:50],
+            has_context=context is not None,
+            context_keys=list(context.keys()) if context else []
+        )
         
         # Create initial state
         try:
@@ -162,14 +150,22 @@ class AgentWorkflowEngine:
                 context=context or {}
             )
         except InvalidStateError as e:
-            logger.error(f"Failed to create initial state: {e}")
+            self.logger.error(
+                "workflow_state_creation_failed",
+                error=str(e),
+                exc_info=True
+            )
             raise
         
         # Execute with retry logic
         for attempt in range(self.max_retries + 1):
             try:
-                if self.enable_logging and attempt > 0:
-                    logger.info(f"Retry attempt {attempt}/{self.max_retries}")
+                if attempt > 0:
+                    self.logger.info(
+                        "workflow_retry_attempt",
+                        attempt=attempt,
+                        max_retries=self.max_retries
+                    )
                 
                 # Run workflow with timeout
                 final_state = await self._execute_with_timeout(
@@ -181,27 +177,34 @@ class AgentWorkflowEngine:
                 result = self.result_handler.parse_result(final_state)
                 self.result_handler.validate_result(result)
                 
-                if self.enable_logging:
-                    logger.info(
-                        f"Workflow completed successfully "
-                        f"(attempt={attempt + 1}, "
-                        f"intent={result['primary_intent']}, "
-                        f"confidence={result['intent_confidence']:.2f}, "
-                        f"agents={result['agent_history']})"
-                    )
+                self.logger.info(
+                    "workflow_execution_completed",
+                    attempt=attempt + 1,
+                    intent=result['primary_intent'],
+                    confidence=round(result['intent_confidence'], 2),
+                    agents=result['agent_history'],
+                    status=result['status']
+                )
                 
                 return result
                 
             except asyncio.TimeoutError:
                 if attempt < self.max_retries:
-                    logger.warning(
-                        f"Workflow timeout on attempt {attempt + 1}/{self.max_retries + 1}, retrying..."
+                    self.logger.warning(
+                        "workflow_timeout_retrying",
+                        attempt=attempt + 1,
+                        max_attempts=self.max_retries + 1,
+                        timeout_seconds=self.timeout
                     )
                     # Wait a bit before retrying
                     await asyncio.sleep(1)
                     continue
                 else:
-                    logger.error(f"Workflow timeout after all {self.max_retries + 1} attempts")
+                    self.logger.error(
+                        "workflow_timeout_exhausted",
+                        total_attempts=self.max_retries + 1,
+                        timeout_seconds=self.timeout
+                    )
                     raise AgentTimeoutError(
                         f"Workflow exceeded timeout of {self.timeout}s "
                         f"after {self.max_retries + 1} attempts",
@@ -210,19 +213,32 @@ class AgentWorkflowEngine:
             
             except InvalidStateError:
                 # Don't retry on validation errors
-                logger.error("State validation failed - not retrying")
+                self.logger.error(
+                    "workflow_state_validation_failed",
+                    message="State validation failed - not retrying"
+                )
                 raise
             
             except Exception as e:
                 if attempt < self.max_retries:
-                    logger.warning(
-                        f"Workflow error on attempt {attempt + 1}/{self.max_retries + 1}: {e}, retrying..."
+                    self.logger.warning(
+                        "workflow_execution_error_retrying",
+                        attempt=attempt + 1,
+                        max_attempts=self.max_retries + 1,
+                        error=str(e),
+                        error_type=type(e).__name__
                     )
                     # Wait a bit before retrying
                     await asyncio.sleep(1)
                     continue
                 else:
-                    logger.error(f"Workflow failed after all {self.max_retries + 1} attempts: {e}")
+                    self.logger.error(
+                        "workflow_execution_failed",
+                        total_attempts=self.max_retries + 1,
+                        error=str(e),
+                        error_type=type(e).__name__,
+                        exc_info=True
+                    )
                     raise AgentExecutionError(
                         f"Workflow failed after {self.max_retries + 1} attempts: {e}",
                         original_error=e
@@ -256,7 +272,10 @@ class AgentWorkflowEngine:
             return final_state
             
         except asyncio.TimeoutError:
-            logger.error(f"Workflow timeout after {timeout}s")
+            self.logger.error(
+                "workflow_timeout",
+                timeout_seconds=timeout
+            )
             raise
     
     async def _run_graph(self, state: AgentState) -> AgentState:
@@ -308,6 +327,11 @@ class AgentWorkflowEngine:
         """
         from agents.router import RouterAgent
         
+        self.logger.debug(
+            "intent_classification_requested",
+            message_preview=message[:50]
+        )
+        
         # Create minimal state
         state = create_initial_state(message)
         
@@ -315,11 +339,19 @@ class AgentWorkflowEngine:
         router = RouterAgent()
         result_state = router.process(state)
         
-        return {
+        classification = {
             "intent": result_state.get("primary_intent"),
             "confidence": result_state.get("intent_confidence", 0.0),
             "sentiment": result_state.get("sentiment", 0.0)
         }
+        
+        self.logger.info(
+            "intent_classified",
+            intent=classification["intent"],
+            confidence=round(classification["confidence"], 2)
+        )
+        
+        return classification
     
     def route_to_agent(
         self,
@@ -345,10 +377,24 @@ class AgentWorkflowEngine:
         """
         # Low confidence -> escalate
         if confidence < 0.5:
+            self.logger.debug(
+                "routing_decision",
+                intent=intent,
+                confidence=confidence,
+                decision="escalate",
+                reason="low_confidence"
+            )
             return "escalation"
         
         # High confidence, simple query -> end (router answers)
         if confidence > 0.8 and self._is_simple_query(intent):
+            self.logger.debug(
+                "routing_decision",
+                intent=intent,
+                confidence=confidence,
+                decision="answer_directly",
+                reason="high_confidence_simple_query"
+            )
             return None
         
         # Route to specialist based on intent
@@ -357,20 +403,35 @@ class AgentWorkflowEngine:
             "billing_downgrade": "billing",
             "billing_refund": "billing",
             "billing_invoice": "billing",
+            
             "technical_bug": "technical",
             "technical_sync": "technical",
             "technical_performance": "technical",
+            
             "feature_create": "usage",
             "feature_edit": "usage",
             "feature_invite": "usage",
             "feature_export": "usage",
+            
             "integration_api": "api",
             "integration_webhook": "api",
+            
             "account_login": "technical",
+            
             "general_inquiry": "escalation"
         }
         
-        return routing_map.get(intent, "escalation")
+        agent = routing_map.get(intent, "escalation")
+        
+        self.logger.debug(
+            "routing_decision",
+            intent=intent,
+            confidence=confidence,
+            decision="route_to_specialist",
+            agent=agent
+        )
+        
+        return agent
     
     def should_escalate(self, state: AgentState) -> bool:
         """
@@ -394,26 +455,37 @@ class AgentWorkflowEngine:
         """
         # Check confidence
         if state.get("response_confidence", 1.0) < 0.4:
-            if self.enable_logging:
-                logger.info("Escalation triggered: low confidence")
+            self.logger.info(
+                "escalation_triggered",
+                reason="low_confidence",
+                confidence=state.get("response_confidence")
+            )
             return True
         
         # Check turn count
         if state.get("turn_count", 0) > 5:
-            if self.enable_logging:
-                logger.info("Escalation triggered: max turns exceeded")
+            self.logger.info(
+                "escalation_triggered",
+                reason="max_turns_exceeded",
+                turn_count=state.get("turn_count")
+            )
             return True
         
         # Check sentiment
         if state.get("sentiment", 0.0) < -0.7:
-            if self.enable_logging:
-                logger.info("Escalation triggered: negative sentiment")
+            self.logger.info(
+                "escalation_triggered",
+                reason="negative_sentiment",
+                sentiment=state.get("sentiment")
+            )
             return True
         
         # Check explicit flag
         if state.get("should_escalate", False):
-            if self.enable_logging:
-                logger.info("Escalation triggered: explicit flag")
+            self.logger.info(
+                "escalation_triggered",
+                reason="explicit_flag"
+            )
             return True
         
         return False

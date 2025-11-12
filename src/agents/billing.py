@@ -1,5 +1,6 @@
 """
 Billing Agent - Handles payments, subscriptions, invoices, refunds
+
 """
 import sys
 from pathlib import Path
@@ -10,6 +11,7 @@ if str(project_root) not in sys.path:
 from workflow.state import AgentState
 from agents.base import BaseAgent
 from knowledge_base import search_articles
+from utils.logging.setup import get_logger
 
 
 class BillingAgent(BaseAgent):
@@ -21,6 +23,7 @@ class BillingAgent(BaseAgent):
     - Refund requests
     - Invoices and payment info
     - Pricing questions
+    
     """
     
     def __init__(self):
@@ -29,6 +32,7 @@ class BillingAgent(BaseAgent):
             model="claude-3-haiku-20240307",
             temperature=0.3
         )
+        self.logger = get_logger(__name__)
     
     def process(self, state: AgentState) -> AgentState:
         """
@@ -40,9 +44,7 @@ class BillingAgent(BaseAgent):
         Returns:
             Updated state with billing response
         """
-        print(f"\n{'='*60}")
-        print(f"💰 BILLING AGENT PROCESSING")
-        print(f"{'='*60}")
+        self.logger.info("billing_agent_processing_started")
         
         # Add to history
         state = self.add_to_history(state)
@@ -52,8 +54,12 @@ class BillingAgent(BaseAgent):
         message = state["current_message"]
         intent = state.get("primary_intent", "billing_upgrade")
         
-        print(f"Message: {message[:100]}...")
-        print(f"Intent: {intent}")
+        self.logger.debug(
+            "billing_processing_message",
+            message_preview=message[:100],
+            intent=intent,
+            turn_count=state["turn_count"]
+        )
         
         # Search KB for billing articles
         kb_results = search_articles(
@@ -64,7 +70,16 @@ class BillingAgent(BaseAgent):
         state["kb_results"] = kb_results
         
         if kb_results:
-            print(f"✓ Found {len(kb_results)} billing articles")
+            self.logger.info(
+                "billing_kb_articles_found",
+                count=len(kb_results),
+                top_score=kb_results[0].get("similarity_score", 0) if kb_results else 0
+            )
+        else:
+            self.logger.warning(
+                "billing_no_kb_articles_found",
+                intent=intent
+            )
         
         # Generate response
         response = self.generate_response(message, intent, kb_results, state)
@@ -75,7 +90,11 @@ class BillingAgent(BaseAgent):
         state["next_agent"] = None  # End conversation
         state["status"] = "resolved"
         
-        print(f"\n✓ Response generated ({len(response)} chars)")
+        self.logger.info(
+            "billing_response_generated",
+            response_length=len(response),
+            status="resolved"
+        )
         
         return state
     
@@ -98,6 +117,12 @@ class BillingAgent(BaseAgent):
         Returns:
             Response text
         """
+        self.logger.debug(
+            "billing_response_generation_started",
+            intent=intent,
+            kb_articles_count=len(kb_results)
+        )
+        
         # Build KB context
         kb_context = ""
         if kb_results:
@@ -135,6 +160,11 @@ Intent: {intent}
 Provide a helpful response."""
 
         response = self.call_llm(system_prompt, user_prompt, max_tokens=500)
+        
+        self.logger.debug(
+            "billing_llm_response_received",
+            response_length=len(response)
+        )
         
         return response
 

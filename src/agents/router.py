@@ -1,5 +1,6 @@
 """
 Router Agent - Classifies intent and routes to specialist agents
+
 """
 from typing import Dict, Optional
 from pydantic import BaseModel, Field
@@ -13,6 +14,7 @@ if str(project_root) not in sys.path:
 
 from workflow.state import AgentState, IntentCategory, AgentType
 from agents.base import BaseAgent
+from utils.logging.setup import get_logger
 
 
 class IntentClassification(BaseModel):
@@ -46,6 +48,7 @@ class RouterAgent(BaseAgent):
     1. Classify intent (billing, technical, usage, etc.)
     2. Extract entities (plan type, feature, etc.)
     3. Route to appropriate specialist OR answer directly
+    
     """
     
     def __init__(self):
@@ -54,6 +57,7 @@ class RouterAgent(BaseAgent):
             model="claude-3-haiku-20240307",  # Fast and cheap
             temperature=0.1  # Low temp for consistent classification
         )
+        self.logger = get_logger(__name__)
     
     def process(self, state: AgentState) -> AgentState:
         """
@@ -65,9 +69,7 @@ class RouterAgent(BaseAgent):
         Returns:
             Updated state with classification and routing decision
         """
-        print(f"\n{'='*60}")
-        print(f"🧭 ROUTER AGENT PROCESSING")
-        print(f"{'='*60}")
+        self.logger.info("router_agent_processing_started")
         
         # Add to history
         state = self.add_to_history(state)
@@ -75,7 +77,11 @@ class RouterAgent(BaseAgent):
         
         # Get current message
         current_message = state["current_message"]
-        print(f"Message: {current_message[:100]}...")
+        self.logger.debug(
+            "router_processing_message",
+            message_preview=current_message[:100],
+            turn_count=state["turn_count"]
+        )
         
         # Classify intent
         classification = self.classify_intent(current_message)
@@ -85,15 +91,22 @@ class RouterAgent(BaseAgent):
         state["intent_confidence"] = classification.confidence
         state["sentiment"] = classification.sentiment
         
-        print(f"\nIntent: {classification.primary_intent}")
-        print(f"Confidence: {classification.confidence:.2%}")
-        print(f"Sentiment: {classification.sentiment:+.2f}")
-        print(f"Reasoning: {classification.reasoning}")
+        self.logger.info(
+            "intent_classified",
+            intent=classification.primary_intent,
+            confidence=round(classification.confidence, 2),
+            sentiment=round(classification.sentiment, 2),
+            reasoning=classification.reasoning
+        )
         
         # Decide routing
         if classification.should_answer_directly and classification.confidence > 0.8:
             # Answer directly with KB search
-            print("\n→ Decision: Answer directly (simple FAQ)")
+            self.logger.info(
+                "routing_decision",
+                decision="answer_directly",
+                reason="high_confidence_simple_query"
+            )
             response = self.answer_directly(current_message, state)
             state["agent_response"] = response
             state["next_agent"] = None  # End conversation
@@ -101,7 +114,12 @@ class RouterAgent(BaseAgent):
         
         elif classification.confidence < 0.5:
             # Low confidence - escalate
-            print("\n→ Decision: Escalate (low confidence)")
+            self.logger.warning(
+                "routing_decision",
+                decision="escalate",
+                reason="low_confidence",
+                confidence=classification.confidence
+            )
             state["should_escalate"] = True
             state["escalation_reason"] = "Low intent confidence"
             state["next_agent"] = "escalation"
@@ -109,7 +127,12 @@ class RouterAgent(BaseAgent):
         else:
             # Route to specialist
             next_agent = self.route_to_specialist(classification.primary_intent)
-            print(f"\n→ Decision: Route to {next_agent.upper()} agent")
+            self.logger.info(
+                "routing_decision",
+                decision="route_to_specialist",
+                agent=next_agent,
+                intent=classification.primary_intent
+            )
             state["next_agent"] = next_agent
         
         state["response_confidence"] = classification.confidence
@@ -126,6 +149,11 @@ class RouterAgent(BaseAgent):
         Returns:
             IntentClassification with primary_intent, confidence, etc.
         """
+        self.logger.debug(
+            "intent_classification_started",
+            message_preview=message[:50]
+        )
+        
         system_prompt = """You are an intent classifier for a customer support system.
 
 Analyze the user's message and classify their primary intent into ONE of these categories:
@@ -186,10 +214,22 @@ Return JSON with:
             
             # Validate and create classification
             classification = IntentClassification(**data)
+            
+            self.logger.debug(
+                "intent_classification_parsed",
+                intent=classification.primary_intent,
+                confidence=classification.confidence
+            )
+            
             return classification
             
         except Exception as e:
-            print(f"⚠ Classification parsing failed: {e}")
+            self.logger.error(
+                "intent_classification_parsing_failed",
+                error=str(e),
+                error_type=type(e).__name__,
+                response_preview=response_text[:100]
+            )
             # Default fallback
             return IntentClassification(
                 primary_intent="general_inquiry",
@@ -233,7 +273,15 @@ Return JSON with:
             "general_inquiry": "escalation"  # Unclear → human
         }
         
-        return routing_map.get(intent, "escalation")
+        agent = routing_map.get(intent, "escalation")
+        
+        self.logger.debug(
+            "agent_routing_mapped",
+            intent=intent,
+            agent=agent
+        )
+        
+        return agent
     
     def answer_directly(self, message: str, state: AgentState) -> str:
         """
@@ -246,6 +294,11 @@ Return JSON with:
         Returns:
             Direct answer
         """
+        self.logger.debug(
+            "direct_answer_started",
+            message_preview=message[:50]
+        )
+        
         # Import KB search
         from knowledge_base import search_articles
         
@@ -254,7 +307,17 @@ Return JSON with:
         state["kb_results"] = kb_results
         
         if not kb_results:
+            self.logger.warning(
+                "direct_answer_no_kb_results",
+                message_preview=message[:50]
+            )
             return "I'm not sure about that. Let me connect you with a specialist who can help."
+        
+        self.logger.info(
+            "direct_answer_kb_results_found",
+            count=len(kb_results),
+            top_score=kb_results[0].get("similarity_score", 0) if kb_results else 0
+        )
         
         # Build context
         kb_context = "\n\n".join([
@@ -276,6 +339,11 @@ Knowledge Base:
 Provide a helpful answer."""
 
         response = self.call_llm(system_prompt, user_prompt, max_tokens=300)
+        
+        self.logger.info(
+            "direct_answer_generated",
+            response_length=len(response)
+        )
         
         return response
 
