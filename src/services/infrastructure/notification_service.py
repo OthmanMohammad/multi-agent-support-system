@@ -6,6 +6,7 @@ This service handles sending notifications to external channels
 services as needed.
 
 Pure external integration - no business logic.
+
 """
 
 from typing import Optional
@@ -13,6 +14,7 @@ from uuid import UUID
 
 from core.result import Result
 from core.errors import ExternalServiceError
+from utils.logging.setup import get_logger
 
 
 class NotificationService:
@@ -30,6 +32,7 @@ class NotificationService:
     - Deciding when to notify (domain/application service)
     - Formatting messages (caller's responsibility)
     - Determining recipients (caller's responsibility)
+    
     """
     
     def __init__(
@@ -46,6 +49,13 @@ class NotificationService:
         """
         self.email_enabled = email_enabled
         self.slack_enabled = slack_enabled
+        self.logger = get_logger(__name__)
+        
+        self.logger.info(
+            "notification_service_initialized",
+            email_enabled=email_enabled,
+            slack_enabled=slack_enabled
+        )
     
     async def notify_escalation(
         self,
@@ -69,33 +79,50 @@ class NotificationService:
             Result with None on success
         """
         try:
-            # Log to stdout (real implementation would send email/Slack)
-            print(f"[ESCALATION] Priority: {priority}, Customer: {customer_email}")
-            print(f"  Conversation: {conversation_id}")
-            print(f"  Reason: {reason}")
+            self.logger.info(
+                "escalation_notification_started",
+                conversation_id=str(conversation_id),
+                priority=priority,
+                customer_email=customer_email,
+                reason=reason
+            )
             
             if self.email_enabled:
                 # TODO: Integrate with SendGrid, AWS SES, etc.
-                # await self._send_email(
-                #     to="support@company.com",
-                #     subject=f"[{priority.upper()}] Escalation Required",
-                #     body=f"Conversation {conversation_id} needs attention..."
-                # )
+                self.logger.debug(
+                    "escalation_email_stub",
+                    to="support@company.com",
+                    subject=f"[{priority.upper()}] Escalation Required"
+                )
                 pass
             
             if self.slack_enabled:
                 # TODO: Integrate with Slack API
-                # await self._send_slack(
-                #     channel="#support-escalations",
-                #     message=f"🚨 {priority.upper()} escalation needed..."
-                # )
+                self.logger.debug(
+                    "escalation_slack_stub",
+                    channel="#support-escalations",
+                    priority=priority
+                )
                 pass
+            
+            self.logger.info(
+                "escalation_notification_completed",
+                conversation_id=str(conversation_id),
+                priority=priority
+            )
             
             return Result.ok(None)
             
         except Exception as e:
-            # Log error but don't fail the transaction
-            print(f"Notification error: {e}")
+            self.logger.error(
+                "escalation_notification_failed",
+                conversation_id=str(conversation_id),
+                priority=priority,
+                error=str(e),
+                error_type=type(e).__name__,
+                exc_info=True
+            )
+            
             return Result.fail(ExternalServiceError(
                 message=f"Failed to send escalation notification: {str(e)}",
                 service="NotificationService",
@@ -119,17 +146,37 @@ class NotificationService:
             Result with None on success
         """
         try:
-            print(f"[RESOLUTION] Notifying customer: {customer_email}")
-            print(f"  Conversation: {conversation_id}")
+            self.logger.info(
+                "resolution_notification_started",
+                conversation_id=str(conversation_id),
+                customer_email=customer_email
+            )
             
             if self.email_enabled:
                 # TODO: Send thank you email
+                self.logger.debug(
+                    "resolution_email_stub",
+                    to=customer_email,
+                    subject="Your support issue has been resolved"
+                )
                 pass
+            
+            self.logger.info(
+                "resolution_notification_completed",
+                conversation_id=str(conversation_id)
+            )
             
             return Result.ok(None)
             
         except Exception as e:
-            print(f"Notification error: {e}")
+            self.logger.error(
+                "resolution_notification_failed",
+                conversation_id=str(conversation_id),
+                error=str(e),
+                error_type=type(e).__name__,
+                exc_info=True
+            )
+            
             return Result.fail(ExternalServiceError(
                 message=f"Failed to send resolution notification: {str(e)}",
                 service="NotificationService",
@@ -155,19 +202,34 @@ class NotificationService:
             Result with None (never fails - alerts are best-effort)
         """
         try:
-            print(f"[LOW CONFIDENCE] Agent: {agent_name}, Confidence: {confidence:.2f}")
-            print(f"  Conversation: {conversation_id}")
+            self.logger.warning(
+                "low_confidence_alert",
+                conversation_id=str(conversation_id),
+                agent_name=agent_name,
+                confidence=round(confidence, 2)
+            )
             
             # Send to monitoring channel
             if self.slack_enabled:
                 # TODO: Send to #support-monitoring
+                self.logger.debug(
+                    "low_confidence_slack_stub",
+                    channel="#support-monitoring",
+                    agent_name=agent_name,
+                    confidence=confidence
+                )
                 pass
             
             return Result.ok(None)
             
         except Exception as e:
             # Alert errors should never fail - just log
-            print(f"Alert error: {e}")
+            self.logger.error(
+                "low_confidence_alert_failed",
+                conversation_id=str(conversation_id),
+                error=str(e),
+                exc_info=True
+            )
             return Result.ok(None)
     
     async def alert_negative_sentiment(
@@ -188,18 +250,31 @@ class NotificationService:
             Result with None (never fails - alerts are best-effort)
         """
         try:
-            print(f"[NEGATIVE SENTIMENT] Sentiment: {sentiment:.2f}")
-            print(f"  Conversation: {conversation_id}")
-            print(f"  Message preview: {message[:100]}...")
+            self.logger.warning(
+                "negative_sentiment_alert",
+                conversation_id=str(conversation_id),
+                sentiment=round(sentiment, 2),
+                message_preview=message[:100]
+            )
             
             if self.slack_enabled:
                 # TODO: Send to #support-alerts
+                self.logger.debug(
+                    "negative_sentiment_slack_stub",
+                    channel="#support-alerts",
+                    sentiment=sentiment
+                )
                 pass
             
             return Result.ok(None)
             
         except Exception as e:
-            print(f"Alert error: {e}")
+            self.logger.error(
+                "negative_sentiment_alert_failed",
+                conversation_id=str(conversation_id),
+                error=str(e),
+                exc_info=True
+            )
             return Result.ok(None)
     
     async def alert_sla_breach(
@@ -218,16 +293,30 @@ class NotificationService:
             Result with None
         """
         try:
-            print(f"[SLA BREACH] Conversation {conversation_id} overdue by {hours_overdue}h")
+            self.logger.error(
+                "sla_breach_alert",
+                conversation_id=str(conversation_id),
+                hours_overdue=hours_overdue
+            )
             
             if self.slack_enabled:
                 # TODO: Send urgent alert
+                self.logger.debug(
+                    "sla_breach_slack_stub",
+                    channel="#support-alerts",
+                    hours_overdue=hours_overdue
+                )
                 pass
             
             return Result.ok(None)
             
         except Exception as e:
-            print(f"Alert error: {e}")
+            self.logger.error(
+                "sla_breach_alert_failed",
+                conversation_id=str(conversation_id),
+                error=str(e),
+                exc_info=True
+            )
             return Result.ok(None)
     
     async def send_email(
@@ -251,8 +340,13 @@ class NotificationService:
         Returns:
             Result with None on success
         """
-        print(f"[EMAIL] To: {to}, Subject: {subject}")
-        print(f"  Body: {body[:100]}...")
+        self.logger.info(
+            "email_send_started",
+            to=to,
+            subject=subject,
+            body_length=len(body),
+            template=template
+        )
         
         # TODO: Implement email sending
         # try:
@@ -262,10 +356,13 @@ class NotificationService:
         #         body=body,
         #         template=template
         #     )
+        #     logger.info("email_sent", to=to, subject=subject)
         #     return Result.ok(None)
         # except Exception as e:
+        #     logger.error("email_send_failed", to=to, error=str(e))
         #     return Result.fail(ExternalServiceError(...))
         
+        self.logger.debug("email_send_stub_completed", to=to)
         return Result.ok(None)
     
     async def send_slack_message(
@@ -287,7 +384,12 @@ class NotificationService:
         Returns:
             Result with None on success
         """
-        print(f"[SLACK] Channel: {channel}, Message: {message[:50]}...")
+        self.logger.info(
+            "slack_message_send_started",
+            channel=channel,
+            message_length=len(message),
+            has_attachments=attachments is not None
+        )
         
         # TODO: Implement Slack integration
         # try:
@@ -297,10 +399,13 @@ class NotificationService:
         #         text=message,
         #         attachments=attachments
         #     )
+        #     logger.info("slack_message_sent", channel=channel)
         #     return Result.ok(None)
         # except Exception as e:
+        #     logger.error("slack_message_send_failed", channel=channel, error=str(e))
         #     return Result.fail(ExternalServiceError(...))
         
+        self.logger.debug("slack_message_send_stub_completed", channel=channel)
         return Result.ok(None)
     
     async def send_webhook(
@@ -320,16 +425,22 @@ class NotificationService:
         Returns:
             Result with None on success
         """
-        print(f"[WEBHOOK] URL: {url}")
-        print(f"  Payload: {str(payload)[:100]}...")
+        self.logger.info(
+            "webhook_send_started",
+            url=url,
+            payload_keys=list(payload.keys()) if payload else []
+        )
         
         # TODO: Implement with httpx or aiohttp
         # try:
         #     async with httpx.AsyncClient() as client:
-        #         response = await client.post(url, json=payload)
+        #         response = await client.post(url, json=payload, timeout=10.0)
         #         response.raise_for_status()
+        #     logger.info("webhook_sent", url=url, status_code=response.status_code)
         #     return Result.ok(None)
         # except Exception as e:
+        #     logger.error("webhook_send_failed", url=url, error=str(e))
         #     return Result.fail(ExternalServiceError(...))
         
+        self.logger.debug("webhook_send_stub_completed", url=url)
         return Result.ok(None)
