@@ -5,14 +5,17 @@ This service provides a Result-based interface to the vector store (Qdrant).
 It handles KB article search, retrieval, and usage tracking.
 
 All semantic search and KB operations go through this service.
+
 """
 
 from typing import List, Dict, Optional
 from uuid import UUID
+import time
 
 from core.result import Result
 from core.errors import ExternalServiceError, NotFoundError
 from vector_store import VectorStore
+from utils.logging.setup import get_logger
 
 
 class KnowledgeBaseService:
@@ -30,15 +33,24 @@ class KnowledgeBaseService:
     - Determining relevance thresholds (domain logic)
     - Article recommendation logic (domain logic)
     - Content generation (domain logic)
+    
     """
     
     def __init__(self):
         """Initialize with vector store"""
+        self.logger = get_logger(__name__)
+        
         try:
             self.vector_store = VectorStore()
             self.available = True
+            self.logger.info("kb_service_initialized", status="available")
         except Exception as e:
-            print(f"Warning: Could not initialize vector store: {e}")
+            self.logger.error(
+                "kb_service_initialization_failed",
+                error=str(e),
+                error_type=type(e).__name__,
+                exc_info=True
+            )
             self.vector_store = None
             self.available = False
     
@@ -71,15 +83,10 @@ class KnowledgeBaseService:
             score_threshold: Minimum similarity score (0-1)
             
         Returns:
-            Result with list of articles, each containing:
-                - doc_id: Article ID
-                - title: Article title
-                - content: Article content
-                - category: Article category
-                - tags: List of tags
-                - similarity_score: Relevance score (0-1)
+            Result with list of articles
         """
         if not self.is_available():
+            self.logger.error("kb_search_unavailable", query=query)
             return Result.fail(ExternalServiceError(
                 message="Knowledge base is not available",
                 service="Qdrant",
@@ -88,16 +95,42 @@ class KnowledgeBaseService:
             ))
         
         try:
-            results = self.vector_store.search(
+            self.logger.info(
+                "kb_search_started",
                 query=query,
                 category=category,
                 limit=limit,
                 score_threshold=score_threshold
             )
             
+            start_time = time.time()
+            results = self.vector_store.search(
+                query=query,
+                category=category,
+                limit=limit,
+                score_threshold=score_threshold
+            )
+            duration_ms = (time.time() - start_time) * 1000
+            
+            self.logger.info(
+                "kb_search_completed",
+                query=query,
+                results_count=len(results),
+                top_score=results[0]["similarity_score"] if results else 0,
+                duration_ms=round(duration_ms, 2)
+            )
+            
             return Result.ok(results)
             
         except Exception as e:
+            self.logger.error(
+                "kb_search_failed",
+                query=query,
+                category=category,
+                error=str(e),
+                error_type=type(e).__name__,
+                exc_info=True
+            )
             return Result.fail(ExternalServiceError(
                 message=f"Failed to search knowledge base: {str(e)}",
                 service="Qdrant",
@@ -109,19 +142,7 @@ class KnowledgeBaseService:
         self,
         article_id: str
     ) -> Result[Optional[Dict]]:
-        """
-        Get specific article by ID
-        
-        NOTE: VectorStore doesn't currently support get_by_id.
-        This would need to be implemented in vector_store.py.
-        For now, returns NOT_IMPLEMENTED.
-        
-        Args:
-            article_id: Article ID
-            
-        Returns:
-            Result with article dict or None
-        """
+        """Get specific article by ID"""
         if not self.is_available():
             return Result.fail(ExternalServiceError(
                 message="Knowledge base is not available",
@@ -130,7 +151,7 @@ class KnowledgeBaseService:
                 is_retryable=True
             ))
         
-        # TODO: Implement get_by_id in VectorStore
+        self.logger.debug("kb_get_by_id_not_implemented", article_id=article_id)
         return Result.fail(NotFoundError(
             resource="Article",
             identifier=article_id
@@ -141,33 +162,23 @@ class KnowledgeBaseService:
         conversation_id: UUID,
         article_ids: List[str]
     ) -> Result[None]:
-        """
-        Track which articles were used in a conversation
-        
-        This is for analytics - writes to a tracking table/log.
-        Pure data write, no business logic.
-        
-        Args:
-            conversation_id: Conversation UUID
-            article_ids: List of article IDs used
-            
-        Returns:
-            Result with None on success
-        """
+        """Track which articles were used in a conversation"""
         try:
-            # TODO: Implement article usage tracking
-            # Could write to:
-            # - Separate article_usage table
-            # - Analytics service
-            # - Log file
-            # For now, just log to stdout
-            print(f"[KB_USAGE] conversation={conversation_id}, articles={article_ids}")
+            self.logger.info(
+                "kb_article_usage_tracked",
+                conversation_id=str(conversation_id),
+                article_count=len(article_ids),
+                article_ids=article_ids
+            )
             
             return Result.ok(None)
             
         except Exception as e:
-            # Don't fail on tracking errors - this is non-critical
-            print(f"Warning: Failed to track article usage: {e}")
+            self.logger.warning(
+                "kb_article_usage_tracking_failed",
+                conversation_id=str(conversation_id),
+                error=str(e)
+            )
             return Result.ok(None)
     
     async def get_popular_articles(
@@ -175,21 +186,8 @@ class KnowledgeBaseService:
         days: int = 30,
         limit: int = 10
     ) -> Result[List[Dict]]:
-        """
-        Get most-used articles
-        
-        NOTE: Requires article usage tracking to be implemented.
-        For now, returns NOT_IMPLEMENTED.
-        
-        Args:
-            days: Number of days to analyze
-            limit: Max articles to return
-            
-        Returns:
-            Result with list of popular articles
-        """
-        # TODO: Implement after article usage tracking is in place
-        # Would query article_usage table and aggregate
+        """Get most-used articles"""
+        self.logger.debug("kb_popular_articles_not_implemented", days=days, limit=limit)
         return Result.ok([])
     
     async def search_by_category(
@@ -197,19 +195,7 @@ class KnowledgeBaseService:
         category: str,
         limit: int = 10
     ) -> Result[List[Dict]]:
-        """
-        Get articles by category
-        
-        This is essentially a search with category filter and no query.
-        Useful for browsing KB by category.
-        
-        Args:
-            category: Category name (billing, technical, usage, api)
-            limit: Max articles to return
-            
-        Returns:
-            Result with list of articles in category
-        """
+        """Get articles by category"""
         if not self.is_available():
             return Result.fail(ExternalServiceError(
                 message="Knowledge base is not available",
@@ -219,18 +205,33 @@ class KnowledgeBaseService:
             ))
         
         try:
-            # Search with empty query to get all in category
-            # Vector store will return by relevance
-            results = self.vector_store.search(
-                query="",  # Empty query
+            self.logger.info(
+                "kb_category_search_started",
                 category=category,
-                limit=limit,
-                score_threshold=0.0  # Accept all
+                limit=limit
             )
             
+            results = self.vector_store.search(
+                query="",
+                category=category,
+                limit=limit,
+                score_threshold=0.0
+            )
+            
+            self.logger.info(
+                "kb_category_search_completed",
+                category=category,
+                results_count=len(results)
+            )
             return Result.ok(results)
             
         except Exception as e:
+            self.logger.error(
+                "kb_category_search_failed",
+                category=category,
+                error=str(e),
+                exc_info=True
+            )
             return Result.fail(ExternalServiceError(
                 message=f"Failed to get articles by category: {str(e)}",
                 service="Qdrant",
@@ -239,18 +240,7 @@ class KnowledgeBaseService:
             ))
     
     async def get_collection_info(self) -> Result[Dict]:
-        """
-        Get KB collection statistics
-        
-        Useful for health checks and monitoring.
-        
-        Returns:
-            Result with collection info:
-                - name: Collection name
-                - vector_size: Embedding dimensions
-                - points_count: Number of articles
-                - status: Collection status
-        """
+        """Get KB collection statistics"""
         if not self.is_available():
             return Result.fail(ExternalServiceError(
                 message="Knowledge base is not available",
@@ -261,9 +251,19 @@ class KnowledgeBaseService:
         
         try:
             info = self.vector_store.get_collection_info()
+            
+            self.logger.info(
+                "kb_collection_info_retrieved",
+                points_count=info.get("points_count", 0)
+            )
             return Result.ok(info)
             
         except Exception as e:
+            self.logger.error(
+                "kb_collection_info_failed",
+                error=str(e),
+                exc_info=True
+            )
             return Result.fail(ExternalServiceError(
                 message=f"Failed to get collection info: {str(e)}",
                 service="Qdrant",
@@ -278,26 +278,12 @@ class KnowledgeBaseService:
         category: str,
         tags: List[str]
     ) -> Result[str]:
-        """
-        Add new article to KB
-        
-        NOTE: This would require implementing upsert in VectorStore.
-        For now, returns NOT_IMPLEMENTED.
-        
-        Args:
-            title: Article title
-            content: Article content
-            category: Category (billing, technical, usage, api)
-            tags: List of tags
-            
-        Returns:
-            Result with article ID
-        """
-        # TODO: Implement article creation in VectorStore
-        # Would need to:
-        # 1. Generate embedding for content
-        # 2. Create point with metadata
-        # 3. Upsert to collection
+        """Add new article to KB"""
+        self.logger.debug(
+            "kb_add_article_not_implemented",
+            title=title,
+            category=category
+        )
         return Result.fail(ExternalServiceError(
             message="Article creation not yet implemented",
             service="Qdrant",
@@ -310,20 +296,8 @@ class KnowledgeBaseService:
         article_id: str,
         content: str
     ) -> Result[None]:
-        """
-        Update existing article
-        
-        NOTE: Requires get_by_id and update in VectorStore.
-        For now, returns NOT_IMPLEMENTED.
-        
-        Args:
-            article_id: Article ID
-            content: New content
-            
-        Returns:
-            Result with None on success
-        """
-        # TODO: Implement after get_by_id and upsert are available
+        """Update existing article"""
+        self.logger.debug("kb_update_article_not_implemented", article_id=article_id)
         return Result.fail(ExternalServiceError(
             message="Article updates not yet implemented",
             service="Qdrant",
@@ -335,19 +309,8 @@ class KnowledgeBaseService:
         self,
         article_id: str
     ) -> Result[None]:
-        """
-        Soft delete article (mark as inactive)
-        
-        NOTE: Requires metadata update in VectorStore.
-        For now, returns NOT_IMPLEMENTED.
-        
-        Args:
-            article_id: Article ID
-            
-        Returns:
-            Result with None on success
-        """
-        # TODO: Implement soft delete via metadata flag
+        """Soft delete article (mark as inactive)"""
+        self.logger.debug("kb_delete_article_not_implemented", article_id=article_id)
         return Result.fail(ExternalServiceError(
             message="Article deletion not yet implemented",
             service="Qdrant",
@@ -356,22 +319,8 @@ class KnowledgeBaseService:
         ))
     
     async def refresh_embeddings(self) -> Result[None]:
-        """
-        Refresh all article embeddings (admin operation)
-        
-        This would regenerate embeddings for all articles.
-        Useful after model upgrades.
-        
-        NOTE: Expensive operation, should be run in background.
-        
-        Returns:
-            Result with None on success
-        """
-        # TODO: Implement batch embedding refresh
-        # Would need to:
-        # 1. Get all articles
-        # 2. Regenerate embeddings
-        # 3. Batch update collection
+        """Refresh all article embeddings (admin operation)"""
+        self.logger.debug("kb_refresh_embeddings_not_implemented")
         return Result.fail(ExternalServiceError(
             message="Embedding refresh not yet implemented",
             service="Qdrant",

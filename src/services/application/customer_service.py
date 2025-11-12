@@ -11,10 +11,14 @@ from core.events import get_event_bus
 from database.unit_of_work import UnitOfWork
 from services.domain.customer.domain_service import CustomerDomainService
 from services.infrastructure.customer_service import CustomerInfrastructureService
+from utils.logging.setup import get_logger
 
 
 class CustomerApplicationService:
-    """Application service for customer use cases"""
+    """
+    Application service for customer use cases
+    
+    """
     
     def __init__(
         self,
@@ -26,6 +30,9 @@ class CustomerApplicationService:
         self.domain = domain_service
         self.infrastructure = infrastructure_service
         self.event_bus = get_event_bus()
+        self.logger = get_logger(__name__)
+        
+        self.logger.debug("customer_application_service_initialized")
     
     async def create_customer(
         self,
@@ -35,14 +42,31 @@ class CustomerApplicationService:
     ) -> Result[Dict[str, Any]]:
         """Create new customer"""
         try:
+            self.logger.info(
+                "customer_creation_started",
+                email=email,
+                plan=plan
+            )
+            
             # Validate email
             validation = self.domain.validate_email(email)
             if validation.is_failure:
+                self.logger.warning(
+                    "customer_creation_validation_failed",
+                    email=email,
+                    error="invalid_email"
+                )
                 return Result.fail(validation.error)
             
             # Validate plan
             plan_validation = self.domain.validate_plan(plan)
             if plan_validation.is_failure:
+                self.logger.warning(
+                    "customer_creation_validation_failed",
+                    email=email,
+                    plan=plan,
+                    error="invalid_plan"
+                )
                 return Result.fail(plan_validation.error)
             
             # Create customer
@@ -57,6 +81,13 @@ class CustomerApplicationService:
             
             customer = result.value
             
+            self.logger.info(
+                "customer_created",
+                customer_id=str(customer.id),
+                email=email,
+                plan=plan
+            )
+            
             return Result.ok({
                 "customer_id": str(customer.id),
                 "email": customer.email,
@@ -66,6 +97,13 @@ class CustomerApplicationService:
             })
             
         except Exception as e:
+            self.logger.error(
+                "customer_creation_failed",
+                email=email,
+                error=str(e),
+                error_type=type(e).__name__,
+                exc_info=True
+            )
             return Result.fail(InternalError(
                 message=f"Failed to create customer: {str(e)}",
                 operation="create_customer",
@@ -79,6 +117,12 @@ class CustomerApplicationService:
     ) -> Result[Dict[str, Any]]:
         """Upgrade customer plan"""
         try:
+            self.logger.info(
+                "customer_plan_upgrade_started",
+                customer_id=str(customer_id),
+                new_plan=new_plan
+            )
+            
             # Get current customer
             customer_result = await self.infrastructure.get_by_id(customer_id)
             if customer_result.is_failure:
@@ -90,11 +134,23 @@ class CustomerApplicationService:
             # Validate plan transition
             validation = self.domain.validate_plan_transition(old_plan, new_plan)
             if validation.is_failure:
+                self.logger.warning(
+                    "customer_plan_upgrade_validation_failed",
+                    customer_id=str(customer_id),
+                    old_plan=old_plan,
+                    new_plan=new_plan
+                )
                 return Result.fail(validation.error)
             
             transition_type = validation.value
             
             if transition_type != "upgrade":
+                self.logger.warning(
+                    "customer_plan_upgrade_incorrect_transition",
+                    customer_id=str(customer_id),
+                    expected="upgrade",
+                    actual=transition_type
+                )
                 return Result.fail(InternalError(
                     message=f"Expected upgrade but got {transition_type}",
                     operation="upgrade_plan"
@@ -107,8 +163,6 @@ class CustomerApplicationService:
             
             updated_customer = result.value
             
-            # REMOVED: plan_benefits calculation that was causing inf error
-            
             # Publish event
             event = self.domain.create_plan_upgraded_event(
                 customer_id=customer_id,
@@ -119,7 +173,13 @@ class CustomerApplicationService:
             )
             self.event_bus.publish(event)
             
-            # FIXED: Simplified response without benefits
+            self.logger.info(
+                "customer_plan_upgraded",
+                customer_id=str(customer_id),
+                old_plan=old_plan,
+                new_plan=new_plan
+            )
+            
             return Result.ok({
                 "customer_id": str(updated_customer.id),
                 "email": updated_customer.email,
@@ -129,8 +189,14 @@ class CustomerApplicationService:
             })
             
         except Exception as e:
-            import traceback
-            traceback.print_exc()
+            self.logger.error(
+                "customer_plan_upgrade_failed",
+                customer_id=str(customer_id),
+                new_plan=new_plan,
+                error=str(e),
+                error_type=type(e).__name__,
+                exc_info=True
+            )
             return Result.fail(InternalError(
                 message=f"Failed to upgrade plan: {str(e)}",
                 operation="upgrade_plan",
@@ -144,6 +210,12 @@ class CustomerApplicationService:
     ) -> Result[Dict[str, Any]]:
         """Downgrade customer plan"""
         try:
+            self.logger.info(
+                "customer_plan_downgrade_started",
+                customer_id=str(customer_id),
+                new_plan=new_plan
+            )
+            
             # Get current customer
             customer_result = await self.infrastructure.get_by_id(customer_id)
             if customer_result.is_failure:
@@ -155,11 +227,23 @@ class CustomerApplicationService:
             # Validate plan transition
             validation = self.domain.validate_plan_transition(old_plan, new_plan)
             if validation.is_failure:
+                self.logger.warning(
+                    "customer_plan_downgrade_validation_failed",
+                    customer_id=str(customer_id),
+                    old_plan=old_plan,
+                    new_plan=new_plan
+                )
                 return Result.fail(validation.error)
             
             transition_type = validation.value
             
             if transition_type != "downgrade":
+                self.logger.warning(
+                    "customer_plan_downgrade_incorrect_transition",
+                    customer_id=str(customer_id),
+                    expected="downgrade",
+                    actual=transition_type
+                )
                 return Result.fail(InternalError(
                     message=f"Expected downgrade but got {transition_type}",
                     operation="downgrade_plan"
@@ -182,6 +266,13 @@ class CustomerApplicationService:
             )
             self.event_bus.publish(event)
             
+            self.logger.info(
+                "customer_plan_downgraded",
+                customer_id=str(customer_id),
+                old_plan=old_plan,
+                new_plan=new_plan
+            )
+            
             return Result.ok({
                 "customer_id": str(updated_customer.id),
                 "email": updated_customer.email,
@@ -191,8 +282,14 @@ class CustomerApplicationService:
             })
             
         except Exception as e:
-            import traceback
-            traceback.print_exc()
+            self.logger.error(
+                "customer_plan_downgrade_failed",
+                customer_id=str(customer_id),
+                new_plan=new_plan,
+                error=str(e),
+                error_type=type(e).__name__,
+                exc_info=True
+            )
             return Result.fail(InternalError(
                 message=f"Failed to downgrade plan: {str(e)}",
                 operation="downgrade_plan",
@@ -205,10 +302,28 @@ class CustomerApplicationService:
     ) -> Result[Dict[str, Any]]:
         """Get customer profile with statistics"""
         try:
+            self.logger.debug(
+                "customer_profile_requested",
+                customer_id=str(customer_id)
+            )
+            
             result = await self.infrastructure.get_customer_profile(customer_id)
+            
+            if result.is_success:
+                self.logger.info(
+                    "customer_profile_retrieved",
+                    customer_id=str(customer_id)
+                )
+            
             return result
             
         except Exception as e:
+            self.logger.error(
+                "customer_profile_retrieval_failed",
+                customer_id=str(customer_id),
+                error=str(e),
+                exc_info=True
+            )
             return Result.fail(InternalError(
                 message=f"Failed to get customer profile: {str(e)}",
                 operation="get_customer_profile",

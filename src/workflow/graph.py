@@ -8,7 +8,6 @@ AgentWorkflowEngine provides the high-level interface.
 """
 from typing import Literal, Optional, Dict, Any
 from langgraph.graph import StateGraph, END
-import logging
 
 import sys
 from pathlib import Path
@@ -23,8 +22,7 @@ from agents.technical import TechnicalAgent
 from agents.usage import UsageAgent
 from agents.api import APIAgent
 from agents.escalation import EscalationAgent
-
-logger = logging.getLogger(__name__)
+from utils.logging.setup import get_logger
 
 
 class SupportGraph:
@@ -52,7 +50,8 @@ class SupportGraph:
     
     def __init__(self):
         """Initialize graph with all agents"""
-        logger.info("Initializing SupportGraph with all 6 agents...")
+        self.logger = get_logger(__name__)
+        self.logger.info("support_graph_initializing", agent_count=6)
         
         # Initialize all agents
         self.router = RouterAgent()
@@ -65,7 +64,7 @@ class SupportGraph:
         # Build LangGraph workflow
         self.app = self._build_graph()
         
-        logger.info("✓ SupportGraph compiled with 6 agents")
+        self.logger.info("support_graph_initialized", status="compiled")
     
     def _build_graph(self) -> StateGraph:
         """
@@ -144,7 +143,7 @@ class SupportGraph:
         
         # Compile the graph
         compiled = workflow.compile()
-        logger.debug("LangGraph workflow compiled successfully")
+        self.logger.debug("langgraph_workflow_compiled")
         
         return compiled
     
@@ -170,7 +169,11 @@ class SupportGraph:
         Returns:
             Final agent state after workflow execution
         """
-        logger.info(f"Running workflow for message: '{message[:50]}...'")
+        self.logger.info(
+            "workflow_execution_starting",
+            message_preview=message[:50],
+            conversation_id=conversation_id
+        )
         
         # Build context dict
         ctx = context or {}
@@ -184,27 +187,32 @@ class SupportGraph:
             context=ctx
         )
         
-        logger.debug(
-            f"Initial state created: "
-            f"conversation_id={initial_state['conversation_id']}, "
-            f"customer_id={initial_state['customer_id']}"
+        self.logger.debug(
+            "initial_state_created",
+            conversation_id=initial_state['conversation_id'],
+            customer_id=initial_state['customer_id']
         )
         
         # Execute workflow
         try:
             final_state = self.app.invoke(initial_state)
             
-            logger.info(
-                f"Workflow completed: "
-                f"intent={final_state.get('primary_intent')}, "
-                f"agents={final_state.get('agent_history')}, "
-                f"status={final_state.get('status')}"
+            self.logger.info(
+                "workflow_execution_completed",
+                intent=final_state.get('primary_intent'),
+                agents=final_state.get('agent_history'),
+                status=final_state.get('status')
             )
             
             return final_state
             
         except Exception as e:
-            logger.error(f"Workflow execution failed: {e}", exc_info=True)
+            self.logger.error(
+                "workflow_execution_failed",
+                error=str(e),
+                error_type=type(e).__name__,
+                exc_info=True
+            )
             raise
     
     def get_response(self, message: str) -> str:
