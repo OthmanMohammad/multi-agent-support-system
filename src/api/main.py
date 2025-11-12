@@ -18,7 +18,7 @@ from database.connection import init_db, close_db
 # Create FastAPI application
 app = FastAPI(
     title="Multi-Agent Support System",
-    version="3.0.0",
+    version="1.0.0",
     description="AI-powered customer support system with multi-agent orchestration",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
