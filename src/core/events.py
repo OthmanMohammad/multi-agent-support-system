@@ -38,9 +38,10 @@ from datetime import datetime
 from uuid import UUID, uuid4
 from typing import List, Callable, Dict, Type, Any
 from dataclasses import dataclass, field
-import logging
 
-logger = logging.getLogger(__name__)
+from utils.logging.setup import get_logger
+
+logger = get_logger(__name__)
 
 __all__ = ["DomainEvent", "EventBus", "get_event_bus", "reset_event_bus"]
 
@@ -99,30 +100,25 @@ class DomainEvent(ABC):
 
 class EventBus:
     """
-    Simple in-memory event bus implementing the Observer pattern
+    Event bus for publishing and subscribing to domain events
     
-    Features:
-    - Type-safe event subscription
-    - Synchronous event publishing
-    - Global event handlers (subscribe to all events)
-    - Automatic error handling (handlers don't crash the bus)
-    - Event handler registration/unregistration
+    Uses Observer pattern to decouple event publishers from subscribers.
+    Subscribers are notified synchronously when events are published.
     
     Example:
         >>> bus = EventBus()
         >>> 
-        >>> def handler(event: ConversationStartedEvent):
-        ...     print(f"Conversation started: {event.conversation_id}")
+        >>> def handle_event(event):
+        ...     print(f"Received: {event}")
         >>> 
-        >>> bus.subscribe(ConversationStartedEvent, handler)
-        >>> bus.publish(ConversationStartedEvent(...))
+        >>> bus.subscribe(MyEvent, handle_event)
+        >>> bus.publish(MyEvent(...))
     """
     
     def __init__(self):
-        """Initialize empty event bus"""
-        self._handlers: Dict[Type[DomainEvent], List[Callable]] = {}
-        self._global_handlers: List[Callable] = []
-        logger.debug("EventBus initialized")
+        """Initialize event bus"""
+        self._subscribers: Dict[Type[DomainEvent], List[Callable]] = {}
+        logger.debug("event_bus_initialized")
     
     def subscribe(
         self,
@@ -130,288 +126,157 @@ class EventBus:
         handler: Callable[[DomainEvent], None]
     ) -> None:
         """
-        Subscribe handler to specific event type
-        
-        The handler will be called synchronously when events of this type
-        are published. Handlers are called in registration order.
+        Subscribe to events of a specific type
         
         Args:
-            event_type: Type of event to listen for
-            handler: Callable that accepts the event
+            event_type: Class of event to subscribe to
+            handler: Function to call when event is published
         
         Example:
-            >>> def on_user_registered(event: UserRegisteredEvent):
-            ...     send_welcome_email(event.email)
+            >>> def my_handler(event: ConversationCreated):
+            ...     print(f"New conversation: {event.conversation_id}")
             >>> 
-            >>> bus.subscribe(UserRegisteredEvent, on_user_registered)
+            >>> bus.subscribe(ConversationCreated, my_handler)
         """
-        if event_type not in self._handlers:
-            self._handlers[event_type] = []
+        if event_type not in self._subscribers:
+            self._subscribers[event_type] = []
         
-        if handler not in self._handlers[event_type]:
-            self._handlers[event_type].append(handler)
-            logger.info(
-                f"Subscribed {handler.__name__} to {event_type.__name__}"
-            )
+        self._subscribers[event_type].append(handler)
+        
+        logger.debug(
+            "event_subscription_added",
+            event_type=event_type.__name__,
+            handler=handler.__name__,
+            total_subscribers=len(self._subscribers[event_type])
+        )
     
     def unsubscribe(
         self,
         event_type: Type[DomainEvent],
         handler: Callable[[DomainEvent], None]
-    ) -> bool:
+    ) -> None:
         """
-        Unsubscribe handler from event type
+        Unsubscribe from events
         
         Args:
             event_type: Event type to unsubscribe from
-            handler: Handler to remove
-        
-        Returns:
-            True if handler was found and removed, False otherwise
+            handler: Handler function to remove
         """
-        if event_type in self._handlers:
+        if event_type in self._subscribers:
             try:
-                self._handlers[event_type].remove(handler)
-                logger.info(
-                    f"Unsubscribed {handler.__name__} from {event_type.__name__}"
+                self._subscribers[event_type].remove(handler)
+                logger.debug(
+                    "event_subscription_removed",
+                    event_type=event_type.__name__,
+                    handler=handler.__name__
                 )
-                return True
             except ValueError:
-                pass
-        return False
-    
-    def subscribe_to_all(self, handler: Callable[[DomainEvent], None]) -> None:
-        """
-        Subscribe handler to all events
-        
-        Global handlers are called for every event, regardless of type.
-        Useful for logging, monitoring, or event persistence.
-        
-        Args:
-            handler: Callable that accepts any DomainEvent
-        
-        Example:
-            >>> def log_all_events(event: DomainEvent):
-            ...     logger.info(f"Event: {event.to_dict()}")
-            >>> 
-            >>> bus.subscribe_to_all(log_all_events)
-        """
-        if handler not in self._global_handlers:
-            self._global_handlers.append(handler)
-            logger.info(f"Subscribed {handler.__name__} to all events")
-    
-    def unsubscribe_from_all(self, handler: Callable[[DomainEvent], None]) -> bool:
-        """
-        Unsubscribe handler from all events
-        
-        Args:
-            handler: Handler to remove
-        
-        Returns:
-            True if handler was found and removed, False otherwise
-        """
-        try:
-            self._global_handlers.remove(handler)
-            logger.info(f"Unsubscribed {handler.__name__} from all events")
-            return True
-        except ValueError:
-            return False
+                logger.warning(
+                    "handler_not_found_for_unsubscribe",
+                    event_type=event_type.__name__,
+                    handler=handler.__name__
+                )
     
     def publish(self, event: DomainEvent) -> None:
         """
         Publish event to all subscribers
         
-        Events are delivered synchronously in the order handlers were registered.
-        If a handler raises an exception, it is logged but does not prevent
-        other handlers from executing.
+        Notifies all handlers subscribed to this event type.
+        Handlers are called synchronously in order of subscription.
         
         Args:
-            event: Event to publish
+            event: Event instance to publish
         
         Example:
-            >>> event = ConversationStartedEvent(
+            >>> event = ConversationCreated(
             ...     conversation_id=uuid4(),
-            ...     customer_id=uuid4(),
-            ...     initial_message="Hello"
+            ...     customer_id=uuid4()
             ... )
             >>> bus.publish(event)
         """
         event_type = type(event)
+        
         logger.debug(
-            f"Publishing {event_type.__name__}: {event.event_id}"
+            "event_published",
+            event_type=event_type.__name__,
+            event_id=str(event.event_id)
         )
         
-        # Call type-specific handlers
-        if event_type in self._handlers:
-            for handler in self._handlers[event_type]:
-                try:
-                    handler(event)
-                except Exception as e:
-                    logger.error(
-                        f"Error in event handler {handler.__name__} "
-                        f"for {event_type.__name__}: {e}",
-                        exc_info=True
-                    )
+        # Get subscribers for this event type
+        handlers = self._subscribers.get(event_type, [])
         
-        # Call global handlers
-        for handler in self._global_handlers:
+        if not handlers:
+            logger.debug(
+                "no_subscribers_for_event",
+                event_type=event_type.__name__
+            )
+            return
+        
+        # Notify each subscriber
+        for handler in handlers:
             try:
                 handler(event)
+                logger.debug(
+                    "event_handler_executed",
+                    event_type=event_type.__name__,
+                    handler=handler.__name__
+                )
             except Exception as e:
                 logger.error(
-                    f"Error in global event handler {handler.__name__} "
-                    f"for {event_type.__name__}: {e}",
+                    "event_handler_failed",
+                    event_type=event_type.__name__,
+                    handler=handler.__name__,
+                    error=str(e),
+                    error_type=type(e).__name__,
                     exc_info=True
                 )
     
     def clear(self) -> None:
-        """
-        Clear all handlers
-        
-        Useful for testing or resetting the event bus.
-        """
-        self._handlers.clear()
-        self._global_handlers.clear()
-        logger.info("EventBus cleared")
+        """Clear all subscriptions (useful for testing)"""
+        logger.debug("event_bus_cleared")
+        self._subscribers.clear()
     
-    def handler_count(self, event_type: Type[DomainEvent] = None) -> int:
+    def get_subscribers(self, event_type: Type[DomainEvent]) -> List[Callable]:
         """
-        Get number of registered handlers
+        Get list of subscribers for event type
         
         Args:
-            event_type: Count handlers for specific type, or all if None
+            event_type: Event type
         
         Returns:
-            Number of handlers
+            List of handler functions
         """
-        if event_type is None:
-            # Count all handlers (type-specific + global)
-            type_specific = sum(len(h) for h in self._handlers.values())
-            return type_specific + len(self._global_handlers)
-        
-        return len(self._handlers.get(event_type, []))
+        return self._subscribers.get(event_type, []).copy()
 
 
-# ===== Global Event Bus Singleton =====
-
+# Global event bus instance
 _event_bus: EventBus = None
 
 
 def get_event_bus() -> EventBus:
     """
-    Get or create global event bus singleton
-    
-    This provides a single shared event bus for the entire application.
-    Use this in production code.
+    Get global event bus instance (singleton)
     
     Returns:
         Global EventBus instance
     
     Example:
-        >>> from core.events import get_event_bus
-        >>> 
         >>> bus = get_event_bus()
-        >>> bus.subscribe(MyEvent, my_handler)
+        >>> bus.publish(MyEvent(...))
     """
     global _event_bus
     if _event_bus is None:
         _event_bus = EventBus()
-        logger.info("Global event bus created")
+        logger.info("global_event_bus_created")
     return _event_bus
 
 
 def reset_event_bus() -> None:
     """
-    Reset global event bus
+    Reset global event bus (for testing)
     
-    Creates a fresh event bus with no handlers.
-    Useful for testing to ensure test isolation.
-    
-    Example:
-        >>> def test_something():
-        ...     reset_event_bus()  # Clean slate
-        ...     bus = get_event_bus()
-        ...     # ... test code ...
+    Creates a new EventBus instance, clearing all subscriptions.
     """
     global _event_bus
     _event_bus = EventBus()
-    logger.info("Global event bus reset")
-
-
-if __name__ == "__main__":
-    # Self-test
-    print("=" * 70)
-    print("DOMAIN EVENTS - SELF TEST")
-    print("=" * 70)
-    
-    @dataclass
-    class TestEvent(DomainEvent):
-        """Test event for demonstration"""
-        message: str
-        count: int
-    
-    # Test event creation
-    print("\n1. Testing event creation...")
-    event = TestEvent(message="Hello", count=42)
-    assert event.event_id is not None
-    assert event.occurred_at is not None
-    print(f"   ✓ {event}")
-    
-    # Test to_dict
-    print("\n2. Testing serialization...")
-    event_dict = event.to_dict()
-    assert event_dict["event_type"] == "TestEvent"
-    assert event_dict["message"] == "Hello"
-    assert event_dict["count"] == 42
-    print(f"   ✓ {event_dict}")
-    
-    # Test EventBus subscription
-    print("\n3. Testing event subscription...")
-    bus = EventBus()
-    called = []
-    
-    def handler(e: TestEvent):
-        called.append(e.message)
-    
-    bus.subscribe(TestEvent, handler)
-    assert bus.handler_count(TestEvent) == 1
-    print(f"   ✓ Handler subscribed")
-    
-    # Test event publishing
-    print("\n4. Testing event publishing...")
-    bus.publish(TestEvent(message="Test1", count=1))
-    bus.publish(TestEvent(message="Test2", count=2))
-    assert len(called) == 2
-    assert called == ["Test1", "Test2"]
-    print(f"   ✓ Events published and handled")
-    
-    # Test global handlers
-    print("\n5. Testing global handlers...")
-    global_called = []
-    
-    def global_handler(e: DomainEvent):
-        global_called.append(e.__class__.__name__)
-    
-    bus.subscribe_to_all(global_handler)
-    bus.publish(TestEvent(message="Global", count=3))
-    assert "TestEvent" in global_called
-    print(f"   ✓ Global handler called")
-    
-    # Test handler removal
-    print("\n6. Testing unsubscribe...")
-    bus.unsubscribe(TestEvent, handler)
-    assert bus.handler_count(TestEvent) == 0
-    print(f"   ✓ Handler unsubscribed")
-    
-    # Test global singleton
-    print("\n7. Testing global event bus...")
-    global_bus = get_event_bus()
-    assert global_bus is not None
-    reset_event_bus()
-    new_bus = get_event_bus()
-    assert new_bus is not global_bus
-    print(f"   ✓ Global bus working")
-    
-    print("\n" + "=" * 70)
-    print("✓ ALL TESTS PASSED")
-    print("=" * 70)
+    logger.debug("global_event_bus_reset")
