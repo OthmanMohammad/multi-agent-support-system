@@ -13,11 +13,11 @@ All service classes should inherit from BaseService.
 
 from typing import TypeVar, Generic, Optional, Callable, Any, Awaitable
 from uuid import UUID
-import logging
 from functools import wraps
 
 from core.result import Result, Error
 from core.errors import InternalError
+from utils.logging.setup import get_logger
 
 __all__ = ["BaseService"]
 
@@ -48,9 +48,11 @@ def handle_exceptions(operation_name: str = "operation"):
                 return await func(*args, **kwargs)
             except Exception as e:
                 # Get logger from first arg (self)
-                logger = getattr(args[0], 'logger', logging.getLogger(__name__))
+                logger = getattr(args[0], 'logger', get_logger(__name__))
                 logger.error(
-                    f"Error in {operation_name}: {e}",
+                    f"{operation_name}_failed",
+                    error=str(e),
+                    error_type=type(e).__name__,
                     exc_info=True
                 )
                 return Result.fail(InternalError(
@@ -64,9 +66,11 @@ def handle_exceptions(operation_name: str = "operation"):
             try:
                 return func(*args, **kwargs)
             except Exception as e:
-                logger = getattr(args[0], 'logger', logging.getLogger(__name__))
+                logger = getattr(args[0], 'logger', get_logger(__name__))
                 logger.error(
-                    f"Error in {operation_name}: {e}",
+                    f"{operation_name}_failed",
+                    error=str(e),
+                    error_type=type(e).__name__,
                     exc_info=True
                 )
                 return Result.fail(InternalError(
@@ -123,8 +127,8 @@ class BaseService:
     
     def __init__(self):
         """Initialize base service with logger"""
-        self.logger = logging.getLogger(self.__class__.__name__)
-        self.logger.debug(f"{self.__class__.__name__} initialized")
+        self.logger = get_logger(self.__class__.__name__)
+        self.logger.debug("service_initialized", service_class=self.__class__.__name__)
     
     # ===== Helper Methods =====
     
@@ -196,14 +200,18 @@ class BaseService:
             ...     email=customer.email
             ... )
         """
-        level = logging.INFO if success else logging.ERROR
-        status = "succeeded" if success else "failed"
-        
-        self.logger.log(
-            level,
-            f"{operation} {status}",
-            extra={"operation": operation, "success": success, **context}
-        )
+        if success:
+            self.logger.info(
+                f"{operation}_succeeded",
+                operation=operation,
+                **context
+            )
+        else:
+            self.logger.error(
+                f"{operation}_failed",
+                operation=operation,
+                **context
+            )
     
     async def execute_async(
         self,
@@ -238,7 +246,9 @@ class BaseService:
             return Result.ok(value)
         except Exception as e:
             self.logger.error(
-                f"Error in {operation_name}: {e}",
+                f"{operation_name}_exception",
+                error=str(e),
+                error_type=type(e).__name__,
                 exc_info=True
             )
             self.log_operation(operation_name, success=False, error=str(e))
@@ -281,7 +291,9 @@ class BaseService:
             return Result.ok(value)
         except Exception as e:
             self.logger.error(
-                f"Error in {operation_name}: {e}",
+                f"{operation_name}_exception",
+                error=str(e),
+                error_type=type(e).__name__,
                 exc_info=True
             )
             self.log_operation(operation_name, success=False, error=str(e))
