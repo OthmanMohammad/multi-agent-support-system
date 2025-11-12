@@ -3,6 +3,9 @@ Workflow Exceptions - Custom exceptions for agent workflow errors
 
 Provides specific exception types for different failure modes in the
 workflow engine, with context and recovery hints.
+
+Phase 4 Enhancement: Added comprehensive docstrings and better error context
+for integration with exception enrichment and Sentry tracking.
 """
 from typing import Optional, Dict, Any
 
@@ -13,6 +16,24 @@ class WorkflowException(Exception):
     
     All workflow exceptions inherit from this, making it easy
     to catch any workflow error with a single except clause.
+    
+    Phase 4 Enhancement: This exception supports automatic context enrichment.
+    When caught by error handlers, it will include:
+    - correlation_id: Request tracking ID
+    - conversation_id: Conversation UUID  
+    - customer_id: Customer identifier
+    - agent_name: Current agent executing
+    
+    These attributes are added automatically by the enrichment system,
+    making debugging much easier.
+    
+    Example:
+        try:
+            await workflow.execute(message)
+        except WorkflowException as e:
+            # Exception is automatically enriched with context
+            # e.correlation_id, e.customer_id, etc. are available
+            logger.error("workflow_failed", exception=e)
     """
     
     def __init__(
@@ -56,6 +77,20 @@ class AgentExecutionError(WorkflowException):
     - Agent logic errors
     - Invalid agent responses
     - Unexpected exceptions in agent code
+    
+    Phase 4 Enhancement: Includes agent_name in context for better debugging.
+    When enriched, this exception will also include correlation_id, customer_id,
+    and conversation_id from the request context.
+    
+    Example:
+        try:
+            result = await billing_agent.execute(state)
+        except Exception as e:
+            raise AgentExecutionError(
+                "Billing agent failed to process request",
+                agent_name="billing",
+                original_error=e
+            )
     """
     
     def __init__(
@@ -90,6 +125,22 @@ class AgentTimeoutError(WorkflowException):
     - Slow LLM responses
     - Network issues
     - Infinite loops in agent logic
+    
+    Phase 4 Enhancement: Includes timeout_seconds in context.
+    When enriched, helps identify which specific request/customer
+    experienced the timeout via correlation_id and customer_id.
+    
+    Example:
+        try:
+            result = await asyncio.wait_for(
+                workflow.execute(state),
+                timeout=30
+            )
+        except asyncio.TimeoutError:
+            raise AgentTimeoutError(
+                "Workflow exceeded 30 second timeout",
+                timeout_seconds=30
+            )
     """
     
     def __init__(
@@ -119,6 +170,19 @@ class InvalidStateError(WorkflowException):
     - Missing required fields
     - Invalid field values
     - State transition violations
+    
+    Phase 4 Enhancement: Includes field-level details for precise debugging.
+    When enriched with correlation_id, makes it easy to trace which specific
+    request caused the invalid state.
+    
+    Example:
+        if state.get("confidence") > 1.0:
+            raise InvalidStateError(
+                "Confidence score exceeds valid range",
+                invalid_field="confidence",
+                expected_value="0.0-1.0",
+                actual_value=state["confidence"]
+            )
     """
     
     def __init__(
@@ -154,6 +218,19 @@ class RoutingError(WorkflowException):
     - Circular routing detected
     - Max turns exceeded
     - Unknown agent type
+    
+    Phase 4 Enhancement: Includes agent_history to track routing path.
+    When enriched, correlation_id helps trace the entire request flow
+    that led to the routing failure.
+    
+    Example:
+        if next_agent not in VALID_AGENTS:
+            raise RoutingError(
+                f"Invalid agent type: {next_agent}",
+                current_agent="router",
+                next_agent=next_agent,
+                agent_history=state["agent_history"]
+            )
     """
     
     def __init__(
@@ -180,62 +257,3 @@ class RoutingError(WorkflowException):
         )
         self.current_agent = current_agent
         self.next_agent = next_agent
-
-
-if __name__ == "__main__":
-    # Test exceptions
-    print("Testing Workflow Exceptions...")
-    print("=" * 60)
-    
-    # Test base exception
-    try:
-        raise WorkflowException(
-            "Test error",
-            context={"key": "value"},
-            recovery_hint="Do this to fix"
-        )
-    except WorkflowException as e:
-        print(f"✓ WorkflowException: {e}")
-    
-    # Test agent execution error
-    try:
-        raise AgentExecutionError(
-            "Agent failed",
-            agent_name="billing",
-            original_error=ValueError("Invalid input")
-        )
-    except AgentExecutionError as e:
-        print(f"✓ AgentExecutionError: {e}")
-    
-    # Test timeout error
-    try:
-        raise AgentTimeoutError(
-            "Workflow timed out",
-            timeout_seconds=30
-        )
-    except AgentTimeoutError as e:
-        print(f"✓ AgentTimeoutError: {e}")
-    
-    # Test invalid state error
-    try:
-        raise InvalidStateError(
-            "Invalid confidence value",
-            invalid_field="confidence",
-            expected_value="0.0-1.0",
-            actual_value=2.5
-        )
-    except InvalidStateError as e:
-        print(f"✓ InvalidStateError: {e}")
-    
-    # Test routing error
-    try:
-        raise RoutingError(
-            "Circular routing detected",
-            current_agent="billing",
-            next_agent="billing",
-            agent_history=["router", "billing", "billing"]
-        )
-    except RoutingError as e:
-        print(f"✓ RoutingError: {e}")
-    
-    print("\n✓ All exceptions working correctly!")
