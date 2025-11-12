@@ -14,6 +14,7 @@ if str(project_root) not in sys.path:
 from api.routes import api_router
 from api.error_handlers import register_error_handlers
 from database.connection import init_db, close_db
+from utils.logging import setup_logging, get_logger  # NEW
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -34,20 +35,28 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize database on startup"""
-    print("🚀 Starting Multi-Agent API v3.0...")
-    print("📊 Initializing database...")
+    """Initialize services on startup"""
+    # NEW: Initialize structured logging
+    setup_logging()
+    logger = get_logger(__name__)
+    
+    logger.info("application_starting", version="3.0.0")
+    logger.info("initializing_database")
+    
     await init_db()
-    print("✓ Database ready")
-    print("✓ API ready!")
+    
+    logger.info("application_ready")
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup on shutdown"""
-    print("🛑 Shutting down...")
+    logger = get_logger(__name__)
+    logger.info("application_shutting_down")
+    
     await close_db()
-    print("✓ Database connections closed")
+    
+    logger.info("application_shutdown_complete")
 
 
 # Root endpoint
@@ -76,12 +85,12 @@ if __name__ == "__main__":
     print("=" * 70)
     print("Multi-Agent Support API v3.0")
     print("=" * 70)
-    print("NEW: Clean Architecture")
+    print("NEW: Clean Architecture + Structured Logging")
     print("  ✓ Application Services (orchestration)")
     print("  ✓ Domain Services (business logic)")
     print("  ✓ Infrastructure Services (data access)")
-    print("  ✓ Thin controllers (< 20 lines)")
-    print("  ✓ Result pattern (no exceptions)")
+    print("  ✓ Structured logging with correlation IDs")
+    print("  ✓ PII masking for compliance")
     print("=" * 70)
     print("Documentation: http://localhost:8000/docs")
     print("Health Check: http://localhost:8000/health")
