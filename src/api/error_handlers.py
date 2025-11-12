@@ -1,120 +1,234 @@
 """
-Error handlers - Map Result objects to HTTP responses
+Global Error Handlers for FastAPI
 
-Converts domain errors (from Result.fail()) into appropriate
-HTTP exceptions with proper status codes and error formatting.
+This module provides centralized error handling for the API:
+- Maps domain errors to HTTP exceptions
+- Captures internal errors in Sentry (Phase 2)
+- Handles validation errors
+- Catches unexpected exceptions
+- Provides consistent error response format
+
+All errors return JSON in this format:
+{
+    "code": "ERROR_CODE",
+    "message": "Human-readable message",
+    "details": {}  // Optional additional context
+}
 """
 
-from fastapi import Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
-from starlette.status import (
-    HTTP_400_BAD_REQUEST,
-    HTTP_401_UNAUTHORIZED,
-    HTTP_403_FORBIDDEN,
-    HTTP_404_NOT_FOUND,
-    HTTP_409_CONFLICT,
-    HTTP_429_TOO_MANY_REQUESTS,
-    HTTP_500_INTERNAL_SERVER_ERROR
-)
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+import sentry_sdk
 
 from core.result import Error
+from core.errors import ErrorCodes
+from utils.logging.setup import get_logger
+
+
+# Get logger for this module
+logger = get_logger(__name__)
+
+
+def setup_error_handlers(app: FastAPI) -> None:
+    """
+    Register global error handlers with FastAPI application
+    
+    Args:
+        app: FastAPI application instance
+    """
+    
+    @app.exception_handler(StarletteHTTPException)
+    async def http_exception_handler(
+        request: Request,
+        exc: StarletteHTTPException
+    ) -> JSONResponse:
+        """
+        Handle standard HTTP exceptions
+        
+        These are typically raised by FastAPI itself (404, 405, etc.)
+        """
+        logger.warning(
+            "http_exception",
+            status_code=exc.status_code,
+            detail=exc.detail,
+            path=request.url.path,
+            method=request.method
+        )
+        
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "code": "HTTP_ERROR",
+                "message": str(exc.detail),
+                "details": {}
+            }
+        )
+    
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(
+        request: Request,
+        exc: RequestValidationError
+    ) -> JSONResponse:
+        """
+        Handle Pydantic validation errors
+        
+        These occur when request body/query params don't match expected schema
+        """
+        logger.warning(
+            "validation_error",
+            errors=exc.errors(),
+            path=request.url.path,
+            method=request.method
+        )
+        
+        return JSONResponse(
+            status_code=400,
+            content={
+                "code": "VALIDATION_ERROR",
+                "message": "Request validation failed",
+                "details": {
+                    "errors": exc.errors()
+                }
+            }
+        )
+    
+    @app.exception_handler(Exception)
+    async def general_exception_handler(
+        request: Request,
+        exc: Exception
+    ) -> JSONResponse:
+        """
+        Catch-all handler for unexpected exceptions
+        
+        This captures any exception not handled by other handlers.
+        All unexpected exceptions are sent to Sentry for tracking.
+        """
+        # Log the error
+        logger.error(
+            "unexpected_exception",
+            error=str(exc),
+            error_type=type(exc).__name__,
+            path=request.url.path,
+            method=request.method,
+            exc_info=True
+        )
+        
+        # Capture in Sentry (Phase 2)
+        sentry_sdk.capture_exception(exc)
+        
+        return JSONResponse(
+            status_code=500,
+            content={
+                "code": "INTERNAL_ERROR",
+                "message": "An unexpected error occurred",
+                "details": {}
+            }
+        )
 
 
 def map_error_to_http(error: Error) -> HTTPException:
     """
     Map domain Error to HTTP exception
     
-    This is the bridge between domain layer (Result/Error) and
-    HTTP layer (status codes, JSON responses).
+    This function converts our domain Error objects (from Result pattern)
+    into FastAPI HTTPException objects with appropriate status codes.
+    
+    Internal errors are automatically captured in Sentry for tracking.
     
     Args:
-        error: Domain error from Result.fail()
-        
+        error: Domain Error object from Result.fail()
+    
     Returns:
         HTTPException with appropriate status code
-        
+    
+    Raises:
+        HTTPException: Always raises to trigger FastAPI error handling
+    
     Example:
-        result = await service.create_customer(email)
+        result = customer_service.create_customer(email)
         if result.is_failure:
             raise map_error_to_http(result.error)
     """
-    # Error code → HTTP status mapping
+    # Capture internal errors in Sentry (Phase 2)
+    if error.code == ErrorCodes.INTERNAL_ERROR:
+        # Log the internal error
+        logger.error(
+            "internal_error_captured",
+            error_code=error.code,
+            error_message=error.message,
+            error_details=error.details
+        )
+        
+        # Capture in Sentry with full context
+        sentry_sdk.capture_exception(
+            Exception(error.message),
+            extras={
+                "error_code": error.code,
+                "error_message": error.message,
+                "error_details": error.details,
+                "stacktrace": error.stacktrace,
+            }
+        )
+    
+    # Map error codes to HTTP status codes
     status_codes = {
-        "VALIDATION_ERROR": HTTP_400_BAD_REQUEST,
-        "NOT_FOUND": HTTP_404_NOT_FOUND,
-        "BUSINESS_RULE_VIOLATION": HTTP_400_BAD_REQUEST,
-        "AUTHORIZATION_ERROR": HTTP_401_UNAUTHORIZED,
-        "FORBIDDEN": HTTP_403_FORBIDDEN,
-        "CONFLICT": HTTP_409_CONFLICT,
-        "RATE_LIMIT_EXCEEDED": HTTP_429_TOO_MANY_REQUESTS,
-        "INTERNAL_ERROR": HTTP_500_INTERNAL_SERVER_ERROR,
-        "EXTERNAL_SERVICE_ERROR": HTTP_500_INTERNAL_SERVER_ERROR,
+        ErrorCodes.VALIDATION_ERROR: 400,
+        ErrorCodes.BUSINESS_RULE_VIOLATION: 400,
+        ErrorCodes.NOT_FOUND: 404,
+        ErrorCodes.CONFLICT: 409,
+        ErrorCodes.AUTHORIZATION_ERROR: 403,
+        ErrorCodes.RATE_LIMIT_EXCEEDED: 429,
+        ErrorCodes.INTERNAL_ERROR: 500,
+        ErrorCodes.EXTERNAL_SERVICE_ERROR: 503,
     }
     
-    # Get status code (default to 500 for unknown errors)
-    status_code = status_codes.get(error.code, HTTP_500_INTERNAL_SERVER_ERROR)
+    status_code = status_codes.get(error.code, 500)
     
-    # Format error response
-    return HTTPException(
+    # Log the error mapping
+    logger.debug(
+        "error_mapped_to_http",
+        error_code=error.code,
+        status_code=status_code,
+        message=error.message
+    )
+    
+    # Create and raise HTTP exception
+    raise HTTPException(
         status_code=status_code,
         detail={
-            "error_code": error.code,
+            "code": error.code,
             "message": error.message,
             "details": error.details or {}
         }
     )
 
 
-def register_error_handlers(app):
+# Convenience function for routes
+def handle_result(result):
     """
-    Register all error handlers with FastAPI app
+    Handle a Result object in route handlers
+    
+    If Result is success, returns the value.
+    If Result is failure, raises mapped HTTP exception.
     
     Args:
-        app: FastAPI application instance
+        result: Result object from service call
+    
+    Returns:
+        result.value if successful
+    
+    Raises:
+        HTTPException: If result is failure
+    
+    Example:
+        @router.post("/customers")
+        async def create_customer(data: CustomerCreate):
+            result = await customer_service.create(data.email)
+            return handle_result(result)
     """
-    
-    @app.exception_handler(Exception)
-    async def general_exception_handler(request: Request, exc: Exception):
-        """
-        Catch-all for unexpected exceptions
-        
-        This ensures no uncaught exceptions leak to the user.
-        All errors are formatted consistently.
-        """
-        # Log the full error server-side
-        import traceback
-        print(f"Unhandled exception: {exc}")
-        traceback.print_exc()
-        
-        return JSONResponse(
-            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-            content={
-                "error_code": "INTERNAL_ERROR",
-                "message": "An unexpected error occurred",
-                "details": {}
-            }
-        )
-    
-    @app.exception_handler(HTTPException)
-    async def http_exception_handler(request: Request, exc: HTTPException):
-        """
-        Handle FastAPI HTTPExceptions
-        
-        Ensures consistent error format even for HTTP exceptions.
-        """
-        # If detail is already a dict (from map_error_to_http), use it
-        if isinstance(exc.detail, dict):
-            return JSONResponse(
-                status_code=exc.status_code,
-                content=exc.detail
-            )
-        
-        # Otherwise, wrap in standard format
-        return JSONResponse(
-            status_code=exc.status_code,
-            content={
-                "error_code": "HTTP_ERROR",
-                "message": str(exc.detail),
-                "details": {}
-            }
-        )
+    if result.is_failure:
+        raise map_error_to_http(result.error)
+    return result.value

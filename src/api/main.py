@@ -5,99 +5,134 @@ FastAPI Application - REST API for multi-agent support system
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-import sys
-from pathlib import Path
-project_root = Path(__file__).parent.parent
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
+# Import routes
+from api.routes import conversations, customers, health, analytics
+from api.error_handlers import setup_error_handlers
 
-from api.routes import api_router
-from api.error_handlers import register_error_handlers
+# Import initialization functions
+from utils.logging.setup import setup_logging
+from utils.monitoring.sentry_config import init_sentry
 from database.connection import init_db, close_db
-from utils.logging import setup_logging, get_logger  # NEW
 
-# Initialize FastAPI app
+
+# Create FastAPI application
 app = FastAPI(
-    title="Multi-Agent Customer Support API",
-    description="Production-ready multi-agent support system with clean architecture",
-    version="3.0.0"
+    title="Multi-Agent Support System",
+    version="3.0.0",
+    description="AI-powered customer support system with multi-agent orchestration",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
 )
 
-# CORS (allow all for development)
+
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Configure appropriately for production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
+# Setup error handlers
+setup_error_handlers(app)
+
+
+# Include API routes
+app.include_router(health.router, prefix="/api", tags=["Health"])
+app.include_router(conversations.router, prefix="/api", tags=["Conversations"])
+app.include_router(customers.router, prefix="/api", tags=["Customers"])
+app.include_router(analytics.router, prefix="/api", tags=["Analytics"])
+
+
 @app.on_event("startup")
 async def startup_event():
-    """Initialize services on startup"""
-    # NEW: Initialize structured logging
+    """
+    Initialize services on application startup
+    
+    Initialization order is critical:
+    1. Logging (Phase 1) - Must be first so other services can log
+    2. Sentry (Phase 2) - Captures errors during startup
+    3. Database - Required for API operations
+    """
+    print("🚀 Starting Multi-Agent Support System v3.0...")
+    
+    # Phase 1: Initialize structured logging
+    print("📝 Initializing structured logging...")
     setup_logging()
-    logger = get_logger(__name__)
+    print("✓ Logging initialized")
     
-    logger.info("application_starting", version="3.0.0")
-    logger.info("initializing_database")
+    # Phase 2: Initialize Sentry error tracking
+    print("📊 Initializing Sentry monitoring...")
+    init_sentry()
+    print("✓ Sentry monitoring ready")
     
+    # Initialize database
+    print("💾 Initializing database connection...")
     await init_db()
+    print("✓ Database connected")
     
-    logger.info("application_ready")
+    print("✅ API ready to accept requests!")
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """Cleanup on shutdown"""
-    logger = get_logger(__name__)
-    logger.info("application_shutting_down")
+    """
+    Cleanup on application shutdown
+    """
+    print("👋 Shutting down Multi-Agent Support System...")
     
+    # Close database connections
+    print("💾 Closing database connections...")
     await close_db()
+    print("✓ Database connections closed")
     
-    logger.info("application_shutdown_complete")
+    print("✅ Shutdown complete")
 
 
-# Root endpoint
 @app.get("/")
 async def root():
-    """Root endpoint with API info"""
+    """
+    Root endpoint - API status
+    
+    Returns:
+        API information and status
+    """
     return {
-        "message": "Multi-Agent Customer Support API",
+        "name": "Multi-Agent Support System",
         "version": "3.0.0",
-        "architecture": "Clean Architecture with Application Services",
-        "docs": "/docs",
-        "health": "/health"
+        "status": "running",
+        "docs": "/api/docs",
+        "health": "/api/health"
     }
 
 
-# Register all routes
-app.include_router(api_router)
-
-# Register error handlers
-register_error_handlers(app)
+@app.get("/api")
+async def api_root():
+    """
+    API root endpoint
+    
+    Returns:
+        Available API endpoints
+    """
+    return {
+        "message": "Multi-Agent Support System API v3.0",
+        "endpoints": {
+            "health": "/api/health",
+            "conversations": "/api/conversations",
+            "customers": "/api/customers",
+            "analytics": "/api/analytics",
+            "docs": "/api/docs"
+        }
+    }
 
 
 if __name__ == "__main__":
     import uvicorn
     
-    print("=" * 70)
-    print("Multi-Agent Support API v3.0")
-    print("=" * 70)
-    print("NEW: Clean Architecture + Structured Logging")
-    print("  ✓ Application Services (orchestration)")
-    print("  ✓ Domain Services (business logic)")
-    print("  ✓ Infrastructure Services (data access)")
-    print("  ✓ Structured logging with correlation IDs")
-    print("  ✓ PII masking for compliance")
-    print("=" * 70)
-    print("Documentation: http://localhost:8000/docs")
-    print("Health Check: http://localhost:8000/health")
-    print("=" * 70)
-    
     uvicorn.run(
-        "main:app",
+        "api.main:app",
         host="0.0.0.0",
         port=8000,
         reload=True,
