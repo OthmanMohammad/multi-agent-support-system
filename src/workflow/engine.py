@@ -19,17 +19,17 @@ This engine is called by application services which handle:
 import asyncio
 from typing import Dict, Any, Optional
 
-from workflow.graph import SupportGraph
-from workflow.state import AgentState, create_initial_state
-from workflow.result_handler import AgentResultHandler
-from workflow.state_manager import WorkflowStateManager
-from workflow.exceptions import (
+from src.workflow.graph import SupportGraph
+from src.workflow.state import AgentState, create_initial_state
+from src.workflow.result_handler import AgentResultHandler
+from src.workflow.state_manager import WorkflowStateManager
+from src.workflow.exceptions import (
     AgentExecutionError,
     AgentTimeoutError,
     RoutingError,
     InvalidStateError
 )
-from utils.logging.setup import get_logger
+from src.utils.logging.setup import get_logger
 
 
 class AgentWorkflowEngine:
@@ -325,7 +325,7 @@ class AgentWorkflowEngine:
             if classification["confidence"] > 0.8:
                 # High confidence, proceed
         """
-        from agents.router import RouterAgent
+        from src.agents.router import RouterAgent
         
         self.logger.debug(
             "intent_classification_requested",

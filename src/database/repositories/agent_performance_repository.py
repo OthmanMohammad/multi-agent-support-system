@@ -6,8 +6,8 @@ from datetime import datetime, timedelta, date
 from uuid import UUID
 from sqlalchemy import select, and_, func
 
-from database.base import BaseRepository
-from database.models import AgentPerformance
+from src.database.base import BaseRepository
+from src.database.models import AgentPerformance
 
 
 class AgentPerformanceRepository(BaseRepository[AgentPerformance]):

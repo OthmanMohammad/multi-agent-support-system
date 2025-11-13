@@ -7,9 +7,9 @@ and valid before returning to callers.
 """
 from typing import Dict, Any, List, Optional
 
-from workflow.state import AgentState
-from workflow.exceptions import InvalidStateError
-from utils.logging.setup import get_logger
+from src.workflow.state import AgentState
+from src.workflow.exceptions import InvalidStateError
+from src.utils.logging.setup import get_logger
 
 
 class AgentResultHandler:
@@ -312,7 +312,7 @@ if __name__ == "__main__":
     handler = AgentResultHandler()
     
     # Create test state
-    from workflow.state import create_initial_state
+    from src.workflow.state import create_initial_state
     
     test_state = create_initial_state("Test message")
     test_state.update({

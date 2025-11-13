@@ -12,10 +12,10 @@ Architecture Layers:
 
 Usage:
     # Domain services (pure business logic)
-    from services.domain import ConversationDomainService, CustomerDomainService
+    from src.services.domain import ConversationDomainService, CustomerDomainService
     
     # Infrastructure services (data access)
-    from services.infrastructure import (
+    from src.services.infrastructure import (
         CustomerInfrastructureService,
         KnowledgeBaseService,
         AnalyticsService,
@@ -24,17 +24,17 @@ Usage:
     )
     
     # Base service for custom services
-    from services.base import BaseService
+    from src.services.base import BaseService
 """
 
-from services.base import BaseService
+from src.services.base import BaseService
 
 # Domain services
-from services.domain.conversation import ConversationDomainService
-from services.domain.customer import CustomerDomainService
+from src.services.domain.conversation import ConversationDomainService
+from src.services.domain.customer import CustomerDomainService
 
 # Infrastructure services
-from services.infrastructure import (
+from src.services.infrastructure import (
     CustomerInfrastructureService,
     KnowledgeBaseService,
     AnalyticsService,

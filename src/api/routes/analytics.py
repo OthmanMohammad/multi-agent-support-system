@@ -5,10 +5,10 @@ Analytics routes - HTTP endpoints for analytics and metrics
 from fastapi import APIRouter, Depends, Query
 from typing import Optional
 
-from api.dependencies import get_analytics_service
-from api.error_handlers import map_error_to_http
-from services.infrastructure.analytics_service import AnalyticsService
-from utils.logging.setup import get_logger
+from src.api.dependencies import get_analytics_service
+from src.api.error_handlers import map_error_to_http
+from src.services.infrastructure.analytics_service import AnalyticsService
+from src.utils.logging.setup import get_logger
 
 router = APIRouter()
 logger = get_logger(__name__)

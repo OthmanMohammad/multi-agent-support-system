@@ -11,13 +11,13 @@ without changing their behavior or requiring special exception classes.
 
 from typing import Dict, Any, Optional
 
-from utils.logging.context import (
+from src.utils.logging.context import (
     get_correlation_id,
     get_conversation_id,
     get_customer_id,
     get_agent_name,
 )
-from utils.logging.setup import get_logger
+from src.utils.logging.setup import get_logger
 
 logger = get_logger(__name__)
 

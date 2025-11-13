@@ -6,10 +6,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from uuid import UUID
 from pydantic import BaseModel
 
-from api.dependencies import get_customer_application_service
-from api.error_handlers import map_error_to_http
-from services.application.customer_service import CustomerApplicationService
-from utils.logging.setup import get_logger
+from src.api.dependencies import get_customer_application_service
+from src.api.error_handlers import map_error_to_http
+from src.services.application.customer_service import CustomerApplicationService
+from src.utils.logging.setup import get_logger
 
 router = APIRouter()
 logger = get_logger(__name__)

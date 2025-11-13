@@ -8,21 +8,21 @@ NO event publishing (just return event objects)
 """
 from typing import Optional, Dict, Any
 from uuid import UUID
-from core.result import Result
-from core.errors import BusinessRuleError
-from services.domain.customer.specifications import (
+from src.core.result import Result
+from src.core.errors import BusinessRuleError
+from src.services.domain.customer.specifications import (
     CustomerIsActive,
     WithinRateLimit,
     HasValidPlan,
     CanUpgradePlan,
     CanDowngradePlan,
 )
-from services.domain.customer.events import (
+from src.services.domain.customer.events import (
     CustomerPlanUpgradedEvent,
     CustomerPlanDowngradedEvent,
     RateLimitExceededEvent,
 )
-from services.domain.customer.validators import CustomerValidators
+from src.services.domain.customer.validators import CustomerValidators
 
 class CustomerDomainService:
     """

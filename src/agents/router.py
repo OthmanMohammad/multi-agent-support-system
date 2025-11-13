@@ -12,9 +12,9 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from workflow.state import AgentState, IntentCategory, AgentType
-from agents.base import BaseAgent
-from utils.logging.setup import get_logger
+from src.workflow.state import AgentState, IntentCategory, AgentType
+from src.agents.base import BaseAgent
+from src.utils.logging.setup import get_logger
 
 
 class IntentClassification(BaseModel):
@@ -354,7 +354,7 @@ if __name__ == "__main__":
     print("TESTING ROUTER AGENT")
     print("=" * 60)
     
-    from workflow.state import create_initial_state
+    from src.workflow.state import create_initial_state
     
     # Test cases
     test_messages = [

@@ -13,7 +13,7 @@ Decorators:
 import time
 import functools
 from typing import Callable, Any
-from utils.logging.setup import get_logger
+from src.utils.logging.setup import get_logger
 
 
 def log_execution(func: Callable) -> Callable:

@@ -28,7 +28,7 @@ def add_correlation_id(
     Gets correlation ID from context (set by middleware or context manager)
     and adds it to every log entry.
     """
-    from utils.logging.context import get_correlation_id
+    from src.utils.logging.context import get_correlation_id
     
     correlation_id = get_correlation_id()
     if correlation_id:
@@ -48,7 +48,7 @@ def setup_logging() -> None:
     Call this once at application startup.
     
     Example:
-        from utils.logging import setup_logging
+        from src.utils.logging import setup_logging
         
         setup_logging()
     """

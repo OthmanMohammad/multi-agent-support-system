@@ -4,8 +4,8 @@ These validators contain NO business logic, just input validation.
 They are static helpers used by the domain service.
 """
 from typing import Optional
-from core.result import Result
-from core.errors import ValidationError
+from src.core.result import Result
+from src.core.errors import ValidationError
 class ConversationValidators:
     """Pure validation functions for conversation domain"""
     @staticmethod

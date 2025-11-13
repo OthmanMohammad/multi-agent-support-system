@@ -7,15 +7,15 @@ from typing import Optional, Dict, Any
 from uuid import UUID
 from datetime import datetime, timezone
 
-from core.result import Result, Error
-from core.errors import ValidationError, BusinessRuleError, NotFoundError, InternalError
-from core.events import get_event_bus
-from database.unit_of_work import UnitOfWork
-from services.domain.conversation.domain_service import ConversationDomainService
-from services.infrastructure.customer_service import CustomerInfrastructureService
-from services.infrastructure.analytics_service import AnalyticsService
-from workflow.engine import AgentWorkflowEngine
-from utils.logging.setup import get_logger
+from src.core.result import Result, Error
+from src.core.errors import ValidationError, BusinessRuleError, NotFoundError, InternalError
+from src.core.events import get_event_bus
+from src.database.unit_of_work import UnitOfWork
+from src.services.domain.conversation.domain_service import ConversationDomainService
+from src.services.infrastructure.customer_service import CustomerInfrastructureService
+from src.services.infrastructure.analytics_service import AnalyticsService
+from src.workflow.engine import AgentWorkflowEngine
+from src.utils.logging.setup import get_logger
 
 
 class ConversationApplicationService:

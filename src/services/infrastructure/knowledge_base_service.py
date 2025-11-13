@@ -12,10 +12,10 @@ from typing import List, Dict, Optional
 from uuid import UUID
 import time
 
-from core.result import Result
-from core.errors import ExternalServiceError, NotFoundError
-from vector_store import VectorStore
-from utils.logging.setup import get_logger
+from src.core.result import Result
+from src.core.errors import ExternalServiceError, NotFoundError
+from src.vector_store import VectorStore
+from src.utils.logging.setup import get_logger
 
 
 class KnowledgeBaseService:

@@ -4,9 +4,9 @@ Specifications encapsulate business rules that can be combined using
 boolean logic (AND, OR, NOT).
 """
 from typing import TYPE_CHECKING
-from core.specifications import Specification
+from src.core.specifications import Specification
 if TYPE_CHECKING:
-    from database.models import Conversation
+    from src.database.models import Conversation
 
 class ConversationIsActive(Specification['Conversation']):
     """Conversation status is 'active'"""

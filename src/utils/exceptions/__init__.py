@@ -13,7 +13,7 @@ Features:
 - Works with existing domain exceptions (doesn't replace them)
 
 Quick Start:
-    from utils.exceptions import enrich_exception, capture_exceptions
+    from src.utils.exceptions import enrich_exception, capture_exceptions
     
     # Enrich exception with context
     try:
@@ -30,16 +30,16 @@ Quick Start:
         await process()
 """
 
-from utils.exceptions.enrichment import (
+from src.utils.exceptions.enrichment import (
     enrich_exception,
     get_exception_context,
     EnrichedExceptionMixin,
 )
-from utils.exceptions.decorators import (
+from src.utils.exceptions.decorators import (
     capture_exceptions,
     handle_workflow_errors,
 )
-from utils.exceptions.context import (
+from src.utils.exceptions.context import (
     get_exception_correlation_id,
     get_exception_customer_id,
     get_exception_conversation_id,

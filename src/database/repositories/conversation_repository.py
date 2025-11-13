@@ -7,8 +7,8 @@ from uuid import UUID
 from sqlalchemy import select, func, and_, or_
 from sqlalchemy.orm import selectinload
 
-from database.base import BaseRepository
-from database.models import Conversation, Message
+from src.database.base import BaseRepository
+from src.database.models import Conversation, Message
 
 
 class ConversationRepository(BaseRepository[Conversation]):
