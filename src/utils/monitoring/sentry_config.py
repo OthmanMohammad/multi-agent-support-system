@@ -4,24 +4,20 @@ Sentry Configuration - Error tracking and performance monitoring
 This module initializes Sentry with:
 - FastAPI integration for automatic error capture
 - SQLAlchemy integration for database query tracking
-- Performance monitoring (10% sampling by default)
+- Performance monitoring (configurable sampling)
 - PII filtering via before_send hook
 - Correlation ID injection from logging context
 - Customer/conversation/agent context enrichment
-
-Environment Variables:
-    SENTRY_DSN: Sentry project DSN (get from sentry.io)
-    SENTRY_ENVIRONMENT: Environment name (development, staging, production)
-    SENTRY_TRACES_SAMPLE_RATE: Transaction sampling rate (0.0-1.0, default 0.1)
-    SENTRY_PROFILES_SAMPLE_RATE: Profile sampling rate (0.0-1.0, default 0.1)
+- Centralized configuration management
 """
 
-import os
 import re
 from typing import Optional, Dict, Any
 import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+
+from src.core.config import get_settings
 
 
 # Sensitive field patterns for PII masking
@@ -168,7 +164,7 @@ def before_send(event: Dict[str, Any], hint: Dict[str, Any]) -> Optional[Dict[st
         Modified event dict or None to drop the event
     """
     # Import here to avoid circular imports
-    from src.utils.logging.context import (
+    from utils.logging.context import (
         get_correlation_id,
         get_conversation_id,
         get_customer_id,
@@ -236,31 +232,26 @@ def before_send(event: Dict[str, Any], hint: Dict[str, Any]) -> Optional[Dict[st
 
 def init_sentry() -> None:
     """
-    Initialize Sentry SDK
+    Initialize Sentry SDK using centralized configuration
     
     Call this once at application startup (in FastAPI startup event).
-    If SENTRY_DSN is not set, Sentry will be disabled.
+    If SENTRY_DSN is not set in config, Sentry will be disabled.
     
     Example:
         @app.on_event("startup")
         async def startup_event():
             init_sentry()
     """
-    dsn = os.getenv("SENTRY_DSN")
+    settings = get_settings()
     
-    if not dsn:
-        print("⚠️  SENTRY_DSN not set - Sentry monitoring disabled")
+    if not settings.sentry.dsn:
+        print(f"⚠️  Sentry DSN not configured - Sentry monitoring disabled (environment: {settings.environment})")
         return
     
-    # Get configuration from environment
-    environment = os.getenv("ENVIRONMENT", "development")
-    traces_sample_rate = float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1"))
-    profiles_sample_rate = float(os.getenv("SENTRY_PROFILES_SAMPLE_RATE", "0.1"))
-    
-    # Initialize Sentry
+    # Initialize Sentry with config
     sentry_sdk.init(
-        dsn=dsn,
-        environment=environment,
+        dsn=settings.sentry.dsn,
+        environment=settings.sentry.environment,
         
         # Integrations
         integrations=[
@@ -271,8 +262,8 @@ def init_sentry() -> None:
         ],
         
         # Performance monitoring
-        traces_sample_rate=traces_sample_rate,  # Sample 10% of transactions (within free tier)
-        profiles_sample_rate=profiles_sample_rate,  # Sample 10% for profiling
+        traces_sample_rate=settings.sentry.traces_sample_rate,
+        profiles_sample_rate=settings.sentry.profiles_sample_rate,
         
         # PII filtering and context enrichment
         before_send=before_send,
@@ -281,19 +272,27 @@ def init_sentry() -> None:
         sample_rate=1.0,
         
         # Don't send default PII (we'll add what we need in before_send)
-        send_default_pii=False,
+        send_default_pii=settings.sentry.send_default_pii,
         
         # Attach stack traces to messages
-        attach_stacktrace=True,
+        attach_stacktrace=settings.sentry.attach_stacktrace,
         
         # Enable distributed tracing
         enable_tracing=True,
         
-        # Set release version if available
-        release=os.getenv("RELEASE_VERSION"),
+        # Set release version
+        release=settings.app_version,
+        
+        # Max breadcrumbs
+        max_breadcrumbs=settings.sentry.max_breadcrumbs,
     )
     
-    print(f"✓ Sentry initialized (environment: {environment}, traces: {traces_sample_rate*100}%)")
+    print(
+        f"✓ Sentry initialized "
+        f"(environment: {settings.sentry.environment}, "
+        f"traces: {settings.sentry.traces_sample_rate*100}%, "
+        f"profiles: {settings.sentry.profiles_sample_rate*100}%)"
+    )
 
 
 def capture_exception(
@@ -434,6 +433,6 @@ if __name__ == "__main__":
     print("✓ ALL TESTS PASSED")
     print("=" * 70)
     print("\nNOTE: To fully test Sentry integration:")
-    print("1. Set SENTRY_DSN in .env")
-    print("2. Run: python -c 'from utils.monitoring import init_sentry; init_sentry()'")
+    print("1. Configure Sentry in .env file")
+    print("2. Run: python -c 'from utils.monitoring.sentry_config import init_sentry; init_sentry()'")
     print("3. Check Sentry dashboard for initialization event")
