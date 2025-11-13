@@ -6,9 +6,10 @@ Configured with:
 - Sentry error monitoring
 - Enhanced exception handling
 - Request/response logging middleware
+- Centralized configuration management
+- Environment-based settings validation
 """
 
-import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -16,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.api.routes import conversations, customers, health, analytics
 from src.api.error_handlers import setup_error_handlers
 
+# Import middleware
 from src.api.middleware import CorrelationMiddleware, LoggingMiddleware
 
 # Import initialization functions
@@ -23,15 +25,22 @@ from src.utils.logging.setup import setup_logging, get_logger
 from src.utils.monitoring.sentry_config import init_sentry
 from src.database.connection import init_db, close_db
 
+# Import configuration
+from src.core.config import get_settings
+from src.core.config_validator import require_valid_configuration
+
 
 # Initialize logger for this module
 logger = get_logger(__name__)
 
+# Load configuration
+settings = get_settings()
+
 
 # Create FastAPI application
 app = FastAPI(
-    title="Multi-Agent Support System",
-    version="1.0.0",
+    title=settings.api.title,
+    version=settings.api.version,
     description="AI-powered customer support system with multi-agent orchestration",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
@@ -44,20 +53,13 @@ app.add_middleware(CorrelationMiddleware)
 # Add logging middleware (MUST be after correlation middleware)
 app.add_middleware(LoggingMiddleware, log_body=False)
 
-# Configure CORS - SECURITY FIX: Environment-based origins (no wildcards)
-# Get allowed origins from environment variable
-# Format: comma-separated list of origins
-ALLOWED_ORIGINS = os.getenv(
-    "CORS_ALLOWED_ORIGINS",
-    "https://app.example.com,https://api.example.com"
-).split(",")
-
+# Configure CORS with validated origins from config
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "X-Correlation-ID"],
+    allow_origins=settings.api.cors_origins,
+    allow_credentials=settings.api.cors_credentials,
+    allow_methods=settings.api.cors_methods,
+    allow_headers=settings.api.cors_headers,
 )
 
 
@@ -78,13 +80,18 @@ async def startup_event():
     Initialize services on application startup
     
     Initialization order is critical:
+    0. Configuration validation - Fail fast if config invalid
     1. Logging - Must be first so other services can log
     2. Sentry - Captures errors during startup
     3. Database - Required for API operations
     """
+    # CRITICAL: Validate configuration first (fail-fast)
+    require_valid_configuration()
+    
     logger.info(
         "application_startup_initiated",
-        version="3.0.0",
+        environment=settings.environment,
+        version=settings.app_version,
         phase="startup"
     )
     
@@ -106,15 +113,16 @@ async def startup_event():
     # Log CORS configuration
     logger.info(
         "cors_configuration",
-        allowed_origins=ALLOWED_ORIGINS,
-        origin_count=len(ALLOWED_ORIGINS),
-        allows_credentials=True
+        allowed_origins=settings.api.cors_origins,
+        origin_count=len(settings.api.cors_origins),
+        allows_credentials=settings.api.cors_credentials
     )
     
     logger.info(
         "application_startup_completed",
+        environment=settings.environment,
         status="ready",
-        message="Multi-Agent Support System v3.0 ready to accept requests"
+        message=f"Multi-Agent Support System v{settings.app_version} ready to accept requests"
     )
 
 
@@ -123,7 +131,10 @@ async def shutdown_event():
     """
     Cleanup on application shutdown
     """
-    logger.info("application_shutdown_initiated")
+    logger.info(
+        "application_shutdown_initiated",
+        environment=settings.environment
+    )
     
     # Close database connections
     logger.info("database_shutdown_started")
@@ -148,7 +159,8 @@ async def root():
     
     return {
         "name": "Multi-Agent Support System",
-        "version": "3.0.0",
+        "version": settings.app_version,
+        "environment": settings.environment,
         "status": "running",
         "docs": "/api/docs",
         "health": "/api/health"
@@ -166,7 +178,8 @@ async def api_root():
     logger.debug("api_root_endpoint_accessed")
     
     return {
-        "message": "Multi-Agent Support System API v3.0",
+        "message": f"Multi-Agent Support System API v{settings.app_version}",
+        "environment": settings.environment,
         "endpoints": {
             "health": "/api/health",
             "conversations": "/api/conversations",
@@ -181,9 +194,9 @@ if __name__ == "__main__":
     import uvicorn
     
     uvicorn.run(
-        "src.api.main:app",
-        host="0.0.0.0",
-        port=8000,
+        "api.main:app",
+        host=settings.api.host,
+        port=settings.api.port,
         reload=True,
         log_level="info"
     )
