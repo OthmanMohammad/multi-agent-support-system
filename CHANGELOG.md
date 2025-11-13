@@ -5,11 +5,85 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2025-11-12
+## [1.1.0] - 2025-11-13
+
+### Added
+
+- Create exception utilities package
+- Add exception enrichment with context
+- Add decorators for exception handling
+- Add context extraction utilities
+- Enhance error handlers with exception enrichment
+- Add correlation ID and logging middleware
+- Integrate middleware and structured logging
+- Add structured logging to conversation endpoints
+- Add structured logging to customer endpoints
+- Add structured logging to analytics endpoints
+- Add structured logging to health check endpoints
+- Migrate notification service to structured logging
+- Migrate customer infrastructure service to structured logging
+- Migrate analytics service to structured logging
+- Migrate knowledge base service to structured logging
+- Migrate conversation application service to structured logging
+- Migrate customer application service to structured logging
+- Migrate workflow engine to structured logging
+- Migrate LangGraph to structured logging
+- Migrate router agent to structured logging
+- Migrate billing agent to structured logging
+- Migrate technical agent to structured logging
+- Migrate escalation agent to structured logging
+- Migrate usage agent to structured logging
+- Migrate API agent to structured logging
+- Migrate connection module to structured logging
+- Migrate result handler to structured logging
+- Migrate state manager to structured logging
+- Migrate base service to structured logging
+- Migrate event bus to structured logging
+- Migrate enrichment utilities to structured logging
+- Add Sentry Discord integration for real-time alerts
+- Add performance testing utilities for Sentry
+- Add centralized configuration management with Pydantic Settings
+- Add startup configuration validation with fail-fast
+
+### Build
+
+- Add pydantic-settings for configuration management
+
+### Documentation
+
+- Generate initial changelog with git-cliff
+- Enhance exception docstrings for Phase 4
+- Add comprehensive Discord integration documentation
+- Update environment template with security requirements
+- Add comprehensive Doppler secrets management documentation
+
+### Fixed
+
+- Add missing EnrichedExceptionMixin class to enrichment.py
+- Remove hardcoded database credentials from version control
+- Convert async database URL to sync for Alembic compatibility
+- Ensure Alembic uses sync database URL
 
 ### Miscellaneous
 
 - Add git-cliff configuration for automated changelog
+- Add git-cliff configuration for automated changelog
+- Ignore local release guide
+- Explicitly ignore environment files to prevent secret leaks
+- Add Doppler config and .env files to .gitignore
+
+### Refactored
+
+- Standardize imports with explicit src package prefix
+- Update .env.example for staging/production only and fix CORS format
+- Integrate centralized configuration management
+- Use centralized configuration for database connections
+- Use centralized configuration for Sentry
+- Export configuration management functions
+- Use centralized config for Anthropic API
+- Use centralized config for Qdrant
+- Use centralized config in simple agent
+- Use centralized config and remove development environment
 
 ## [1.0.0] - 2025-11-12
 
@@ -241,5 +315,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add audit trail and soft delete fields to all tables
 - Complete schema with audit trail and optimized indexes
 
-[1.0.0]: https://github.com/othmanmohammad/multi-agent-support-system/compare/v1.0.0...v1.0.0
+[1.1.0]: https://github.com/othmanmohammad/multi-agent-support-system/compare/v1.0.0...v1.1.0
 
