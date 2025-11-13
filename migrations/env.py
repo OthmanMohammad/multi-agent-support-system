@@ -21,6 +21,11 @@ if not database_url:
         "  alembic upgrade head"
     )
 
+# IMPORTANT: Convert async URL to sync URL for Alembic
+# Alembic uses synchronous connections, so we need psycopg2 instead of asyncpg
+if "postgresql+asyncpg://" in database_url:
+    database_url = database_url.replace("postgresql+asyncpg://", "postgresql+psycopg2://")
+
 # Set the sqlalchemy.url from environment
 config.set_main_option("sqlalchemy.url", database_url)
 
