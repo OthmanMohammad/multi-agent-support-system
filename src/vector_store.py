@@ -1,6 +1,7 @@
 """
 Vector Store - Qdrant Cloud client wrapper for semantic search
 Uses sentence-transformers for local embeddings (no OpenAI needed)
+Uses centralized configuration for Qdrant connection
 """
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
@@ -14,10 +15,8 @@ from qdrant_client.models import (
 )
 from sentence_transformers import SentenceTransformer
 from typing import List, Dict, Optional
-import os
-from dotenv import load_dotenv
 
-load_dotenv()
+from src.core.config import get_settings
 
 
 class VectorStore:
@@ -38,21 +37,15 @@ class VectorStore:
         """
         self.collection_name = collection_name
         
+        # Get configuration
+        settings = get_settings()
+        
         # Connect to Qdrant Cloud
-        qdrant_url = os.getenv("QDRANT_URL")
-        qdrant_api_key = os.getenv("QDRANT_API_KEY")
-        
-        if not qdrant_url or not qdrant_api_key:
-            raise ValueError(
-                "Missing QDRANT_URL or QDRANT_API_KEY in .env file. "
-                "Please add them from your Qdrant Cloud dashboard."
-            )
-        
         print(f"Connecting to Qdrant Cloud...")
         self.client = QdrantClient(
-            url=qdrant_url,
-            api_key=qdrant_api_key,
-            timeout=30  # 30 seconds timeout for cloud
+            url=settings.qdrant.url,
+            api_key=settings.qdrant.api_key,
+            timeout=settings.qdrant.timeout
         )
         print("✓ Connected to Qdrant Cloud")
         
@@ -276,7 +269,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ Error: {e}")
         print("\nTroubleshooting:")
-        print("1. Check your .env file has QDRANT_URL and QDRANT_API_KEY")
+        print("1. Check your configuration in Doppler or .env")
         print("2. Verify the URL starts with https://")
         print("3. Make sure API key is correct")
         print("4. Check your cluster is running in Qdrant Cloud dashboard")
