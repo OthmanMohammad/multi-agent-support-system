@@ -8,7 +8,7 @@ from uuid import UUID
 
 # Use TYPE_CHECKING to avoid circular imports
 if TYPE_CHECKING:
-    from database.schemas.message import MessageInDB
+    from src.database.schemas.message import MessageInDB
 
 
 class ConversationBase(BaseModel):
@@ -72,5 +72,5 @@ class ConversationStatistics(BaseModel):
 
 
 # Update forward references after all classes are defined
-from database.schemas.message import MessageInDB
+from src.database.schemas.message import MessageInDB
 ConversationWithMessages.model_rebuild()

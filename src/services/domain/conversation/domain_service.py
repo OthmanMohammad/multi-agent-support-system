@@ -26,24 +26,24 @@ from typing import Optional, TYPE_CHECKING
 from datetime import datetime
 from uuid import UUID
 
-from core.result import Result
-from core.errors import BusinessRuleError
-from services.domain.conversation.specifications import (
+from src.core.result import Result
+from src.core.errors import BusinessRuleError
+from src.services.domain.conversation.specifications import (
     CanResolveConversation,
     CanEscalateConversation,
     CanReopenConversation,
 )
-from services.domain.conversation.events import (
+from src.services.domain.conversation.events import (
     ConversationResolvedEvent,
     ConversationEscalatedEvent,
     ConversationReopenedEvent,
     LowConfidenceDetectedEvent,
     NegativeSentimentDetectedEvent,
 )
-from services.domain.conversation.validators import ConversationValidators
+from src.services.domain.conversation.validators import ConversationValidators
 
 if TYPE_CHECKING:
-    from database.models import Conversation
+    from src.database.models import Conversation
 
 
 class ConversationDomainService:

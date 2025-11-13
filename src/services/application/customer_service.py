@@ -5,13 +5,13 @@ Customer Application Service - Orchestrates customer use cases
 from typing import Optional, Dict, Any
 from uuid import UUID
 
-from core.result import Result
-from core.errors import NotFoundError, InternalError
-from core.events import get_event_bus
-from database.unit_of_work import UnitOfWork
-from services.domain.customer.domain_service import CustomerDomainService
-from services.infrastructure.customer_service import CustomerInfrastructureService
-from utils.logging.setup import get_logger
+from src.core.result import Result
+from src.core.errors import NotFoundError, InternalError
+from src.core.events import get_event_bus
+from src.database.unit_of_work import UnitOfWork
+from src.services.domain.customer.domain_service import CustomerDomainService
+from src.services.infrastructure.customer_service import CustomerInfrastructureService
+from src.utils.logging.setup import get_logger
 
 
 class CustomerApplicationService:

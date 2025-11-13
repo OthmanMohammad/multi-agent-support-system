@@ -6,11 +6,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from uuid import UUID
 from typing import Optional
 
-from api.models import ChatRequest, ChatResponse, ConversationResponse
-from api.dependencies import get_conversation_application_service
-from api.error_handlers import map_error_to_http
-from services.application.conversation_service import ConversationApplicationService
-from utils.logging.setup import get_logger
+from src.api.models import ChatRequest, ChatResponse, ConversationResponse
+from src.api.dependencies import get_conversation_application_service
+from src.api.error_handlers import map_error_to_http
+from src.services.application.conversation_service import ConversationApplicationService
+from src.utils.logging.setup import get_logger
 
 router = APIRouter()
 logger = get_logger(__name__)

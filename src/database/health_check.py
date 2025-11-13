@@ -10,13 +10,13 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from database.connection import (
+from src.database.connection import (
     check_db_health,
     get_db_version,
     get_db_session,
     close_db
 )
-from database.models import Customer, Conversation, Message, AgentPerformance
+from src.database.models import Customer, Conversation, Message, AgentPerformance
 from sqlalchemy import text, func
 
 

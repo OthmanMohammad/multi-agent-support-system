@@ -8,10 +8,10 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from workflow.state import AgentState
-from agents.base import BaseAgent
+from src.workflow.state import AgentState
+from src.agents.base import BaseAgent
 from knowledge_base import search_articles
-from utils.logging.setup import get_logger
+from src.utils.logging.setup import get_logger
 
 
 class UsageAgent(BaseAgent):
@@ -127,7 +127,7 @@ Provide a helpful how-to guide."""
 
 
 if __name__ == "__main__":
-    from workflow.state import create_initial_state
+    from src.workflow.state import create_initial_state
     
     state = create_initial_state("How do I add team members?")
     state["primary_intent"] = "feature_invite"

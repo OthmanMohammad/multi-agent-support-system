@@ -168,7 +168,7 @@ def before_send(event: Dict[str, Any], hint: Dict[str, Any]) -> Optional[Dict[st
         Modified event dict or None to drop the event
     """
     # Import here to avoid circular imports
-    from utils.logging.context import (
+    from src.utils.logging.context import (
         get_correlation_id,
         get_conversation_id,
         get_customer_id,
@@ -323,7 +323,7 @@ def capture_exception(
             # Handle the error...
     """
     # Import here to avoid circular imports
-    from utils.logging.context import get_correlation_id
+    from src.utils.logging.context import get_correlation_id
     
     with sentry_sdk.push_scope() as scope:
         # Add custom context
@@ -367,7 +367,7 @@ def capture_message(
         )
     """
     # Import here to avoid circular imports
-    from utils.logging.context import get_correlation_id
+    from src.utils.logging.context import get_correlation_id
     
     with sentry_sdk.push_scope() as scope:
         # Add custom context

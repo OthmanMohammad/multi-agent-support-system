@@ -10,7 +10,7 @@ Use specifications for business rules
 Are easily testable without mocking
 
 Usage:
-from services.domain import ConversationDomainService
+from src.services.domain import ConversationDomainService
 service = ConversationDomainService()
 
 # Validate conversation creation
@@ -24,8 +24,8 @@ if result.is_success:
     # Proceed with creation
     pass
 """
-from services.domain.conversation.domain_service import ConversationDomainService
-from services.domain.customer.domain_service import CustomerDomainService
+from src.services.domain.conversation.domain_service import ConversationDomainService
+from src.services.domain.customer.domain_service import CustomerDomainService
 
 version = "1.0.0"
 

@@ -17,7 +17,7 @@ Architecture:
     Domain Services + Infrastructure Services + Workflow Engine
 
 Example:
-    from services.application import ConversationApplicationService
+    from src.services.application import ConversationApplicationService
     
     service = ConversationApplicationService(uow, domain_service, customer_service, workflow_engine)
     result = await service.create_conversation(
@@ -26,8 +26,8 @@ Example:
     )
 """
 
-from services.application.conversation_service import ConversationApplicationService
-from services.application.customer_service import CustomerApplicationService
+from src.services.application.conversation_service import ConversationApplicationService
+from src.services.application.customer_service import CustomerApplicationService
 
 __version__ = "1.0.0"
 

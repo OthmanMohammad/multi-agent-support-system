@@ -7,8 +7,8 @@ This package contains FastAPI middleware for:
 - Performance timing
 """
 
-from api.middleware.correlation_middleware import CorrelationMiddleware
-from api.middleware.logging_middleware import LoggingMiddleware
+from src.api.middleware.correlation_middleware import CorrelationMiddleware
+from src.api.middleware.logging_middleware import LoggingMiddleware
 
 __all__ = [
     "CorrelationMiddleware",

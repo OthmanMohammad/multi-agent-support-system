@@ -15,7 +15,7 @@ from starlette.requests import Request
 from starlette.responses import Response
 from typing import Callable
 
-from utils.logging.context import set_correlation_id, generate_correlation_id
+from src.utils.logging.context import set_correlation_id, generate_correlation_id
 
 
 class CorrelationMiddleware(BaseHTTPMiddleware):

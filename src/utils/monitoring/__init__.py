@@ -13,7 +13,7 @@ Features:
 - Context enrichment (customer, conversation, agent)
 
 Quick Start:
-    from utils.monitoring import init_sentry, capture_exception
+    from src.utils.monitoring import init_sentry, capture_exception
     
     # Initialize once at startup
     init_sentry()
@@ -36,7 +36,7 @@ Automatic Capture:
     - All with correlation IDs attached
 """
 
-from utils.monitoring.sentry_config import (
+from src.utils.monitoring.sentry_config import (
     init_sentry,
     capture_exception,
     capture_message,

@@ -5,8 +5,8 @@ from typing import Optional, List
 from sqlalchemy import select, func
 from uuid import UUID
 
-from database.base import BaseRepository
-from database.models import Customer
+from src.database.base import BaseRepository
+from src.database.models import Customer
 
 
 class CustomerRepository(BaseRepository[Customer]):

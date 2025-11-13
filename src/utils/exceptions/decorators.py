@@ -14,13 +14,13 @@ import functools
 from typing import Callable, Optional, List, Type
 import logging
 
-from utils.exceptions.enrichment import enrich_exception, get_exception_context
-from utils.logging.setup import get_logger
+from src.utils.exceptions.enrichment import enrich_exception, get_exception_context
+from src.utils.logging.setup import get_logger
 
 # Import for type hints only (avoid circular import)
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from core.result import Result
+    from src.core.result import Result
 
 
 def capture_exceptions(
@@ -88,7 +88,7 @@ def capture_exceptions(
                 if send_to_sentry:
                     try:
                         import sentry_sdk
-                        from utils.monitoring.sentry_config import capture_exception as sentry_capture
+                        from src.utils.monitoring.sentry_config import capture_exception as sentry_capture
                         sentry_capture(exc, function=func.__name__)
                     except Exception as sentry_err:
                         logger.warning(
@@ -122,7 +122,7 @@ def capture_exceptions(
                 if send_to_sentry:
                     try:
                         import sentry_sdk
-                        from utils.monitoring.sentry_config import capture_exception as sentry_capture
+                        from src.utils.monitoring.sentry_config import capture_exception as sentry_capture
                         sentry_capture(exc, function=func.__name__)
                     except Exception as sentry_err:
                         logger.warning(
@@ -172,9 +172,9 @@ def handle_workflow_errors(
         logger = get_logger(func.__module__)
         
         # Import here to avoid circular imports
-        from workflow.exceptions import WorkflowException
-        from core.result import Result
-        from core.errors import InternalError
+        from src.workflow.exceptions import WorkflowException
+        from src.core.result import Result
+        from src.core.errors import InternalError
         
         # Default capture types
         types_to_capture = capture_types or [WorkflowException]

@@ -2,8 +2,8 @@
 Conversation domain services package
 """
 
-from services.domain.conversation.domain_service import ConversationDomainService
-from services.domain.conversation.specifications import (
+from src.services.domain.conversation.domain_service import ConversationDomainService
+from src.services.domain.conversation.specifications import (
     ConversationIsActive,
     ConversationIsResolved,
     ConversationIsEscalated,
@@ -15,7 +15,7 @@ from services.domain.conversation.specifications import (
     CanEscalateConversation,
     CanReopenConversation,
 )
-from services.domain.conversation.events import (
+from src.services.domain.conversation.events import (
     ConversationCreatedEvent,
     ConversationResolvedEvent,
     ConversationEscalatedEvent,
@@ -24,7 +24,7 @@ from services.domain.conversation.events import (
     LowConfidenceDetectedEvent,
     NegativeSentimentDetectedEvent,
 )
-from services.domain.conversation.validators import ConversationValidators
+from src.services.domain.conversation.validators import ConversationValidators
 
 __all__ = [
     # Service

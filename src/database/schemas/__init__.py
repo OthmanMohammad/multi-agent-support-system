@@ -1,7 +1,7 @@
 """
 Pydantic schemas package - Data Transfer Objects
 """
-from database.schemas.customer import (
+from src.database.schemas.customer import (
     CustomerBase,
     CustomerCreate,
     CustomerUpdate,
@@ -9,7 +9,7 @@ from database.schemas.customer import (
     CustomerResponse,
     CustomerWithConversations,
 )
-from database.schemas.conversation import (
+from src.database.schemas.conversation import (
     ConversationBase,
     ConversationCreate,
     ConversationUpdate,
@@ -18,7 +18,7 @@ from database.schemas.conversation import (
     ConversationWithMessages,
     ConversationStatistics,
 )
-from database.schemas.message import (
+from src.database.schemas.message import (
     MessageBase,
     MessageCreate,
     MessageUpdate,
@@ -26,7 +26,7 @@ from database.schemas.message import (
     MessageResponse,
     MessageSentimentDistribution,
 )
-from database.schemas.agent_performance import (
+from src.database.schemas.agent_performance import (
     AgentPerformanceBase,
     AgentPerformanceCreate,
     AgentPerformanceUpdate,

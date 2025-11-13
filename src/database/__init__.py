@@ -11,13 +11,13 @@ This package provides:
 
 Usage:
     # Import models
-    from database.models import Customer, Conversation, Message
+    from src.database.models import Customer, Conversation, Message
     
     # Import schemas
-    from database.schemas import CustomerCreate, ConversationResponse
+    from src.database.schemas import CustomerCreate, ConversationResponse
     
     # Import repositories
-    from database.repositories import CustomerRepository
+    from src.database.repositories import CustomerRepository
     
     # Import Unit of Work (RECOMMENDED)
     from database import get_unit_of_work
@@ -28,7 +28,7 @@ Usage:
         # Transaction commits automatically
     
     # Legacy: Get database session
-    from database.connection import get_db_session
+    from src.database.connection import get_db_session
     
     async with get_db_session() as session:
         repo = CustomerRepository(session)
@@ -36,7 +36,7 @@ Usage:
 """
 
 # Models
-from database.models import (
+from src.database.models import (
     Base,
     BaseModel,
     TimestampMixin,
@@ -48,7 +48,7 @@ from database.models import (
 )
 
 # Schemas
-from database.schemas import (
+from src.database.schemas import (
     CustomerCreate,
     CustomerResponse,
     ConversationCreate,
@@ -60,7 +60,7 @@ from database.schemas import (
 )
 
 # Repositories
-from database.repositories import (
+from src.database.repositories import (
     CustomerRepository,
     ConversationRepository,
     MessageRepository,
@@ -68,14 +68,14 @@ from database.repositories import (
 )
 
 # Unit of Work (NEW - RECOMMENDED)
-from database.unit_of_work import (
+from src.database.unit_of_work import (
     UnitOfWork,
     get_unit_of_work,
     get_uow,
 )
 
 # Connection
-from database.connection import (
+from src.database.connection import (
     get_db_session,
     init_db,
     close_db,

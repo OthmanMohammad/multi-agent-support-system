@@ -15,7 +15,7 @@ from sqlalchemy.pool import Pool
 import os
 
 from dotenv import load_dotenv
-from utils.logging.setup import get_logger
+from src.utils.logging.setup import get_logger
 
 # Initialize logger
 logger = get_logger(__name__)
@@ -153,7 +153,7 @@ async def init_db():
     Initialize database - create all tables
     Should be called on application startup
     """
-    from database.models import Base
+    from src.database.models import Base
     
     logger.info("database_initialization_started")
     engine = get_engine()

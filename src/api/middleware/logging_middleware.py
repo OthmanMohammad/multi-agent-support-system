@@ -15,8 +15,8 @@ from starlette.requests import Request
 from starlette.responses import Response
 from typing import Callable
 
-from utils.logging.setup import get_logger
-from utils.logging.context import get_correlation_id
+from src.utils.logging.setup import get_logger
+from src.utils.logging.context import get_correlation_id
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):

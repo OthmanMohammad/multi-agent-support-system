@@ -3,7 +3,7 @@ Customer Domain Specifications - Business rules as composable objects
 """
 
 from typing import TYPE_CHECKING
-from core.specifications import Specification
+from src.core.specifications import Specification
 
 if TYPE_CHECKING:
     from typing import Dict, Any

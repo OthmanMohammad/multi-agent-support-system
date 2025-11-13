@@ -9,7 +9,7 @@ Each module contains routes for a specific domain:
 """
 
 from fastapi import APIRouter
-from api.routes import conversations, customers, analytics, health
+from src.api.routes import conversations, customers, analytics, health
 
 # Create main router
 api_router = APIRouter()
