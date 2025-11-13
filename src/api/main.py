@@ -8,20 +8,20 @@ Configured with:
 - Request/response logging middleware
 """
 
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Import routes
-from api.routes import conversations, customers, health, analytics
-from api.error_handlers import setup_error_handlers
+from src.api.routes import conversations, customers, health, analytics
+from src.api.error_handlers import setup_error_handlers
 
-# Import middleware (Phase 5)
-from api.middleware import CorrelationMiddleware, LoggingMiddleware
+from src.api.middleware import CorrelationMiddleware, LoggingMiddleware
 
 # Import initialization functions
-from utils.logging.setup import setup_logging, get_logger
-from utils.monitoring.sentry_config import init_sentry
-from database.connection import init_db, close_db
+from src.utils.logging.setup import setup_logging, get_logger
+from src.utils.monitoring.sentry_config import init_sentry
+from src.database.connection import init_db, close_db
 
 
 # Initialize logger for this module
@@ -44,13 +44,20 @@ app.add_middleware(CorrelationMiddleware)
 # Add logging middleware (MUST be after correlation middleware)
 app.add_middleware(LoggingMiddleware, log_body=False)
 
-# Configure CORS
+# Configure CORS - SECURITY FIX: Environment-based origins (no wildcards)
+# Get allowed origins from environment variable
+# Format: comma-separated list of origins
+ALLOWED_ORIGINS = os.getenv(
+    "CORS_ALLOWED_ORIGINS",
+    "https://app.example.com,https://api.example.com"
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Correlation-ID"],
 )
 
 
@@ -95,6 +102,14 @@ async def startup_event():
     logger.info("database_initialization_started")
     await init_db()
     logger.info("database_initialized")
+    
+    # Log CORS configuration
+    logger.info(
+        "cors_configuration",
+        allowed_origins=ALLOWED_ORIGINS,
+        origin_count=len(ALLOWED_ORIGINS),
+        allows_credentials=True
+    )
     
     logger.info(
         "application_startup_completed",
@@ -166,7 +181,7 @@ if __name__ == "__main__":
     import uvicorn
     
     uvicorn.run(
-        "api.main:app",
+        "src.api.main:app",
         host="0.0.0.0",
         port=8000,
         reload=True,

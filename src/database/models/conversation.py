@@ -9,7 +9,7 @@ from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 import uuid
 
-from database.models.base import BaseModel
+from src.database.models.base import BaseModel
 
 
 class Conversation(BaseModel):

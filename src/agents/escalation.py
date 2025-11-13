@@ -8,9 +8,9 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from workflow.state import AgentState
-from agents.base import BaseAgent
-from utils.logging.setup import get_logger
+from src.workflow.state import AgentState
+from src.agents.base import BaseAgent
+from src.utils.logging.setup import get_logger
 
 
 class EscalationAgent(BaseAgent):
@@ -106,7 +106,7 @@ Create a friendly handoff message."""
 
 
 if __name__ == "__main__":
-    from workflow.state import create_initial_state
+    from src.workflow.state import create_initial_state
     
     state = create_initial_state("This is really frustrating!")
     state["escalation_reason"] = "Negative sentiment"

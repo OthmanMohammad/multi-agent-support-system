@@ -3,8 +3,8 @@ Customer Domain Validators - Pure validation functions
 """
 
 import re
-from core.result import Result
-from core.errors import ValidationError
+from src.core.result import Result
+from src.core.errors import ValidationError
 
 
 class CustomerValidators:

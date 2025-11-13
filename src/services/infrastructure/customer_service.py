@@ -13,11 +13,11 @@ from typing import Optional
 from uuid import UUID
 from datetime import datetime, timedelta
 
-from core.result import Result
-from core.errors import NotFoundError, InternalError
-from database.unit_of_work import UnitOfWork
-from database.models import Customer
-from utils.logging.setup import get_logger
+from src.core.result import Result
+from src.core.errors import NotFoundError, InternalError
+from src.database.unit_of_work import UnitOfWork
+from src.database.models import Customer
+from src.utils.logging.setup import get_logger
 
 
 class CustomerInfrastructureService:

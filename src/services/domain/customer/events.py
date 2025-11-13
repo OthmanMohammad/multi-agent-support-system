@@ -4,7 +4,7 @@ Customer Domain Events - Event definitions
 
 from dataclasses import dataclass, field
 from uuid import UUID
-from core.events import DomainEvent
+from src.core.events import DomainEvent
 
 
 @dataclass

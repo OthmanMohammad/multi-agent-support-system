@@ -11,10 +11,10 @@ Business logic for interpreting metrics belongs in domain services.
 from typing import Dict, Optional
 from datetime import datetime, timedelta
 
-from core.result import Result
-from core.errors import InternalError
-from database.unit_of_work import UnitOfWork
-from utils.logging.setup import get_logger
+from src.core.result import Result
+from src.core.errors import InternalError
+from src.database.unit_of_work import UnitOfWork
+from src.utils.logging.setup import get_logger
 
 
 class AnalyticsService:

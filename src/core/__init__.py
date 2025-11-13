@@ -28,8 +28,8 @@ Usage:
         process(entity)
 """
 
-from core.result import Result, Error
-from core.errors import (
+from src.core.result import Result, Error
+from src.core.errors import (
     ValidationError,
     BusinessRuleError,
     NotFoundError,
@@ -40,13 +40,13 @@ from core.errors import (
     ExternalServiceError,
     ErrorCodes,
 )
-from core.events import (
+from src.core.events import (
     DomainEvent,
     EventBus,
     get_event_bus,
     reset_event_bus,
 )
-from core.specifications import (
+from src.core.specifications import (
     Specification,
     AndSpecification,
     OrSpecification,

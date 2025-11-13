@@ -11,7 +11,7 @@ Features:
 - Integration with FastAPI
 
 Quick Start:
-    from utils.logging import setup_logging, get_logger
+    from src.utils.logging import setup_logging, get_logger
     
     # Initialize once at startup
     setup_logging()
@@ -27,7 +27,7 @@ Quick Start:
     )
 
 With Context:
-    from utils.logging import correlation_context
+    from src.utils.logging import correlation_context
     
     with correlation_context():
         logger.info("processing_request")
@@ -36,8 +36,8 @@ With Context:
         # Both logs will have same correlation_id
 """
 
-from utils.logging.setup import setup_logging, get_logger
-from utils.logging.context import (
+from src.utils.logging.setup import setup_logging, get_logger
+from src.utils.logging.context import (
     correlation_context,
     conversation_context,
     agent_context,
@@ -47,7 +47,7 @@ from utils.logging.context import (
     generate_correlation_id,
     get_or_create_correlation_id,
 )
-from utils.logging.decorators import (
+from src.utils.logging.decorators import (
     log_execution,
     log_errors,
     log_result,

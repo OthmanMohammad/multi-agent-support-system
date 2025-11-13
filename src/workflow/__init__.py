@@ -14,8 +14,8 @@ The workflow engine is stateless and focuses purely on executing
 AI agent workflows and returning structured results.
 """
 
-from workflow.engine import AgentWorkflowEngine
-from workflow.exceptions import (
+from src.workflow.engine import AgentWorkflowEngine
+from src.workflow.exceptions import (
     WorkflowException,
     AgentExecutionError,
     AgentTimeoutError,

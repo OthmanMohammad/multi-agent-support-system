@@ -12,9 +12,9 @@ Pure external integration - no business logic.
 from typing import Optional
 from uuid import UUID
 
-from core.result import Result
-from core.errors import ExternalServiceError
-from utils.logging.setup import get_logger
+from src.core.result import Result
+from src.core.errors import ExternalServiceError
+from src.utils.logging.setup import get_logger
 
 
 class NotificationService:

@@ -6,8 +6,8 @@ from uuid import UUID
 from sqlalchemy import select, func, and_, case
 from datetime import datetime, timedelta
 
-from database.base import BaseRepository
-from database.models import Message
+from src.database.base import BaseRepository
+from src.database.models import Message
 
 
 class MessageRepository(BaseRepository[Message]):

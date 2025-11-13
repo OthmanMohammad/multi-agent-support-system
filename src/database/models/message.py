@@ -10,7 +10,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
 
-from database.models.base import BaseModel
+from src.database.models.base import BaseModel
 
 
 class Message(BaseModel):

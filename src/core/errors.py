@@ -31,7 +31,7 @@ Example:
 """
 
 from typing import Optional, Any, Dict
-from core.result import Error
+from src.core.result import Error
 
 __all__ = [
     "ValidationError",

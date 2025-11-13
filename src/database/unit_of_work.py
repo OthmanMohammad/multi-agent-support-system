@@ -6,8 +6,8 @@ from contextlib import asynccontextmanager
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 
-from database.connection import get_db_session
-from database.repositories import (
+from src.database.connection import get_db_session
+from src.database.repositories import (
     CustomerRepository,
     ConversationRepository,
     MessageRepository,

@@ -24,11 +24,11 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 import sentry_sdk
 
-from core.result import Error
-from core.errors import ErrorCodes
-from utils.logging.setup import get_logger
-from utils.logging.context import get_correlation_id
-from utils.exceptions import enrich_exception, get_exception_context
+from src.core.result import Error
+from src.core.errors import ErrorCodes
+from src.utils.logging.setup import get_logger
+from src.utils.logging.context import get_correlation_id
+from src.utils.exceptions import enrich_exception, get_exception_context
 
 
 # Get logger for this module

@@ -8,9 +8,9 @@ from fastapi import Depends, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 
-from database.connection import get_db_session
-from database.unit_of_work import UnitOfWork, get_unit_of_work as _get_uow
-from database.repositories import (
+from src.database.connection import get_db_session
+from src.database.unit_of_work import UnitOfWork, get_unit_of_work as _get_uow
+from src.database.repositories import (
     ConversationRepository,
     MessageRepository,
     CustomerRepository,
@@ -18,15 +18,15 @@ from database.repositories import (
 )
 
 # NEW: Import application services
-from services.application.conversation_service import ConversationApplicationService
-from services.application.customer_service import CustomerApplicationService
+from src.services.application.conversation_service import ConversationApplicationService
+from src.services.application.customer_service import CustomerApplicationService
 
 # NEW: Import domain and infrastructure services
-from services.domain.conversation.domain_service import ConversationDomainService
-from services.domain.customer.domain_service import CustomerDomainService
-from services.infrastructure.customer_service import CustomerInfrastructureService
-from services.infrastructure.analytics_service import AnalyticsService
-from workflow.engine import AgentWorkflowEngine
+from src.services.domain.conversation.domain_service import ConversationDomainService
+from src.services.domain.customer.domain_service import CustomerDomainService
+from src.services.infrastructure.customer_service import CustomerInfrastructureService
+from src.services.infrastructure.analytics_service import AnalyticsService
+from src.workflow.engine import AgentWorkflowEngine
 
 
 # ===== CURRENT USER EXTRACTION =====

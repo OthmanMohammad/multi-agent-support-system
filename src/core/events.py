@@ -39,7 +39,7 @@ from uuid import UUID, uuid4
 from typing import List, Callable, Dict, Type, Any
 from dataclasses import dataclass, field
 
-from utils.logging.setup import get_logger
+from src.utils.logging.setup import get_logger
 
 logger = get_logger(__name__)
 

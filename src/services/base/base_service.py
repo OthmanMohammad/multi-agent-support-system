@@ -15,9 +15,9 @@ from typing import TypeVar, Generic, Optional, Callable, Any, Awaitable
 from uuid import UUID
 from functools import wraps
 
-from core.result import Result, Error
-from core.errors import InternalError
-from utils.logging.setup import get_logger
+from src.core.result import Result, Error
+from src.core.errors import InternalError
+from src.utils.logging.setup import get_logger
 
 __all__ = ["BaseService"]
 
@@ -325,7 +325,7 @@ class BaseService:
             >>> if result.is_failure:
             ...     return result  # Early return with validation error
         """
-        from core.errors import ValidationError
+        from src.core.errors import ValidationError
         
         if value is None:
             return Result.fail(ValidationError(
@@ -350,7 +350,7 @@ class BaseService:
         Returns:
             Result.ok(None) if valid, Result.fail() if empty
         """
-        from core.errors import ValidationError
+        from src.core.errors import ValidationError
         
         if not value or not value.strip():
             return Result.fail(ValidationError(
@@ -387,7 +387,7 @@ if __name__ == "__main__":
         
         def test_failure(self) -> Result[str]:
             """Operation that fails"""
-            from core.errors import ValidationError
+            from src.core.errors import ValidationError
             return Result.fail(ValidationError(
                 message="Test validation error",
                 field="test_field"

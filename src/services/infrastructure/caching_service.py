@@ -11,8 +11,8 @@ from typing import Optional, Any, Callable
 import json
 from datetime import timedelta
 
-from core.result import Result
-from core.errors import ExternalServiceError
+from src.core.result import Result
+from src.core.errors import ExternalServiceError
 
 
 class CachingService:

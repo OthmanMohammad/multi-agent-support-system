@@ -5,9 +5,9 @@ Health check routes - System health monitoring
 from fastapi import APIRouter, Depends
 from datetime import datetime
 
-from api.dependencies import get_analytics_service
-from services.infrastructure.analytics_service import AnalyticsService
-from utils.logging.setup import get_logger
+from src.api.dependencies import get_analytics_service
+from src.services.infrastructure.analytics_service import AnalyticsService
+from src.utils.logging.setup import get_logger
 
 router = APIRouter()
 logger = get_logger(__name__)

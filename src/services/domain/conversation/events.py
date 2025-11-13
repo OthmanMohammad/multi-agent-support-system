@@ -11,7 +11,7 @@ NOTE: Domain services create these events but DO NOT publish them.
 from dataclasses import dataclass, field
 from uuid import UUID
 from typing import Optional, List
-from core.events import DomainEvent
+from src.core.events import DomainEvent
 
 
 @dataclass
