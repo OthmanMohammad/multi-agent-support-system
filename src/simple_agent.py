@@ -1,13 +1,11 @@
 """
 Simple chat agent with conversation memory and vector-based knowledge base
 semantic search powered by Qdrant Cloud
+Uses centralized configuration for Anthropic API
 """
 from anthropic import Anthropic
-import os
-from dotenv import load_dotenv
-from knowledge_base import search_articles
-
-load_dotenv()
+from src.knowledge_base import search_articles
+from src.core.config import get_settings
 
 SYSTEM_PROMPT = """You are a helpful customer support agent for a project management SaaS tool.
 
@@ -34,7 +32,11 @@ def chat(message: str, conversation_history: list = None) -> tuple[str, list, li
     Returns:
         (response_text, updated_history, kb_results)
     """
-    client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+    # Get configuration
+    settings = get_settings()
+    
+    # Initialize Anthropic client
+    client = Anthropic(api_key=settings.anthropic.api_key)
     
     # Initialize history if none provided
     if conversation_history is None:
@@ -71,8 +73,8 @@ def chat(message: str, conversation_history: list = None) -> tuple[str, list, li
     
     # Get response from Claude
     response = client.messages.create(
-        model="claude-3-haiku-20240307",
-        max_tokens=1024,
+        model=settings.anthropic.model,
+        max_tokens=settings.anthropic.max_tokens,
         system=SYSTEM_PROMPT,
         messages=conversation_history
     )

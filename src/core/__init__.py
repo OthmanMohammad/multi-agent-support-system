@@ -6,26 +6,31 @@ This package provides foundational patterns used throughout the application:
 - Domain Events: Event-driven architecture support
 - Specification Pattern: Business rule encapsulation
 - Error Types: Structured error handling
+- Configuration Management: Type-safe centralized configuration
 
 Usage:
-    from core import Result, Error, DomainEvent, Specification
-    
+    from core import Result, Error, DomainEvent, Specification, get_settings
+
     # Result pattern
     result = some_operation()
     if result.is_success:
         value = result.value
     else:
         error = result.error
-    
+
     # Domain events
     bus = get_event_bus()
     bus.subscribe(MyEvent, my_handler)
     bus.publish(MyEvent(...))
-    
+
     # Specifications
     can_process = IsActive().and_(HasPermission())
     if can_process.is_satisfied_by(entity):
         process(entity)
+
+    # Configuration
+    settings = get_settings()
+    api_key = settings.anthropic.api_key
 """
 
 from src.core.result import Result, Error
@@ -52,6 +57,8 @@ from src.core.specifications import (
     OrSpecification,
     NotSpecification,
 )
+from src.core.config import get_settings, Settings
+from src.core.config_validator import validate_configuration, require_valid_configuration
 
 __version__ = "1.0.0"
 
@@ -79,4 +86,9 @@ __all__ = [
     "AndSpecification",
     "OrSpecification",
     "NotSpecification",
+    # Configuration
+    "get_settings",
+    "Settings",
+    "validate_configuration",
+    "require_valid_configuration",
 ]

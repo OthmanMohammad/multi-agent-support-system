@@ -1,6 +1,7 @@
 """
 Database connection management with async connection pooling
 Production-grade configuration with health checks
+Uses centralized configuration management
 """
 from sqlalchemy.ext.asyncio import (
     create_async_engine,
@@ -12,31 +13,15 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Optional
 from sqlalchemy import text, event
 from sqlalchemy.pool import Pool
-import os
 
-from dotenv import load_dotenv
+from src.core.config import get_settings
 from src.utils.logging.setup import get_logger
 
 # Initialize logger
 logger = get_logger(__name__)
 
-load_dotenv()
-
-# Get database URL from environment
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-if not DATABASE_URL:
-    raise ValueError(
-        "DATABASE_URL not found in environment. "
-        "Please set it in your .env file"
-    )
-
-# Database connection settings
-DB_POOL_SIZE = int(os.getenv("DB_POOL_SIZE", "20"))
-DB_MAX_OVERFLOW = int(os.getenv("DB_MAX_OVERFLOW", "10"))
-DB_POOL_TIMEOUT = int(os.getenv("DB_POOL_TIMEOUT", "30"))
-DB_POOL_RECYCLE = int(os.getenv("DB_POOL_RECYCLE", "3600"))
-DB_ECHO = os.getenv("DB_ECHO", "false").lower() == "true"
+# Load settings
+settings = get_settings()
 
 # Global engine instance
 _engine: Optional[AsyncEngine] = None
@@ -50,13 +35,13 @@ def create_engine() -> AsyncEngine:
         Configured async engine
     """
     engine = create_async_engine(
-        DATABASE_URL,
-        echo=DB_ECHO,  # Log SQL statements (disable in production)
-        pool_size=DB_POOL_SIZE,  # Number of permanent connections
-        max_overflow=DB_MAX_OVERFLOW,  # Additional connections under load
-        pool_timeout=DB_POOL_TIMEOUT,  # Seconds to wait for connection
+        str(settings.database.url),
+        echo=settings.database.echo,  # Log SQL statements (disable in production)
+        pool_size=settings.database.pool_size,  # Number of permanent connections
+        max_overflow=settings.database.max_overflow,  # Additional connections under load
+        pool_timeout=settings.database.pool_timeout,  # Seconds to wait for connection
         pool_pre_ping=True,  # Verify connections before using
-        pool_recycle=DB_POOL_RECYCLE,  # Recycle connections after N seconds
+        pool_recycle=settings.database.pool_recycle,  # Recycle connections after N seconds
         # Connection arguments
         connect_args={
             "server_settings": {
@@ -90,8 +75,10 @@ def get_engine() -> AsyncEngine:
         _engine = create_engine()
         logger.info(
             "database_engine_created",
-            pool_size=DB_POOL_SIZE,
-            max_overflow=DB_MAX_OVERFLOW
+            environment=settings.environment,
+            pool_size=settings.database.pool_size,
+            max_overflow=settings.database.max_overflow,
+            pool_timeout=settings.database.pool_timeout
         )
     return _engine
 
@@ -155,7 +142,10 @@ async def init_db():
     """
     from src.database.models import Base
     
-    logger.info("database_initialization_started")
+    logger.info(
+        "database_initialization_started",
+        environment=settings.environment
+    )
     engine = get_engine()
     
     async with engine.begin() as conn:
@@ -171,7 +161,10 @@ async def close_db():
     """
     global _engine
     if _engine is not None:
-        logger.info("database_connections_closing")
+        logger.info(
+            "database_connections_closing",
+            environment=settings.environment
+        )
         await _engine.dispose()
         logger.info("database_connections_closed")
         _engine = None
@@ -211,6 +204,7 @@ async def check_db_health() -> dict:
             return {
                 "status": "healthy",
                 "database": "postgresql",
+                "environment": settings.environment,
                 "pool": pool_status
             }
     except Exception as e:
@@ -262,6 +256,7 @@ if __name__ == "__main__":
         health = await check_db_health()
         print(f"   Status: {health['status']}")
         if health['status'] == 'healthy':
+            print(f"   Environment: {health['environment']}")
             print(f"   Pool size: {health['pool']['size']}")
             print(f"   Checked out: {health['pool']['checked_out']}")
         
