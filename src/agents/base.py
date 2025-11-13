@@ -1,11 +1,10 @@
 """
 Base Agent - Abstract class that all agents inherit from
+Uses centralized configuration for Anthropic API
 """
 from abc import ABC, abstractmethod
 from typing import Optional
 from anthropic import Anthropic
-import os
-from dotenv import load_dotenv
 
 # Import state from workflow package
 import sys
@@ -15,8 +14,7 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from src.workflow.state import AgentState, AgentType
-
-load_dotenv()
+from src.core.config import get_settings
 
 
 class BaseAgent(ABC):
@@ -46,11 +44,8 @@ class BaseAgent(ABC):
         self.temperature = temperature
         
         # Initialize Anthropic client
-        api_key = os.getenv("ANTHROPIC_API_KEY")
-        if not api_key:
-            raise ValueError("ANTHROPIC_API_KEY not found in environment")
-        
-        self.client = Anthropic(api_key=api_key)
+        settings = get_settings()
+        self.client = Anthropic(api_key=settings.anthropic.api_key)
         
         print(f"✓ {self.agent_type.upper()} agent initialized")
     
