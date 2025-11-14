@@ -32,6 +32,96 @@ class Customer(BaseModel, TimestampMixin):
         cascade="all, delete-orphan",
         lazy="selectin"
     )
+    health_events = relationship(
+        "CustomerHealthEvent",
+        back_populates="customer",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+    segments = relationship(
+        "CustomerSegment",
+        back_populates="customer",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+    notes = relationship(
+        "CustomerNote",
+        back_populates="customer",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+    contacts = relationship(
+        "CustomerContact",
+        back_populates="customer",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+    integrations = relationship(
+        "CustomerIntegration",
+        back_populates="customer",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+    subscriptions = relationship(
+        "Subscription",
+        back_populates="customer",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+    invoices = relationship(
+        "Invoice",
+        back_populates="customer",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+    payments = relationship(
+        "Payment",
+        back_populates="customer",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+    usage_events = relationship(
+        "UsageEvent",
+        back_populates="customer",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+    credits = relationship(
+        "Credit",
+        back_populates="customer",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+    converted_from_lead = relationship(
+        "Lead",
+        back_populates="converted_customer",
+        foreign_keys="Lead.converted_to_customer_id",
+        uselist=False
+    )
+    deals = relationship(
+        "Deal",
+        back_populates="customer",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+    quotes = relationship(
+        "Quote",
+        back_populates="customer",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+    feature_usage = relationship(
+        "FeatureUsage",
+        back_populates="customer",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+    ab_tests = relationship(
+        "ABTest",
+        back_populates="customer",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
     
     # Constraints
     __table_args__ = (
