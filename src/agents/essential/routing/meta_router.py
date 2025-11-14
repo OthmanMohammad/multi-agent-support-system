@@ -1,388 +1,530 @@
 """
-Meta Router Agent - Classifies intent and routes to specialist agents.
+Meta Router Agent - Top-level domain classification.
 
-This is the entry point for all conversations. It classifies user intent,
-extracts entities, and routes to the appropriate specialist agent.
+Routes user messages to appropriate domain: Support, Sales, or Customer Success.
+This is the entry point for all conversations in the multi-agent system.
+
+Part of: STORY-01 Routing & Orchestration Swarm (TASK-101)
 """
 
-from typing import Dict, Optional
-from pydantic import BaseModel, Field
+from typing import Dict, Any, Optional
 import json
+import time
+import structlog
 
-from src.workflow.state import AgentState, IntentCategory
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base.base_agent import BaseAgent, RoutingAgent, AgentConfig
+from src.agents.base.agent_types import AgentType, AgentCapability, Domain
+from src.workflow.state import AgentState
 from src.services.infrastructure.agent_registry import AgentRegistry
 
-
-class IntentClassification(BaseModel):
-    """Structured output for intent classification"""
-    primary_intent: IntentCategory = Field(
-        description="Primary intent category"
-    )
-    confidence: float = Field(
-        description="Confidence score 0-1",
-        ge=0,
-        le=1
-    )
-    sentiment: float = Field(
-        description="Sentiment score -1 (negative) to 1 (positive)",
-        ge=-1,
-        le=1
-    )
-    reasoning: str = Field(
-        description="Brief explanation of classification"
-    )
-    should_answer_directly: bool = Field(
-        description="Can router answer this directly without specialist?"
-    )
+logger = structlog.get_logger(__name__)
 
 
 @AgentRegistry.register("meta_router", tier="essential", category="routing")
-class MetaRouterAgent(BaseAgent):
+class MetaRouter(RoutingAgent):
     """
-    Meta Router Agent - Entry point for all conversations.
+    Meta Router - Top-level domain classifier.
 
-    Responsibilities:
-    1. Classify intent (billing, technical, usage, etc.)
-    2. Extract entities (plan type, feature, etc.)
-    3. Route to appropriate specialist OR answer directly
+    Routes messages to:
+    - Support: Problems, how-to questions, billing issues, technical issues
+    - Sales: Pricing, demos, upgrades (new customers), competitive questions
+    - Customer Success: Value concerns, adoption issues, retention, expansion
+
+    This is the FIRST agent in the routing chain. All conversations start here.
     """
 
-    def __init__(self):
+    def __init__(self, **kwargs):
+        """Initialize Meta Router with optimized configuration for fast routing."""
         config = AgentConfig(
             name="meta_router",
             type=AgentType.ROUTER,
-            model="claude-3-haiku-20240307",  # Fast and cheap
-            temperature=0.1,  # Low temp for consistent classification
+            model="claude-3-haiku-20240307",  # Fast and cost-effective
+            temperature=0.1,  # Low temperature for consistent routing
+            max_tokens=200,   # Short responses for quick routing
             capabilities=[
-                AgentCapability.KB_SEARCH,
+                AgentCapability.ROUTING,
                 AgentCapability.CONTEXT_AWARE
             ],
-            tier="essential"
+            system_prompt_template=self._get_system_prompt(),
+            tier="essential",
+            role="meta_router"
         )
-        super().__init__(config)
-        self.logger = get_logger(__name__)
+        super().__init__(config=config, **kwargs)
+        self.logger = logger.bind(agent="meta_router", agent_type="router")
+
+    def _get_system_prompt(self) -> str:
+        """
+        Get the system prompt for domain classification.
+
+        Returns:
+            System prompt with classification rules and examples
+        """
+        return """You are a meta router that classifies customer messages into business domains.
+
+Your job is to classify each message into ONE domain:
+
+**SUPPORT** - Customer has a problem or question
+Examples:
+- Technical issues (crashes, bugs, sync problems, performance)
+- Billing issues (charges, invoices, payments, refunds)
+- How-to questions (using features, setup, configuration)
+- Account issues (login, password, access, security)
+- Integration issues (API, webhooks, OAuth)
+- Data issues (export, import, recovery)
+
+**SALES** - Pricing, demos, upgrades (NEW customers), competitive questions
+Examples:
+- Pricing inquiries ("How much does Premium cost?")
+- Demo requests ("Can I see a demo?")
+- Plan upgrades from FREE users
+- Competitive comparisons ("How do you compare to Asana?")
+- Feature availability questions (pre-purchase)
+- Trial questions from prospects
+
+**CUSTOMER_SUCCESS** - Existing paying customers with value/adoption concerns
+Examples:
+- Not seeing value / considering cancellation
+- Low engagement / team not using product
+- Onboarding help for paid customers
+- Expansion opportunities (upsell/cross-sell for existing customers)
+- Renewal discussions
+- Feature requests from engaged customers
+
+**Customer Context**: {customer_context}
+
+**Classification Rules**:
+1. If customer has a PROBLEM → support
+2. If customer wants to BUY or UPGRADE (and is on FREE plan) → sales
+3. If PAYING customer questions VALUE or is at-risk → customer_success
+4. If PAYING customer wants to upgrade → support (billing)
+5. If ambiguous → default to support
+6. Use customer context (plan, health_score, churn_risk) to inform decision
+
+**Output Format** (JSON only, no extra text):
+{{
+    "domain": "support" | "sales" | "customer_success",
+    "confidence": 0.0-1.0,
+    "reasoning": "Brief explanation of why this domain",
+    "next_agent": "support_domain_router" | "sales_domain_router" | "cs_domain_router"
+}}
+
+Be concise. Output ONLY valid JSON, no markdown or extra text."""
 
     async def process(self, state: AgentState) -> AgentState:
         """
-        Process message: classify intent and route.
+        Process the message and classify domain.
+
+        This is the main entry point for all conversations. Classifies the message
+        into one of three domains and routes to the appropriate domain router.
 
         Args:
-            state: Current state
+            state: Current agent state with message and context
 
         Returns:
-            Updated state with classification and routing decision
+            Updated state with domain classification and routing decision
         """
-        self.logger.info("router_agent_processing_started")
-
-        # Add to history and update state
-        state = self.update_state(state)
-
-        # Get current message
-        current_message = state["current_message"]
-        self.logger.debug(
-            "router_processing_message",
-            message_preview=current_message[:100],
-            turn_count=state["turn_count"]
-        )
-
-        # Classify intent
-        classification = await self.classify_intent(current_message)
-
-        # Update state with classification
-        state["primary_intent"] = classification.primary_intent
-        state["intent_confidence"] = classification.confidence
-        state["sentiment"] = classification.sentiment
+        start_time = time.time()
 
         self.logger.info(
-            "intent_classified",
-            intent=classification.primary_intent,
-            confidence=round(classification.confidence, 2),
-            sentiment=round(classification.sentiment, 2),
-            reasoning=classification.reasoning
+            "meta_router_processing_started",
+            conversation_id=state.get("conversation_id"),
+            message_preview=state.get("current_message", "")[:50]
         )
 
-        # Decide routing
-        if classification.should_answer_directly and classification.confidence > 0.8:
-            # Answer directly with KB search
-            self.logger.info(
-                "routing_decision",
-                decision="answer_directly",
-                reason="high_confidence_simple_query"
-            )
-            response = await self.answer_directly(current_message, state)
-            state["agent_response"] = response
-            state["next_agent"] = None  # End conversation
-            state["status"] = "resolved"
-
-        elif classification.confidence < 0.5:
-            # Low confidence - escalate
-            self.logger.warning(
-                "routing_decision",
-                decision="escalate",
-                reason="low_confidence",
-                confidence=classification.confidence
-            )
-            state["should_escalate"] = True
-            state["escalation_reason"] = "Low intent confidence"
-            state["next_agent"] = "escalation"
-
-        else:
-            # Route to specialist
-            next_agent = self.route_to_specialist(classification.primary_intent)
-            self.logger.info(
-                "routing_decision",
-                decision="route_to_specialist",
-                agent=next_agent,
-                intent=classification.primary_intent
-            )
-            state["next_agent"] = next_agent
-
-        state["response_confidence"] = classification.confidence
-
-        return state
-
-    async def classify_intent(self, message: str) -> IntentClassification:
-        """
-        Classify user intent using Claude with structured output.
-
-        Args:
-            message: User's message
-
-        Returns:
-            IntentClassification with primary_intent, confidence, etc.
-        """
-        self.logger.debug(
-            "intent_classification_started",
-            message_preview=message[:50]
-        )
-
-        system_prompt = """You are an intent classifier for a customer support system.
-
-Analyze the user's message and classify their primary intent into ONE of these categories:
-
-BILLING:
-- billing_upgrade: Wants to upgrade plan
-- billing_downgrade: Wants to downgrade plan
-- billing_refund: Requesting refund
-- billing_invoice: Needs invoice or payment info
-
-TECHNICAL:
-- technical_bug: Reporting a bug or error
-- technical_sync: Sync or data update issues
-- technical_performance: Performance/speed problems
-
-FEATURES (Usage):
-- feature_create: How to create something (project, task, etc.)
-- feature_edit: How to edit/modify something
-- feature_invite: How to invite/add team members
-- feature_export: How to export data
-
-INTEGRATIONS:
-- integration_api: API questions
-- integration_webhook: Webhook questions
-
-ACCOUNT:
-- account_login: Login or authentication issues
-
-GENERAL:
-- general_inquiry: General questions, greetings, unclear intent
-
-Return your classification with confidence (0-1) and reasoning."""
-
-        user_prompt = f"""Classify this message:
-
-"{message}"
-
-Return JSON with:
-{{
-  "primary_intent": "category_name",
-  "confidence": 0.0-1.0,
-  "sentiment": -1.0 to 1.0,
-  "reasoning": "brief explanation",
-  "should_answer_directly": true/false (true if simple FAQ, false if needs specialist)
-}}"""
-
-        # Call Claude
-        response_text = await self.call_llm(system_prompt, user_prompt, max_tokens=500)
-
-        # Parse JSON response
         try:
-            # Extract JSON from response (Claude might add text around it)
-            json_start = response_text.find('{')
-            json_end = response_text.rfind('}') + 1
-            json_str = response_text[json_start:json_end]
+            # Update state with agent history
+            state = self.update_state(state)
 
-            data = json.loads(json_str)
+            # Get customer context (if available)
+            customer_context = state.get("customer_metadata", {})
 
-            # Validate and create classification
-            classification = IntentClassification(**data)
+            # Format context for prompt
+            context_str = self._format_customer_context(customer_context)
 
-            self.logger.debug(
-                "intent_classification_parsed",
-                intent=classification.primary_intent,
-                confidence=classification.confidence
+            # Build system prompt with context
+            system_prompt = self._get_system_prompt().format(
+                customer_context=context_str
             )
 
-            return classification
+            # Get message
+            message = state.get("current_message", "")
+
+            if not message:
+                self.logger.warning("meta_router_empty_message")
+                return self._handle_empty_message(state)
+
+            # Call LLM for classification
+            response = await self.call_llm(
+                system_prompt=system_prompt,
+                user_message=f"Classify this message:\n\n{message}"
+            )
+
+            # Parse response
+            classification = self._parse_response(response)
+
+            # Add metadata
+            latency_ms = int((time.time() - start_time) * 1000)
+            classification["metadata"] = {
+                "model": self.config.model,
+                "latency_ms": latency_ms,
+                "tokens_used": getattr(self, "_last_tokens_used", 0)
+            }
+
+            # Update state with classification results
+            state = self._update_state_with_classification(state, classification)
+
+            self.logger.info(
+                "meta_router_classification_complete",
+                domain=classification["domain"],
+                confidence=classification["confidence"],
+                next_agent=classification["next_agent"],
+                latency_ms=latency_ms
+            )
+
+            return state
 
         except Exception as e:
             self.logger.error(
-                "intent_classification_parsing_failed",
+                "meta_router_failed",
                 error=str(e),
                 error_type=type(e).__name__,
-                response_preview=response_text[:100]
-            )
-            # Default fallback
-            return IntentClassification(
-                primary_intent="general_inquiry",
-                confidence=0.3,
-                sentiment=0.0,
-                reasoning="Failed to parse classification",
-                should_answer_directly=False
+                conversation_id=state.get("conversation_id")
             )
 
-    def route_to_specialist(self, intent: IntentCategory) -> str:
+            # Fallback to support domain
+            return self._handle_error(state, e)
+
+    def _format_customer_context(self, context: Dict[str, Any]) -> str:
         """
-        Map intent to specialist agent.
+        Format customer context for prompt injection.
 
         Args:
-            intent: Classified intent
+            context: Customer metadata dictionary
 
         Returns:
-            Agent type to route to
+            Formatted context string for prompt
         """
-        # Intent → Agent mapping
-        routing_map = {
-            "billing_upgrade": "billing",
-            "billing_downgrade": "billing",
-            "billing_refund": "billing",
-            "billing_invoice": "billing",
+        if not context:
+            return "No customer context available"
 
-            "technical_bug": "technical",
-            "technical_sync": "technical",
-            "technical_performance": "technical",
+        parts = []
 
-            "feature_create": "usage",
-            "feature_edit": "usage",
-            "feature_invite": "usage",
-            "feature_export": "usage",
+        # Plan information
+        if "plan" in context:
+            parts.append(f"Plan: {context['plan']}")
 
-            "integration_api": "api",
-            "integration_webhook": "api",
+        # Health score
+        if "health_score" in context:
+            score = context['health_score']
+            parts.append(f"Health Score: {score}/100")
 
-            "account_login": "technical",  # Login issues are technical
+        # MRR (Monthly Recurring Revenue)
+        if "mrr" in context:
+            parts.append(f"MRR: ${context['mrr']}")
 
-            "general_inquiry": "escalation"  # Unclear → human
+        # Churn risk
+        if "churn_risk" in context:
+            risk = context['churn_risk']
+            risk_label = "high" if risk > 0.7 else "medium" if risk > 0.4 else "low"
+            parts.append(f"Churn Risk: {risk_label} ({risk:.2f})")
+
+        # Account age
+        if "account_age_days" in context:
+            days = context['account_age_days']
+            parts.append(f"Account Age: {days} days")
+
+        # Last login
+        if "last_login" in context:
+            parts.append(f"Last Login: {context['last_login']}")
+
+        return "\n".join(parts) if parts else "No relevant context"
+
+    def _parse_response(self, response: str) -> Dict[str, Any]:
+        """
+        Parse LLM response into structured classification.
+
+        Handles both JSON responses and text responses with fallback logic.
+
+        Args:
+            response: LLM response (should be JSON)
+
+        Returns:
+            Classification dictionary with domain, confidence, reasoning, next_agent
+
+        Raises:
+            ValueError: If response cannot be parsed
+        """
+        try:
+            # Clean response - remove markdown code blocks if present
+            cleaned_response = response.strip()
+            if cleaned_response.startswith("```"):
+                # Remove markdown code blocks
+                lines = cleaned_response.split("\n")
+                cleaned_response = "\n".join(
+                    line for line in lines
+                    if not line.strip().startswith("```")
+                )
+
+            # Try to parse as JSON
+            classification = json.loads(cleaned_response)
+
+            # Validate required fields
+            required_fields = ["domain", "confidence", "reasoning"]
+            for field in required_fields:
+                if field not in classification:
+                    raise ValueError(f"Missing required field: {field}")
+
+            # Validate domain
+            valid_domains = ["support", "sales", "customer_success"]
+            if classification["domain"] not in valid_domains:
+                self.logger.warning(
+                    "meta_router_invalid_domain",
+                    domain=classification["domain"],
+                    valid_domains=valid_domains
+                )
+                # Default to support
+                classification["domain"] = "support"
+
+            # Add next_agent if not present
+            if "next_agent" not in classification:
+                domain = classification["domain"]
+                classification["next_agent"] = f"{domain}_domain_router"
+
+            # Ensure confidence is between 0 and 1
+            classification["confidence"] = max(0.0, min(1.0, float(classification["confidence"])))
+
+            return classification
+
+        except json.JSONDecodeError as e:
+            self.logger.warning(
+                "meta_router_invalid_json",
+                response_preview=response[:200],
+                error=str(e)
+            )
+
+            # Try to extract domain from text (fallback)
+            return self._extract_domain_from_text(response)
+
+    def _extract_domain_from_text(self, response: str) -> Dict[str, Any]:
+        """
+        Extract domain from text response when JSON parsing fails.
+
+        This is a fallback mechanism for robustness.
+
+        Args:
+            response: Text response from LLM
+
+        Returns:
+            Classification dictionary with extracted domain
+        """
+        response_lower = response.lower()
+
+        # Try to find domain keywords
+        if "customer_success" in response_lower or "customer success" in response_lower:
+            domain = "customer_success"
+        elif "sales" in response_lower:
+            domain = "sales"
+        elif "support" in response_lower:
+            domain = "support"
+        else:
+            domain = "support"  # Default to support
+
+        self.logger.info(
+            "meta_router_fallback_extraction",
+            domain=domain,
+            method="text_analysis"
+        )
+
+        return {
+            "domain": domain,
+            "confidence": 0.6,  # Lower confidence for fallback
+            "reasoning": "Fallback classification due to JSON parsing error",
+            "next_agent": f"{domain}_domain_router"
         }
 
-        agent = routing_map.get(intent, "escalation")
-
-        self.logger.debug(
-            "agent_routing_mapped",
-            intent=intent,
-            agent=agent
-        )
-
-        return agent
-
-    async def answer_directly(self, message: str, state: AgentState) -> str:
+    def _update_state_with_classification(
+        self,
+        state: AgentState,
+        classification: Dict[str, Any]
+    ) -> AgentState:
         """
-        Answer simple FAQs directly using KB search.
+        Update agent state with classification results.
 
         Args:
-            message: User's message
-            state: Current state
+            state: Current agent state
+            classification: Classification results from LLM
 
         Returns:
-            Direct answer
+            Updated agent state
         """
-        self.logger.debug(
-            "direct_answer_started",
-            message_preview=message[:50]
-        )
+        state.update({
+            "domain": classification["domain"],
+            "domain_confidence": classification["confidence"],
+            "domain_reasoning": classification["reasoning"],
+            "next_agent": classification["next_agent"],
+            "routing_metadata": classification.get("metadata", {})
+        })
 
-        # Search KB
-        kb_results = await self.search_knowledge_base(message, limit=2)
-        state["kb_results"] = kb_results
+        return state
 
-        if not kb_results:
-            self.logger.warning(
-                "direct_answer_no_kb_results",
-                message_preview=message[:50]
-            )
-            return "I'm not sure about that. Let me connect you with a specialist who can help."
+    def _handle_empty_message(self, state: AgentState) -> AgentState:
+        """
+        Handle edge case of empty message.
 
-        self.logger.info(
-            "direct_answer_kb_results_found",
-            count=len(kb_results),
-            top_score=kb_results[0].get("similarity_score", 0) if kb_results else 0
-        )
+        Args:
+            state: Current agent state
 
-        # Build context
-        kb_context = "\n\n".join([
-            f"Article: {r['title']}\n{r['content']}"
-            for r in kb_results
-        ])
+        Returns:
+            Updated state with default routing to support
+        """
+        state.update({
+            "domain": "support",
+            "domain_confidence": 0.5,
+            "domain_reasoning": "Empty message - defaulting to support",
+            "next_agent": "support_domain_router",
+            "routing_metadata": {"error": "empty_message"}
+        })
 
-        # Generate answer
-        system_prompt = """You are a helpful customer support agent.
+        return state
 
-Answer the user's question using ONLY the knowledge base articles provided.
-Be concise and friendly. Cite the article title."""
+    def _handle_error(self, state: AgentState, error: Exception) -> AgentState:
+        """
+        Handle errors during classification with graceful fallback.
 
-        user_prompt = f"""Question: {message}
+        Args:
+            state: Current agent state
+            error: Exception that occurred
 
-Knowledge Base:
-{kb_context}
+        Returns:
+            Updated state with fallback routing to support
+        """
+        state.update({
+            "domain": "support",
+            "domain_confidence": 0.5,
+            "domain_reasoning": f"Error in classification: {str(error)}",
+            "next_agent": "support_domain_router",
+            "routing_metadata": {
+                "error": str(error),
+                "error_type": type(error).__name__
+            }
+        })
 
-Provide a helpful answer."""
+        return state
 
-        response = await self.call_llm(system_prompt, user_prompt, max_tokens=300)
+    async def classify_and_route(self, state: AgentState) -> AgentState:
+        """
+        Implementation of RoutingAgent abstract method.
 
-        self.logger.info(
-            "direct_answer_generated",
-            response_length=len(response)
-        )
+        This is an alias for process() to satisfy the RoutingAgent interface.
 
-        return response
+        Args:
+            state: Current agent state
+
+        Returns:
+            Updated state with routing decision
+        """
+        return await self.process(state)
 
 
+# Helper function to create instance
+def create_meta_router(**kwargs) -> MetaRouter:
+    """
+    Create MetaRouter instance.
+
+    Args:
+        **kwargs: Additional arguments passed to MetaRouter constructor
+
+    Returns:
+        Configured MetaRouter instance
+    """
+    return MetaRouter(**kwargs)
+
+
+# Example usage (for development/testing)
 if __name__ == "__main__":
-    # Test router agent
     import asyncio
     from src.workflow.state import create_initial_state
 
-    async def test():
+    async def test_meta_router():
+        """Test Meta Router with sample messages."""
         print("=" * 60)
         print("TESTING META ROUTER AGENT")
         print("=" * 60)
 
-        # Test cases
-        test_messages = [
-            "I want to upgrade to premium",
-            "My project is not syncing",
-            "How do I invite team members?",
-            "What are your prices?",
+        router = MetaRouter()
+
+        # Test cases covering all three domains
+        test_cases = [
+            # Support domain
+            {
+                "message": "My app is crashing when I try to export data",
+                "context": {"plan": "premium", "health_score": 85},
+                "expected_domain": "support"
+            },
+            {
+                "message": "I was charged twice this month",
+                "context": {"plan": "basic", "mrr": 10},
+                "expected_domain": "support"
+            },
+            {
+                "message": "How do I reset my password?",
+                "context": {"plan": "free"},
+                "expected_domain": "support"
+            },
+
+            # Sales domain
+            {
+                "message": "How much does Premium cost for 50 users?",
+                "context": {"plan": "free", "account_age_days": 5},
+                "expected_domain": "sales"
+            },
+            {
+                "message": "I'd like to schedule a demo of your product",
+                "context": {"plan": "free"},
+                "expected_domain": "sales"
+            },
+            {
+                "message": "How does this compare to Asana?",
+                "context": {"plan": "free"},
+                "expected_domain": "sales"
+            },
+
+            # Customer Success domain
+            {
+                "message": "We're not getting the value we expected from the product",
+                "context": {"plan": "premium", "health_score": 35, "churn_risk": 0.8},
+                "expected_domain": "customer_success"
+            },
+            {
+                "message": "Our team isn't really using the product",
+                "context": {"plan": "basic", "health_score": 40},
+                "expected_domain": "customer_success"
+            },
         ]
 
-        router = MetaRouterAgent()
-
-        for msg in test_messages:
+        for i, test in enumerate(test_cases, 1):
             print(f"\n{'='*60}")
-            print(f"TEST: {msg}")
+            print(f"TEST CASE {i}: {test['message'][:50]}...")
             print(f"{'='*60}")
 
-            state = create_initial_state(msg)
+            state = create_initial_state(
+                message=test["message"],
+                context={"customer_metadata": test["context"]}
+            )
+
             result = await router.process(state)
 
-            print(f"\nRESULT:")
-            print(f"  Intent: {result['primary_intent']}")
-            print(f"  Confidence: {result['intent_confidence']:.2%}")
-            print(f"  Next Agent: {result.get('next_agent', 'END')}")
+            print(f"\n✓ Domain: {result['domain']}")
+            print(f"✓ Confidence: {result['domain_confidence']:.2%}")
+            print(f"✓ Reasoning: {result['domain_reasoning']}")
+            print(f"✓ Next Agent: {result['next_agent']}")
+            print(f"✓ Latency: {result['routing_metadata'].get('latency_ms', 0)}ms")
 
-            if result.get("agent_response"):
-                print(f"\n  Response: {result['agent_response'][:100]}...")
+            # Validate expectation
+            if result['domain'] == test['expected_domain']:
+                print(f"✓ PASS: Correctly classified as {test['expected_domain']}")
+            else:
+                print(f"✗ FAIL: Expected {test['expected_domain']}, got {result['domain']}")
 
-    asyncio.run(test())
+    # Run tests
+    asyncio.run(test_meta_router())
