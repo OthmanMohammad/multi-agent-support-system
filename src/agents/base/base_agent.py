@@ -256,7 +256,7 @@ class BaseAgent(ABC):
         self,
         customer_id: str,
         conversation_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+    ) -> Optional[Any]:
         """
         Get enriched customer context.
 
@@ -265,15 +265,20 @@ class BaseAgent(ABC):
             conversation_id: Conversation ID (optional)
 
         Returns:
-            Enriched context dictionary
+            EnrichedContext object or None if not available
         """
         # Check if capability is enabled
         if AgentCapability.CONTEXT_AWARE not in self.config.capabilities:
-            return {}
+            return None
 
         if not self.context_service:
-            self.logger.warning("context_service_not_available")
-            return {}
+            # Try to get context service from global singleton
+            try:
+                from src.services.infrastructure.context_enrichment import get_context_service
+                self.context_service = get_context_service()
+            except Exception as e:
+                self.logger.warning("context_service_not_available", error=str(e))
+                return None
 
         try:
             context = await self.context_service.enrich_context(
@@ -283,7 +288,9 @@ class BaseAgent(ABC):
 
             self.logger.info(
                 "context_enrichment_success",
-                customer_id=customer_id
+                customer_id=customer_id,
+                latency_ms=context.enrichment_latency_ms,
+                cache_hit=context.cache_hit
             )
             return context
 
@@ -293,7 +300,41 @@ class BaseAgent(ABC):
                 error=str(e),
                 error_type=type(e).__name__
             )
-            return {}
+            return None
+
+    async def inject_context_into_prompt(
+        self,
+        system_prompt: str,
+        customer_id: str,
+        conversation_id: Optional[str] = None
+    ) -> str:
+        """
+        Inject enriched context into system prompt.
+
+        This automatically fetches and injects customer context into the system prompt,
+        making agents context-aware without extra code.
+
+        Args:
+            system_prompt: Original system prompt
+            customer_id: Customer ID
+            conversation_id: Optional conversation ID
+
+        Returns:
+            System prompt with injected context
+
+        Example:
+            >>> prompt = "You are a helpful billing specialist."
+            >>> enriched_prompt = await self.inject_context_into_prompt(prompt, "customer_123")
+            >>> # enriched_prompt now contains customer intelligence
+        """
+        context = await self.get_enriched_context(customer_id, conversation_id)
+
+        if context:
+            # Inject context before the main prompt
+            context_section = context.to_prompt_context()
+            return f"{context_section}\n\n{system_prompt}"
+
+        return system_prompt
 
     def build_system_prompt(self, **kwargs) -> str:
         """
