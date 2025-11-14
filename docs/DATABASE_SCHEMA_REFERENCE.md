@@ -577,7 +577,7 @@ Indexes: entity_type+entity_id, actor_type+actor_id, timestamp, action
 
 ---
 
-## **📊 STATISTICS**
+## **STATISTICS**
 
 ### **Tables**
 - **Total Tables:** 30
@@ -608,7 +608,7 @@ Indexes: entity_type+entity_id, actor_type+actor_id, timestamp, action
 
 ---
 
-## ** COMMON QUERY PATTERNS**
+## **COMMON QUERY PATTERNS**
 
 ### **Get Customer with All Data**
 ```python
