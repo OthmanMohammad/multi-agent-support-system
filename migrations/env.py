@@ -1,10 +1,21 @@
 import os
 from logging.config import fileConfig
+from pathlib import Path
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
+
+# Load .env file if it exists
+try:
+    from dotenv import load_dotenv
+    env_path = Path(__file__).parent.parent / '.env'
+    if env_path.exists():
+        load_dotenv(env_path)
+except ImportError:
+    # dotenv not installed, skip loading
+    pass
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -45,6 +56,19 @@ src_path = project_root / 'src'
 sys.path.insert(0, str(src_path))
 
 from src.database.models import Base
+
+# Import all models explicitly for autogenerate to detect them
+from src.database.models import (
+    Customer, Conversation, Message, AgentPerformance,
+    CustomerHealthEvent, CustomerSegment, CustomerNote, CustomerContact, CustomerIntegration,
+    AgentHandoff, AgentCollaboration, ConversationTag,
+    Subscription, Invoice, Payment, UsageEvent, Credit,
+    Employee, Lead, Deal, SalesActivity, Quote,
+    ConversationAnalytics, FeatureUsage, ABTest,
+    Workflow, WorkflowExecution, ScheduledTask,
+    AuditLog,
+)
+
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
