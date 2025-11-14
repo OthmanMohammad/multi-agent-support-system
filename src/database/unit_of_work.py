@@ -11,7 +11,32 @@ from src.database.repositories import (
     CustomerRepository,
     ConversationRepository,
     MessageRepository,
-    AgentPerformanceRepository
+    AgentPerformanceRepository,
+    CustomerHealthEventRepository,
+    CustomerSegmentRepository,
+    CustomerNoteRepository,
+    CustomerContactRepository,
+    CustomerIntegrationRepository,
+    SubscriptionRepository,
+    InvoiceRepository,
+    PaymentRepository,
+    UsageEventRepository,
+    CreditRepository,
+    EmployeeRepository,
+    LeadRepository,
+    DealRepository,
+    SalesActivityRepository,
+    QuoteRepository,
+    ConversationAnalyticsRepository,
+    FeatureUsageRepository,
+    ABTestRepository,
+    WorkflowRepository,
+    WorkflowExecutionRepository,
+    ScheduledTaskRepository,
+    AgentHandoffRepository,
+    AgentCollaborationRepository,
+    ConversationTagRepository,
+    AuditLogRepository,
 )
 
 
@@ -36,19 +61,58 @@ class UnitOfWork:
     def __init__(self, session: AsyncSession, current_user_id: Optional[UUID] = None):
         """
         Initialize Unit of Work
-        
+
         Args:
             session: Async database session
             current_user_id: ID of user performing operations (for audit trail)
         """
         self.session = session
         self.current_user_id = current_user_id
-        
-        # Lazy-loaded repositories
+
+        # Lazy-loaded repositories - Core
         self._customer_repo: Optional[CustomerRepository] = None
         self._conversation_repo: Optional[ConversationRepository] = None
         self._message_repo: Optional[MessageRepository] = None
         self._agent_performance_repo: Optional[AgentPerformanceRepository] = None
+
+        # Lazy-loaded repositories - Customer Health
+        self._customer_health_event_repo: Optional[CustomerHealthEventRepository] = None
+        self._customer_segment_repo: Optional[CustomerSegmentRepository] = None
+        self._customer_note_repo: Optional[CustomerNoteRepository] = None
+        self._customer_contact_repo: Optional[CustomerContactRepository] = None
+        self._customer_integration_repo: Optional[CustomerIntegrationRepository] = None
+
+        # Lazy-loaded repositories - Subscription & Billing
+        self._subscription_repo: Optional[SubscriptionRepository] = None
+        self._invoice_repo: Optional[InvoiceRepository] = None
+        self._payment_repo: Optional[PaymentRepository] = None
+        self._usage_event_repo: Optional[UsageEventRepository] = None
+        self._credit_repo: Optional[CreditRepository] = None
+
+        # Lazy-loaded repositories - Sales
+        self._employee_repo: Optional[EmployeeRepository] = None
+        self._lead_repo: Optional[LeadRepository] = None
+        self._deal_repo: Optional[DealRepository] = None
+        self._sales_activity_repo: Optional[SalesActivityRepository] = None
+        self._quote_repo: Optional[QuoteRepository] = None
+
+        # Lazy-loaded repositories - Analytics
+        self._conversation_analytics_repo: Optional[ConversationAnalyticsRepository] = None
+        self._feature_usage_repo: Optional[FeatureUsageRepository] = None
+        self._ab_test_repo: Optional[ABTestRepository] = None
+
+        # Lazy-loaded repositories - Workflow
+        self._workflow_repo: Optional[WorkflowRepository] = None
+        self._workflow_execution_repo: Optional[WorkflowExecutionRepository] = None
+        self._scheduled_task_repo: Optional[ScheduledTaskRepository] = None
+
+        # Lazy-loaded repositories - Agent Handoff
+        self._agent_handoff_repo: Optional[AgentHandoffRepository] = None
+        self._agent_collaboration_repo: Optional[AgentCollaborationRepository] = None
+        self._conversation_tag_repo: Optional[ConversationTagRepository] = None
+
+        # Lazy-loaded repositories - Audit
+        self._audit_log_repo: Optional[AuditLogRepository] = None
     
     @property
     def customers(self) -> CustomerRepository:
@@ -77,7 +141,189 @@ class UnitOfWork:
         if self._agent_performance_repo is None:
             self._agent_performance_repo = AgentPerformanceRepository(self.session)
         return self._agent_performance_repo
-    
+
+    # Customer Health Repositories
+    @property
+    def customer_health_events(self) -> CustomerHealthEventRepository:
+        """Get customer health event repository (lazy-loaded)"""
+        if self._customer_health_event_repo is None:
+            self._customer_health_event_repo = CustomerHealthEventRepository(self.session)
+        return self._customer_health_event_repo
+
+    @property
+    def customer_segments(self) -> CustomerSegmentRepository:
+        """Get customer segment repository (lazy-loaded)"""
+        if self._customer_segment_repo is None:
+            self._customer_segment_repo = CustomerSegmentRepository(self.session)
+        return self._customer_segment_repo
+
+    @property
+    def customer_notes(self) -> CustomerNoteRepository:
+        """Get customer note repository (lazy-loaded)"""
+        if self._customer_note_repo is None:
+            self._customer_note_repo = CustomerNoteRepository(self.session)
+        return self._customer_note_repo
+
+    @property
+    def customer_contacts(self) -> CustomerContactRepository:
+        """Get customer contact repository (lazy-loaded)"""
+        if self._customer_contact_repo is None:
+            self._customer_contact_repo = CustomerContactRepository(self.session)
+        return self._customer_contact_repo
+
+    @property
+    def customer_integrations(self) -> CustomerIntegrationRepository:
+        """Get customer integration repository (lazy-loaded)"""
+        if self._customer_integration_repo is None:
+            self._customer_integration_repo = CustomerIntegrationRepository(self.session)
+        return self._customer_integration_repo
+
+    # Subscription & Billing Repositories
+    @property
+    def subscriptions(self) -> SubscriptionRepository:
+        """Get subscription repository (lazy-loaded)"""
+        if self._subscription_repo is None:
+            self._subscription_repo = SubscriptionRepository(self.session)
+        return self._subscription_repo
+
+    @property
+    def invoices(self) -> InvoiceRepository:
+        """Get invoice repository (lazy-loaded)"""
+        if self._invoice_repo is None:
+            self._invoice_repo = InvoiceRepository(self.session)
+        return self._invoice_repo
+
+    @property
+    def payments(self) -> PaymentRepository:
+        """Get payment repository (lazy-loaded)"""
+        if self._payment_repo is None:
+            self._payment_repo = PaymentRepository(self.session)
+        return self._payment_repo
+
+    @property
+    def usage_events(self) -> UsageEventRepository:
+        """Get usage event repository (lazy-loaded)"""
+        if self._usage_event_repo is None:
+            self._usage_event_repo = UsageEventRepository(self.session)
+        return self._usage_event_repo
+
+    @property
+    def credits(self) -> CreditRepository:
+        """Get credit repository (lazy-loaded)"""
+        if self._credit_repo is None:
+            self._credit_repo = CreditRepository(self.session)
+        return self._credit_repo
+
+    # Sales Repositories
+    @property
+    def employees(self) -> EmployeeRepository:
+        """Get employee repository (lazy-loaded)"""
+        if self._employee_repo is None:
+            self._employee_repo = EmployeeRepository(self.session)
+        return self._employee_repo
+
+    @property
+    def leads(self) -> LeadRepository:
+        """Get lead repository (lazy-loaded)"""
+        if self._lead_repo is None:
+            self._lead_repo = LeadRepository(self.session)
+        return self._lead_repo
+
+    @property
+    def deals(self) -> DealRepository:
+        """Get deal repository (lazy-loaded)"""
+        if self._deal_repo is None:
+            self._deal_repo = DealRepository(self.session)
+        return self._deal_repo
+
+    @property
+    def sales_activities(self) -> SalesActivityRepository:
+        """Get sales activity repository (lazy-loaded)"""
+        if self._sales_activity_repo is None:
+            self._sales_activity_repo = SalesActivityRepository(self.session)
+        return self._sales_activity_repo
+
+    @property
+    def quotes(self) -> QuoteRepository:
+        """Get quote repository (lazy-loaded)"""
+        if self._quote_repo is None:
+            self._quote_repo = QuoteRepository(self.session)
+        return self._quote_repo
+
+    # Analytics Repositories
+    @property
+    def conversation_analytics(self) -> ConversationAnalyticsRepository:
+        """Get conversation analytics repository (lazy-loaded)"""
+        if self._conversation_analytics_repo is None:
+            self._conversation_analytics_repo = ConversationAnalyticsRepository(self.session)
+        return self._conversation_analytics_repo
+
+    @property
+    def feature_usage(self) -> FeatureUsageRepository:
+        """Get feature usage repository (lazy-loaded)"""
+        if self._feature_usage_repo is None:
+            self._feature_usage_repo = FeatureUsageRepository(self.session)
+        return self._feature_usage_repo
+
+    @property
+    def ab_tests(self) -> ABTestRepository:
+        """Get A/B test repository (lazy-loaded)"""
+        if self._ab_test_repo is None:
+            self._ab_test_repo = ABTestRepository(self.session)
+        return self._ab_test_repo
+
+    # Workflow Repositories
+    @property
+    def workflows(self) -> WorkflowRepository:
+        """Get workflow repository (lazy-loaded)"""
+        if self._workflow_repo is None:
+            self._workflow_repo = WorkflowRepository(self.session)
+        return self._workflow_repo
+
+    @property
+    def workflow_executions(self) -> WorkflowExecutionRepository:
+        """Get workflow execution repository (lazy-loaded)"""
+        if self._workflow_execution_repo is None:
+            self._workflow_execution_repo = WorkflowExecutionRepository(self.session)
+        return self._workflow_execution_repo
+
+    @property
+    def scheduled_tasks(self) -> ScheduledTaskRepository:
+        """Get scheduled task repository (lazy-loaded)"""
+        if self._scheduled_task_repo is None:
+            self._scheduled_task_repo = ScheduledTaskRepository(self.session)
+        return self._scheduled_task_repo
+
+    # Agent Handoff Repositories
+    @property
+    def agent_handoffs(self) -> AgentHandoffRepository:
+        """Get agent handoff repository (lazy-loaded)"""
+        if self._agent_handoff_repo is None:
+            self._agent_handoff_repo = AgentHandoffRepository(self.session)
+        return self._agent_handoff_repo
+
+    @property
+    def agent_collaborations(self) -> AgentCollaborationRepository:
+        """Get agent collaboration repository (lazy-loaded)"""
+        if self._agent_collaboration_repo is None:
+            self._agent_collaboration_repo = AgentCollaborationRepository(self.session)
+        return self._agent_collaboration_repo
+
+    @property
+    def conversation_tags(self) -> ConversationTagRepository:
+        """Get conversation tag repository (lazy-loaded)"""
+        if self._conversation_tag_repo is None:
+            self._conversation_tag_repo = ConversationTagRepository(self.session)
+        return self._conversation_tag_repo
+
+    # Audit Repository
+    @property
+    def audit_logs(self) -> AuditLogRepository:
+        """Get audit log repository (lazy-loaded)"""
+        if self._audit_log_repo is None:
+            self._audit_log_repo = AuditLogRepository(self.session)
+        return self._audit_log_repo
+
     async def commit(self):
         """Commit the current transaction"""
         await self.session.commit()
