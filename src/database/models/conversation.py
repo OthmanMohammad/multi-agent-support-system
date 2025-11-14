@@ -70,6 +70,30 @@ class Conversation(BaseModel):
         order_by="Message.created_at",
         lazy="selectin"
     )
+    handoffs = relationship(
+        "AgentHandoff",
+        back_populates="conversation",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+    collaborations = relationship(
+        "AgentCollaboration",
+        back_populates="conversation",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+    tags = relationship(
+        "ConversationTag",
+        back_populates="conversation",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+    ab_tests = relationship(
+        "ABTest",
+        back_populates="conversation",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
     
     # Constraints and Indexes
     __table_args__ = (
