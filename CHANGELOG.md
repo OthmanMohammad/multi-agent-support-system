@@ -5,6 +5,177 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-11-15
+
+### Added
+
+- Add schema expansion migration for 26 new tables
+- Add customer health tracking models (5 models)
+- Add agent collaboration models (3 models)
+- Add subscription and billing models (5 models)
+- Add sales and leads models (5 models)
+- Add analytics models (3 models)
+- Add workflow automation models (3 models)
+- Add audit log model for compliance
+- Add 16 new relationships to Customer model
+- Add 4 new relationships to Conversation model
+- Export all 29 models in package
+- Change file name to correct creating date
+- Export all 29 repositories in __init__.py
+- Export all 125 schema classes in __init__.py
+- Add 25 lazy-loaded repository properties to UnitOfWork
+- Add customer health schemas (5 models)
+- Add subscription and billing schemas (5 models)
+- Add sales pipeline schemas (5 models)
+- Add analytics schemas (3 models)
+- Add workflow automation schemas (3 models)
+- Add agent handoff and collaboration schemas (3 models)
+- Add immutable audit log schemas (1 model)
+- Add customer health repositories (5 repos)
+- Add subscription and billing repositories (5 repos)
+- Add sales pipeline repositories (5 repos)
+- Add analytics repositories (3 repos)
+- Add workflow automation repositories (3 repos)
+- Add agent coordination repositories (3 repos)
+- Add immutable audit log repository (1 repo)
+- Add schema expansion migration for 26 new tables
+- Add enhanced base agent infrastructure
+- Add essential tier agents with new structure
+- Add revenue tier placeholder
+- Add operational tier placeholder
+- Add advanced tier placeholder
+- Add agent registry for dynamic discovery
+- Add workflow patterns placeholder
+- Add router backward compatibility wrapper
+- Add enriched context data models
+- Add custom exceptions for context enrichment
+- Add base provider abstract class
+- Add providers module exports
+- Add internal providers module exports
+- Add customer intelligence provider
+- Add engagement metrics provider
+- Add support history provider
+- Add subscription details provider
+- Add account health analyzer provider
+- Add external providers placeholder
+- Add realtime providers placeholder
+- Add two-tier caching system
+- Add context enrichment service
+- Add context enrichment module exports
+- Integrate context enrichment into BaseAgent
+- Implement Meta Router for domain classification
+- Implement Intent Classifier with hierarchical taxonomy...
+- Implement Entity Extractor for structured data extraction
+- Implement Sentiment Analyzer for emotion and urgency detection (TASK-104)
+- Implement Support Domain Router for category routing (TASK-105)
+- Implement Sales Domain Router for sales pipeline routing (TASK-105)
+- Implement CS Domain Router for customer success routing (TASK-105)
+- Implement Complexity Assessor for query complexity scoring (TASK-106)
+- Implement Coordinator for multi-agent collaboration orchestration (TASK-107)
+- Implement Handoff Manager for agent-to-agent state transfer (TASK-108)
+- Implement Escalation Decider for human escalation logic (TASK-109)
+- Implement Context Injector for enriched customer intelligence (TASK-110)
+- Add KB Article database models (TASK-201-206)
+- Export KB models from database models package
+- Implement KB Searcher agent (TASK-201)
+- Implement KB Ranker agent (TASK-202)
+- Implement KB Synthesizer agent (TASK-203)
+- Implement KB Feedback Tracker agent (TASK-204)
+- Implement KB Quality Checker agent (TASK-205)
+- Implement KB Updater agent (TASK-206)
+- Update knowledge_base package exports (STORY-002)
+- Implement KB Gap Detector agent (TASK-207)
+- Implement KB Suggester agent (TASK-208)
+- Implement FAQ Generator agent (TASK-209)
+- Implement KB Embedder agent (TASK-210)
+- Update KB package exports for all 10 agents (STORY-002)
+- Implement Subscription Downgrade Specialist (TASK-301)
+- Implement Refund Processor Agent (TASK-302)
+- Implement Invoice Generator Agent (TASK-303)
+- Implement Payment Troubleshooter Agent (TASK-304)
+- Implement Pricing Explainer Agent (TASK-305)
+- Add Crash Investigator agent (TASK-401)
+- Add Sync Troubleshooter agent (TASK-402)
+- Add Performance Optimizer agent (TASK-403)
+- Add Login Specialist agent (TASK-404)
+- Add Data Recovery Specialist agent (TASK-405)
+- Add Browser Compatibility Specialist agent (TASK-406)
+- Update __init__.py to export all technical specialists
+- Implement Feature Teacher Agent (TASK-501)
+- Implement Workflow Optimizer Agent (TASK-502)
+- Implement Export Specialist Agent (TASK-503)
+- Implement Import Specialist Agent (TASK-504)
+- Implement Collaboration Expert Agent (TASK-505)
+- Update __init__.py to export new Feature Usage agents
+- Implement Webhook Troubleshooter Agent (TASK-601)
+- Implement OAuth Specialist Agent (TASK-602)
+- Implement Rate Limit Advisor Agent (TASK-603)
+- Implement SDK Expert Agent (TASK-604)
+- Update integration module exports (STORY-006)
+- Implement Profile Manager Agent (TASK-701)
+- Implement Team Manager Agent (TASK-702)
+- Implement Notification Configurator Agent (TASK-703)
+- Implement Security Advisor Agent (TASK-704)
+- Implement SSO Specialist Agent (TASK-705)
+- Implement Permission Manager Agent (TASK-706)
+- Implement Data Export Specialist Agent (TASK-707)
+- Implement Account Deletion Specialist Agent (TASK-708)
+- Implement Compliance Specialist Agent (TASK-709)
+- Implement Audit Log Specialist Agent (TASK-710)
+- Update account module __init__.py with all 10 agents
+
+### Documentation
+
+- Add complete database schema reference
+- Add complete database schema reference
+- Add comprehensive agent architecture documentation
+- Add runnable examples for context enrichment
+- Add comprehensive context enrichment documentation
+
+### Fixed
+
+- Load .env file for DATABASE_URL
+
+### Miscellaneous
+
+- Update migration file
+
+### Testing
+
+- Add comprehensive unit tests for Meta Router
+- Add integration tests with real LLM calls
+- Add performance benchmarks for Meta Router
+- Add comprehensive unit tests for Intent Classifier...
+- Add integration tests for Intent Classifier with real LLM...
+- Add performance benchmarks for Intent Classifier...
+- Add comprehensive unit tests for Entity Extractor
+- Add integration tests for Entity Extractor with real LLM
+- Add comprehensive tests for Sentiment Analyzer (TASK-104)
+- Add comprehensive tests for all 3 Domain Routers (TASK-105)
+- Add comprehensive tests for Complexity Assessor (TASK-106)
+- Add comprehensive unit tests for Coordinator (TASK-111)
+- Add comprehensive unit tests for Handoff Manager (TASK-111)
+- Add comprehensive unit tests for Escalation Decider (TASK-111)
+- Add comprehensive unit tests for Context Injector (TASK-111)
+- Add end-to-end routing flow integration tests (TASK-112)
+- Add comprehensive unit tests for all KB agents (TASK-211)
+- Add integration tests for KB swarm flows (TASK-212)
+- Add comprehensive unit tests for all 6 billing agents
+- Add test infrastructure for technical specialists
+- Add comprehensive tests for Crash Investigator (TASK-401)
+- Add comprehensive tests for Sync Troubleshooter (TASK-402)
+- Add comprehensive tests for Performance Optimizer (TASK-403)
+- Add comprehensive tests for Login Specialist (TASK-404)
+- Add comprehensive tests for Data Recovery Specialist (TASK-405)
+- Add comprehensive tests for Browser Compatibility Specialist (TASK-406)
+- Add comprehensive tests for Feature Usage Specialists
+- Add comprehensive tests for Integration Specialists (STORY-006)
+- Add comprehensive tests for all 10 Account Specialists
+
+### [PROD]
+
+- (Story #110) Technical Specialists Sub Swarm 7 Agents (#122)
+
 ## [1.1.0] - 2025-11-13
 
 ### Added
@@ -71,6 +242,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ignore local release guide
 - Explicitly ignore environment files to prevent secret leaks
 - Add Doppler config and .env files to .gitignore
+- Prepare release v1.1.0
 
 ### Refactored
 
@@ -315,5 +487,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add audit trail and soft delete fields to all tables
 - Complete schema with audit trail and optimized indexes
 
+[1.2.0]: https://github.com/othmanmohammad/multi-agent-support-system/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/othmanmohammad/multi-agent-support-system/compare/v1.0.0...v1.1.0
 
