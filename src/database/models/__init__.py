@@ -61,6 +61,13 @@ from src.database.models.workflow import (
 # Security & compliance
 from src.database.models.audit_log import AuditLog
 
+# Knowledge Base
+from src.database.models.kb_article import (
+    KBArticle,
+    KBUsage,
+    KBQualityReport,
+)
+
 __all__ = [
     # Base classes
     "Base",
@@ -104,4 +111,8 @@ __all__ = [
     "ScheduledTask",
     # Security & compliance
     "AuditLog",
+    # Knowledge Base
+    "KBArticle",
+    "KBUsage",
+    "KBQualityReport",
 ]
