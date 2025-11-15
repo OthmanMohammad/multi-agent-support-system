@@ -11,6 +11,10 @@ Agents:
 - KBFeedbackTracker: Tracks article usage and effectiveness
 - KBQualityChecker: Evaluates article quality
 - KBUpdater: Detects outdated content
+- KBGapDetector: Identifies missing KB content
+- KBSuggester: Suggests new articles based on patterns
+- FAQGenerator: Auto-generates FAQs from conversations
+- KBEmbedder: Generates embeddings for articles
 """
 
 from src.agents.essential.knowledge_base.searcher import KBSearcher
@@ -19,6 +23,10 @@ from src.agents.essential.knowledge_base.synthesizer import KBSynthesizer
 from src.agents.essential.knowledge_base.feedback_tracker import KBFeedbackTracker
 from src.agents.essential.knowledge_base.quality_checker import KBQualityChecker
 from src.agents.essential.knowledge_base.updater import KBUpdater
+from src.agents.essential.knowledge_base.gap_detector import KBGapDetector
+from src.agents.essential.knowledge_base.suggester import KBSuggester
+from src.agents.essential.knowledge_base.faq_generator import FAQGenerator
+from src.agents.essential.knowledge_base.embedder import KBEmbedder
 
 __all__ = [
     "KBSearcher",
@@ -27,4 +35,8 @@ __all__ = [
     "KBFeedbackTracker",
     "KBQualityChecker",
     "KBUpdater",
+    "KBGapDetector",
+    "KBSuggester",
+    "FAQGenerator",
+    "KBEmbedder",
 ]
