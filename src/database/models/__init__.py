@@ -68,6 +68,48 @@ from src.database.models.kb_article import (
     KBQualityReport,
 )
 
+# Tier 3: Operational Excellence models
+from src.database.models.operational_analytics import (
+    AnomalyDetection,
+    CohortAnalysis,
+    ABTestResult,
+    FunnelStep,
+    FunnelAnalysis,
+    CorrelationAnalysis,
+    NLQuery,
+    ExecutiveReport,
+    Insight,
+    PredictionExplanation,
+)
+
+from src.database.models.qa_metrics import (
+    ResponseQualityCheck,
+    KBArticleQuality,
+    PolicyRule,
+    CodeValidationResult,
+    LinkCheckResult,
+    SensitivityViolation,
+    HallucinationDetection,
+)
+
+from src.database.models.automation import (
+    AutomatedTask,
+    WorkflowExecution,
+    SLACompliance,
+)
+
+from src.database.models.security import (
+    PIIDetection,
+    AccessControlLog,
+    SecurityIncident,
+    ComplianceAudit,
+    VulnerabilityScan,
+    DataRetentionPolicy,
+    ConsentRecord,
+    EncryptionValidation,
+    PenetrationTest,
+)
+
 __all__ = [
     # Base classes
     "Base",
@@ -115,4 +157,36 @@ __all__ = [
     "KBArticle",
     "KBUsage",
     "KBQualityReport",
+    # Tier 3: Operational Analytics
+    "AnomalyDetection",
+    "CohortAnalysis",
+    "ABTestResult",
+    "FunnelStep",
+    "FunnelAnalysis",
+    "CorrelationAnalysis",
+    "NLQuery",
+    "ExecutiveReport",
+    "Insight",
+    "PredictionExplanation",
+    # Tier 3: QA Metrics
+    "ResponseQualityCheck",
+    "KBArticleQuality",
+    "PolicyRule",
+    "CodeValidationResult",
+    "LinkCheckResult",
+    "SensitivityViolation",
+    "HallucinationDetection",
+    # Tier 3: Automation
+    "AutomatedTask",
+    "SLACompliance",
+    # Tier 3: Security
+    "PIIDetection",
+    "AccessControlLog",
+    "SecurityIncident",
+    "ComplianceAudit",
+    "VulnerabilityScan",
+    "DataRetentionPolicy",
+    "ConsentRecord",
+    "EncryptionValidation",
+    "PenetrationTest",
 ]
