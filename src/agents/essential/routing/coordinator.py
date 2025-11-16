@@ -53,7 +53,6 @@ class Coordinator(BaseAgent):
             temperature=0.1,
             max_tokens=500,
             capabilities=[
-                AgentCapability.ROUTING,
                 AgentCapability.CONTEXT_AWARE
             ],
             system_prompt_template="",  # Coordinator doesn't need LLM
