@@ -1,13 +1,31 @@
 """
-Tier 4 Advanced Agents.
+Tier 4: Advanced Capabilities - EPIC-004
 
-This tier contains advanced AI agents:
-- Predictive Analytics
-- Sentiment Analysis
-- Proactive Support
-- Intelligence Gathering
+49 advanced AI agents providing competitive advantage through prediction,
+personalization, competitive intelligence, content generation, and continuous learning.
 
-PLACEHOLDER: To be implemented in future iterations.
+Swarms:
+- Predictive Intelligence (10 agents): Forecast future events, prevent churn, identify upsells
+- Personalization (9 agents): Hyper-personalize every customer interaction
+- Competitive Intelligence (10 agents): Track competitors, inform strategy
+- Content Generation (10 agents): Generate high-quality content at scale
+- Learning & Improvement (10 agents): Continuously improve the entire system
+
+Expected ROI: $2M-$5M annually
+Timeline: Months 7-12
+Dependencies: Tiers 1-3 must be complete
 """
 
-__all__ = []
+from src.agents.advanced import predictive
+from src.agents.advanced import personalization
+from src.agents.advanced import competitive
+from src.agents.advanced import content
+from src.agents.advanced import learning
+
+__all__ = [
+    "predictive",
+    "personalization",
+    "competitive",
+    "content",
+    "learning",
+]
