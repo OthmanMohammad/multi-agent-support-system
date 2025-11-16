@@ -122,7 +122,19 @@ class Customer(BaseModel, TimestampMixin):
         cascade="all, delete-orphan",
         lazy="selectin"
     )
-    
+    sla_compliance = relationship(
+        "SLACompliance",
+        back_populates="customer",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+    consent_records = relationship(
+        "ConsentRecord",
+        back_populates="customer",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+
     # Constraints
     __table_args__ = (
         CheckConstraint(
