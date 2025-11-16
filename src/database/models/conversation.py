@@ -94,7 +94,31 @@ class Conversation(BaseModel):
         cascade="all, delete-orphan",
         lazy="selectin"
     )
-    
+    quality_checks = relationship(
+        "ResponseQualityCheck",
+        back_populates="conversation",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+    code_validations = relationship(
+        "CodeValidationResult",
+        back_populates="conversation",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+    sensitivity_violations = relationship(
+        "SensitivityViolation",
+        back_populates="conversation",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+    hallucination_detections = relationship(
+        "HallucinationDetection",
+        back_populates="conversation",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+
     # Constraints and Indexes
     __table_args__ = (
         CheckConstraint(
