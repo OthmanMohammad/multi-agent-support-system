@@ -228,6 +228,55 @@ class CacheConfig(BaseSettings):
     )
 
 
+class ContextEnrichmentConfig(BaseSettings):
+    """Context enrichment system configuration"""
+
+    # Enable/disable features
+    enabled: bool = Field(default=True)
+    enable_l1_cache: bool = Field(default=True, description="In-memory L1 cache")
+    enable_l2_cache: bool = Field(default=True, description="Redis L2 cache")
+    enable_external_apis: bool = Field(default=False, description="External data providers")
+
+    # Cache settings
+    l1_cache_ttl: int = Field(default=30, ge=1, le=300, description="L1 cache TTL in seconds")
+    l2_cache_ttl: int = Field(default=300, ge=1, le=3600, description="L2 cache TTL in seconds")
+    l1_max_size: int = Field(default=1000, ge=100, le=10000, description="L1 cache max entries")
+
+    # Timeout settings
+    provider_timeout_ms: int = Field(default=500, ge=100, le=5000, description="Individual provider timeout (ms)")
+    orchestrator_timeout_ms: int = Field(default=200, ge=50, le=2000, description="Total enrichment timeout (ms)")
+
+    # Parallel execution
+    parallel_execution: bool = Field(default=True, description="Execute providers in parallel")
+    max_concurrent_providers: int = Field(default=10, ge=1, le=50, description="Max concurrent provider calls")
+
+    # PII filtering
+    enable_pii_filtering: bool = Field(default=True, description="Enable PII masking")
+    pii_filter_level: Literal["none", "partial", "full"] = Field(default="partial")
+
+    # Monitoring
+    enable_metrics: bool = Field(default=True, description="Enable Prometheus metrics")
+    enable_tracing: bool = Field(default=False, description="Enable OpenTelemetry tracing")
+
+    # Provider-specific settings
+    customer_intelligence_enabled: bool = Field(default=True)
+    subscription_details_enabled: bool = Field(default=True)
+    support_history_enabled: bool = Field(default=True)
+    engagement_metrics_enabled: bool = Field(default=True)
+    account_health_enabled: bool = Field(default=True)
+    sales_pipeline_enabled: bool = Field(default=True)
+    feature_usage_enabled: bool = Field(default=True)
+    security_context_enabled: bool = Field(default=False, description="Security context provider (opt-in)")
+
+    model_config = SettingsConfigDict(
+        env_prefix="CONTEXT_ENRICHMENT_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
+
+
 class Settings(BaseSettings):
     """
     Main application settings.
@@ -257,6 +306,7 @@ class Settings(BaseSettings):
     sentry: SentryConfig = Field(default_factory=SentryConfig)
     notification: NotificationConfig = Field(default_factory=NotificationConfig)
     cache: CacheConfig = Field(default_factory=CacheConfig)
+    context_enrichment: ContextEnrichmentConfig = Field(default_factory=ContextEnrichmentConfig)
 
     @field_validator("debug")
     @classmethod
