@@ -49,7 +49,6 @@ class SalesDomainRouter(RoutingAgent):
             temperature=0.1,  # Consistent routing
             max_tokens=200,
             capabilities=[
-                AgentCapability.ROUTING,
                 AgentCapability.CONTEXT_AWARE
             ],
             system_prompt_template=self._get_system_prompt(),
