@@ -58,7 +58,7 @@ class AutomatedTask(BaseModel):
         return f"<AutomatedTask(type={self.task_type}, status={self.status}, success={self.success})>"
 
 
-class WorkflowExecution(BaseModel):
+class AutomationWorkflowExecution(BaseModel):
     """
     Workflow executions by TASK-2211
     Track multi-step workflow progress
@@ -107,7 +107,7 @@ class WorkflowExecution(BaseModel):
     )
 
     def __repr__(self) -> str:
-        return f"<WorkflowExecution(workflow={self.workflow_name}, status={self.status}, steps={self.completed_steps}/{self.total_steps})>"
+        return f"<AutomationWorkflowExecution(workflow={self.workflow_name}, status={self.status}, steps={self.completed_steps}/{self.total_steps})>"
 
 
 class SLACompliance(BaseModel):
