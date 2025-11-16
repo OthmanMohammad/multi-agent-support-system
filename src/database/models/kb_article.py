@@ -57,6 +57,7 @@ class KBArticle(Base, BaseModel, TimestampMixin):
 
     # Relationships
     usage_records = relationship("KBUsage", back_populates="article", lazy="dynamic")
+    quality_checks = relationship("KBArticleQuality", back_populates="article", lazy="dynamic")
 
     # Indexes
     __table_args__ = (
