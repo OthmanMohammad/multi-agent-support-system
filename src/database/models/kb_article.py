@@ -11,10 +11,10 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
 
-from src.database.models.base import Base, BaseModel, TimestampMixin
+from src.database.models.base import BaseModel
 
 
-class KBArticle(Base, BaseModel, TimestampMixin):
+class KBArticle(BaseModel):
     """
     Knowledge Base Article.
 
@@ -57,7 +57,7 @@ class KBArticle(Base, BaseModel, TimestampMixin):
 
     # Relationships
     usage_records = relationship("KBUsage", back_populates="article", lazy="dynamic")
-    quality_checks = relationship("KBArticleQuality", back_populates="article", lazy="dynamic")
+    quality_checks = relationship("KBQualityReport", back_populates="article", lazy="dynamic")
 
     # Indexes
     __table_args__ = (
@@ -71,7 +71,7 @@ class KBArticle(Base, BaseModel, TimestampMixin):
         return f"<KBArticle(id={self.id}, title={self.title[:50]}, category={self.category})>"
 
 
-class KBUsage(Base, BaseModel, TimestampMixin):
+class KBUsage(BaseModel):
     """
     Knowledge Base Usage Tracking.
 
@@ -91,7 +91,7 @@ class KBUsage(Base, BaseModel, TimestampMixin):
     csat_score = Column(Integer, default=None)  # 1-5
 
     # Metadata
-    metadata = Column(JSON, default=dict)
+    extra_metadata = Column(JSON, default=dict)
 
     # Relationships
     article = relationship("KBArticle", back_populates="usage_records")
@@ -108,7 +108,7 @@ class KBUsage(Base, BaseModel, TimestampMixin):
         return f"<KBUsage(id={self.id}, article_id={self.article_id}, event_type={self.event_type})>"
 
 
-class KBQualityReport(Base, BaseModel, TimestampMixin):
+class KBQualityReport(BaseModel):
     """
     Knowledge Base Quality Report.
 
@@ -119,6 +119,9 @@ class KBQualityReport(Base, BaseModel, TimestampMixin):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     article_id = Column(UUID(as_uuid=True), ForeignKey("kb_articles.id"), nullable=False, index=True)
+
+    # Relationships
+    article = relationship("KBArticle", back_populates="quality_checks")
 
     # Overall quality score
     quality_score = Column(Integer, nullable=False)  # 0-100

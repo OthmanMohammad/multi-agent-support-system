@@ -64,7 +64,7 @@ class WorkflowExecution(BaseModel):
     Track multi-step workflow progress
     """
 
-    __tablename__ = "workflow_executions"
+    __tablename__ = "automation_workflow_executions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 

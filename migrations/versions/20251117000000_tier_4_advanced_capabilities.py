@@ -274,9 +274,10 @@ def upgrade() -> None:
         sa.Index('idx_insights_priority', 'priority', 'status')
     )
 
-    # A/B Tests Table (TASK-4055)
+    # A/B Test Experiments Table (TASK-4055) - Configuration and results
+    # Note: Different from 'ab_tests' table which tracks participation
     op.create_table(
-        'ab_tests',
+        'ab_test_experiments',
         sa.Column('id', postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
         sa.Column('test_id', sa.String(100), nullable=False, unique=True, index=True),
         sa.Column('hypothesis', sa.Text(), nullable=True),
@@ -288,7 +289,7 @@ def upgrade() -> None:
         sa.Column('winner', sa.String(50), nullable=True),
         sa.Column('deployed_at', sa.TIMESTAMP(), nullable=True),
         sa.Column('created_at', sa.TIMESTAMP(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
-        sa.Index('idx_ab_tests_status', 'status')
+        sa.Index('idx_ab_test_experiments_status', 'status')
     )
 
     # Prompt Versions Table (TASK-4057)
@@ -310,7 +311,7 @@ def downgrade() -> None:
 
     # Learning & Improvement tables
     op.drop_table('prompt_versions')
-    op.drop_table('ab_tests')
+    op.drop_table('ab_test_experiments')
     op.drop_table('improvement_insights')
 
     # Content Generation tables
