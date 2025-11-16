@@ -39,9 +39,17 @@ from uuid import UUID, uuid4
 from typing import List, Callable, Dict, Type, Any
 from dataclasses import dataclass, field
 
-from src.utils.logging.setup import get_logger
+# Lazy import to avoid circular dependency:
+# events → logging.setup → core.config → core.__init__ → events
+_logger = None
 
-logger = get_logger(__name__)
+def _get_logger():
+    """Lazy logger initialization"""
+    global _logger
+    if _logger is None:
+        from src.utils.logging.setup import get_logger
+        _logger = get_logger(__name__)
+    return _logger
 
 __all__ = ["DomainEvent", "EventBus", "get_event_bus", "reset_event_bus"]
 
