@@ -6,9 +6,17 @@ Validates configuration and fails fast with clear errors.
 
 from typing import List, Tuple
 from src.core.config import get_settings
-from src.utils.logging.setup import get_logger
+# Lazy import to avoid circular dependency:
+# config_validator → logging.setup → core.config → core.__init__ → config_validator
+_logger = None
 
-logger = get_logger(__name__)
+def _get_logger():
+    """Lazy logger initialization"""
+    global _logger
+    if _logger is None:
+        from src.utils.logging.setup import get_logger
+        _logger = get_logger(__name__)
+    return _logger
 
 
 class ConfigurationError(Exception):
