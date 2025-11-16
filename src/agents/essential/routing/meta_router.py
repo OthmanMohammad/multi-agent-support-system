@@ -42,7 +42,6 @@ class MetaRouter(RoutingAgent):
             temperature=0.1,  # Low temperature for consistent routing
             max_tokens=200,   # Short responses for quick routing
             capabilities=[
-                AgentCapability.ROUTING,
                 AgentCapability.CONTEXT_AWARE
             ],
             system_prompt_template=self._get_system_prompt(),
@@ -528,3 +527,4 @@ if __name__ == "__main__":
 
     # Run tests
     asyncio.run(test_meta_router())
+    
