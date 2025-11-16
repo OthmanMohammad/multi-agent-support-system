@@ -325,18 +325,18 @@ class AgentWorkflowEngine:
             if classification["confidence"] > 0.8:
                 # High confidence, proceed
         """
-        from src.agents.router import RouterAgent
-        
+        from src.agents.essential.routing.meta_router import MetaRouter
+
         self.logger.debug(
             "intent_classification_requested",
             message_preview=message[:50]
         )
-        
+
         # Create minimal state
         state = create_initial_state(message)
-        
+
         # Run just router
-        router = RouterAgent()
+        router = MetaRouter()
         result_state = router.process(state)
         
         classification = {
