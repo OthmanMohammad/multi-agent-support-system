@@ -4,7 +4,6 @@ KB Synthesizer Agent.
 Combines multiple KB articles into a coherent, comprehensive answer with proper citations.
 Uses Claude Sonnet for better synthesis quality.
 
-Part of: STORY-002 Knowledge Base Swarm (TASK-203)
 """
 
 from typing import List, Dict

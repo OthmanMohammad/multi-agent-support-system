@@ -4,7 +4,6 @@ KB Quality Checker Agent.
 Automatically evaluates KB article quality using LLM-based criteria.
 Ensures knowledge base maintains high standards.
 
-Part of: STORY-002 Knowledge Base Swarm (TASK-205)
 """
 
 from typing import Dict, List

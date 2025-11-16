@@ -4,7 +4,6 @@ KB Searcher Agent.
 Performs semantic search across knowledge base articles using Qdrant vector database.
 This is the foundation for all KB-powered agent responses.
 
-Part of: STORY-002 Knowledge Base Swarm (TASK-201)
 """
 
 from typing import List, Dict, Optional

@@ -4,7 +4,6 @@ KB Updater Agent.
 Detects outdated content in the knowledge base and flags articles that need updating.
 Ensures KB stays current with product changes.
 
-Part of: STORY-002 Knowledge Base Swarm (TASK-206)
 """
 
 from typing import Dict, List, Optional

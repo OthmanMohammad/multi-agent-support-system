@@ -4,7 +4,6 @@ KB Ranker Agent.
 Re-ranks KB search results using multiple factors beyond semantic similarity.
 Improves relevance by considering quality, recency, and historical helpfulness.
 
-Part of: STORY-002 Knowledge Base Swarm (TASK-202)
 """
 
 from typing import List, Dict
