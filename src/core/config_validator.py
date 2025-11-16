@@ -85,14 +85,15 @@ def validate_configuration() -> Tuple[bool, List[str]]:
             errors.append("PRODUCTION: Log format should be 'json'")
 
     # Log validation results
+    log = _get_logger()
     if errors:
-        logger.error(
+        log.error(
             "configuration_validation_failed",
             error_count=len(errors),
             errors=errors
         )
     else:
-        logger.info(
+        log.info(
             "configuration_validation_passed",
             environment=settings.environment
         )
@@ -110,9 +111,10 @@ def require_valid_configuration():
         SystemExit: If configuration is invalid
     """
     is_valid, errors = validate_configuration()
+    log = _get_logger()
 
     if not is_valid:
-        logger.critical(
+        log.critical(
             "configuration_validation_failed_startup_aborted",
             errors=errors
         )
@@ -128,7 +130,7 @@ def require_valid_configuration():
 
         raise SystemExit(1)
 
-    logger.info(
+    log.info(
         "configuration_validated",
         environment=get_settings().environment
     )
