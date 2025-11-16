@@ -46,7 +46,6 @@ class IntentClassifier(RoutingAgent):
             temperature=0.1,  # Low for consistent classification
             max_tokens=400,  # Slightly higher for detailed classification
             capabilities=[
-                AgentCapability.ROUTING,
                 AgentCapability.CONTEXT_AWARE,
                 AgentCapability.ENTITY_EXTRACTION
             ],
