@@ -78,7 +78,6 @@ class HandoffManager(BaseAgent):
             temperature=0.1,
             max_tokens=300,
             capabilities=[
-                AgentCapability.ROUTING,
                 AgentCapability.CONTEXT_AWARE
             ],
             system_prompt_template="",  # Handoff manager doesn't need LLM
