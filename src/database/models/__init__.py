@@ -4,6 +4,10 @@ Database models package
 # Base classes
 from src.database.models.base import Base, BaseModel, TimestampMixin, AuditMixin
 
+# Authentication & authorization
+from src.database.models.user import User, UserRole, UserStatus, OAuthProvider
+from src.database.models.api_key import APIKey
+
 # Core models
 from src.database.models.customer import Customer
 from src.database.models.conversation import Conversation
@@ -116,6 +120,12 @@ __all__ = [
     "BaseModel",
     "TimestampMixin",
     "AuditMixin",
+    # Authentication & authorization
+    "User",
+    "UserRole",
+    "UserStatus",
+    "OAuthProvider",
+    "APIKey",
     # Core models
     "Customer",
     "Conversation",

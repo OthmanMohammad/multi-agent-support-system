@@ -8,6 +8,8 @@ from uuid import UUID
 
 from src.database.connection import get_db_session
 from src.database.repositories import (
+    UserRepository,
+    APIKeyRepository,
     CustomerRepository,
     ConversationRepository,
     MessageRepository,
@@ -69,6 +71,10 @@ class UnitOfWork:
         self.session = session
         self.current_user_id = current_user_id
 
+        # Lazy-loaded repositories - Authentication
+        self._user_repo: Optional[UserRepository] = None
+        self._api_key_repo: Optional[APIKeyRepository] = None
+
         # Lazy-loaded repositories - Core
         self._customer_repo: Optional[CustomerRepository] = None
         self._conversation_repo: Optional[ConversationRepository] = None
@@ -113,7 +119,22 @@ class UnitOfWork:
 
         # Lazy-loaded repositories - Audit
         self._audit_log_repo: Optional[AuditLogRepository] = None
-    
+
+    # Authentication Repositories
+    @property
+    def users(self) -> UserRepository:
+        """Get user repository (lazy-loaded)"""
+        if self._user_repo is None:
+            self._user_repo = UserRepository(self.session)
+        return self._user_repo
+
+    @property
+    def api_keys(self) -> APIKeyRepository:
+        """Get API key repository (lazy-loaded)"""
+        if self._api_key_repo is None:
+            self._api_key_repo = APIKeyRepository(self.session)
+        return self._api_key_repo
+
     @property
     def customers(self) -> CustomerRepository:
         """Get customer repository (lazy-loaded)"""

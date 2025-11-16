@@ -228,6 +228,71 @@ class CacheConfig(BaseSettings):
     )
 
 
+class JWTConfig(BaseSettings):
+    """JWT authentication configuration"""
+
+    secret_key: str = Field(
+        ...,
+        min_length=32,
+        description="Secret key for JWT encoding (min 32 characters)"
+    )
+    algorithm: str = Field(default="HS256")
+    access_token_expire_minutes: int = Field(default=60, ge=1, le=1440)
+    refresh_token_expire_days: int = Field(default=30, ge=1, le=90)
+
+    @field_validator("secret_key")
+    @classmethod
+    def validate_secret_key(cls, v: str) -> str:
+        """Ensure secret key is strong enough"""
+        if len(v) < 32:
+            raise ValueError("JWT secret key must be at least 32 characters")
+        return v
+
+    model_config = SettingsConfigDict(
+        env_prefix="JWT_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
+
+
+class RedisConfig(BaseSettings):
+    """Redis configuration for caching and rate limiting"""
+
+    url: str = Field(
+        default="redis://localhost:6379/0",
+        description="Redis connection URL"
+    )
+    password: Optional[str] = Field(default=None)
+    max_connections: int = Field(default=50, ge=1, le=500)
+    socket_timeout: int = Field(default=5, ge=1)
+    socket_connect_timeout: int = Field(default=5, ge=1)
+    decode_responses: bool = Field(default=True)
+
+    # Rate limiting
+    rate_limit_enabled: bool = Field(default=True)
+
+    # Token blacklist
+    token_blacklist_enabled: bool = Field(default=True)
+
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, v: str) -> str:
+        """Validate Redis URL format"""
+        if not v.startswith("redis://") and not v.startswith("rediss://"):
+            raise ValueError("Redis URL must start with redis:// or rediss://")
+        return v
+
+    model_config = SettingsConfigDict(
+        env_prefix="REDIS_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
+
+
 class ContextEnrichmentConfig(BaseSettings):
     """Context enrichment system configuration"""
 
@@ -300,6 +365,8 @@ class Settings(BaseSettings):
     # Sub-configurations
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
     api: APIConfig = Field(default_factory=APIConfig)
+    jwt: JWTConfig = Field(default_factory=JWTConfig)
+    redis: RedisConfig = Field(default_factory=RedisConfig)
     anthropic: AnthropicConfig = Field(default_factory=AnthropicConfig)
     qdrant: QdrantConfig = Field(default_factory=QdrantConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
