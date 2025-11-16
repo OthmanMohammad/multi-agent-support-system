@@ -137,21 +137,30 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
 
 async def init_db():
     """
-    Initialize database - create all tables
+    Initialize database - verify connection
     Should be called on application startup
+
+    Note: Table creation is handled by Alembic migrations.
+    This function just verifies the database is accessible.
     """
     from src.database.models import Base
-    
+
     logger.info(
         "database_initialization_started",
         environment=settings.environment
     )
     engine = get_engine()
-    
+
+    # Just verify connection works (don't create tables - use migrations)
     async with engine.begin() as conn:
-        # Create all tables
-        await conn.run_sync(Base.metadata.create_all)
-        logger.info("database_tables_created")
+        # Only create tables if they don't exist (for development)
+        # In production, use: alembic upgrade head
+        if settings.environment == "development":
+            await conn.run_sync(lambda sync_conn: Base.metadata.create_all(sync_conn, checkfirst=True))
+            logger.info("database_tables_verified_or_created")
+        else:
+            # Production: assume migrations have been run
+            logger.info("database_connection_verified")
 
 
 async def close_db():
