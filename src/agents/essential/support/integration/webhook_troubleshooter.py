@@ -7,6 +7,7 @@ including delivery failures, timeouts, authentication errors, and payload issues
 
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
+import os
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -622,7 +623,7 @@ import hmac
 import hashlib
 
 app = Flask(__name__)
-WEBHOOK_SECRET = "your_webhook_secret"  # From settings
+WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "<YOUR_WEBHOOK_SECRET_HERE>")  # From settings
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
