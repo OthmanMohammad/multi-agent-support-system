@@ -16,13 +16,11 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from src.workflow.state import AgentState, create_initial_state
-from src.agents.router import RouterAgent
-from src.agents.billing import BillingAgent
-from src.agents.technical import TechnicalAgent
-from src.agents.usage import UsageAgent
-from src.agents.api import APIAgent
-from src.agents.escalation import EscalationAgent
 from src.utils.logging.setup import get_logger
+
+# NOTE: Agent imports moved to __init__ to avoid circular imports
+# (graph.py imports agents which import base which imports workflow.state,
+#  but workflow.__init__ imports engine which imports graph)
 
 
 class SupportGraph:
@@ -50,11 +48,19 @@ class SupportGraph:
     
     def __init__(self):
         """Initialize graph with all agents"""
+        # Lazy import to avoid circular dependency
+        from src.agents.essential.routing.meta_router import MetaRouter
+        from src.agents.billing import BillingAgent
+        from src.agents.technical import TechnicalAgent
+        from src.agents.usage import UsageAgent
+        from src.agents.api import APIAgent
+        from src.agents.escalation import EscalationAgent
+
         self.logger = get_logger(__name__)
         self.logger.info("support_graph_initializing", agent_count=6)
-        
-        # Initialize all agents
-        self.router = RouterAgent()
+
+        # Initialize all agents (using MetaRouter instead of deprecated RouterAgent)
+        self.router = MetaRouter()
         self.billing = BillingAgent()
         self.technical = TechnicalAgent()
         self.usage = UsageAgent()
