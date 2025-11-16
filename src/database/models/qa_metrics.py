@@ -116,7 +116,7 @@ class KBArticleQuality(BaseModel):
     checked_at = Column(DateTime(timezone=True), nullable=False, index=True)
 
     # Relationships
-    article = relationship("KBArticle", back_populates="quality_checks")
+    article = relationship("KBArticle", back_populates="qa_quality_checks")
 
     def __repr__(self) -> str:
         return f"<KBArticleQuality(article_id={self.article_id}, needs_update={self.needs_update})>"
@@ -364,3 +364,4 @@ class HallucinationDetection(BaseModel):
 
     def __repr__(self) -> str:
         return f"<HallucinationDetection(type={self.hallucination_type}, severity={self.severity}, blocked={self.response_blocked})>"
+    

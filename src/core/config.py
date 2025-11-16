@@ -25,7 +25,13 @@ class DatabaseConfig(BaseSettings):
     pool_recycle: int = Field(default=3600, ge=60)
     echo: bool = Field(default=False)
 
-    model_config = SettingsConfigDict(env_prefix="DATABASE_")
+    model_config = SettingsConfigDict(
+        env_prefix="DATABASE_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
 
 
 class APIConfig(BaseSettings):
@@ -70,7 +76,13 @@ class APIConfig(BaseSettings):
                 )
         return v
 
-    model_config = SettingsConfigDict(env_prefix="API_")
+    model_config = SettingsConfigDict(
+        env_prefix="API_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
 
 
 class AnthropicConfig(BaseSettings):
@@ -92,7 +104,13 @@ class AnthropicConfig(BaseSettings):
             raise ValueError("Invalid Anthropic API key format")
         return v
 
-    model_config = SettingsConfigDict(env_prefix="ANTHROPIC_")
+    model_config = SettingsConfigDict(
+        env_prefix="ANTHROPIC_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
 
 
 class QdrantConfig(BaseSettings):
@@ -114,7 +132,13 @@ class QdrantConfig(BaseSettings):
             raise ValueError("Qdrant URL must start with http:// or https://")
         return v
 
-    model_config = SettingsConfigDict(env_prefix="QDRANT_")
+    model_config = SettingsConfigDict(
+        env_prefix="QDRANT_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
 
 
 class LoggingConfig(BaseSettings):
@@ -132,7 +156,13 @@ class LoggingConfig(BaseSettings):
     include_timestamp: bool = Field(default=True)
     include_caller: bool = Field(default=False)
 
-    model_config = SettingsConfigDict(env_prefix="LOG_")
+    model_config = SettingsConfigDict(
+        env_prefix="LOG_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
 
 
 class SentryConfig(BaseSettings):
@@ -154,7 +184,13 @@ class SentryConfig(BaseSettings):
             raise ValueError("Sentry DSN must start with https://")
         return v
 
-    model_config = SettingsConfigDict(env_prefix="SENTRY_")
+    model_config = SettingsConfigDict(
+        env_prefix="SENTRY_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
 
 
 class NotificationConfig(BaseSettings):
@@ -166,7 +202,13 @@ class NotificationConfig(BaseSettings):
     slack_webhook_url: Optional[str] = Field(default=None)
     email_from: str = Field(default="noreply@example.com")
 
-    model_config = SettingsConfigDict(env_prefix="NOTIFICATION_")
+    model_config = SettingsConfigDict(
+        env_prefix="NOTIFICATION_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
 
 
 class CacheConfig(BaseSettings):
@@ -177,7 +219,13 @@ class CacheConfig(BaseSettings):
     ttl: int = Field(default=3600, ge=1)
     max_connections: int = Field(default=10, ge=1, le=100)
 
-    model_config = SettingsConfigDict(env_prefix="CACHE_")
+    model_config = SettingsConfigDict(
+        env_prefix="CACHE_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
 
 
 class Settings(BaseSettings):

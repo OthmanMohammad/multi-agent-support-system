@@ -94,7 +94,7 @@ from src.database.models.qa_metrics import (
 
 from src.database.models.automation import (
     AutomatedTask,
-    WorkflowExecution,
+    AutomationWorkflowExecution,
     SLACompliance,
 )
 
@@ -178,6 +178,7 @@ __all__ = [
     "HallucinationDetection",
     # Tier 3: Automation
     "AutomatedTask",
+    "AutomationWorkflowExecution",
     "SLACompliance",
     # Tier 3: Security
     "PIIDetection",

@@ -58,6 +58,7 @@ class KBArticle(BaseModel):
     # Relationships
     usage_records = relationship("KBUsage", back_populates="article", lazy="dynamic")
     quality_checks = relationship("KBQualityReport", back_populates="article", lazy="dynamic")
+    qa_quality_checks = relationship("KBArticleQuality", back_populates="article", lazy="dynamic")
 
     # Indexes
     __table_args__ = (
