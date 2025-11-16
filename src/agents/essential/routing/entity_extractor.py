@@ -226,6 +226,12 @@ Output ONLY valid JSON with the extracted entities. If no entities found, return
                     if not line.strip().startswith("```")
                 )
 
+            # Fix double braces (LLM sometimes returns {{ instead of {)
+            if cleaned_response.startswith("{{"):
+                cleaned_response = cleaned_response[1:]
+            if cleaned_response.endswith("}}"):
+                cleaned_response = cleaned_response[:-1]
+
             # Parse JSON
             entities = json.loads(cleaned_response)
 
