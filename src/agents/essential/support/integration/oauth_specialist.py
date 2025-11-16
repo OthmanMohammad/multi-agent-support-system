@@ -7,6 +7,7 @@ token refresh, scope management, and common OAuth implementation issues.
 
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
+import os
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -239,10 +240,10 @@ import requests
 
 app = Flask(__name__)
 
-# Your OAuth credentials
-CLIENT_ID = "abc123def456ghi789"
-CLIENT_SECRET = "xyz789abc123def456ghi789"
-REDIRECT_URI = "https://your-app.com/oauth/callback"
+# Your OAuth credentials (use environment variables in production)
+CLIENT_ID = os.getenv("OAUTH_CLIENT_ID", "<YOUR_CLIENT_ID_HERE>")
+CLIENT_SECRET = os.getenv("OAUTH_CLIENT_SECRET", "<YOUR_CLIENT_SECRET_HERE>")
+REDIRECT_URI = os.getenv("OAUTH_REDIRECT_URI", "https://your-app.com/oauth/callback")
 
 # Step 2a: Redirect user to authorize
 @app.route('/login')
@@ -915,12 +916,12 @@ import requests
 import secrets
 
 app = Flask(__name__)
-app.secret_key = "your-secret-key"
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "<YOUR_SECRET_KEY_HERE>")
 
 # OAuth configuration
-CLIENT_ID = "your_client_id"
-CLIENT_SECRET = "your_client_secret"
-REDIRECT_URI = "https://your-app.com/callback"
+CLIENT_ID = os.getenv("OAUTH_CLIENT_ID", "<YOUR_CLIENT_ID_HERE>")
+CLIENT_SECRET = os.getenv("OAUTH_CLIENT_SECRET", "<YOUR_CLIENT_SECRET_HERE>")
+REDIRECT_URI = os.getenv("OAUTH_REDIRECT_URI", "https://your-app.com/callback")
 AUTH_URL = "https://api.example.com/oauth/authorize"
 TOKEN_URL = "https://api.example.com/oauth/token"
 
