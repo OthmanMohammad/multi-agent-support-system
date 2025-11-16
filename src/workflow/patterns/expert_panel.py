@@ -24,7 +24,10 @@ from enum import Enum
 import structlog
 
 from src.workflow.state import AgentState
-from src.workflow.exceptions import WorkflowExecutionError
+from src.workflow.exceptions import WorkflowException
+
+# Alias for backward compatibility
+WorkflowExecutionError = WorkflowException
 
 logger = structlog.get_logger(__name__)
 

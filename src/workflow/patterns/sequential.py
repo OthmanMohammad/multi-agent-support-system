@@ -22,10 +22,14 @@ import structlog
 
 from src.workflow.state import AgentState
 from src.workflow.exceptions import (
-    WorkflowExecutionError,
+    WorkflowException,
     AgentExecutionError,
-    WorkflowTimeoutError
+    AgentTimeoutError
 )
+
+# Alias for backward compatibility
+WorkflowExecutionError = WorkflowException
+WorkflowTimeoutError = AgentTimeoutError
 
 logger = structlog.get_logger(__name__)
 
