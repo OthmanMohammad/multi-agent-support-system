@@ -4,7 +4,7 @@ vector search.. Falls back to keyword search if needed.
 """
 import json
 from typing import List, Dict, Optional
-from vector_store import VectorStore
+from src.vector_store import VectorStore
 
 
 # Global vector store instance (initialized on first use)
@@ -172,13 +172,13 @@ def search_articles(
 ) -> List[Dict]:
     """
     Search articles (automatically chooses best method)
-    
+
     Args:
         query: Search query
         category: Filter by category
         limit: Max results
         use_vector: Use vector search if available (default: True)
-        
+
     Returns:
         List of matching articles
     """
@@ -186,6 +186,30 @@ def search_articles(
         return search_articles_vector(query, category, limit)
     else:
         return search_articles_keyword(query, category, limit)
+
+
+# Alias for backward compatibility
+def search_knowledge_base(
+    query: str,
+    category: Optional[str] = None,
+    top_k: int = 3
+) -> List[Dict]:
+    """
+    Search knowledge base (alias for search_articles)
+
+    Args:
+        query: Search query
+        category: Filter by category
+        top_k: Maximum number of results
+
+    Returns:
+        List of matching articles with 'score' field
+    """
+    results = search_articles(query, category, limit=top_k)
+    # Rename similarity_score to score for compatibility
+    for result in results:
+        result['score'] = result.pop('similarity_score', 0.0)
+    return results
 
 
 if __name__ == "__main__":
