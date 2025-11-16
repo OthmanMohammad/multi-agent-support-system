@@ -1,6 +1,8 @@
 """
 Repository package - Data access layer
 """
+from src.database.repositories.user_repository import UserRepository
+from src.database.repositories.api_key_repository import APIKeyRepository
 from src.database.repositories.customer_repository import CustomerRepository
 from src.database.repositories.conversation_repository import ConversationRepository
 from src.database.repositories.message_repository import MessageRepository
@@ -44,6 +46,9 @@ from src.database.repositories.agent_handoff_repository import (
 from src.database.repositories.audit_log_repository import AuditLogRepository
 
 __all__ = [
+    # Authentication
+    "UserRepository",
+    "APIKeyRepository",
     # Core
     "CustomerRepository",
     "ConversationRepository",
