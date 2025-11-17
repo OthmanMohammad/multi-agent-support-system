@@ -14,6 +14,10 @@ from src.api.dependencies.auth_dependencies import (
     get_current_user_or_api_key,
 )
 
+from src.api.dependencies.service_dependencies import (
+    get_conversation_application_service,
+)
+
 __all__ = [
     # JWT authentication
     "get_current_user",
@@ -24,4 +28,6 @@ __all__ = [
     "get_user_from_api_key",
     # Combined authentication
     "get_current_user_or_api_key",
+    # Service dependencies
+    "get_conversation_application_service",
 ]
