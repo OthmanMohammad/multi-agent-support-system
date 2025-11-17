@@ -197,17 +197,17 @@ def sample_conversation_data():
     }
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True, scope="function")
 def mock_event_bus(monkeypatch):
     """Mock EventBus for all KB agent tests"""
     # Create a comprehensive mock with all possible methods
     mock_bus = AsyncMock()
-    mock_bus.publish = AsyncMock()
-    mock_bus.subscribe = AsyncMock()
-    mock_bus.send = AsyncMock()
-    mock_bus.emit = AsyncMock()
-    mock_bus.dispatch = AsyncMock()
-    mock_bus.notify = AsyncMock()
+    mock_bus.publish = AsyncMock(return_value=None)
+    mock_bus.subscribe = AsyncMock(return_value=None)
+    mock_bus.send = AsyncMock(return_value=None)
+    mock_bus.emit = AsyncMock(return_value=None)
+    mock_bus.dispatch = AsyncMock(return_value=None)
+    mock_bus.notify = AsyncMock(return_value=None)
 
     # Mock class that returns the mock_bus instance
     mock_bus_class = MagicMock(return_value=mock_bus)
@@ -215,19 +215,33 @@ def mock_event_bus(monkeypatch):
     def get_mock_event_bus():
         return mock_bus
 
-    # Patch all possible EventBus locations
-    try:
-        monkeypatch.setattr('src.core.events.get_event_bus', get_mock_event_bus)
-        monkeypatch.setattr('src.core.events.EventBus', mock_bus_class)
-        monkeypatch.setattr('src.core.events._event_bus', mock_bus)
-    except (AttributeError, KeyError):
-        pass  # Module might not be loaded yet
+    # Patch EventBus module
+    monkeypatch.setattr('src.core.events.get_event_bus', get_mock_event_bus, raising=False)
+    monkeypatch.setattr('src.core.events.EventBus', mock_bus_class, raising=False)
 
-    # Patch in services that use EventBus
+    # CRITICAL: Patch the services' event_bus attributes directly
+    # This handles cases where services are already instantiated
     try:
-        monkeypatch.setattr('src.services.application.conversation_service.get_event_bus', get_mock_event_bus)
-        monkeypatch.setattr('src.services.application.customer_service.get_event_bus', get_mock_event_bus)
-    except (AttributeError, KeyError):
-        pass  # Services might not be imported in these tests
+        import src.services.application.conversation_service as conv_service
+        if hasattr(conv_service, 'ConversationApplicationService'):
+            # Patch the __init__ to set event_bus to our mock
+            original_init = conv_service.ConversationApplicationService.__init__
+            def patched_init(self, *args, **kwargs):
+                original_init(self, *args, **kwargs)
+                self.event_bus = mock_bus
+            monkeypatch.setattr(conv_service.ConversationApplicationService, '__init__', patched_init, raising=False)
+    except (ImportError, AttributeError):
+        pass
+
+    try:
+        import src.services.application.customer_service as cust_service
+        if hasattr(cust_service, 'CustomerApplicationService'):
+            original_init = cust_service.CustomerApplicationService.__init__
+            def patched_init(self, *args, **kwargs):
+                original_init(self, *args, **kwargs)
+                self.event_bus = mock_bus
+            monkeypatch.setattr(cust_service.CustomerApplicationService, '__init__', patched_init, raising=False)
+    except (ImportError, AttributeError):
+        pass
 
     return mock_bus
