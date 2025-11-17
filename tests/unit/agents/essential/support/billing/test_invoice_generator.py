@@ -184,7 +184,7 @@ class TestInvoiceGenerator:
         assert result["invoice_generated"] is True
         assert "invoice_number" in result
         assert result["status"] == "resolved"
-        assert "sent to" in result["agent_response"].lower()
+        assert ("sent to" in result["agent_response"].lower() or "sent it to" in result["agent_response"].lower())
 
     @pytest.mark.asyncio
     async def test_process_tax_document_request(self, generator):

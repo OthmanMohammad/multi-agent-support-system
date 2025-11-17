@@ -184,7 +184,7 @@ class TestPaymentTroubleshooter:
 
         solution = troubleshooter._get_solution(diagnosis, {})
 
-        assert "timeout" in solution["help_text"].lower() or "quickly" in solution["help_text"].lower()
+        assert any(word in solution["help_text"].lower() for word in ["timeout", "quickly", "promptly"])
 
     def test_get_solution_funds(self, troubleshooter):
         """Test solution for insufficient funds."""

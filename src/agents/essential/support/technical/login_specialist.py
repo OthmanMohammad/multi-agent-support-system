@@ -115,7 +115,9 @@ class LoginSpecialist(BaseAgent):
         """Detect the type of login issue"""
         message_lower = message.lower()
 
-        if any(word in message_lower for word in ["forgot password", "reset password", "can't remember password"]):
+        if any(phrase in message_lower for phrase in ["forgot password", "reset password", "can't remember password"]) or \
+           ("forgot" in message_lower and "password" in message_lower) or \
+           ("remember" in message_lower and "password" in message_lower):
             return "forgot_password"
         elif any(word in message_lower for word in ["locked", "locked out", "too many attempts"]):
             return "locked"

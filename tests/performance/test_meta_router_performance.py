@@ -6,6 +6,7 @@ Tests latency, throughput, and resource usage under various conditions.
 Part of: STORY-01 Routing & Orchestration Swarm (TASK-101)
 """
 
+import os
 import pytest
 import time
 import asyncio

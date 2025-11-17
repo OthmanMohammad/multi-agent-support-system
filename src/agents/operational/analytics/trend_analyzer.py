@@ -471,8 +471,8 @@ class TrendAnalyzerAgent(BaseAgent):
             traj_icon = "🚀" if growth_trajectory["trajectory"] == "growing" else "⬇️" if growth_trajectory["trajectory"] == "declining" else "➡️"
             report += f"- Overall Trend: {growth_trajectory['trajectory'].title()} {traj_icon}\n"
             report += f"- CAGR: {growth_trajectory.get('cagr', 0):.2f}%\n"
-            report += f"- Total Change: {growth_trajectory['total_change_pct']:+.2f}%\n"
-            report += f"- Trend Fit: {growth_trajectory['fit_quality'].title()} (R²={growth_trajectory['r_squared']:.3f})\n"
+            report += f"- Total Change: {growth_trajectory.get('total_change_pct', 0):+.2f}%\n"
+            report += f"- Trend Fit: {growth_trajectory.get('fit_quality', 'unknown').title()} (R²={growth_trajectory.get('r_squared', 0):.3f})\n"
 
         # Forecast
         if forecast.get("status") == "available":

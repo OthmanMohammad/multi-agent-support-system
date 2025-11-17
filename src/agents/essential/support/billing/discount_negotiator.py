@@ -139,9 +139,25 @@ class DiscountNegotiator(BaseAgent):
                 reason=discount_details["reason"]
             )
 
+        elif discount_details["reason"] in self.AVAILABLE_DISCOUNTS and discount_details["reason"] != "general":
+            # Requested specific program (nonprofit, student, etc.) but doesn't qualify
+            # Offer alternatives regardless of requested percentage
+            response = self._offer_alternative_discount(
+                customer_metadata,
+                discount_details
+            )
+            state["discount_approved"] = False
+            state["alternative_offered"] = True
+
+            self.logger.info(
+                "discount_denied_alternative_offered",
+                customer_id=state.get("customer_id"),
+                requested_percent=discount_details["requested_percent"],
+                reason=f"does_not_qualify_for_{discount_details['reason']}"
+            )
+
         elif discount_details["requested_percent"] <= self.MAX_AUTO_APPROVE_PERCENT:
-            # Doesn't qualify for specific program, but within auto-approve limit
-            # Offer alternative discounts
+            # General request within auto-approve limit - offer alternatives
             response = self._offer_alternative_discount(
                 customer_metadata,
                 discount_details
@@ -157,7 +173,7 @@ class DiscountNegotiator(BaseAgent):
             )
 
         else:
-            # Doesn't qualify AND above auto-approve limit - escalate
+            # General request above auto-approve limit - escalate
             response = self._escalate_for_approval(discount_details, customer_metadata)
             state["should_escalate"] = True
             state["escalation_reason"] = f"Discount request >{self.MAX_AUTO_APPROVE_PERCENT}%"

@@ -101,10 +101,12 @@ class BrowserCompatibilitySpecialist(BaseAgent):
         )
 
         # Generate appropriate response
-        if not compatibility["supported"]:
-            response = self._recommend_browser_upgrade(browser, browser_version, compatibility)
-        elif compatibility.get("needs_update"):
+        if not compatibility["supported"] and compatibility.get("needs_update"):
+            # Outdated version of supported browser
             response = self._recommend_version_upgrade(browser, browser_version, compatibility)
+        elif not compatibility["supported"]:
+            # Unsupported/deprecated browser
+            response = self._recommend_browser_upgrade(browser, browser_version, compatibility)
         else:
             # Browser is compatible - check for known issues
             response = await self._check_browser_specific_issues(browser, message)

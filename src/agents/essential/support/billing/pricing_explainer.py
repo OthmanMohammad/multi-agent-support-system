@@ -201,6 +201,8 @@ class PricingExplainer(BaseAgent):
         entities = state.get("entities", {})
         if "pricing_query_type" in entities:
             return entities["pricing_query_type"]
+        if "plans_to_compare" in entities:
+            return "compare"
 
         # Check message keywords
         if any(word in message_lower for word in ["compare", "difference", "vs", "versus"]):
