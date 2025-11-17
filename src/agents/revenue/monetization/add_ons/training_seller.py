@@ -132,7 +132,7 @@ class TrainingSeller(BaseAgent):
         config = AgentConfig(
             name="training_seller",
             type=AgentType.SPECIALIST,
-            model="claude-3-haiku-20240307",  # Haiku for efficient training sales
+             # Haiku for efficient training sales
             temperature=0.3,
             max_tokens=500,
             capabilities=[

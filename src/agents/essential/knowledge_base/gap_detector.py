@@ -50,7 +50,6 @@ class KBGapDetector(BaseAgent):
         config = AgentConfig(
             name="kb_gap_detector",
             type=AgentType.SPECIALIST,
-            model="claude-3-haiku-20240307",
             temperature=0.2,
             max_tokens=512,
             tier="essential"

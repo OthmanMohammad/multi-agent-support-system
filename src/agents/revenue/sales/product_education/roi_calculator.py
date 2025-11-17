@@ -84,7 +84,6 @@ class ROICalculator(BaseAgent):
         config = AgentConfig(
             name="roi_calculator",
             type=AgentType.ANALYZER,
-            model="claude-3-5-sonnet-20240620",
             temperature=0.2,  # Low temperature for accuracy
             max_tokens=1500,
             capabilities=[

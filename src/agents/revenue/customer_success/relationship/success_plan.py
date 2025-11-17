@@ -70,7 +70,6 @@ class SuccessPlanAgent(BaseAgent):
         config = AgentConfig(
             name="success_plan",
             type=AgentType.SPECIALIST,
-            model="claude-3-sonnet-20240229",
             temperature=0.4,
             max_tokens=800,
             capabilities=[

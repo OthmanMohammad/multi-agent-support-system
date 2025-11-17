@@ -229,7 +229,6 @@ class TimingObjectionHandler(BaseAgent):
         config = AgentConfig(
             name="timing_objection_handler",
             type=AgentType.SPECIALIST,
-            model="claude-3-5-sonnet-20240620",
             temperature=0.4,  # Slightly higher for more creative urgency arguments
             max_tokens=1000,
             capabilities=[

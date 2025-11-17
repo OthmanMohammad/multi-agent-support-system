@@ -102,10 +102,11 @@ def captured_events():
     class EventCapture:
         def __init__(self):
             self.events = []
-        
+            self.__name__ = "EventCapture"  # For EventBus logging
+
         def __call__(self, event):
             self.events.append(event)
-        
+
         def clear(self):
             self.events.clear()
     

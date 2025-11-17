@@ -9,7 +9,7 @@ class LanguageAdapterAgent(BaseAgent):
     """Adapt language complexity."""
     
     def __init__(self):
-        config = AgentConfig(name="language_adapter", type=AgentType.COORDINATOR, model="claude-3-haiku-20240307", temperature=0.2, max_tokens=800, capabilities=[], tier="advanced")
+        config = AgentConfig(name="language_adapter", type=AgentType.COORDINATOR, temperature=0.2, max_tokens=800, capabilities=[], tier="advanced")
         super().__init__(config)
         self.logger = get_logger(__name__)
     

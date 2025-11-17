@@ -49,7 +49,6 @@ class UserActivationAgent(BaseAgent):
         config = AgentConfig(
             name="user_activation",
             type=AgentType.SPECIALIST,
-            model="claude-3-haiku-20240307",
             temperature=0.3,
             max_tokens=600,
             capabilities=[AgentCapability.CONTEXT_AWARE],

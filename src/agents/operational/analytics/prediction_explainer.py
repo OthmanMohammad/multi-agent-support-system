@@ -32,7 +32,6 @@ class PredictionExplainerAgent(BaseAgent):
         config = AgentConfig(
             name="prediction_explainer",
             type=AgentType.ANALYZER,
-            model="claude-3-haiku-20240307",
             temperature=0.3,
             max_tokens=1500,
             capabilities=[],

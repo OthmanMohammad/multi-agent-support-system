@@ -71,7 +71,6 @@ class MQLtoSQLConverter(BaseAgent):
         config = AgentConfig(
             name="mql_to_sql_converter",
             type=AgentType.SPECIALIST,
-            model="claude-3-5-sonnet-20240620",
             temperature=0.3,
             max_tokens=800,
             capabilities=[

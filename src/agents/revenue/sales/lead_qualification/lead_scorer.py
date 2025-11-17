@@ -40,7 +40,6 @@ class LeadScorer(BaseAgent):
         config = AgentConfig(
             name="lead_scorer",
             type=AgentType.ANALYZER,
-            model="claude-3-haiku-20240307",
             temperature=0.2,
             max_tokens=800,
             capabilities=[

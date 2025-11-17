@@ -228,7 +228,6 @@ class SecurityObjectionHandler(BaseAgent):
         config = AgentConfig(
             name="security_objection_handler",
             type=AgentType.SPECIALIST,
-            model="claude-3-5-sonnet-20240620",
             temperature=0.2,  # Lower temperature for factual accuracy
             max_tokens=1200,
             capabilities=[

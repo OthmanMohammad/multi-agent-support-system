@@ -82,7 +82,7 @@ class UsageTracker(BaseAgent):
         config = AgentConfig(
             name="usage_tracker",
             type=AgentType.SPECIALIST,
-            model="claude-3-haiku-20240307",  # Fast for real-time tracking
+             # Fast for real-time tracking
             temperature=0.2,  # Low for accurate metrics
             max_tokens=500,
             capabilities=[

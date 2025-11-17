@@ -37,7 +37,6 @@ class RoutingOptimizerAgent(BaseAgent):
         config = AgentConfig(
             name="routing_optimizer",
             type=AgentType.ANALYZER,
-            model="claude-3-sonnet-20240229",
             temperature=0.2,
             max_tokens=3000,
             capabilities=[

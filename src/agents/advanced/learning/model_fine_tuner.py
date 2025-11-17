@@ -37,7 +37,6 @@ class ModelFineTunerAgent(BaseAgent):
         config = AgentConfig(
             name="model_fine_tuner",
             type=AgentType.ANALYZER,
-            model="claude-3-sonnet-20240229",
             temperature=0.2,
             max_tokens=3000,
             capabilities=[

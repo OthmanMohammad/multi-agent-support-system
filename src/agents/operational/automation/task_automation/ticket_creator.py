@@ -70,7 +70,6 @@ class TicketCreatorAgent(BaseAgent):
         config = AgentConfig(
             name="ticket_creator",
             type=AgentType.AUTOMATOR,
-            model="claude-3-haiku-20240307",
             temperature=0.1,  # Deterministic automation
             max_tokens=800,
             capabilities=[AgentCapability.DATABASE_WRITE],

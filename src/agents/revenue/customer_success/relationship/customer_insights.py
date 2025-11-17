@@ -60,7 +60,6 @@ class CustomerInsightsAgent(BaseAgent):
         config = AgentConfig(
             name="customer_insights",
             type=AgentType.SPECIALIST,
-            model="claude-3-sonnet-20240229",
             temperature=0.4,
             max_tokens=800,
             capabilities=[

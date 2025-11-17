@@ -50,7 +50,6 @@ class AnomalyDetectorAgent(BaseAgent):
         config = AgentConfig(
             name="anomaly_detector",
             type=AgentType.ANALYZER,
-            model="claude-3-haiku-20240307",
             temperature=0.2,
             max_tokens=1200,
             capabilities=[AgentCapability.DATABASE_WRITE],

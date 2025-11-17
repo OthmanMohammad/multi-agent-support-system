@@ -10,7 +10,7 @@ class ContentRecommenderAgent(BaseAgent):
     """Recommend personalized content."""
     
     def __init__(self):
-        config = AgentConfig(name="content_recommender", type=AgentType.ANALYZER, model="claude-3-haiku-20240307", temperature=0.2, max_tokens=1000, capabilities=[AgentCapability.KB_SEARCH], tier="advanced")
+        config = AgentConfig(name="content_recommender", type=AgentType.ANALYZER, temperature=0.2, max_tokens=1000, capabilities=[AgentCapability.KB_SEARCH], tier="advanced")
         super().__init__(config)
         self.logger = get_logger(__name__)
     

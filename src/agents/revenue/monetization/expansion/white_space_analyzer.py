@@ -79,7 +79,7 @@ class WhiteSpaceAnalyzer(BaseAgent):
         config = AgentConfig(
             name="white_space_analyzer",
             type=AgentType.SPECIALIST,
-            model="claude-3-5-sonnet-20240620",  # Sonnet for strategic analysis
+             # Sonnet for strategic analysis
             temperature=0.3,
             max_tokens=700,
             capabilities=[

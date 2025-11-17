@@ -59,7 +59,7 @@ class SentimentAnalyzer(BaseAgent):
         config = AgentConfig(
             name="sentiment_analyzer",
             type=AgentType.ANALYZER,
-            model="claude-3-haiku-20240307",  # Fast and accurate
+             # Fast and accurate
             temperature=0.2,  # Low but allows nuance
             max_tokens=250,  # Moderate for detailed analysis
             capabilities=[

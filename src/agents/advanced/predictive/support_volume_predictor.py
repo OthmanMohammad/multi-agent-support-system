@@ -22,7 +22,6 @@ class SupportVolumePredictorAgent(BaseAgent):
         config = AgentConfig(
             name="support_volume_predictor",
             type=AgentType.ANALYZER,
-            model="claude-3-haiku-20240307",
             temperature=0.1,
             max_tokens=1200,
             capabilities=[AgentCapability.DATABASE_READ],

@@ -151,7 +151,6 @@ class CompetitorTracker(BaseAgent):
         config = AgentConfig(
             name="competitor_tracker",
             type=AgentType.ANALYZER,
-            model="claude-3-haiku-20240307",
             temperature=0.3,
             max_tokens=1000,
             capabilities=[

@@ -39,7 +39,6 @@ class RiskAlertAgent(BaseAgent):
         config = AgentConfig(
             name="risk_alert",
             type=AgentType.SPECIALIST,
-            model="claude-3-haiku-20240307",
             temperature=0.2,
             max_tokens=400,
             capabilities=[AgentCapability.CONTEXT_AWARE],

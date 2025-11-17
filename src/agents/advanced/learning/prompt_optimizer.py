@@ -53,7 +53,6 @@ class PromptOptimizerAgent(BaseAgent):
         config = AgentConfig(
             name="prompt_optimizer",
             type=AgentType.ANALYZER,
-            model="claude-3-sonnet-20240229",
             temperature=0.2,
             max_tokens=4000,
             capabilities=[

@@ -15,7 +15,7 @@ class SentimentPredictorAgent(BaseAgent):
     """Predict sentiment trajectory."""
 
     def __init__(self):
-        config = AgentConfig(name="sentiment_predictor", type=AgentType.ANALYZER, model="claude-3-haiku-20240307", temperature=0.1, max_tokens=1000, capabilities=[AgentCapability.DATABASE_READ], tier="advanced")
+        config = AgentConfig(name="sentiment_predictor", type=AgentType.ANALYZER, temperature=0.1, max_tokens=1000, capabilities=[AgentCapability.DATABASE_READ], tier="advanced")
         super().__init__(config)
         self.logger = get_logger(__name__)
 

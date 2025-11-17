@@ -35,7 +35,6 @@ class InvoiceGenerator(BaseAgent):
         config = AgentConfig(
             name="invoice_generator",
             type=AgentType.SPECIALIST,
-            model="claude-3-haiku-20240307",
             temperature=0.2,
             capabilities=[
                 AgentCapability.KB_SEARCH,

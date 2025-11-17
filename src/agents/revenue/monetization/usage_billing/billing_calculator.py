@@ -70,7 +70,7 @@ class BillingCalculator(BaseAgent):
         config = AgentConfig(
             name="billing_calculator",
             type=AgentType.SPECIALIST,
-            model="claude-3-haiku-20240307",  # Fast, accurate calculations
+             # Fast, accurate calculations
             temperature=0.1,  # Very low for financial accuracy
             max_tokens=600,
             capabilities=[

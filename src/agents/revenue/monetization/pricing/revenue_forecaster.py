@@ -93,7 +93,7 @@ class RevenueForecaster(BaseAgent):
         config = AgentConfig(
             name="revenue_forecaster",
             type=AgentType.SPECIALIST,
-            model="claude-3-5-sonnet-20240620",  # Sonnet for complex forecasting
+             # Sonnet for complex forecasting
             temperature=0.2,  # Low for analytical accuracy
             max_tokens=800,
             capabilities=[

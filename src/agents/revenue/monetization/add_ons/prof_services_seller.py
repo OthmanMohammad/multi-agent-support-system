@@ -151,7 +151,7 @@ class ProfServicesSeller(BaseAgent):
         config = AgentConfig(
             name="prof_services_seller",
             type=AgentType.SPECIALIST,
-            model="claude-3-5-sonnet-20240620",  # Sonnet for complex scoping
+             # Sonnet for complex scoping
             temperature=0.3,
             max_tokens=700,
             capabilities=[

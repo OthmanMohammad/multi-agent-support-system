@@ -38,7 +38,7 @@ class MetaRouter(RoutingAgent):
         config = AgentConfig(
             name="meta_router",
             type=AgentType.ROUTER,
-            model="claude-3-haiku-20240307",  # Fast and cost-effective
+             # Fast and cost-effective
             temperature=0.1,  # Low temperature for consistent routing
             max_tokens=200,   # Short responses for quick routing
             capabilities=[

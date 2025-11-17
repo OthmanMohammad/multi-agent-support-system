@@ -87,7 +87,7 @@ class MultiYearDeal(BaseAgent):
         config = AgentConfig(
             name="multi_year_deal",
             type=AgentType.SPECIALIST,
-            model="claude-3-5-sonnet-20240620",  # Sonnet for complex deal structuring
+             # Sonnet for complex deal structuring
             temperature=0.4,
             max_tokens=700,
             capabilities=[

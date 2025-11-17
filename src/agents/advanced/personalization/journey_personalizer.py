@@ -9,7 +9,7 @@ class JourneyPersonalizerAgent(BaseAgent):
     """Customize onboarding journey."""
     
     def __init__(self):
-        config = AgentConfig(name="journey_personalizer", type=AgentType.COORDINATOR, model="claude-3-haiku-20240307", temperature=0.2, max_tokens=1000, capabilities=[AgentCapability.DATABASE_READ], tier="advanced")
+        config = AgentConfig(name="journey_personalizer", type=AgentType.COORDINATOR, temperature=0.2, max_tokens=1000, capabilities=[AgentCapability.DATABASE_READ], tier="advanced")
         super().__init__(config)
         self.logger = get_logger(__name__)
     

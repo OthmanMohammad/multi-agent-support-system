@@ -261,7 +261,6 @@ class ReviewAnalyzer(BaseAgent):
         config = AgentConfig(
             name="review_analyzer",
             type=AgentType.ANALYZER,
-            model="claude-3-5-sonnet-20240620",
             temperature=0.3,
             max_tokens=1500,
             capabilities=[

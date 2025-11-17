@@ -90,7 +90,6 @@ class MetricsTrackerAgent(BaseAgent):
         config = AgentConfig(
             name="metrics_tracker",
             type=AgentType.ANALYZER,
-            model="claude-3-haiku-20240307",
             temperature=0.2,
             max_tokens=1000,
             capabilities=[AgentCapability.DATABASE_WRITE],

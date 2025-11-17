@@ -32,7 +32,7 @@ class InsightSummarizerAgent(BaseAgent):
         config = AgentConfig(
             name="insight_summarizer",
             type=AgentType.GENERATOR,
-            model="claude-3-sonnet-20240229",  # Use Sonnet for better narrative generation
+             # Use Sonnet for better narrative generation
             temperature=0.4,
             max_tokens=1500,
             capabilities=[],

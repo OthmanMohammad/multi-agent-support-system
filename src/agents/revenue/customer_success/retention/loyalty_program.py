@@ -67,7 +67,6 @@ class LoyaltyProgramAgent(BaseAgent):
         config = AgentConfig(
             name="loyalty_program",
             type=AgentType.SPECIALIST,
-            model="claude-3-haiku-20240307",
             temperature=0.2,
             max_tokens=550,
             capabilities=[AgentCapability.CONTEXT_AWARE],

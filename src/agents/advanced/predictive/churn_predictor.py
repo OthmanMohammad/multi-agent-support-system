@@ -59,7 +59,7 @@ class ChurnPredictorAgent(BaseAgent):
         config = AgentConfig(
             name="churn_predictor",
             type=AgentType.ANALYZER,
-            model="claude-3-haiku-20240307",  # For explainability
+             # For explainability
             temperature=0.1,
             max_tokens=1500,
             capabilities=[

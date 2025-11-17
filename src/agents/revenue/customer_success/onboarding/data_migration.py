@@ -52,7 +52,6 @@ class DataMigrationAgent(BaseAgent):
         config = AgentConfig(
             name="data_migration",
             type=AgentType.SPECIALIST,
-            model="claude-3-sonnet-20240229",
             temperature=0.2,
             max_tokens=750,
             capabilities=[

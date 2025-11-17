@@ -31,7 +31,7 @@ class KBQualityChecker(BaseAgent):
         config = AgentConfig(
             name="kb_quality_checker",
             type=AgentType.SPECIALIST,
-            model="claude-3-haiku-20240307",  # Fast for quality checks
+             # Fast for quality checks
             temperature=0.1,  # Low temperature for consistency
             max_tokens=1024,
             tier="essential"

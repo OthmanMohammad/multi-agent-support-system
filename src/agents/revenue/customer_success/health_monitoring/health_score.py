@@ -50,7 +50,6 @@ class HealthScoreAgent(BaseAgent):
         config = AgentConfig(
             name="health_score",
             type=AgentType.SPECIALIST,
-            model="claude-3-sonnet-20240229",
             temperature=0.3,
             max_tokens=700,
             capabilities=[

@@ -52,7 +52,6 @@ class ComplexityAssessor(BaseAgent):
         config = AgentConfig(
             name="complexity_assessor",
             type=AgentType.ANALYZER,
-            model="claude-3-haiku-20240307",
             temperature=0.2,  # Low but allows nuance
             max_tokens=300,
             capabilities=[

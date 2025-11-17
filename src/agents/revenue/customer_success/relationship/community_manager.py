@@ -69,7 +69,6 @@ class CommunityManagerAgent(BaseAgent):
         config = AgentConfig(
             name="community_manager",
             type=AgentType.SPECIALIST,
-            model="claude-3-haiku-20240307",
             temperature=0.4,
             max_tokens=700,
             capabilities=[

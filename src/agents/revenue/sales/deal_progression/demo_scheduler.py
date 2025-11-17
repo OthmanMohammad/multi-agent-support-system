@@ -132,7 +132,7 @@ class DemoScheduler(BaseAgent):
         config = AgentConfig(
             name="demo_scheduler",
             type=AgentType.SPECIALIST,
-            model="claude-3-haiku-20240307",  # Simple scheduling logic
+             # Simple scheduling logic
             temperature=0.3,
             max_tokens=1000,
             capabilities=[

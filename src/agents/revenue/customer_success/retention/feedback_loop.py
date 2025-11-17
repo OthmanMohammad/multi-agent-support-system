@@ -49,7 +49,6 @@ class FeedbackLoopAgent(BaseAgent):
         config = AgentConfig(
             name="feedback_loop",
             type=AgentType.SPECIALIST,
-            model="claude-3-haiku-20240307",
             temperature=0.2,
             max_tokens=600,
             capabilities=[AgentCapability.CONTEXT_AWARE],

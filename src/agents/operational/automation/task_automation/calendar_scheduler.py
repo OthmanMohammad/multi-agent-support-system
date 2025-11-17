@@ -101,7 +101,6 @@ class CalendarSchedulerAgent(BaseAgent):
         config = AgentConfig(
             name="calendar_scheduler",
             type=AgentType.AUTOMATOR,
-            model="claude-3-haiku-20240307",
             temperature=0.1,
             max_tokens=800,
             capabilities=[AgentCapability.DATABASE_WRITE],

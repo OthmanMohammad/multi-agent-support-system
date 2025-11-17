@@ -42,7 +42,7 @@ class KBUpdater(BaseAgent):
         config = AgentConfig(
             name="kb_updater",
             type=AgentType.SPECIALIST,
-            model="claude-3-haiku-20240307",  # For content analysis
+             # For content analysis
             temperature=0.1,
             max_tokens=512,
             tier="essential"

@@ -28,7 +28,7 @@ class KBSynthesizer(BaseAgent):
         config = AgentConfig(
             name="kb_synthesizer",
             type=AgentType.SPECIALIST,
-            model="claude-3-sonnet-20240229",  # Better synthesis quality
+             # Better synthesis quality
             temperature=0.3,  # Some creativity but mostly factual
             max_tokens=2048,
             capabilities=[AgentCapability.KB_SEARCH],

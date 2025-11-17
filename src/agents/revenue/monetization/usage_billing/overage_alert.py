@@ -94,7 +94,7 @@ class OverageAlert(BaseAgent):
         config = AgentConfig(
             name="overage_alert",
             type=AgentType.SPECIALIST,
-            model="claude-3-haiku-20240307",  # Fast for real-time alerts
+             # Fast for real-time alerts
             temperature=0.3,
             max_tokens=400,
             capabilities=[

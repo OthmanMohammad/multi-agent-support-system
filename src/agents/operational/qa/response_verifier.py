@@ -54,7 +54,6 @@ class ResponseVerifierAgent(BaseAgent):
         config = AgentConfig(
             name="response_verifier",
             type=AgentType.ANALYZER,
-            model="claude-3-haiku-20240307",
             temperature=0.1,
             max_tokens=2000,
             capabilities=[AgentCapability.DATABASE_WRITE],

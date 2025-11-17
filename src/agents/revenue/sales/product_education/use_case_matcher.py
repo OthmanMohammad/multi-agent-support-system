@@ -117,7 +117,6 @@ class UseCaseMatcher(BaseAgent):
         config = AgentConfig(
             name="use_case_matcher",
             type=AgentType.SPECIALIST,
-            model="claude-3-5-sonnet-20240620",
             temperature=0.4,
             max_tokens=1200,
             capabilities=[

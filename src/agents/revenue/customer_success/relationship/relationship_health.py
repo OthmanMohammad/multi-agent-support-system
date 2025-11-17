@@ -58,7 +58,6 @@ class RelationshipHealthAgent(BaseAgent):
         config = AgentConfig(
             name="relationship_health",
             type=AgentType.SPECIALIST,
-            model="claude-3-haiku-20240307",
             temperature=0.3,
             max_tokens=700,
             capabilities=[

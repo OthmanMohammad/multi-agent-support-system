@@ -115,7 +115,6 @@ class DisqualificationAgent(BaseAgent):
         config = AgentConfig(
             name="disqualification_agent",
             type=AgentType.SPECIALIST,
-            model="claude-3-5-sonnet-20240620",
             temperature=0.3,
             max_tokens=600,
             capabilities=[

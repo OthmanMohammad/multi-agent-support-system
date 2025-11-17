@@ -49,7 +49,6 @@ class Coordinator(BaseAgent):
         config = AgentConfig(
             name="coordinator",
             type=AgentType.ORCHESTRATOR,
-            model="claude-3-haiku-20240307",
             temperature=0.1,
             max_tokens=500,
             capabilities=[
@@ -697,8 +696,7 @@ if __name__ == "__main__":
             def __init__(self, name: str, decision: Any = None):
                 config = AgentConfig(
                     name=name,
-                    type=AgentType.ANALYZER,
-                    model="claude-3-haiku-20240307"
+                    type=AgentType.ANALYZER
                 )
                 super().__init__(config=config)
                 self.decision = decision

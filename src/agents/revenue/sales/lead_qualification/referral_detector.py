@@ -81,7 +81,6 @@ class ReferralDetector(BaseAgent):
         config = AgentConfig(
             name="referral_detector",
             type=AgentType.SPECIALIST,
-            model="claude-3-5-sonnet-20240620",
             temperature=0.4,
             max_tokens=700,
             capabilities=[

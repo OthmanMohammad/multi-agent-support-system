@@ -74,7 +74,6 @@ class HandoffManager(BaseAgent):
         config = AgentConfig(
             name="handoff_manager",
             type=AgentType.ORCHESTRATOR,
-            model="claude-3-haiku-20240307",
             temperature=0.1,
             max_tokens=300,
             capabilities=[

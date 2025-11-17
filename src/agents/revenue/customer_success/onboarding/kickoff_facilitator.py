@@ -49,7 +49,6 @@ class KickoffFacilitatorAgent(BaseAgent):
         config = AgentConfig(
             name="kickoff_facilitator",
             type=AgentType.SPECIALIST,
-            model="claude-3-haiku-20240307",
             temperature=0.3,
             max_tokens=500,
             capabilities=[

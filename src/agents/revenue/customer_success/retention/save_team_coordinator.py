@@ -63,7 +63,6 @@ class SaveTeamCoordinatorAgent(BaseAgent):
         config = AgentConfig(
             name="save_team_coordinator",
             type=AgentType.SPECIALIST,
-            model="claude-3-sonnet-20240229",
             temperature=0.3,
             max_tokens=850,
             capabilities=[

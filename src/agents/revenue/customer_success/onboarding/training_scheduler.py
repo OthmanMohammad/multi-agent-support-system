@@ -47,7 +47,6 @@ class TrainingSchedulerAgent(BaseAgent):
         config = AgentConfig(
             name="training_scheduler",
             type=AgentType.SPECIALIST,
-            model="claude-3-haiku-20240307",
             temperature=0.3,
             max_tokens=450,
             capabilities=[AgentCapability.CONTEXT_AWARE],

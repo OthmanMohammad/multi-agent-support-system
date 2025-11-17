@@ -94,7 +94,6 @@ class CodeValidatorAgent(BaseAgent):
         config = AgentConfig(
             name="code_validator",
             type=AgentType.ANALYZER,
-            model="claude-3-haiku-20240307",
             temperature=0.1,
             max_tokens=2000,
             capabilities=[],

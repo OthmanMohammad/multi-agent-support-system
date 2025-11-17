@@ -89,7 +89,6 @@ class InboundQualifier(BaseAgent):
         config = AgentConfig(
             name="inbound_qualifier",
             type=AgentType.SPECIALIST,
-            model="claude-3-5-sonnet-20240620",
             temperature=0.4,
             max_tokens=600,
             capabilities=[

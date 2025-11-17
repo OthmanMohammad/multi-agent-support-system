@@ -9,7 +9,7 @@ class ChannelOptimizerAgent(BaseAgent):
     """Choose best communication channel."""
     
     def __init__(self):
-        config = AgentConfig(name="channel_optimizer", type=AgentType.ANALYZER, model="claude-3-haiku-20240307", temperature=0.1, max_tokens=600, capabilities=[AgentCapability.DATABASE_READ], tier="advanced")
+        config = AgentConfig(name="channel_optimizer", type=AgentType.ANALYZER, temperature=0.1, max_tokens=600, capabilities=[AgentCapability.DATABASE_READ], tier="advanced")
         super().__init__(config)
         self.logger = get_logger(__name__)
     

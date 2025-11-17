@@ -59,7 +59,6 @@ class ChampionCultivatorAgent(BaseAgent):
         config = AgentConfig(
             name="champion_cultivator",
             type=AgentType.SPECIALIST,
-            model="claude-3-haiku-20240307",
             temperature=0.4,
             max_tokens=700,
             capabilities=[

@@ -136,7 +136,6 @@ class DashboardGeneratorAgent(BaseAgent):
         config = AgentConfig(
             name="dashboard_generator",
             type=AgentType.GENERATOR,
-            model="claude-3-haiku-20240307",
             temperature=0.2,
             max_tokens=2000,
             capabilities=[AgentCapability.DATABASE_WRITE],

@@ -26,7 +26,6 @@ class TechnicalAgent(BaseAgent):
         config = AgentConfig(
             name="technical_agent",
             type=AgentType.SPECIALIST,
-            model="claude-3-haiku-20240307",
             temperature=0.3,
             capabilities=[
                 AgentCapability.KB_SEARCH,

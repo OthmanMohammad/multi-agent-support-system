@@ -299,7 +299,6 @@ class PricingAnalyzer(BaseAgent):
         config = AgentConfig(
             name="pricing_analyzer",
             type=AgentType.ANALYZER,
-            model="claude-3-5-sonnet-20240620",
             temperature=0.2,
             max_tokens=1500,
             capabilities=[

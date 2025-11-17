@@ -173,7 +173,6 @@ class CollaborationExpert(BaseAgent):
         config = AgentConfig(
             name="collaboration_expert",
             type=AgentType.SPECIALIST,
-            model="claude-3-haiku-20240307",
             temperature=0.4,
             capabilities=[
                 AgentCapability.KB_SEARCH,

@@ -28,7 +28,6 @@ class DataBackupAgent(BaseAgent):
         config = AgentConfig(
             name="data_backup",
             type=AgentType.AUTOMATOR,
-            model="claude-3-haiku-20240307",
             temperature=0.1,
             max_tokens=600,
             capabilities=[AgentCapability.DATABASE_WRITE],

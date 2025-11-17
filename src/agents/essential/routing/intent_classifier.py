@@ -42,7 +42,7 @@ class IntentClassifier(RoutingAgent):
         config = AgentConfig(
             name="intent_classifier",
             type=AgentType.ROUTER,
-            model="claude-3-haiku-20240307",  # Fast and accurate
+             # Fast and accurate
             temperature=0.1,  # Low for consistent classification
             max_tokens=400,  # Slightly higher for detailed classification
             capabilities=[

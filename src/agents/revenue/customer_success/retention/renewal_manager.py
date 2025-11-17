@@ -50,7 +50,6 @@ class RenewalManagerAgent(BaseAgent):
         config = AgentConfig(
             name="renewal_manager",
             type=AgentType.SPECIALIST,
-            model="claude-3-sonnet-20240229",
             temperature=0.3,
             max_tokens=800,
             capabilities=[

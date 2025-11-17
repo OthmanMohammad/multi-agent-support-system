@@ -62,7 +62,6 @@ class DeduplicatorAgent(BaseAgent):
         config = AgentConfig(
             name="deduplicator",
             type=AgentType.AUTOMATOR,
-            model="claude-3-haiku-20240307",
             temperature=0.1,
             max_tokens=900,
             capabilities=[AgentCapability.DATABASE_WRITE],

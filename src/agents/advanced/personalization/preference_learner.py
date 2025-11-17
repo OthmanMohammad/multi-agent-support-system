@@ -10,7 +10,7 @@ class PreferenceLearnerAgent(BaseAgent):
     """Learn customer preferences from behavior."""
     
     def __init__(self):
-        config = AgentConfig(name="preference_learner", type=AgentType.ANALYZER, model="claude-3-haiku-20240307", temperature=0.1, max_tokens=800, capabilities=[AgentCapability.DATABASE_READ, AgentCapability.DATABASE_WRITE], tier="advanced")
+        config = AgentConfig(name="preference_learner", type=AgentType.ANALYZER, temperature=0.1, max_tokens=800, capabilities=[AgentCapability.DATABASE_READ, AgentCapability.DATABASE_WRITE], tier="advanced")
         super().__init__(config)
         self.logger = get_logger(__name__)
     

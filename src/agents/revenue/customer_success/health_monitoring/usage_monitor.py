@@ -31,7 +31,6 @@ class UsageMonitorAgent(BaseAgent):
         config = AgentConfig(
             name="usage_monitor",
             type=AgentType.SPECIALIST,
-            model="claude-3-haiku-20240307",
             temperature=0.3,
             max_tokens=400,
             capabilities=[AgentCapability.CONTEXT_AWARE],

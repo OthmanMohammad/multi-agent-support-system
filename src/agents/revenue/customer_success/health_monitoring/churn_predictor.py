@@ -50,7 +50,6 @@ class ChurnPredictorAgent(BaseAgent):
         config = AgentConfig(
             name="churn_predictor",
             type=AgentType.SPECIALIST,
-            model="claude-3-sonnet-20240229",
             temperature=0.2,
             max_tokens=600,
             capabilities=[

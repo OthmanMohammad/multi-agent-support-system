@@ -69,7 +69,6 @@ class UsageBasedExpansionAgent(BaseAgent):
         config = AgentConfig(
             name="usage_based_expansion",
             type=AgentType.SPECIALIST,
-            model="claude-3-sonnet-20240229",
             temperature=0.3,
             max_tokens=800,
             capabilities=[

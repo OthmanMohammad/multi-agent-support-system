@@ -45,7 +45,6 @@ class CohortAnalyzerAgent(BaseAgent):
         config = AgentConfig(
             name="cohort_analyzer",
             type=AgentType.ANALYZER,
-            model="claude-3-haiku-20240307",
             temperature=0.2,
             max_tokens=1500,
             capabilities=[AgentCapability.DATABASE_WRITE],

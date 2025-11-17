@@ -65,7 +65,7 @@ class EntityExtractor(BaseAgent):
         config = AgentConfig(
             name="entity_extractor",
             type=AgentType.ANALYZER,
-            model="claude-3-haiku-20240307",  # Fast and accurate
+             # Fast and accurate
             temperature=0.1,  # Low for consistent extraction
             max_tokens=300,  # Moderate for entity lists
             capabilities=[

@@ -49,7 +49,6 @@ class ConversationAnalyzerAgent(BaseAgent):
         config = AgentConfig(
             name="conversation_analyzer",
             type=AgentType.ANALYZER,
-            model="claude-3-sonnet-20240229",
             temperature=0.3,
             max_tokens=4000,
             capabilities=[

@@ -135,7 +135,7 @@ class UsageOptimizer(BaseAgent):
         config = AgentConfig(
             name="usage_optimizer",
             type=AgentType.SPECIALIST,
-            model="claude-3-5-sonnet-20240620",  # Sonnet for detailed analysis
+             # Sonnet for detailed analysis
             temperature=0.3,
             max_tokens=600,
             capabilities=[

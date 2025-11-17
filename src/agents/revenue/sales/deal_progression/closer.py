@@ -221,7 +221,6 @@ class Closer(BaseAgent):
         config = AgentConfig(
             name="closer",
             type=AgentType.SPECIALIST,
-            model="claude-3-5-sonnet-20240620",
             temperature=0.4,  # Slightly higher for persuasive language
             max_tokens=1500,
             capabilities=[

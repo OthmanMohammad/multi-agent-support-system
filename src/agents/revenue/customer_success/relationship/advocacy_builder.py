@@ -61,7 +61,6 @@ class AdvocacyBuilderAgent(BaseAgent):
         config = AgentConfig(
             name="advocacy_builder",
             type=AgentType.SPECIALIST,
-            model="claude-3-haiku-20240307",
             temperature=0.4,
             max_tokens=700,
             capabilities=[

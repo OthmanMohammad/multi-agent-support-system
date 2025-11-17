@@ -103,7 +103,7 @@ class SeatExpansion(BaseAgent):
         config = AgentConfig(
             name="seat_expansion",
             type=AgentType.SPECIALIST,
-            model="claude-3-5-sonnet-20240620",  # Sonnet for expansion sales
+             # Sonnet for expansion sales
             temperature=0.3,
             max_tokens=600,
             capabilities=[

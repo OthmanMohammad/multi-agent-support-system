@@ -28,7 +28,6 @@ class SLAEnforcerAgent(BaseAgent):
         config = AgentConfig(
             name="sla_enforcer",
             type=AgentType.AUTOMATOR,
-            model="claude-3-haiku-20240307",
             temperature=0.1,
             max_tokens=600,
             capabilities=[AgentCapability.DATABASE_WRITE],

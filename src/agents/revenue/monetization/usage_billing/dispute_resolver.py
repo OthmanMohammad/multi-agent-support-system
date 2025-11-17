@@ -137,7 +137,7 @@ class DisputeResolver(BaseAgent):
         config = AgentConfig(
             name="dispute_resolver",
             type=AgentType.SPECIALIST,
-            model="claude-3-5-sonnet-20240620",  # Sonnet for nuanced resolution
+             # Sonnet for nuanced resolution
             temperature=0.3,
             max_tokens=600,
             capabilities=[

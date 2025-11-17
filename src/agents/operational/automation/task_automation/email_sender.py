@@ -129,7 +129,6 @@ Best regards,
         config = AgentConfig(
             name="email_sender",
             type=AgentType.AUTOMATOR,
-            model="claude-3-haiku-20240307",
             temperature=0.1,
             max_tokens=1000,
             capabilities=[AgentCapability.DATABASE_WRITE],

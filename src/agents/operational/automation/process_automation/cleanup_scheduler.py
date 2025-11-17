@@ -30,7 +30,6 @@ class CleanupSchedulerAgent(BaseAgent):
         config = AgentConfig(
             name="cleanup_scheduler",
             type=AgentType.AUTOMATOR,
-            model="claude-3-haiku-20240307",
             temperature=0.1,
             max_tokens=700,
             capabilities=[AgentCapability.DATABASE_WRITE],

@@ -127,7 +127,7 @@ class AdoptionTracker(BaseAgent):
         config = AgentConfig(
             name="adoption_tracker",
             type=AgentType.SPECIALIST,
-            model="claude-3-haiku-20240307",  # Haiku for efficient tracking
+             # Haiku for efficient tracking
             temperature=0.3,
             max_tokens=500,
             capabilities=[

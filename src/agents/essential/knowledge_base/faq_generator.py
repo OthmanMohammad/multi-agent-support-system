@@ -45,7 +45,7 @@ class FAQGenerator(BaseAgent):
         config = AgentConfig(
             name="faq_generator",
             type=AgentType.SPECIALIST,
-            model="claude-3-sonnet-20240229",  # Better writing
+             # Better writing
             temperature=0.3,
             max_tokens=1024,
             tier="essential"

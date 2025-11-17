@@ -50,7 +50,7 @@ class QueryBuilderAgent(BaseAgent):
         config = AgentConfig(
             name="query_builder",
             type=AgentType.GENERATOR,
-            model="claude-3-sonnet-20240229",  # Use Sonnet for better NL understanding
+             # Use Sonnet for better NL understanding
             temperature=0.2,
             max_tokens=1000,
             capabilities=[],

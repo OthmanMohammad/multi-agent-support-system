@@ -170,7 +170,6 @@ class ContractNegotiator(BaseAgent):
         config = AgentConfig(
             name="contract_negotiator",
             type=AgentType.SPECIALIST,
-            model="claude-3-5-sonnet-20240620",
             temperature=0.3,
             max_tokens=1500,
             capabilities=[

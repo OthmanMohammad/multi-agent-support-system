@@ -106,7 +106,7 @@ class DiscountManager(BaseAgent):
         config = AgentConfig(
             name="discount_manager",
             type=AgentType.SPECIALIST,
-            model="claude-3-haiku-20240307",  # Haiku for fast discount decisions
+             # Haiku for fast discount decisions
             temperature=0.2,  # Low for policy enforcement
             max_tokens=500,
             capabilities=[

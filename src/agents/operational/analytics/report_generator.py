@@ -52,7 +52,6 @@ class ReportGeneratorAgent(BaseAgent):
         config = AgentConfig(
             name="report_generator",
             type=AgentType.GENERATOR,
-            model="claude-3-haiku-20240307",
             temperature=0.3,
             max_tokens=2000,
             capabilities=[AgentCapability.DATABASE_WRITE],

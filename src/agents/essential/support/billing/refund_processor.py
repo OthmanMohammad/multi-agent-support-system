@@ -54,7 +54,6 @@ class RefundProcessor(BaseAgent):
         config = AgentConfig(
             name="refund_processor",
             type=AgentType.SPECIALIST,
-            model="claude-3-haiku-20240307",
             temperature=0.1,  # Low temp for strict policy enforcement
             capabilities=[
                 AgentCapability.KB_SEARCH,
