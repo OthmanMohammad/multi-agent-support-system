@@ -10,7 +10,6 @@ from langgraph.graph import StateGraph, END
 
 from src.workflow.state import AgentState, create_initial_state
 from src.services.infrastructure.agent_registry import AgentRegistry
-from src.agents.base.base_agent import AgentConfig
 from src.utils.logging.setup import get_logger
 
 
