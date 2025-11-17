@@ -8,7 +8,7 @@ Part of: STORY-002 Knowledge Base Swarm (TASK-209)
 
 from typing import List, Dict
 from collections import Counter
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 import json
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -154,7 +154,7 @@ class FAQGenerator(BaseAgent):
         Returns:
             List of common questions with counts
         """
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = datetime.now(UTC) - timedelta(days=days)
 
         try:
             async with get_db_session() as session:

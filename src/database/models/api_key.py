@@ -5,7 +5,7 @@ This module defines the APIKey model for machine-to-machine authentication.
 """
 
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, UTC
 from uuid import UUID
 from sqlalchemy import String, DateTime, Boolean, ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -187,7 +187,7 @@ class APIKey(BaseModel):
         """
         if not self.expires_at:
             return False
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(UTC) > self.expires_at
 
     def is_valid(self) -> bool:
         """
@@ -210,6 +210,6 @@ class APIKey(BaseModel):
             ip_address: IP address of the request
         """
         self.usage_count += 1
-        self.last_used_at = datetime.utcnow()
+        self.last_used_at = datetime.now(UTC)
         if ip_address:
             self.last_used_ip = ip_address

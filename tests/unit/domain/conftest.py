@@ -3,7 +3,7 @@ Shared fixtures for domain services tests
 """
 import pytest
 from uuid import uuid4
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import List
 
 
@@ -30,19 +30,19 @@ def sample_message_id():
 @pytest.fixture
 def sample_timestamp():
     """Sample timestamp"""
-    return datetime.utcnow()
+    return datetime.now(UTC)
 
 
 @pytest.fixture
 def timestamp_1_hour_ago():
     """Timestamp from 1 hour ago"""
-    return datetime.utcnow() - timedelta(hours=1)
+    return datetime.now(UTC) - timedelta(hours=1)
 
 
 @pytest.fixture
 def timestamp_5_minutes_ago():
     """Timestamp from 5 minutes ago"""
-    return datetime.utcnow() - timedelta(minutes=5)
+    return datetime.now(UTC) - timedelta(minutes=5)
 
 
 # ===== Mock Conversation Object =====
@@ -78,7 +78,7 @@ class MockConversation:
         self.messages = messages or []
         self.sentiment_avg = sentiment_avg
         self.agents_involved = agents_involved or []
-        self.started_at = started_at or datetime.utcnow()
+        self.started_at = started_at or datetime.now(UTC)
 
 
 @pytest.fixture

@@ -5,7 +5,7 @@ Fetches customer engagement and product usage data from database.
 """
 
 from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from uuid import UUID
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -70,7 +70,7 @@ class EngagementMetricsProvider(BaseContextProvider):
             uow = UnitOfWork(session)
 
             # Fetch usage events for last 30 days
-            cutoff_date = datetime.utcnow() - timedelta(days=30)
+            cutoff_date = datetime.now(UTC) - timedelta(days=30)
             usage_events = await uow.usage_events.find_by(customer_id=customer_id)
 
             # Filter to last 30 days
@@ -93,7 +93,7 @@ class EngagementMetricsProvider(BaseContextProvider):
                     event.created_at for event in login_events
                     if hasattr(event, 'created_at')
                 )
-                days_since = (datetime.utcnow() - last_login.replace(tzinfo=None)).days
+                days_since = (datetime.now(UTC) - last_login.replace(tzinfo=None)).days
             else:
                 last_login = None
                 days_since = None

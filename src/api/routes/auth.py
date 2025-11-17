@@ -20,7 +20,7 @@ Endpoints:
 
 from typing import List
 from uuid import UUID
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -386,7 +386,7 @@ async def request_password_reset(
         if user:
             # Generate reset token
             reset_token = PasswordManager.generate_password_reset_token()
-            expires_at = datetime.utcnow() + timedelta(hours=24)
+            expires_at = datetime.now(UTC) + timedelta(hours=24)
 
             # Save reset token
             await uow.users.set_password_reset_token(
@@ -450,7 +450,7 @@ async def confirm_password_reset(
             )
 
         # Check token expiration
-        if not user.password_reset_expires_at or user.password_reset_expires_at < datetime.utcnow():
+        if not user.password_reset_expires_at or user.password_reset_expires_at < datetime.now(UTC):
             logger.warning("password_reset_token_expired", user_id=str(user.id))
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

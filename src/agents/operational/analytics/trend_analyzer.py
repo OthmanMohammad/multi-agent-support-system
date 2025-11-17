@@ -6,7 +6,7 @@ Identifies seasonality patterns and growth trajectories.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from decimal import Decimal
 import math
 
@@ -475,6 +475,6 @@ class TrendAnalyzerAgent(BaseAgent):
             for trend in significant_trends:
                 report += f"- {trend['period_name']}: {trend['direction'].title()} {trend['percent_change']:+.1f}% ({trend['significance']} significance)\n"
 
-        report += f"\n*Analysis completed at {datetime.utcnow().isoformat()}*"
+        report += f"\n*Analysis completed at {datetime.now(UTC).isoformat()}*"
 
         return report

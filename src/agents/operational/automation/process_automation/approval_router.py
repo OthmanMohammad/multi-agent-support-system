@@ -6,7 +6,7 @@ amount thresholds, and organizational hierarchy.
 """
 
 from typing import Dict, Any, List
-from datetime import datetime
+from datetime import datetime, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -51,13 +51,13 @@ class ApprovalRouterAgent(BaseAgent):
 
         # Create approval request
         approval_request = {
-            "id": f"APR-{datetime.utcnow().timestamp()}",
+            "id": f"APR-{datetime.now(UTC).timestamp()}",
             "type": approval_type,
             "amount": amount,
             "approver": approver["approver"],
             "requires_escalation": approver["requires_escalation"],
             "status": "pending",
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(UTC).isoformat()
         }
 
         # Send to approver

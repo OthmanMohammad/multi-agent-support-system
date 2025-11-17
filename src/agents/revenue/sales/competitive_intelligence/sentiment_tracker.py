@@ -6,7 +6,7 @@ identifies sentiment shifts, and generates sentiment reports.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -369,7 +369,7 @@ class SentimentTracker(BaseAgent):
             "recent_topics": sentiment_data.get("recent_topics", []),
             "viral_posts": sentiment_data.get("viral_posts", []),
             "platforms_tracked": len(self.PLATFORMS),
-            "last_updated": datetime.utcnow().isoformat()
+            "last_updated": datetime.now(UTC).isoformat()
         }
 
     def _identify_shifts(self, sentiment_reports: List[Dict]) -> List[Dict[str, Any]]:

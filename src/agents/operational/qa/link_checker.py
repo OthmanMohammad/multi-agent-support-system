@@ -7,7 +7,7 @@ Uses Claude Haiku for efficient link validation.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 import re
 
 from src.workflow.state import AgentState
@@ -297,7 +297,7 @@ class LinkCheckerAgent(BaseAgent):
             "http_status": http_status,
             "status": status,
             "issues": issues,
-            "checked_at": datetime.utcnow().isoformat()
+            "checked_at": datetime.now(UTC).isoformat()
         }
 
     def _identify_link_issues(self, validation_results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -468,6 +468,6 @@ class LinkCheckerAgent(BaseAgent):
             for rec in recommendations:
                 report += f"- {rec}\n"
 
-        report += f"\n*Link check completed at {datetime.utcnow().isoformat()}*"
+        report += f"\n*Link check completed at {datetime.now(UTC).isoformat()}*"
 
         return report

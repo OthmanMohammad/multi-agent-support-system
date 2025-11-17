@@ -2,7 +2,7 @@
 Conversation repository - Business logic for conversation data access
 """
 from typing import List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from uuid import UUID
 from sqlalchemy import select, func, and_, or_
 from sqlalchemy.orm import selectinload
@@ -105,7 +105,7 @@ class ConversationRepository(BaseRepository[Conversation]):
         return await self.update(
             conversation_id,
             status="resolved",
-            ended_at=datetime.utcnow(),
+            ended_at=datetime.now(UTC),
             resolution_time_seconds=resolution_time_seconds
         )
     
@@ -122,7 +122,7 @@ class ConversationRepository(BaseRepository[Conversation]):
         return await self.update(
             conversation_id,
             status="escalated",
-            ended_at=datetime.utcnow()
+            ended_at=datetime.now(UTC)
         )
     
     async def search_by_intent(
@@ -193,7 +193,7 @@ class ConversationRepository(BaseRepository[Conversation]):
         Returns:
             List of unresolved conversations
         """
-        cutoff = datetime.utcnow() - timedelta(hours=hours_old)
+        cutoff = datetime.now(UTC) - timedelta(hours=hours_old)
         
         result = await self.session.execute(
             select(Conversation)
@@ -217,7 +217,7 @@ class ConversationRepository(BaseRepository[Conversation]):
         Returns:
             Statistics dictionary
         """
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(UTC) - timedelta(days=days)
         
         # Total conversations
         total_result = await self.session.execute(
@@ -295,7 +295,7 @@ class ConversationRepository(BaseRepository[Conversation]):
         Returns:
             Dict with agent usage counts
         """
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(UTC) - timedelta(days=days)
         
         result = await self.session.execute(
             select(Conversation)

@@ -6,7 +6,7 @@ Generates warnings for >2σ and critical alerts for >3σ deviations.
 """
 
 from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 import math
 
 from src.workflow.state import AgentState
@@ -554,6 +554,6 @@ class AnomalyDetectorAgent(BaseAgent):
             for rec in recommendations:
                 report += f"- {rec}\n"
 
-        report += f"\n*Analysis completed at {datetime.utcnow().isoformat()}*"
+        report += f"\n*Analysis completed at {datetime.now(UTC).isoformat()}*"
 
         return report

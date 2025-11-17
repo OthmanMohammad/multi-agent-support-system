@@ -6,7 +6,7 @@ and tracks relationship metrics to ensure strong customer partnerships.
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -229,7 +229,7 @@ class RelationshipHealthAgent(BaseAgent):
             "risk_level": risk_level,
             "trend": trend,
             "score_change": int(overall_score - previous_score) if previous_score else 0,
-            "assessed_at": datetime.utcnow().isoformat()
+            "assessed_at": datetime.now(UTC).isoformat()
         }
 
     def _score_engagement_frequency(
@@ -333,7 +333,7 @@ class RelationshipHealthAgent(BaseAgent):
         if customer_since:
             try:
                 since_date = datetime.fromisoformat(customer_since.replace('Z', '+00:00'))
-                days_active = (datetime.utcnow() - since_date).days
+                days_active = (datetime.now(UTC) - since_date).days
                 if days_active > 365:
                     score += 5
                 elif days_active > 180:
@@ -368,7 +368,7 @@ class RelationshipHealthAgent(BaseAgent):
             if last_exec_contact:
                 try:
                     last_contact = datetime.fromisoformat(last_exec_contact.replace('Z', '+00:00'))
-                    days_since = (datetime.utcnow() - last_contact).days
+                    days_since = (datetime.now(UTC) - last_contact).days
                     if days_since <= 30:
                         score += 7
                     elif days_since <= 60:
@@ -685,7 +685,7 @@ if __name__ == "__main__":
             "contact_data": {
                 "executive_sponsor": {
                     "name": "Sarah Johnson",
-                    "last_contact_date": (datetime.utcnow() - timedelta(days=15)).isoformat()
+                    "last_contact_date": (datetime.now(UTC) - timedelta(days=15)).isoformat()
                 },
                 "all_contacts": [
                     {"name": "Contact 1", "department": "Engineering", "title": "VP Engineering"},
@@ -698,7 +698,7 @@ if __name__ == "__main__":
                     {"name": "Contact 2", "department": "Operations", "title": "Director Operations"},
                     {"name": "Contact 3", "department": "IT", "title": "IT Manager"}
                 ],
-                "customer_since_date": (datetime.utcnow() - timedelta(days=500)).isoformat()
+                "customer_since_date": (datetime.now(UTC) - timedelta(days=500)).isoformat()
             },
             "communication_data": {
                 "avg_response_time_hours": 3,
@@ -742,7 +742,7 @@ if __name__ == "__main__":
                 "engaged_contacts_last_90d": [
                     {"name": "Contact 1", "department": "IT", "title": "IT Manager"}
                 ],
-                "customer_since_date": (datetime.utcnow() - timedelta(days=120)).isoformat()
+                "customer_since_date": (datetime.now(UTC) - timedelta(days=120)).isoformat()
             },
             "communication_data": {
                 "avg_response_time_hours": 72,

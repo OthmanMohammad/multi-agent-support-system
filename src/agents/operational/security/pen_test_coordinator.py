@@ -6,7 +6,7 @@ Manages vendor coordination, scope definition, and remediation tracking.
 """
 
 from typing import Dict, Any, List, Optional, Set
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 
 from src.workflow.state import AgentState
@@ -243,10 +243,10 @@ class PenTestCoordinatorAgent(BaseAgent):
             next_test_date = last_test_date + timedelta(days=schedule_days)
         else:
             # First test - schedule for next month
-            next_test_date = datetime.utcnow() + timedelta(days=30)
+            next_test_date = datetime.now(UTC) + timedelta(days=30)
 
         # Generate test ID
-        test_id = f"PENTEST-{datetime.utcnow().strftime('%Y%m%d')}-{test_type.upper()[:3]}"
+        test_id = f"PENTEST-{datetime.now(UTC).strftime('%Y%m%d')}-{test_type.upper()[:3]}"
 
         return {
             "status": "scheduled",
@@ -302,7 +302,7 @@ class PenTestCoordinatorAgent(BaseAgent):
                 "remediation": finding.get("remediation", ""),
                 "remediation_sla_days": self.SEVERITY_LEVELS[validated_severity]["remediation_sla_days"],
                 "remediation_deadline": (
-                    datetime.utcnow() + timedelta(
+                    datetime.now(UTC) + timedelta(
                         days=self.SEVERITY_LEVELS[validated_severity]["remediation_sla_days"]
                     )
                 ).isoformat()
@@ -321,7 +321,7 @@ class PenTestCoordinatorAgent(BaseAgent):
             },
             "categorized_findings": categorized,
             "owasp_mapping": owasp_mapping,
-            "reviewed_at": datetime.utcnow().isoformat()
+            "reviewed_at": datetime.now(UTC).isoformat()
         }
 
     def _track_remediation(self, findings: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -344,7 +344,7 @@ class PenTestCoordinatorAgent(BaseAgent):
         for finding in findings:
             finding_id = finding.get("id", "unknown")
             status = finding.get("remediation_status", "not_started")
-            deadline = datetime.fromisoformat(finding.get("remediation_deadline", datetime.utcnow().isoformat()))
+            deadline = datetime.fromisoformat(finding.get("remediation_deadline", datetime.now(UTC).isoformat()))
 
             tracking_item = {
                 "finding_id": finding_id,
@@ -352,13 +352,13 @@ class PenTestCoordinatorAgent(BaseAgent):
                 "severity": finding.get("severity", "informational"),
                 "status": status,
                 "deadline": deadline.isoformat(),
-                "days_until_deadline": (deadline - datetime.utcnow()).days
+                "days_until_deadline": (deadline - datetime.now(UTC)).days
             }
 
             if status == "completed":
                 remediation_status["completed"].append(tracking_item)
-            elif deadline < datetime.utcnow() and status != "completed":
-                tracking_item["overdue_by_days"] = (datetime.utcnow() - deadline).days
+            elif deadline < datetime.now(UTC) and status != "completed":
+                tracking_item["overdue_by_days"] = (datetime.now(UTC) - deadline).days
                 remediation_status["overdue"].append(tracking_item)
             elif status == "in_progress":
                 remediation_status["in_progress"].append(tracking_item)
@@ -377,7 +377,7 @@ class PenTestCoordinatorAgent(BaseAgent):
             "completion_percentage": round(completion_percentage, 1),
             "remediation_status": remediation_status,
             "overdue_count": len(remediation_status["overdue"]),
-            "tracked_at": datetime.utcnow().isoformat()
+            "tracked_at": datetime.now(UTC).isoformat()
         }
 
     def _coordinate_retest(
@@ -401,8 +401,8 @@ class PenTestCoordinatorAgent(BaseAgent):
             if f.get("remediation_status") == "completed"
         ]
 
-        retest_id = f"RETEST-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
-        retest_date = datetime.utcnow() + timedelta(days=7)  # Schedule retest in 1 week
+        retest_id = f"RETEST-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}"
+        retest_date = datetime.now(UTC) + timedelta(days=7)  # Schedule retest in 1 week
 
         return {
             "status": "scheduled",
@@ -513,7 +513,7 @@ class PenTestCoordinatorAgent(BaseAgent):
                 "action_required": "Schedule initial pen test"
             }
 
-        days_since_last_test = (datetime.utcnow() - last_test_date).days
+        days_since_last_test = (datetime.now(UTC) - last_test_date).days
         overdue = days_since_last_test > schedule_days
 
         return {
@@ -725,7 +725,7 @@ class PenTestCoordinatorAgent(BaseAgent):
             for rec in recommendations:
                 report += f"- {rec}\n"
 
-        report += f"\n*Coordination completed at {datetime.utcnow().isoformat()}*"
+        report += f"\n*Coordination completed at {datetime.now(UTC).isoformat()}*"
         report += f"\n*Compliance: SOC 2, ISO 27001, PCI-DSS*"
 
         return report

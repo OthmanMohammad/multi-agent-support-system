@@ -15,7 +15,7 @@ from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from typing import Optional
 import secrets
-from datetime import datetime
+from datetime import datetime, UTC
 
 from src.api.models.auth_models import LoginResponse, UserProfile
 from src.api.auth.jwt import JWTManager
@@ -48,7 +48,7 @@ class OAuthStateStore:
         state = secrets.token_urlsafe(32)
         self._states[state] = {
             "provider": provider,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(UTC),
         }
         return state
 

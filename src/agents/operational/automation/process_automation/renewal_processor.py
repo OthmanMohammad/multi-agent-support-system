@@ -6,7 +6,7 @@ contract generation, payment processing, and renewal confirmation.
 """
 
 from typing import Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -60,8 +60,8 @@ Amount: ${renewal_amount:,.2f}
 **Renewal Details:**
 - Payment Status: {payment_result['status'].title()}
 - Invoice: {invoice['invoice_number']}
-- Renewal Date: {datetime.utcnow().strftime('%Y-%m-%d')}
-- Next Renewal: {(datetime.utcnow() + timedelta(days=365)).strftime('%Y-%m-%d')}
+- Renewal Date: {datetime.now(UTC).strftime('%Y-%m-%d')}
+- Next Renewal: {(datetime.now(UTC) + timedelta(days=365)).strftime('%Y-%m-%d')}
 
 Confirmation email sent to customer."""
 
@@ -79,14 +79,14 @@ Confirmation email sent to customer."""
         return {
             "status": "success",
             "amount": amount,
-            "transaction_id": f"TXN-{datetime.utcnow().timestamp()}",
-            "processed_at": datetime.utcnow().isoformat()
+            "transaction_id": f"TXN-{datetime.now(UTC).timestamp()}",
+            "processed_at": datetime.now(UTC).isoformat()
         }
 
     async def _generate_renewal_invoice(self, customer: Dict, amount: float) -> Dict:
         """Generate renewal invoice."""
         return {
-            "invoice_number": f"INV-{datetime.utcnow().strftime('%Y%m%d')}-001",
+            "invoice_number": f"INV-{datetime.now(UTC).strftime('%Y%m%d')}-001",
             "amount": amount,
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.now(UTC).isoformat()
         }

@@ -6,7 +6,7 @@ Handles report scheduling, generation, formatting, and distribution.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 import json
 
 from src.workflow.state import AgentState
@@ -213,7 +213,7 @@ Delivered: {distribution_result['delivered_count']}/{distribution_result['total_
 
     def _calculate_date_range(self, period: str) -> Dict:
         """Calculate date range for report period."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         if period == "today":
             start = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -302,7 +302,7 @@ Delivered: {distribution_result['delivered_count']}/{distribution_result['total_
             "title": report_type.replace('_', ' ').title(),
             "format": format_type,
             "sections": sections,
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.now(UTC).isoformat()
         }
 
     def _generate_visualizations(self, data: Dict) -> List[Dict]:
@@ -331,14 +331,14 @@ Delivered: {distribution_result['delivered_count']}/{distribution_result['total_
         format_type: str
     ) -> Dict:
         """Create report file (mocked)."""
-        filename = f"{formatted_report['title'].replace(' ', '_')}_{datetime.utcnow().strftime('%Y%m%d')}.{format_type}"
+        filename = f"{formatted_report['title'].replace(' ', '_')}_{datetime.now(UTC).strftime('%Y%m%d')}.{format_type}"
 
         return {
             "filename": filename,
             "format": format_type,
             "size_kb": 245,
             "path": f"/reports/{filename}",
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "sections_count": len(formatted_report["sections"]),
             "visualizations_count": len(visualizations)
         }
@@ -356,7 +356,7 @@ Delivered: {distribution_result['delivered_count']}/{distribution_result['total_
             "delivered_count": len(recipients),
             "failed_count": 0,
             "recipients": recipients,
-            "distributed_at": datetime.utcnow().isoformat()
+            "distributed_at": datetime.now(UTC).isoformat()
         }
 
     def _archive_report(self, report_file: Dict, report_type: str) -> Dict:
@@ -364,7 +364,7 @@ Delivered: {distribution_result['delivered_count']}/{distribution_result['total_
         return {
             "archived": True,
             "archive_path": f"/archive/reports/{report_type}/{report_file['filename']}",
-            "archived_at": datetime.utcnow().isoformat()
+            "archived_at": datetime.now(UTC).isoformat()
         }
 
     def _log_automation_action(
@@ -376,7 +376,7 @@ Delivered: {distribution_result['delivered_count']}/{distribution_result['total_
         """Log automation action."""
         return {
             "action_type": action_type,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "report_type": report_info.get("report_type"),
             "success": report_info.get("distribution", {}).get("status") == "delivered"
         }

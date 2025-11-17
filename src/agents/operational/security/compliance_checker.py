@@ -6,7 +6,7 @@ Validates system configuration and data handling practices.
 """
 
 from typing import Dict, Any, List, Optional, Set
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -358,7 +358,7 @@ class ComplianceCheckerAgent(BaseAgent):
             "status": status,
             "evidence": evidence,
             "gaps": gaps,
-            "checked_at": datetime.utcnow().isoformat()
+            "checked_at": datetime.now(UTC).isoformat()
         }
 
     def _identify_violations(
@@ -387,7 +387,7 @@ class ComplianceCheckerAgent(BaseAgent):
                         "gaps": requirement["gaps"],
                         "severity": self._calculate_violation_severity(severity_weight),
                         "severity_weight": severity_weight,
-                        "detected_at": datetime.utcnow().isoformat()
+                        "detected_at": datetime.now(UTC).isoformat()
                     })
 
         return violations
@@ -550,7 +550,7 @@ class ComplianceCheckerAgent(BaseAgent):
 
     def _calculate_deadline(self, severity: str) -> str:
         """Calculate compliance deadline based on severity."""
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         if severity == "critical":
             deadline = now + timedelta(days=7)
@@ -658,7 +658,7 @@ class ComplianceCheckerAgent(BaseAgent):
             for rec in recommendations:
                 report += f"- {rec}\n"
 
-        report += f"\n*Compliance check completed at {datetime.utcnow().isoformat()}*"
+        report += f"\n*Compliance check completed at {datetime.now(UTC).isoformat()}*"
         report += f"\n*Next check recommended within 30 days*"
 
         return report

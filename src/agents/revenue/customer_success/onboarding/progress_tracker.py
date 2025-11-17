@@ -6,7 +6,7 @@ Provides real-time visibility into onboarding health and milestone achievement.
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -141,9 +141,9 @@ class ProgressTrackerAgent(BaseAgent):
         if start_date_str:
             start_date = datetime.fromisoformat(start_date_str.replace('Z', '+00:00'))
         else:
-            start_date = datetime.utcnow()
+            start_date = datetime.now(UTC)
 
-        days_elapsed = (datetime.utcnow() - start_date).days
+        days_elapsed = (datetime.now(UTC) - start_date).days
 
         completed_milestones = progress_data.get("completed_milestones", [])
         total_milestones = len(self.STANDARD_MILESTONES)
@@ -186,7 +186,7 @@ class ProgressTrackerAgent(BaseAgent):
             "milestone_timing": milestone_timing,
             "overdue_milestones": overdue_milestones,
             "velocity": round(velocity, 2),
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat()
         }
 
     def _analyze_milestone_timing(
@@ -330,7 +330,7 @@ class ProgressTrackerAgent(BaseAgent):
 
         total_days_remaining = estimated_days_remaining + buffer_days
 
-        forecasted_date = (datetime.utcnow() + timedelta(days=total_days_remaining)).date().isoformat()
+        forecasted_date = (datetime.now(UTC) + timedelta(days=total_days_remaining)).date().isoformat()
 
         # Determine confidence level
         if progress_analysis["health_score"] >= 80:
@@ -429,7 +429,7 @@ if __name__ == "__main__":
         )
         state1["entities"] = {
             "progress_data": {
-                "onboarding_start_date": (datetime.utcnow() - timedelta(days=20)).isoformat(),
+                "onboarding_start_date": (datetime.now(UTC) - timedelta(days=20)).isoformat(),
                 "completed_milestones": [
                     "Kickoff Call Completed",
                     "Success Plan Approved",
@@ -462,7 +462,7 @@ if __name__ == "__main__":
         )
         state2["entities"] = {
             "progress_data": {
-                "onboarding_start_date": (datetime.utcnow() - timedelta(days=35)).isoformat(),
+                "onboarding_start_date": (datetime.now(UTC) - timedelta(days=35)).isoformat(),
                 "completed_milestones": [
                     "Kickoff Call Completed",
                     "Success Plan Approved",

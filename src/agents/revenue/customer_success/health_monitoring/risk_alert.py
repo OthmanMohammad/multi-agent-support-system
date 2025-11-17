@@ -6,7 +6,7 @@ Manages escalation and SLA tracking for at-risk customers.
 """
 
 from typing import Dict, Any, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -110,7 +110,7 @@ class RiskAlertAgent(BaseAgent):
             "escalation_path": sla_config["escalation"],
             "sla": f"Respond within {sla_config['sla_hours']} hours",
             "recommended_actions": recommended_actions,
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(UTC).isoformat()
         }
 
     def _calculate_severity(self, risk_signals: List[Dict[str, Any]]) -> str:

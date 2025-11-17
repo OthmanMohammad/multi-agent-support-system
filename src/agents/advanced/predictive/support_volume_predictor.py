@@ -6,7 +6,7 @@ Provides 7-day and 30-day forecasts with staffing recommendations.
 """
 
 from typing import Dict, Any, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -58,7 +58,7 @@ class SupportVolumePredictorAgent(BaseAgent):
         forecast = []
 
         for i in range(days):
-            date = datetime.utcnow() + timedelta(days=i+1)
+            date = datetime.now(UTC) + timedelta(days=i+1)
             # Simulate forecast with some variation
             predicted = int(base_volume * (1 + random.uniform(-0.15, 0.15)))
 

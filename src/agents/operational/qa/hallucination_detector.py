@@ -6,7 +6,7 @@ Uses Claude Sonnet for nuanced hallucination detection and verification.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -364,7 +364,7 @@ class HallucinationDetectorAgent(BaseAgent):
 
         # Add timestamps
         for signal in all_signals:
-            signal["detected_at"] = datetime.utcnow().isoformat()
+            signal["detected_at"] = datetime.now(UTC).isoformat()
 
         # Sort by severity
         severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
@@ -554,6 +554,6 @@ class HallucinationDetectorAgent(BaseAgent):
             for rec in recommendations:
                 report += f"- {rec}\n"
 
-        report += f"\n*Hallucination detection completed at {datetime.utcnow().isoformat()}*"
+        report += f"\n*Hallucination detection completed at {datetime.now(UTC).isoformat()}*"
 
         return report

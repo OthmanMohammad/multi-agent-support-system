@@ -6,7 +6,7 @@ Fills in missing company info, social profiles, and firmographic data.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 import json
 
 from src.workflow.state import AgentState
@@ -180,7 +180,7 @@ Data Sources Used: {', '.join(enrichment_sources)}
             },
             "sources_used": sources,
             "confidence": 0.87,
-            "enriched_at": datetime.utcnow().isoformat()
+            "enriched_at": datetime.now(UTC).isoformat()
         }
         return enriched
 
@@ -207,7 +207,7 @@ Data Sources Used: {', '.join(enrichment_sources)}
         """Update customer record with enriched data."""
         return {
             "status": "success",
-            "updated_at": datetime.utcnow().isoformat()
+            "updated_at": datetime.now(UTC).isoformat()
         }
 
     def _log_automation_action(
@@ -219,7 +219,7 @@ Data Sources Used: {', '.join(enrichment_sources)}
         """Log automation action."""
         return {
             "action_type": action_type,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "fields_enriched": len(enriched_data.get("fields_added", [])),
             "customer_id": customer_metadata.get("customer_id"),
             "success": True

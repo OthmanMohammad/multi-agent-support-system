@@ -4,7 +4,7 @@ Message repository - Business logic for message data access
 from typing import List, Optional
 from uuid import UUID
 from sqlalchemy import select, func, and_, case
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.database.base import BaseRepository
 from src.database.models import Message
@@ -216,7 +216,7 @@ class MessageRepository(BaseRepository[Message]):
         Returns:
             Dict with token statistics
         """
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(UTC) - timedelta(days=days)
         
         query = select(
             func.sum(Message.tokens_used).label('total'),

@@ -6,7 +6,7 @@ Automates data lifecycle management per GDPR, CCPA, and SOC 2 requirements.
 """
 
 from typing import Dict, Any, List, Optional, Set
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -240,7 +240,7 @@ class DataRetentionEnforcerAgent(BaseAgent):
         for record in data_inventory:
             data_type = record.get("data_type", "unknown")
             category = record.get("category", "user_data")
-            created_at = datetime.fromisoformat(record.get("created_at", datetime.utcnow().isoformat()))
+            created_at = datetime.fromisoformat(record.get("created_at", datetime.now(UTC).isoformat()))
             last_accessed = datetime.fromisoformat(record.get("last_accessed", created_at.isoformat()))
 
             # Get retention period
@@ -252,7 +252,7 @@ class DataRetentionEnforcerAgent(BaseAgent):
 
             # Calculate expiry
             expiry_date = created_at + timedelta(days=retention_days)
-            days_until_expiry = (expiry_date - datetime.utcnow()).days
+            days_until_expiry = (expiry_date - datetime.now(UTC)).days
 
             # Check if on legal hold
             on_legal_hold = self._is_on_legal_hold(record, legal_holds)
@@ -323,7 +323,7 @@ class DataRetentionEnforcerAgent(BaseAgent):
             # Check by date range
             created_at = datetime.fromisoformat(record.get("created_at", ""))
             hold_start = datetime.fromisoformat(hold.get("start_date", ""))
-            hold_end = datetime.fromisoformat(hold.get("end_date", datetime.utcnow().isoformat()))
+            hold_end = datetime.fromisoformat(hold.get("end_date", datetime.now(UTC).isoformat()))
 
             if hold_start <= created_at <= hold_end:
                 return True
@@ -359,7 +359,7 @@ class DataRetentionEnforcerAgent(BaseAgent):
 
         for request in deletion_requests:
             user_id = request.get("user_id")
-            request_date = datetime.fromisoformat(request.get("request_date", datetime.utcnow().isoformat()))
+            request_date = datetime.fromisoformat(request.get("request_date", datetime.now(UTC).isoformat()))
             data_categories = request.get("categories", ["all"])
 
             # Check if data is on legal hold
@@ -412,7 +412,7 @@ class DataRetentionEnforcerAgent(BaseAgent):
                 "record_id": record["record_id"],
                 "data_type": record["data_type"],
                 "deletion_method": self._get_deletion_method(record["data_type"]),
-                "deleted_at": datetime.utcnow().isoformat(),
+                "deleted_at": datetime.now(UTC).isoformat(),
                 "reason": "retention_period_expired",
                 "data_size_mb": record.get("data_size_mb", 0),
                 "status": "deleted"
@@ -423,12 +423,12 @@ class DataRetentionEnforcerAgent(BaseAgent):
         for request in deletion_results:
             if request["status"] == "scheduled":
                 deletion_date = datetime.fromisoformat(request["deletion_date"])
-                if deletion_date <= datetime.utcnow():
+                if deletion_date <= datetime.now(UTC):
                     action = {
                         "user_id": request["user_id"],
                         "categories": request["categories"],
                         "deletion_method": "secure_wipe",
-                        "deleted_at": datetime.utcnow().isoformat(),
+                        "deleted_at": datetime.now(UTC).isoformat(),
                         "reason": "right_to_erasure",
                         "status": "deleted"
                     }
@@ -467,7 +467,7 @@ class DataRetentionEnforcerAgent(BaseAgent):
                         "legal_hold_id": hold.get("hold_id"),
                         "violation_type": "deleted_data_on_hold",
                         "severity": "critical",
-                        "detected_at": datetime.utcnow().isoformat()
+                        "detected_at": datetime.now(UTC).isoformat()
                     })
 
         return violations
@@ -505,7 +505,7 @@ class DataRetentionEnforcerAgent(BaseAgent):
         deleted_size_mb = sum(a.get("data_size_mb", 0) for a in deletion_actions)
 
         return {
-            "report_date": datetime.utcnow().isoformat(),
+            "report_date": datetime.now(UTC).isoformat(),
             "total_records": len(compliance_results),
             "total_size_mb": round(total_size_mb, 2),
             "compliant_records": len([r for r in compliance_results if r["status"] == "compliant"]),
@@ -627,7 +627,7 @@ class DataRetentionEnforcerAgent(BaseAgent):
             for rec in recommendations:
                 report += f"- {rec}\n"
 
-        report += f"\n*Retention enforcement completed at {datetime.utcnow().isoformat()}*"
-        report += f"\n*Next enforcement: {(datetime.utcnow() + timedelta(days=7)).isoformat()[:10]}*"
+        report += f"\n*Retention enforcement completed at {datetime.now(UTC).isoformat()}*"
+        report += f"\n*Next enforcement: {(datetime.now(UTC) + timedelta(days=7)).isoformat()[:10]}*"
 
         return report

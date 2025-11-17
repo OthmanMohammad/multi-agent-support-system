@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 import pytest
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, UTC
 
 # Add src directory to Python path
 # This allows tests to import from src/ regardless of where pytest is run
@@ -31,7 +31,7 @@ def sample_uuid():
 @pytest.fixture
 def sample_timestamp():
     """Generate a sample timestamp for testing"""
-    return datetime.utcnow()
+    return datetime.now(UTC)
 
 
 @pytest.fixture

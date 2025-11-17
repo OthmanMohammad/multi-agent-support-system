@@ -13,7 +13,7 @@ Part of: Phase 2 - Agent & Workflow Endpoints
 import asyncio
 from typing import Dict, Any, Optional
 from uuid import UUID, uuid4
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 import time
 import os
@@ -483,7 +483,7 @@ async def execute_agent_async(
 
     # Return job response
     job = await job_store.get_job(job_id)
-    estimated_completion = datetime.utcnow() + timedelta(seconds=request.timeout)
+    estimated_completion = datetime.now(UTC) + timedelta(seconds=request.timeout)
 
     return AgentJobResponse(
         job_id=job_id,
@@ -572,7 +572,7 @@ async def get_agent_metrics(
             total_tokens_used=443205,
             average_confidence=0.87,
             escalation_rate=12.5,
-            last_executed_at=datetime.utcnow(),
+            last_executed_at=datetime.now(UTC),
         )
     ]
 

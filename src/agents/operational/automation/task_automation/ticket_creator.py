@@ -6,7 +6,7 @@ bug reports, and feature requests.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 import json
 
 from src.workflow.state import AgentState
@@ -380,7 +380,7 @@ Return a JSON structure with title, description, steps_to_reproduce, expected_be
                 "customer_name": customer_metadata.get("customer_name"),
                 "plan": customer_metadata.get("plan_name"),
                 "created_by": "automation",
-                "created_at": datetime.utcnow().isoformat()
+                "created_at": datetime.now(UTC).isoformat()
             }
         }
 
@@ -435,7 +435,7 @@ Return a JSON structure with title, description, steps_to_reproduce, expected_be
 
         import hashlib
         ticket_id = hashlib.md5(
-            f"{ticket_data['title']}{datetime.utcnow()}".encode()
+            f"{ticket_data['title']}{datetime.now(UTC)}".encode()
         ).hexdigest()[:8].upper()
 
         created_ticket = {
@@ -447,7 +447,7 @@ Return a JSON structure with title, description, steps_to_reproduce, expected_be
             "priority": ticket_data["priority"],
             "status": "open",
             "url": f"https://{ticket_system}.example.com/issues/{ticket_id}",
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
             "created_by": "automation",
             "system": ticket_system,
             "duplicate_warning": duplicate_check.get("has_duplicates", False)
@@ -476,7 +476,7 @@ Return a JSON structure with title, description, steps_to_reproduce, expected_be
         """Log automated action for audit trail."""
         return {
             "action_type": action_type,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "system": ticket_system,
             "ticket_id": created_ticket.get("id"),
             "customer_id": customer_metadata.get("customer_id"),

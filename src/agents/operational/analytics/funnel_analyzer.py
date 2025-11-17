@@ -6,7 +6,7 @@ Provides step-by-step conversion metrics and optimization recommendations.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 from decimal import Decimal
 
 from src.workflow.state import AgentState
@@ -524,6 +524,6 @@ class FunnelAnalyzerAgent(BaseAgent):
         for rec in recommendations:
             report += f"- {rec}\n"
 
-        report += f"\n*Analysis completed at {datetime.utcnow().isoformat()}*"
+        report += f"\n*Analysis completed at {datetime.now(UTC).isoformat()}*"
 
         return report

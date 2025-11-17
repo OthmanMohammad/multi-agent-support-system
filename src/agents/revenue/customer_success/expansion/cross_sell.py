@@ -6,7 +6,7 @@ based on customer usage patterns, industry, and business needs.
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -295,7 +295,7 @@ class CrossSellAgent(BaseAgent):
             "health_status": health_status,
             "account_maturity": maturity,
             "months_as_customer": months_as_customer,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat()
         }
 
     def _identify_cross_sell_opportunities(

@@ -23,7 +23,7 @@ NOT responsible for:
 """
 
 from typing import Optional, TYPE_CHECKING
-from datetime import datetime
+from datetime import datetime, UTC
 from uuid import UUID
 
 from src.core.result import Result
@@ -217,7 +217,7 @@ class ConversationDomainService:
             Resolution time in seconds
         """
         if ended_at is None:
-            ended_at = datetime.utcnow()
+            ended_at = datetime.now(UTC)
         
         return int((ended_at - started_at).total_seconds())
     

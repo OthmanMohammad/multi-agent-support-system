@@ -6,7 +6,7 @@ Uses fuzzy matching and intelligent merge strategies.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 import json
 
 from src.workflow.state import AgentState
@@ -204,13 +204,13 @@ Records Merged: {len(merge_results.get('merged', []))}
                 "result_id": op["primary_id"],
                 "confidence": op["confidence"],
                 "status": "success",
-                "merged_at": datetime.utcnow().isoformat()
+                "merged_at": datetime.now(UTC).isoformat()
             })
 
         return {
             "merged": merged,
             "total_merges": len(merged),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(UTC).isoformat()
         }
 
     def _log_automation_action(
@@ -222,7 +222,7 @@ Records Merged: {len(merge_results.get('merged', []))}
         """Log automation action."""
         return {
             "action_type": action_type,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "records_merged": len(merge_results.get("merged", [])),
             "success": True
         }

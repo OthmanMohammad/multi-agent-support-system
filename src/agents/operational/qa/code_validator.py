@@ -7,7 +7,7 @@ Uses Claude Haiku for efficient code validation.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 import re
 
 from src.workflow.state import AgentState
@@ -282,7 +282,7 @@ class CodeValidatorAgent(BaseAgent):
             "line_count": code_block["line_count"],
             "issues": issues,
             "passed": len([i for i in issues if i["severity"] in ["critical", "high"]]) == 0,
-            "validated_at": datetime.utcnow().isoformat()
+            "validated_at": datetime.now(UTC).isoformat()
         }
 
     def _check_dangerous_patterns(self, code: str, language: str) -> List[Dict[str, Any]]:
@@ -545,6 +545,6 @@ class CodeValidatorAgent(BaseAgent):
             for rec in recommendations:
                 report += f"- {rec}\n"
 
-        report += f"\n*Code validation completed at {datetime.utcnow().isoformat()}*"
+        report += f"\n*Code validation completed at {datetime.now(UTC).isoformat()}*"
 
         return report

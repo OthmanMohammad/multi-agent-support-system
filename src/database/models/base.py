@@ -5,7 +5,7 @@ from sqlalchemy import Column, DateTime, Index, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import declarative_base, declared_attr
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional
 import uuid
 
@@ -44,7 +44,7 @@ class AuditMixin:
     
     def soft_delete(self, deleted_by: Optional[uuid.UUID] = None):
         """Mark record as deleted"""
-        self.deleted_at = datetime.utcnow()
+        self.deleted_at = datetime.now(UTC)
         self.deleted_by = deleted_by
     
     def restore(self):

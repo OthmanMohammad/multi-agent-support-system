@@ -5,7 +5,7 @@ Analyzes aggregated data from other providers to identify health indicators and 
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.services.infrastructure.context_enrichment.providers.base_provider import BaseContextProvider
 
@@ -173,13 +173,13 @@ class AccountHealthProvider(BaseContextProvider):
         # Recent health changes (based on trends)
         if health_trend == 'declining':
             recent_changes.append({
-                "timestamp": (datetime.utcnow() - timedelta(days=7)).isoformat(),
+                "timestamp": (datetime.now(UTC) - timedelta(days=7)).isoformat(),
                 "change": "Health score decreased",
                 "reason": red_flags[0] if red_flags else yellow_flags[0] if yellow_flags else "Unknown"
             })
         elif health_trend == 'improving':
             recent_changes.append({
-                "timestamp": (datetime.utcnow() - timedelta(days=7)).isoformat(),
+                "timestamp": (datetime.now(UTC) - timedelta(days=7)).isoformat(),
                 "change": "Health score increased",
                 "reason": green_flags[0] if green_flags else "Improved engagement"
             })

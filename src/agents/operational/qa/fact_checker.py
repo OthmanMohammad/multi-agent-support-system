@@ -6,7 +6,7 @@ Uses Claude Sonnet for nuanced fact verification and claim extraction.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -178,7 +178,7 @@ class FactCheckerAgent(BaseAgent):
                         "text": sentence,
                         "category": category,
                         "position": i,
-                        "extracted_at": datetime.utcnow().isoformat()
+                        "extracted_at": datetime.now(UTC).isoformat()
                     })
                     break
 
@@ -189,7 +189,7 @@ class FactCheckerAgent(BaseAgent):
                 "text": response_text[:200] + "..." if len(response_text) > 200 else response_text,
                 "category": "general",
                 "position": 0,
-                "extracted_at": datetime.utcnow().isoformat()
+                "extracted_at": datetime.now(UTC).isoformat()
             })
 
         return claims
@@ -280,7 +280,7 @@ class FactCheckerAgent(BaseAgent):
             "confidence": confidence,
             "evidence": evidence,
             "issues": issues_found,
-            "verified_at": datetime.utcnow().isoformat(),
+            "verified_at": datetime.now(UTC).isoformat(),
             "sources_checked": ["knowledge_base", "product_data"] if evidence else []
         }
 
@@ -509,6 +509,6 @@ class FactCheckerAgent(BaseAgent):
             for rec in recommendations:
                 report += f"- {rec}\n"
 
-        report += f"\n*Fact check completed at {datetime.utcnow().isoformat()}*"
+        report += f"\n*Fact check completed at {datetime.now(UTC).isoformat()}*"
 
         return report

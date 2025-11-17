@@ -4,7 +4,7 @@ Audit log repository - Business logic for audit and compliance data access
 from typing import Optional, List
 from sqlalchemy import select, and_
 from uuid import UUID
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.database.base import BaseRepository
 from src.database.models import AuditLog
@@ -119,7 +119,7 @@ class AuditLogRepository(BaseRepository[AuditLog]):
         limit: int = 100
     ) -> List[AuditLog]:
         """Get recent audit activity"""
-        cutoff = datetime.utcnow() - timedelta(hours=hours)
+        cutoff = datetime.now(UTC) - timedelta(hours=hours)
         result = await self.session.execute(
             select(AuditLog)
             .where(AuditLog.timestamp >= cutoff)
@@ -134,7 +134,7 @@ class AuditLogRepository(BaseRepository[AuditLog]):
         limit: int = 100
     ) -> List[AuditLog]:
         """Get security-related events (logins, logouts, exports)"""
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = datetime.now(UTC) - timedelta(days=days)
         result = await self.session.execute(
             select(AuditLog)
             .where(and_(

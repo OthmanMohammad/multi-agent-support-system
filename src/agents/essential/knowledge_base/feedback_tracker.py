@@ -8,7 +8,7 @@ Part of: STORY-002 Knowledge Base Swarm (TASK-204)
 """
 
 from typing import Dict, Optional, List
-from datetime import datetime
+from datetime import datetime, UTC
 from sqlalchemy import select, func
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -132,7 +132,7 @@ class KBFeedbackTracker(BaseAgent):
                     resolution_time_seconds=metadata.get("resolution_time_seconds"),
                     csat_score=metadata.get("csat_score"),
                     metadata=metadata,
-                    created_at=datetime.utcnow()
+                    created_at=datetime.now(UTC)
                 )
 
                 session.add(usage_record)
@@ -235,7 +235,7 @@ class KBFeedbackTracker(BaseAgent):
                 article.csat_count = current_count + 1
 
         # Update timestamp
-        article.last_used_at = datetime.utcnow()
+        article.last_used_at = datetime.now(UTC)
 
     async def get_article_stats(self, article_id: str) -> Dict:
         """

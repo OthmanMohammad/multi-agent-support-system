@@ -6,7 +6,7 @@ Handles conflicts, deduplication, and intelligent merging strategies.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 import structlog
 
 from src.services.infrastructure.context_enrichment.types import (
@@ -92,7 +92,7 @@ class ResultAggregator:
             "providers_used": [r.provider_name for r in successful_results],
             "providers_failed": [r.provider_name for r in results if r.status != ProviderStatus.SUCCESS],
             "total_latency_ms": sum(r.latency_ms for r in results),
-            "aggregated_at": datetime.utcnow(),
+            "aggregated_at": datetime.now(UTC),
         }
 
         self.logger.debug(
@@ -359,7 +359,7 @@ class ResultAggregator:
         if "_metadata" in previous:
             aggregated_at = previous["_metadata"].get("aggregated_at")
             if aggregated_at:
-                age = (datetime.utcnow() - aggregated_at).total_seconds()
+                age = (datetime.now(UTC) - aggregated_at).total_seconds()
                 if age > max_age_seconds:
                     self.logger.debug(
                         "previous_data_too_old",
@@ -426,7 +426,7 @@ class ResultAggregator:
             return 50.0
 
         # Calculate age in seconds
-        age = (datetime.utcnow() - aggregated_at).total_seconds()
+        age = (datetime.now(UTC) - aggregated_at).total_seconds()
 
         # Scoring:
         # < 30s: 100

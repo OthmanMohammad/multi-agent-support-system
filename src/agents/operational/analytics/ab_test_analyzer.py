@@ -6,7 +6,7 @@ Determines statistical significance (p<0.05) and provides actionable insights.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 import math
 
 from src.workflow.state import AgentState
@@ -625,6 +625,6 @@ The test data does not meet minimum requirements for statistical analysis:
         for rec in recommendations:
             report += f"- {rec}\n"
 
-        report += f"\n*Analysis completed at {datetime.utcnow().isoformat()}*"
+        report += f"\n*Analysis completed at {datetime.now(UTC).isoformat()}*"
 
         return report

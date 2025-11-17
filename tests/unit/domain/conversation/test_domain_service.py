@@ -5,7 +5,7 @@ These tests verify pure business logic with NO database operations.
 All data is passed as parameters - no mocking needed.
 """
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from uuid import uuid4
 
 from services.domain.conversation.domain_service import ConversationDomainService
@@ -188,7 +188,7 @@ class TestCalculateResolutionTime:
         """Resolution time uses current time if end not provided"""
         service = ConversationDomainService()
         
-        started = datetime.utcnow() - timedelta(minutes=5)
+        started = datetime.now(UTC) - timedelta(minutes=5)
         
         result = service.calculate_resolution_time(started)
         
@@ -199,7 +199,7 @@ class TestCalculateResolutionTime:
         """Resolution time can be zero"""
         service = ConversationDomainService()
         
-        time = datetime.utcnow()
+        time = datetime.now(UTC)
         result = service.calculate_resolution_time(time, time)
         
         assert result == 0

@@ -5,7 +5,7 @@ Fetches billing, subscription, and payment information from the database.
 """
 
 from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -83,13 +83,13 @@ class SubscriptionDetailsProvider(BaseContextProvider):
             # Calculate days to renewal
             days_to_renewal = None
             if hasattr(subscription, 'current_period_end') and subscription.current_period_end:
-                delta = subscription.current_period_end.replace(tzinfo=None) - datetime.utcnow()
+                delta = subscription.current_period_end.replace(tzinfo=None) - datetime.now(UTC)
                 days_to_renewal = max(0, delta.days)
 
             # Get trial status
             trial_status = None
             if hasattr(subscription, 'trial_end') and subscription.trial_end:
-                if subscription.trial_end.replace(tzinfo=None) > datetime.utcnow():
+                if subscription.trial_end.replace(tzinfo=None) > datetime.now(UTC):
                     trial_status = "active"
                 else:
                     trial_status = "expired"
@@ -118,7 +118,7 @@ class SubscriptionDetailsProvider(BaseContextProvider):
 
             # Count failed payments in last 90 days
             failed_payments_90d = 0
-            cutoff_date = datetime.utcnow() - timedelta(days=90)
+            cutoff_date = datetime.now(UTC) - timedelta(days=90)
             for payment in payments:
                 if (hasattr(payment, 'status') and payment.status == "failed" and
                     hasattr(payment, 'created_at') and

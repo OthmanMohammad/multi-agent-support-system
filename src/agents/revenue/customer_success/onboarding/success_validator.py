@@ -6,7 +6,7 @@ Ensures all success criteria are met before declaring onboarding complete.
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -194,7 +194,7 @@ class SuccessValidatorAgent(BaseAgent):
             "categories_met": categories_met,
             "total_categories": len(self.SUCCESS_CATEGORIES),
             "gaps": gaps,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat()
         }
 
     def _determine_validation_status(
@@ -311,7 +311,7 @@ class SuccessValidatorAgent(BaseAgent):
             "csm_focus_areas": csm_focus_areas,
             "customer_summary": customer_summary,
             "next_steps": next_steps,
-            "handoff_date": datetime.utcnow().date().isoformat()
+            "handoff_date": datetime.now(UTC).date().isoformat()
         }
 
     def _generate_csm_next_steps(

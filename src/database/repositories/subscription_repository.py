@@ -4,7 +4,7 @@ Subscription and billing repository - Business logic for subscription data acces
 from typing import Optional, List
 from sqlalchemy import select, func, and_
 from uuid import UUID
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.database.base import BaseRepository
 from src.database.models import Subscription, Invoice, Payment, UsageEvent, Credit
@@ -50,7 +50,7 @@ class SubscriptionRepository(BaseRepository[Subscription]):
         limit: int = 100
     ) -> List[Subscription]:
         """Get subscriptions expiring in the next N days"""
-        cutoff = datetime.utcnow() + timedelta(days=days)
+        cutoff = datetime.now(UTC) + timedelta(days=days)
         result = await self.session.execute(
             select(Subscription)
             .where(and_(
@@ -76,7 +76,7 @@ class SubscriptionRepository(BaseRepository[Subscription]):
         limit: int = 100
     ) -> List[Subscription]:
         """Get recently churned subscriptions"""
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = datetime.now(UTC) - timedelta(days=days)
         result = await self.session.execute(
             select(Subscription)
             .where(and_(
@@ -131,7 +131,7 @@ class InvoiceRepository(BaseRepository[Invoice]):
             select(Invoice)
             .where(and_(
                 Invoice.status == 'unpaid',
-                Invoice.due_date < datetime.utcnow()
+                Invoice.due_date < datetime.now(UTC)
             ))
             .order_by(Invoice.due_date.asc())
             .limit(limit)
@@ -196,7 +196,7 @@ class PaymentRepository(BaseRepository[Payment]):
         limit: int = 100
     ) -> List[Payment]:
         """Get recent failed payments"""
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = datetime.now(UTC) - timedelta(days=days)
         result = await self.session.execute(
             select(Payment)
             .where(and_(
@@ -296,7 +296,7 @@ class CreditRepository(BaseRepository[Credit]):
             .where(and_(
                 Credit.customer_id == customer_id,
                 Credit.remaining_amount > 0,
-                Credit.expires_at > datetime.utcnow()
+                Credit.expires_at > datetime.now(UTC)
             ))
             .order_by(Credit.expires_at.asc())
         )
@@ -312,7 +312,7 @@ class CreditRepository(BaseRepository[Credit]):
             .where(and_(
                 Credit.customer_id == customer_id,
                 Credit.remaining_amount > 0,
-                Credit.expires_at > datetime.utcnow()
+                Credit.expires_at > datetime.now(UTC)
             ))
         )
         return result.scalar() or 0.0

@@ -5,7 +5,7 @@ Can be run with pytest or directly with Python
 import asyncio
 import sys
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from uuid import uuid4
 import pytest
 
@@ -233,7 +233,7 @@ async def test_agent_performance_repository():
         
         # Record metrics
         print("\n1. Recording daily metrics...")
-        today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        today = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
         
         metrics = await repo.record_daily_metrics(
             agent_name="billing",

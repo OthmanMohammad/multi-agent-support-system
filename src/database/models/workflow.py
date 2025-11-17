@@ -118,7 +118,7 @@ class ScheduledTask(BaseModel):
         from datetime import datetime
         if not self.next_run_at or not self.is_active:
             return False
-        return datetime.utcnow() > self.next_run_at
+        return datetime.now(UTC) > self.next_run_at
 
     def __repr__(self) -> str:
         return f"<ScheduledTask(id={self.id}, name={self.task_name}, active={self.is_active})>"

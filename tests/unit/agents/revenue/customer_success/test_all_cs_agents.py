@@ -12,7 +12,7 @@ Tests agent initialization, registration, and basic processing for:
 
 import pytest
 from unittest.mock import AsyncMock, patch
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import create_initial_state
 
@@ -88,7 +88,7 @@ class TestCustomerSuccessAgents:
         })
         state["entities"] = {
             "usage_data": {"daily_active_users": 10, "total_users": 15, "features_used": 8, "automation_rules_active": 3},
-            "engagement_data": {"nps_score": 8, "support_tickets_last_30d": 2, "last_login": datetime.utcnow().isoformat()},
+            "engagement_data": {"nps_score": 8, "support_tickets_last_30d": 2, "last_login": datetime.now(UTC).isoformat()},
             "business_data": {"payment_status": "current"}
         }
 

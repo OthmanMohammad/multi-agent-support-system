@@ -5,7 +5,7 @@ from sqlalchemy import Column, String, Integer, DECIMAL, Boolean, Text, ForeignK
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 from src.database.models.base import BaseModel
 
@@ -80,7 +80,7 @@ class Subscription(BaseModel):
         """Calculate days until renewal"""
         if not self.current_period_end:
             return 0
-        delta = self.current_period_end - datetime.utcnow()
+        delta = self.current_period_end - datetime.now(UTC)
         return max(0, delta.days)
 
     @property
@@ -147,7 +147,7 @@ class Invoice(BaseModel):
         """Check if invoice is overdue"""
         if self.status == "paid" or not self.due_at:
             return False
-        return datetime.utcnow() > self.due_at
+        return datetime.now(UTC) > self.due_at
 
     def __repr__(self) -> str:
         return f"<Invoice(id={self.id}, number={self.invoice_number}, amount={self.amount}, status={self.status})>"
@@ -274,7 +274,7 @@ class Credit(BaseModel):
         """Check if credit is expired"""
         if not self.expires_at:
             return False
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(UTC) > self.expires_at
 
     def __repr__(self) -> str:
         return f"<Credit(id={self.id}, customer_id={self.customer_id}, amount={self.amount}, status={self.status})>"

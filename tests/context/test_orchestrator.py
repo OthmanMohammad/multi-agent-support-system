@@ -4,7 +4,7 @@ Tests for context orchestrator.
 
 import pytest
 import asyncio
-from datetime import datetime
+from datetime import datetime, UTC
 
 from src.services.infrastructure.context_enrichment.types import (
     AgentType,
@@ -285,13 +285,13 @@ async def test_orchestrator_parallel_execution(sample_customer_id: str):
     orchestrator = ContextOrchestrator(registry=registry)
 
     # Enrich and measure time
-    start = datetime.utcnow()
+    start = datetime.now(UTC)
     context = await orchestrator.enrich(
         customer_id=sample_customer_id,
         agent_type=AgentType.SUPPORT,
         timeout_ms=5000
     )
-    elapsed_ms = (datetime.utcnow() - start).total_seconds() * 1000
+    elapsed_ms = (datetime.now(UTC) - start).total_seconds() * 1000
 
     # If sequential, would take ~300ms (3 x 100ms)
     # If parallel, should take ~100ms

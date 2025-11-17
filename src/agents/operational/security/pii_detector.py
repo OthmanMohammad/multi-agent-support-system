@@ -7,7 +7,7 @@ Uses pattern matching and Claude Sonnet for contextual PII detection.
 """
 
 from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime
+from datetime import datetime, UTC
 import re
 
 from src.workflow.state import AgentState
@@ -191,7 +191,7 @@ class PIIDetectorAgent(BaseAgent):
                     "start_position": match.start(),
                     "end_position": match.end(),
                     "sensitivity": sensitivity,
-                    "detected_at": datetime.utcnow().isoformat(),
+                    "detected_at": datetime.now(UTC).isoformat(),
                     "redaction_token": f"[REDACTED:{pii_type.upper()}]"
                 }
 
@@ -319,7 +319,7 @@ class PIIDetectorAgent(BaseAgent):
             Audit log entry
         """
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "detection_count": len(detections),
             "detection_types": list(set(d["type"] for d in detections)),
             "sensitivity_levels": list(set(d["sensitivity"] for d in detections)),
@@ -332,7 +332,7 @@ class PIIDetectorAgent(BaseAgent):
                 }
                 for d in detections
             ],
-            "audit_id": f"PII-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
+            "audit_id": f"PII-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}",
             "compliance_flags": ["GDPR", "CCPA", "HIPAA"]
         }
 
@@ -526,7 +526,7 @@ class PIIDetectorAgent(BaseAgent):
             for rec in recommendations:
                 report += f"- {rec}\n"
 
-        report += f"\n*PII scan completed at {datetime.utcnow().isoformat()}*"
+        report += f"\n*PII scan completed at {datetime.now(UTC).isoformat()}*"
         report += f"\n*Compliance: GDPR, CCPA, HIPAA, PCI-DSS*"
 
         return report

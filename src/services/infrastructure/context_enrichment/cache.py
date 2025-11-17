@@ -10,7 +10,7 @@ Implements L1 (in-memory LRU) + L2 (Redis) caching strategy with:
 """
 
 from typing import Optional, Dict, Any, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from collections import OrderedDict
 import asyncio
 import json
@@ -94,7 +94,7 @@ class LRUCache:
             value, expires_at = self._cache[key]
 
             # Check expiration
-            if datetime.utcnow() >= expires_at:
+            if datetime.now(UTC) >= expires_at:
                 del self._cache[key]
                 return None
 
@@ -112,7 +112,7 @@ class LRUCache:
             ttl: Time to live in seconds
         """
         async with self._lock:
-            expires_at = datetime.utcnow() + timedelta(seconds=ttl)
+            expires_at = datetime.now(UTC) + timedelta(seconds=ttl)
 
             # If key exists, update and move to end
             if key in self._cache:
@@ -151,7 +151,7 @@ class LRUCache:
     async def cleanup_expired(self):
         """Remove all expired entries"""
         async with self._lock:
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             expired_keys = [
                 key for key, (_, expires_at) in self._cache.items()
                 if now >= expires_at

@@ -6,7 +6,7 @@ and measurable outcomes to ensure customers achieve desired business value.
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -220,14 +220,14 @@ class SuccessPlanAgent(BaseAgent):
         value_metrics = self._set_value_metrics(objectives, business_data)
 
         return {
-            "plan_id": f"plan_{customer_metadata.get('customer_id', 'new')}_{int(datetime.utcnow().timestamp())}",
-            "created_date": datetime.utcnow().isoformat(),
+            "plan_id": f"plan_{customer_metadata.get('customer_id', 'new')}_{int(datetime.now(UTC).timestamp())}",
+            "created_date": datetime.now(UTC).isoformat(),
             "current_stage": "planning",
             "business_objectives": objectives,
             "success_criteria": success_criteria,
             "milestones": milestones,
             "value_metrics": value_metrics,
-            "target_completion_date": (datetime.utcnow() + timedelta(days=180)).isoformat(),
+            "target_completion_date": (datetime.now(UTC) + timedelta(days=180)).isoformat(),
             "stakeholders": [],
             "status": "active"
         }
@@ -247,14 +247,14 @@ class SuccessPlanAgent(BaseAgent):
                 "category": "strategic_transformation",
                 "objective": f"Enable strategic business transformation in {industry}",
                 "priority": "critical",
-                "target_date": (datetime.utcnow() + timedelta(days=180)).isoformat()
+                "target_date": (datetime.now(UTC) + timedelta(days=180)).isoformat()
             })
         else:
             objectives.append({
                 "category": "operational_efficiency",
                 "objective": "Streamline operations and improve team productivity",
                 "priority": "high",
-                "target_date": (datetime.utcnow() + timedelta(days=90)).isoformat()
+                "target_date": (datetime.now(UTC) + timedelta(days=90)).isoformat()
             })
 
         # User adoption objective
@@ -262,7 +262,7 @@ class SuccessPlanAgent(BaseAgent):
             "category": "user_adoption",
             "objective": "Achieve 80%+ user adoption across licensed seats",
             "priority": "high",
-            "target_date": (datetime.utcnow() + timedelta(days=60)).isoformat()
+            "target_date": (datetime.now(UTC) + timedelta(days=60)).isoformat()
         })
 
         # ROI objective
@@ -271,7 +271,7 @@ class SuccessPlanAgent(BaseAgent):
             "category": "cost_reduction",
             "objective": f"Realize 3x ROI (${contract_value * 3:,}) through efficiency gains",
             "priority": "medium",
-            "target_date": (datetime.utcnow() + timedelta(days=120)).isoformat()
+            "target_date": (datetime.now(UTC) + timedelta(days=120)).isoformat()
         })
 
         return objectives
@@ -288,7 +288,7 @@ class SuccessPlanAgent(BaseAgent):
         milestones.append({
             "name": "Onboarding Complete",
             "type": "onboarding_complete",
-            "target_date": (datetime.utcnow() + timedelta(days=30)).isoformat(),
+            "target_date": (datetime.now(UTC) + timedelta(days=30)).isoformat(),
             "criteria": "All users trained and actively using platform",
             "status": "pending",
             "completion_date": None
@@ -298,7 +298,7 @@ class SuccessPlanAgent(BaseAgent):
         milestones.append({
             "name": "First Value Realized",
             "type": "first_value_realized",
-            "target_date": (datetime.utcnow() + timedelta(days=60)).isoformat(),
+            "target_date": (datetime.now(UTC) + timedelta(days=60)).isoformat(),
             "criteria": "Measurable efficiency improvement or time savings",
             "status": "pending",
             "completion_date": None
@@ -308,7 +308,7 @@ class SuccessPlanAgent(BaseAgent):
         milestones.append({
             "name": "Adoption Target Met",
             "type": "adoption_target_met",
-            "target_date": (datetime.utcnow() + timedelta(days=90)).isoformat(),
+            "target_date": (datetime.now(UTC) + timedelta(days=90)).isoformat(),
             "criteria": "80%+ user adoption and 60%+ feature adoption",
             "status": "pending",
             "completion_date": None
@@ -319,7 +319,7 @@ class SuccessPlanAgent(BaseAgent):
             milestones.append({
                 "name": "ROI Threshold Achieved",
                 "type": "roi_threshold_achieved",
-                "target_date": (datetime.utcnow() + timedelta(days=120)).isoformat(),
+                "target_date": (datetime.now(UTC) + timedelta(days=120)).isoformat(),
                 "criteria": "Documented 2x+ return on investment",
                 "status": "pending",
                 "completion_date": None
@@ -430,11 +430,11 @@ class SuccessPlanAgent(BaseAgent):
 
                 if milestone_met:
                     milestone["status"] = "completed"
-                    milestone["completion_date"] = datetime.utcnow().isoformat()
+                    milestone["completion_date"] = datetime.now(UTC).isoformat()
 
         # Update plan stage
         existing_plan["current_stage"] = self._determine_current_stage(existing_plan)
-        existing_plan["last_updated"] = datetime.utcnow().isoformat()
+        existing_plan["last_updated"] = datetime.now(UTC).isoformat()
 
         return existing_plan
 
@@ -464,7 +464,7 @@ class SuccessPlanAgent(BaseAgent):
     def _determine_current_stage(self, plan: Dict[str, Any]) -> str:
         """Determine current stage of success plan."""
         created_date = datetime.fromisoformat(plan["created_date"].replace('Z', '+00:00'))
-        days_since_creation = (datetime.utcnow() - created_date).days
+        days_since_creation = (datetime.now(UTC) - created_date).days
 
         if days_since_creation <= 30:
             return "planning"
@@ -530,7 +530,7 @@ class SuccessPlanAgent(BaseAgent):
         for milestone in success_plan.get("milestones", []):
             if milestone["status"] == "pending":
                 target_date = datetime.fromisoformat(milestone["target_date"].replace('Z', '+00:00'))
-                if datetime.utcnow() > target_date:
+                if datetime.now(UTC) > target_date:
                     blockers.append({
                         "blocker": f"Delayed milestone: {milestone['name']}",
                         "severity": "high",
@@ -810,14 +810,14 @@ if __name__ == "__main__":
 
         existing_plan = {
             "plan_id": "plan_123",
-            "created_date": (datetime.utcnow() - timedelta(days=45)).isoformat(),
+            "created_date": (datetime.now(UTC) - timedelta(days=45)).isoformat(),
             "current_stage": "execution",
             "business_objectives": [
                 {
                     "category": "operational_efficiency",
                     "objective": "Streamline operations and improve team productivity",
                     "priority": "high",
-                    "target_date": (datetime.utcnow() + timedelta(days=45)).isoformat()
+                    "target_date": (datetime.now(UTC) + timedelta(days=45)).isoformat()
                 }
             ],
             "success_criteria": [
@@ -828,7 +828,7 @@ if __name__ == "__main__":
                 {
                     "name": "Onboarding Complete",
                     "type": "onboarding_complete",
-                    "target_date": (datetime.utcnow() - timedelta(days=15)).isoformat(),
+                    "target_date": (datetime.now(UTC) - timedelta(days=15)).isoformat(),
                     "criteria": "All users trained",
                     "status": "pending",
                     "completion_date": None

@@ -6,7 +6,7 @@ purging expired data, and maintaining database health.
 """
 
 from typing import Dict, Any, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -64,7 +64,7 @@ Total Space Freed: {total_space:,} MB
         for result in cleanup_results:
             response += f"✓ {result['data_type'].replace('_', ' ').title()}: {result['records_processed']} records ({result['space_freed_mb']} MB)\n"
 
-        response += f"\nNext cleanup scheduled: {(datetime.utcnow() + timedelta(days=1)).strftime('%Y-%m-%d')}"
+        response += f"\nNext cleanup scheduled: {(datetime.now(UTC) + timedelta(days=1)).strftime('%Y-%m-%d')}"
 
         state["agent_response"] = response
         state["cleanup_results"] = cleanup_results
@@ -76,7 +76,7 @@ Total Space Freed: {total_space:,} MB
 
     async def _execute_cleanup(self, data_type: str, policy: Dict) -> Dict:
         """Execute cleanup for a specific data type."""
-        cutoff_date = datetime.utcnow() - timedelta(days=policy['retention_days'])
+        cutoff_date = datetime.now(UTC) - timedelta(days=policy['retention_days'])
 
         # Mock cleanup execution
         import random
@@ -91,5 +91,5 @@ Total Space Freed: {total_space:,} MB
             "records_processed": records_processed,
             "space_freed_mb": space_freed,
             "status": "success",
-            "executed_at": datetime.utcnow().isoformat()
+            "executed_at": datetime.now(UTC).isoformat()
         }

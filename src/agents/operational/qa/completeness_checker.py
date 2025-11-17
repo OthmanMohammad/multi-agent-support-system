@@ -6,7 +6,7 @@ Uses Claude Haiku for efficient completeness validation.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -549,6 +549,6 @@ class CompletenessCheckerAgent(BaseAgent):
             for rec in recommendations:
                 report += f"- {rec}\n"
 
-        report += f"\n*Completeness check completed at {datetime.utcnow().isoformat()}*"
+        report += f"\n*Completeness check completed at {datetime.now(UTC).isoformat()}*"
 
         return report

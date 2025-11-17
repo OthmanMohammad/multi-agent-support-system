@@ -9,7 +9,7 @@ Part of: STORY-002 Knowledge Base Swarm (TASK-208)
 
 from typing import List, Dict, Optional
 from collections import Counter
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -143,7 +143,7 @@ class KBSuggester(BaseAgent):
         Returns:
             List of suggestions
         """
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = datetime.now(UTC) - timedelta(days=days)
 
         try:
             async with get_db_session() as session:

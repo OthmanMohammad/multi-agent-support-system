@@ -6,7 +6,7 @@ smooth transition. Coordinates extraction, transformation, validation, and loadi
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -188,7 +188,7 @@ class DataMigrationAgent(BaseAgent):
             "data_issues": data_issues,
             "estimated_completion_days": estimated_completion,
             "quality_metrics": quality_metrics,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat()
         }
 
     def _calculate_progress(
@@ -267,9 +267,9 @@ class DataMigrationAgent(BaseAgent):
         try:
             start_date = datetime.fromisoformat(start_date_str.replace('Z', '+00:00'))
         except:
-            start_date = datetime.utcnow()
+            start_date = datetime.now(UTC)
 
-        days_elapsed = max((datetime.utcnow() - start_date).days, 1)
+        days_elapsed = max((datetime.now(UTC) - start_date).days, 1)
         records_migrated = migration_data.get("records_migrated", 0)
         records_per_day = int(records_migrated / days_elapsed)
 
@@ -610,7 +610,7 @@ if __name__ == "__main__":
             "migration_data": {
                 "current_phase": "validation",
                 "completed_phases": ["discovery", "planning", "extraction", "transformation"],
-                "migration_start_date": (datetime.utcnow() - timedelta(days=10)).isoformat(),
+                "migration_start_date": (datetime.now(UTC) - timedelta(days=10)).isoformat(),
                 "total_records": 50000,
                 "records_migrated": 48500,
                 "records_failed": 50,
@@ -646,7 +646,7 @@ if __name__ == "__main__":
             "migration_data": {
                 "current_phase": "transformation",
                 "completed_phases": ["discovery", "planning", "extraction"],
-                "migration_start_date": (datetime.utcnow() - timedelta(days=15)).isoformat(),
+                "migration_start_date": (datetime.now(UTC) - timedelta(days=15)).isoformat(),
                 "total_records": 30000,
                 "records_migrated": 15000,
                 "records_failed": 2000,

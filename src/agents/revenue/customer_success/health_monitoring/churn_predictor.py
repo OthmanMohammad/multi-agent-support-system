@@ -6,7 +6,7 @@ Identifies at-risk customers and recommends retention strategies.
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from decimal import Decimal
 
 from src.workflow.state import AgentState
@@ -281,11 +281,11 @@ class ChurnPredictorAgent(BaseAgent):
 
         # High churn risk usually materializes at renewal
         if days_until_renewal <= 90:
-            churn_date = datetime.utcnow() + timedelta(days=days_until_renewal)
+            churn_date = datetime.now(UTC) + timedelta(days=days_until_renewal)
             return churn_date.strftime("%Y-%m-%d")
 
         # Otherwise estimate 90 days out
-        churn_date = datetime.utcnow() + timedelta(days=90)
+        churn_date = datetime.now(UTC) + timedelta(days=90)
         return churn_date.strftime("%Y-%m-%d")
 
     def _generate_retention_strategy(self, churn_analysis: Dict[str, Any]) -> Dict[str, Any]:

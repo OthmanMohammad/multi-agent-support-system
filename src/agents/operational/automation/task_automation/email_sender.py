@@ -6,7 +6,7 @@ escalation notifications, and customer communications.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 import json
 
 from src.workflow.state import AgentState
@@ -440,7 +440,7 @@ Help Center: https://help.acme-corp.com
 
         import hashlib
         email_id = hashlib.md5(
-            f"{email['subject']}{datetime.utcnow()}".encode()
+            f"{email['subject']}{datetime.now(UTC)}".encode()
         ).hexdigest()[:16]
 
         priority_config = self.PRIORITY_LEVELS.get(priority, self.PRIORITY_LEVELS["normal"])
@@ -456,7 +456,7 @@ Help Center: https://help.acme-corp.com
             "priority": priority,
             "importance": priority_config["importance"],
             "status": "sent",
-            "sent_at": datetime.utcnow().isoformat(),
+            "sent_at": datetime.now(UTC).isoformat(),
             "category": email.get("category", "general")
         }
 
@@ -500,7 +500,7 @@ Help Center: https://help.acme-corp.com
             "priority": priority,
             "status": "scheduled",
             "scheduled_for": schedule_time,
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(UTC).isoformat()
         }
 
         return scheduled_email
@@ -521,7 +521,7 @@ Help Center: https://help.acme-corp.com
             "track_clicks": True,
             "tracking_pixel_url": f"https://tracking.acme-corp.com/pixel/{sent_email['id']}",
             "click_tracking_enabled": True,
-            "tracking_created_at": datetime.utcnow().isoformat()
+            "tracking_created_at": datetime.now(UTC).isoformat()
         }
 
     def _log_automation_action(
@@ -533,7 +533,7 @@ Help Center: https://help.acme-corp.com
         """Log automated action for audit trail."""
         return {
             "action_type": action_type,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "email_id": sent_email.get("id"),
             "customer_id": customer_metadata.get("customer_id"),
             "success": True,

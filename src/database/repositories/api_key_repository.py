@@ -7,7 +7,7 @@ Provides methods for API key management and validation.
 from typing import Optional, List
 from sqlalchemy import select, func
 from uuid import UUID
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.database.base import BaseRepository
 from src.database.models import APIKey
@@ -75,7 +75,7 @@ class APIKeyRepository(BaseRepository[APIKey]):
         Returns:
             List of active API keys
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         result = await self.session.execute(
             select(APIKey).where(
@@ -150,7 +150,7 @@ class APIKeyRepository(BaseRepository[APIKey]):
         return await self.update(
             key_id,
             usage_count=usage_count,
-            last_used_at=datetime.utcnow(),
+            last_used_at=datetime.now(UTC),
             last_used_ip=ip_address
         )
 
@@ -164,7 +164,7 @@ class APIKeyRepository(BaseRepository[APIKey]):
         Returns:
             List of expired API keys
         """
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         result = await self.session.execute(
             select(APIKey).where(
@@ -223,7 +223,7 @@ class APIKeyRepository(BaseRepository[APIKey]):
             select(func.count(APIKey.id)).where(
                 *base_filter,
                 APIKey.expires_at.isnot(None),
-                APIKey.expires_at < datetime.utcnow()
+                APIKey.expires_at < datetime.now(UTC)
             )
         )
 
@@ -248,7 +248,7 @@ class APIKeyRepository(BaseRepository[APIKey]):
         Returns:
             List of unused API keys
         """
-        cutoff_date = datetime.utcnow() - timedelta(days=days_unused)
+        cutoff_date = datetime.now(UTC) - timedelta(days=days_unused)
 
         result = await self.session.execute(
             select(APIKey).where(

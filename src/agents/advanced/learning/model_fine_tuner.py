@@ -14,7 +14,7 @@ Part of: EPIC-004 Learning & Improvement Swarm (TASK-4055)
 
 from typing import Dict, Any, List
 import structlog
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -125,14 +125,14 @@ Base your analysis on the data provided and industry best practices."""
 
         try:
             # Query relevant data
-            end_date = datetime.utcnow()
+            end_date = datetime.now(UTC)
             start_date = end_date - timedelta(days=lookback_days)
 
             # Placeholder for actual analysis logic
             # In production, this would query specific tables and perform calculations
             analysis_data = {
                 "period_days": lookback_days,
-                "analyzed_at": datetime.utcnow().isoformat(),
+                "analyzed_at": datetime.now(UTC).isoformat(),
                 "findings": [
                     "System operating within normal parameters",
                     "No critical issues detected",

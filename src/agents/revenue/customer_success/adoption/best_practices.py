@@ -6,7 +6,7 @@ and benchmarks customer performance against industry standards.
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime
+from datetime import datetime, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -228,7 +228,7 @@ class BestPracticesAgent(BaseAgent):
             "category_scores": category_scores,
             "strengths": strengths,
             "gaps": gaps,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat()
         }
 
     def _score_practice_category(

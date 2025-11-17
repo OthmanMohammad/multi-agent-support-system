@@ -9,7 +9,7 @@ Pure infrastructure - no business logic.
 
 from typing import Optional, Any, Callable
 import json
-from datetime import timedelta
+from datetime import timedelta, UTC
 
 from src.core.result import Result
 from src.core.errors import ExternalServiceError
@@ -99,7 +99,7 @@ class CachingService:
                     # Check TTL
                     if key in self._cache_ttls:
                         from datetime import datetime
-                        if datetime.utcnow() > self._cache_ttls[key]:
+                        if datetime.now(UTC) > self._cache_ttls[key]:
                             # Expired
                             del self._memory_cache[key]
                             del self._cache_ttls[key]
@@ -157,7 +157,7 @@ class CachingService:
                 
                 if ttl:
                     from datetime import datetime
-                    expiry = datetime.utcnow() + timedelta(seconds=ttl)
+                    expiry = datetime.now(UTC) + timedelta(seconds=ttl)
                     self._cache_ttls[key] = expiry
             
             return Result.ok(None)
@@ -224,7 +224,7 @@ class CachingService:
                 # Check TTL
                 if key in self._cache_ttls:
                     from datetime import datetime
-                    if datetime.utcnow() > self._cache_ttls[key]:
+                    if datetime.now(UTC) > self._cache_ttls[key]:
                         # Expired
                         del self._memory_cache[key]
                         del self._cache_ttls[key]

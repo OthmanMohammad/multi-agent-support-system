@@ -6,7 +6,7 @@ and action items via email or notifications.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 import json
 
 from src.workflow.state import AgentState
@@ -255,13 +255,13 @@ Return JSON with subject, deadline, urgency_level, preferred_channels, and addit
             else:
                 details = {
                     "subject": message[:100],
-                    "deadline": (datetime.utcnow() + timedelta(days=7)).isoformat(),
+                    "deadline": (datetime.now(UTC) + timedelta(days=7)).isoformat(),
                     "urgency_level": "medium"
                 }
         except:
             details = {
                 "subject": message[:100],
-                "deadline": (datetime.utcnow() + timedelta(days=7)).isoformat(),
+                "deadline": (datetime.now(UTC) + timedelta(days=7)).isoformat(),
                 "urgency_level": "medium"
             }
 
@@ -293,7 +293,7 @@ Return JSON with subject, deadline, urgency_level, preferred_channels, and addit
         if deadline_str:
             deadline = datetime.fromisoformat(deadline_str.replace('Z', '+00:00').split('+')[0])
         else:
-            deadline = datetime.utcnow() + timedelta(days=7)
+            deadline = datetime.now(UTC) + timedelta(days=7)
 
         schedule = []
 
@@ -301,7 +301,7 @@ Return JSON with subject, deadline, urgency_level, preferred_channels, and addit
         if "advance_days" in reminder_config:
             for days in reminder_config["advance_days"]:
                 send_time = deadline - timedelta(days=days)
-                if send_time > datetime.utcnow():
+                if send_time > datetime.now(UTC):
                     schedule.append({
                         "send_at": send_time.isoformat(),
                         "advance_days": days,
@@ -312,7 +312,7 @@ Return JSON with subject, deadline, urgency_level, preferred_channels, and addit
         if "advance_hours" in reminder_config:
             for hours in reminder_config["advance_hours"]:
                 send_time = deadline - timedelta(hours=hours)
-                if send_time > datetime.utcnow():
+                if send_time > datetime.now(UTC):
                     schedule.append({
                         "send_at": send_time.isoformat(),
                         "advance_hours": hours,
@@ -512,7 +512,7 @@ The Team"""
 
         for message in reminder_messages:
             send_time = datetime.fromisoformat(message["send_at"])
-            is_immediate = send_time <= datetime.utcnow()
+            is_immediate = send_time <= datetime.now(UTC)
 
             reminder_record = {
                 "id": message["id"],
@@ -523,7 +523,7 @@ The Team"""
                 "status": "sent" if is_immediate else "scheduled",
                 "type": message["type"],
                 "urgency": message["urgency"],
-                "created_at": datetime.utcnow().isoformat()
+                "created_at": datetime.now(UTC).isoformat()
             }
 
             sent_reminders.append(reminder_record)
@@ -578,7 +578,7 @@ The Team"""
         """Log automated action for audit trail."""
         return {
             "action_type": action_type,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "reminder_count": len(sent_reminders),
             "customer_id": customer_metadata.get("customer_id"),
             "success": True,

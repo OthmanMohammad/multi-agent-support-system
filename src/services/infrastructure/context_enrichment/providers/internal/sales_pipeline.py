@@ -5,7 +5,7 @@ Fetches active deals, opportunities, and sales activities from database.
 """
 
 from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -106,7 +106,7 @@ class SalesPipelineProvider(BaseContextProvider):
                 })
 
             # Fetch recent sales activities (last 30 days)
-            cutoff = datetime.utcnow() - timedelta(days=30)
+            cutoff = datetime.now(UTC) - timedelta(days=30)
             activities = await uow.sales_activities.find_by(customer_id=customer_id)
 
             recent_activities = [

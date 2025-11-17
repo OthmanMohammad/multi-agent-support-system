@@ -7,7 +7,7 @@ Part of: TASK-2011 Analytics Swarm
 
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
-from datetime import datetime
+from datetime import datetime, UTC
 
 from src.agents.operational.analytics.metrics_tracker import MetricsTrackerAgent
 from src.workflow.state import AgentState, create_initial_state
@@ -353,7 +353,7 @@ class TestReportFormatting:
             "alerts_count": 0,
             "critical_alerts": 0,
             "warning_alerts": 0,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(UTC).isoformat()
         }
 
         report = agent._format_metrics_report(
@@ -379,7 +379,7 @@ class TestReportFormatting:
             "alerts_count": 1,
             "critical_alerts": 1,
             "warning_alerts": 0,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(UTC).isoformat()
         }
 
         report = agent._format_metrics_report(

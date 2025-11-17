@@ -6,7 +6,7 @@ and business units within the existing customer organization.
 """
 
 from typing import Dict, Any, Optional, List, Set
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -262,7 +262,7 @@ class DepartmentExpansionAgent(BaseAgent):
             "underutilized_departments": underutilized_departments,
             "departments_in_org": list(departments_in_org),
             "expansion_signals": expansion_signals,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat()
         }
 
     def _detect_expansion_signals(

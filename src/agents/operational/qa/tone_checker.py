@@ -6,7 +6,7 @@ Uses Claude Sonnet for nuanced tone analysis and emotion detection.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -348,7 +348,7 @@ class ToneCheckerAgent(BaseAgent):
 
         # Add timestamps
         for issue in all_issues:
-            issue["detected_at"] = datetime.utcnow().isoformat()
+            issue["detected_at"] = datetime.now(UTC).isoformat()
 
         return all_issues
 
@@ -492,6 +492,6 @@ class ToneCheckerAgent(BaseAgent):
             for rec in recommendations:
                 report += f"- {rec}\n"
 
-        report += f"\n*Tone check completed at {datetime.utcnow().isoformat()}*"
+        report += f"\n*Tone check completed at {datetime.now(UTC).isoformat()}*"
 
         return report

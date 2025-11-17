@@ -7,7 +7,7 @@ Uses Claude Sonnet for nuanced citation validation.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 import re
 
 from src.workflow.state import AgentState
@@ -428,7 +428,7 @@ class CitationValidatorAgent(BaseAgent):
 
         # Add timestamps
         for issue in all_issues:
-            issue["detected_at"] = datetime.utcnow().isoformat()
+            issue["detected_at"] = datetime.now(UTC).isoformat()
 
         # Sort by severity
         severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
@@ -603,6 +603,6 @@ class CitationValidatorAgent(BaseAgent):
             for rec in recommendations:
                 report += f"- {rec}\n"
 
-        report += f"\n*Citation validation completed at {datetime.utcnow().isoformat()}*"
+        report += f"\n*Citation validation completed at {datetime.now(UTC).isoformat()}*"
 
         return report

@@ -6,7 +6,7 @@ intelligent routing, and seamless customer experience.
 """
 
 from typing import Dict, Any
-from datetime import datetime
+from datetime import datetime, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -80,5 +80,5 @@ The specialist will continue assisting you shortly."""
         return {
             "target_agent": target,
             "context_transferred": True,
-            "handoff_at": datetime.utcnow().isoformat()
+            "handoff_at": datetime.now(UTC).isoformat()
         }

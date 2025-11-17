@@ -11,7 +11,7 @@ CustomerDomainService, not here.
 
 from typing import Optional
 from uuid import UUID
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.core.result import Result
 from src.core.errors import NotFoundError, InternalError
@@ -85,7 +85,7 @@ class CustomerInfrastructureService:
                 "customer_retrieved",
                 customer_id=str(customer.id),
                 plan=customer.plan,
-                was_created=customer.created_at > (datetime.utcnow() - timedelta(seconds=1))
+                was_created=customer.created_at > (datetime.now(UTC) - timedelta(seconds=1))
             )
             
             return Result.ok(customer)
@@ -298,7 +298,7 @@ class CustomerInfrastructureService:
     ) -> Result[dict]:
         """Get customer usage statistics"""
         try:
-            since = datetime.utcnow() - timedelta(days=days)
+            since = datetime.now(UTC) - timedelta(days=days)
             
             conversations = await self.uow.conversations.get_by_customer(
                 customer_id=customer_id,
@@ -364,7 +364,7 @@ class CustomerInfrastructureService:
             metadata = customer.extra_metadata.copy() if customer.extra_metadata else {}
             metadata["blocked"] = True
             metadata["blocked_reason"] = reason
-            metadata["blocked_at"] = datetime.utcnow().isoformat()
+            metadata["blocked_at"] = datetime.now(UTC).isoformat()
             
             updated = await self.uow.customers.update(
                 customer_id,

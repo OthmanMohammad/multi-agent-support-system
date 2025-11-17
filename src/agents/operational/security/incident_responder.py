@@ -6,7 +6,7 @@ Target: <5 min detection-to-response time for critical incidents.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 
 from src.workflow.state import AgentState
@@ -137,7 +137,7 @@ class IncidentResponderAgent(BaseAgent):
         incident_type = state.get("entities", {}).get("incident_type", "unknown")
         incident_data = state.get("entities", {}).get("incident_data", {})
         affected_systems = state.get("entities", {}).get("affected_systems", [])
-        detection_time = state.get("entities", {}).get("detection_time", datetime.utcnow().isoformat())
+        detection_time = state.get("entities", {}).get("detection_time", datetime.now(UTC).isoformat())
         source_ip = state.get("entities", {}).get("source_ip", "unknown")
         user_id = state.get("entities", {}).get("user_id")
 
@@ -149,7 +149,7 @@ class IncidentResponderAgent(BaseAgent):
         )
 
         # Start response timer
-        response_start = datetime.utcnow()
+        response_start = datetime.now(UTC)
 
         # Classify incident severity
         severity = self._classify_severity(incident_type, incident_data, affected_systems)
@@ -195,7 +195,7 @@ class IncidentResponderAgent(BaseAgent):
         )
 
         # Calculate response time
-        response_end = datetime.utcnow()
+        response_end = datetime.now(UTC)
         response_time = (response_end - response_start).total_seconds()
 
         # Check SLA compliance
@@ -320,7 +320,7 @@ class IncidentResponderAgent(BaseAgent):
         user_id: Optional[str]
     ) -> str:
         """Create incident record."""
-        incident_id = f"INC-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+        incident_id = f"INC-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}"
 
         self.logger.info(
             "incident_record_created",
@@ -387,7 +387,7 @@ class IncidentResponderAgent(BaseAgent):
         action_result = {
             "action": action,
             "status": "success",
-            "executed_at": datetime.utcnow().isoformat(),
+            "executed_at": datetime.now(UTC).isoformat(),
             "details": f"Executed {action.replace('_', ' ')}"
         }
 
@@ -416,7 +416,7 @@ class IncidentResponderAgent(BaseAgent):
     ) -> Dict[str, Any]:
         """Collect evidence for forensic analysis."""
         evidence = {
-            "collection_time": datetime.utcnow().isoformat(),
+            "collection_time": datetime.now(UTC).isoformat(),
             "incident_type": incident_type,
             "artifacts": [],
             "chain_of_custody": []
@@ -444,7 +444,7 @@ class IncidentResponderAgent(BaseAgent):
 
         # Chain of custody
         evidence["chain_of_custody"].append({
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "action": "evidence_collection_started",
             "collector": "incident_responder_agent"
         })
@@ -531,7 +531,7 @@ class IncidentResponderAgent(BaseAgent):
             "action": "Verify containment effectiveness",
             "description": "Confirm all containment actions successful",
             "responsible": "security_team",
-            "deadline": (datetime.utcnow() + timedelta(hours=1)).isoformat()
+            "deadline": (datetime.now(UTC) + timedelta(hours=1)).isoformat()
         })
 
         # Eradicate threat
@@ -540,7 +540,7 @@ class IncidentResponderAgent(BaseAgent):
             "action": "Eradicate threat",
             "description": f"Remove malicious artifacts from {len(affected_systems)} systems",
             "responsible": "security_team",
-            "deadline": (datetime.utcnow() + timedelta(hours=4)).isoformat()
+            "deadline": (datetime.now(UTC) + timedelta(hours=4)).isoformat()
         })
 
         # Restore systems
@@ -549,7 +549,7 @@ class IncidentResponderAgent(BaseAgent):
             "action": "Restore affected systems",
             "description": "Restore from clean backups and verify integrity",
             "responsible": "ops_team",
-            "deadline": (datetime.utcnow() + timedelta(hours=8)).isoformat()
+            "deadline": (datetime.now(UTC) + timedelta(hours=8)).isoformat()
         })
 
         # Post-incident review
@@ -558,7 +558,7 @@ class IncidentResponderAgent(BaseAgent):
             "action": "Conduct post-incident review",
             "description": "Document lessons learned and update procedures",
             "responsible": "security_lead",
-            "deadline": (datetime.utcnow() + timedelta(days=3)).isoformat()
+            "deadline": (datetime.now(UTC) + timedelta(days=3)).isoformat()
         })
 
         return plan
@@ -654,7 +654,7 @@ class IncidentResponderAgent(BaseAgent):
         for rec in recommendations:
             report += f"- {rec}\n"
 
-        report += f"\n*Incident response completed at {datetime.utcnow().isoformat()}*"
+        report += f"\n*Incident response completed at {datetime.now(UTC).isoformat()}*"
         report += f"\n*Status: CONTAINED - Monitoring for additional indicators*"
 
         return report

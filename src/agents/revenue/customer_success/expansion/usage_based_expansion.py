@@ -6,7 +6,7 @@ with ROI analysis to proactively manage usage-based expansion opportunities.
 """
 
 from typing import Dict, Any, Optional, List, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from decimal import Decimal
 
 from src.workflow.state import AgentState
@@ -244,7 +244,7 @@ class UsageBasedExpansionAgent(BaseAgent):
             "metrics_at_risk": metrics_at_risk,
             "metrics_at_risk_count": len(metrics_at_risk),
             "usage_velocity": usage_velocity,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat()
         }
 
     def _determine_usage_status(self, usage_pct: float) -> str:

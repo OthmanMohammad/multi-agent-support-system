@@ -6,7 +6,7 @@ and recommends strategic upsell approaches to grow account value.
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from decimal import Decimal
 
 from src.workflow.state import AgentState
@@ -254,7 +254,7 @@ class UpsellIdentifierAgent(BaseAgent):
             "signal_scores": signal_scores,
             "total_signal_score": sum(signal_scores.values()),
             "premium_features_used": len(premium_features),
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat()
         }
 
     def _calculate_upsell_readiness(

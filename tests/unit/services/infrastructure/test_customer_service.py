@@ -3,7 +3,7 @@ Unit tests for CustomerInfrastructureService
 """
 import pytest
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, UTC
 from unittest.mock import AsyncMock, MagicMock
 
 from services.infrastructure.customer_service import CustomerInfrastructureService
@@ -126,7 +126,7 @@ class TestCustomerInfrastructureService:
         # Act
         result = await service.get_conversation_count_for_date(
             customer_id, 
-            datetime.utcnow()
+            datetime.now(UTC)
         )
         
         # Assert

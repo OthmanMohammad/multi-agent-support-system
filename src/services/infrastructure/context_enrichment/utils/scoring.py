@@ -6,7 +6,7 @@ agent type relevance, and data quality.
 """
 
 from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 import structlog
 
 from src.services.infrastructure.context_enrichment.types import (
@@ -181,7 +181,7 @@ class RelevanceScorer:
             return 0.5
 
         # Calculate age in days
-        age_days = (datetime.utcnow() - most_recent).days
+        age_days = (datetime.now(UTC) - most_recent).days
 
         # Exponential decay with 30-day half-life
         # After 30 days, score is 0.5; after 60 days, 0.25; etc.

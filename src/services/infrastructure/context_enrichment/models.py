@@ -7,7 +7,7 @@ including customer intelligence, engagement metrics, support history, and enrich
 
 from dataclasses import dataclass, field, asdict
 from typing import Dict, Any, Optional, List
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 
 
@@ -243,7 +243,7 @@ Churn Risk: {churn_label} ({ci.churn_risk:.0%})
 
         # Add customer tenure if available
         if ci.customer_since:
-            days_as_customer = (datetime.utcnow() - ci.customer_since).days
+            days_as_customer = (datetime.now(UTC) - ci.customer_since).days
             context += f"Customer Since: {ci.customer_since.strftime('%Y-%m-%d')} ({days_as_customer} days)\n"
 
         # Engagement section

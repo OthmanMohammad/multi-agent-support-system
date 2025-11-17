@@ -6,7 +6,7 @@ Provides customized data views for executives, managers, and individual contribu
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 import json
 
 from src.workflow.state import AgentState
@@ -264,7 +264,7 @@ class DashboardGeneratorAgent(BaseAgent):
         """
         dashboard_data = {
             "time_range": time_range,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "widgets": {}
         }
 
@@ -423,7 +423,7 @@ class DashboardGeneratorAgent(BaseAgent):
         """
         dashboard_json = {
             "dashboard": {
-                "id": f"dashboard_{role}_{datetime.utcnow().timestamp()}",
+                "id": f"dashboard_{role}_{datetime.now(UTC).timestamp()}",
                 "name": dashboard_template["name"],
                 "role": role,
                 "time_range": time_range,

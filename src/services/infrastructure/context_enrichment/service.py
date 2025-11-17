@@ -7,7 +7,7 @@ It orchestrates all providers, handles caching, and combines data from multiple 
 
 from typing import Optional, List
 import asyncio
-from datetime import datetime
+from datetime import datetime, UTC
 import structlog
 
 from src.services.infrastructure.context_enrichment.models import (
@@ -116,7 +116,7 @@ class ContextEnrichmentService:
             >>> print(context.customer_intelligence.plan)
             'premium'
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
         providers_used: List[str] = []
 
         self.logger.info(
@@ -134,7 +134,7 @@ class ContextEnrichmentService:
                 self.logger.info(
                     "context_cache_hit",
                     customer_id=customer_id,
-                    latency_ms=(datetime.utcnow() - start_time).total_seconds() * 1000
+                    latency_ms=(datetime.now(UTC) - start_time).total_seconds() * 1000
                 )
                 return cached_context
 
@@ -183,9 +183,9 @@ class ContextEnrichmentService:
                 account_health=AccountHealth(**results[4]),
                 company_enrichment=None,  # External APIs not implemented yet
                 product_status=ProductStatus(),  # Real-time status not implemented yet
-                enriched_at=datetime.utcnow(),
+                enriched_at=datetime.now(UTC),
                 cache_hit=False,
-                enrichment_latency_ms=(datetime.utcnow() - start_time).total_seconds() * 1000,
+                enrichment_latency_ms=(datetime.now(UTC) - start_time).total_seconds() * 1000,
                 providers_used=providers_used
             )
 
@@ -253,7 +253,7 @@ class ContextEnrichmentService:
             support_history=SupportHistory(),
             subscription_details=SubscriptionDetails(),
             account_health=AccountHealth(),
-            enriched_at=datetime.utcnow(),
+            enriched_at=datetime.now(UTC),
             cache_hit=False,
             enrichment_latency_ms=0,
             providers_used=[]

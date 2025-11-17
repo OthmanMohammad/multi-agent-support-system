@@ -6,7 +6,7 @@ Handles timezone conversion, availability checking, and automatic meeting setup.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 import json
 
 from src.workflow.state import AgentState
@@ -266,7 +266,7 @@ Return JSON with title, date, time, duration_minutes, attendees (array), meeting
             else:
                 details = {
                     "title": "Customer Meeting",
-                    "date": (datetime.utcnow() + timedelta(days=1)).strftime("%Y-%m-%d"),
+                    "date": (datetime.now(UTC) + timedelta(days=1)).strftime("%Y-%m-%d"),
                     "time": "14:00",
                     "duration_minutes": 30,
                     "meeting_type": "call"
@@ -274,7 +274,7 @@ Return JSON with title, date, time, duration_minutes, attendees (array), meeting
         except:
             details = {
                 "title": "Customer Meeting",
-                "date": (datetime.utcnow() + timedelta(days=1)).strftime("%Y-%m-%d"),
+                "date": (datetime.now(UTC) + timedelta(days=1)).strftime("%Y-%m-%d"),
                 "time": "14:00",
                 "duration_minutes": 30,
                 "meeting_type": "call"
@@ -349,7 +349,7 @@ Return JSON with title, date, time, duration_minutes, attendees (array), meeting
                 {"date": requested_date, "time": "14:00", "available": is_business_hours},
                 {"date": requested_date, "time": "15:30", "available": True}
             ],
-            "checked_at": datetime.utcnow().isoformat()
+            "checked_at": datetime.now(UTC).isoformat()
         }
 
     def _check_conflicts(
@@ -504,7 +504,7 @@ Return JSON with title, date, time, duration_minutes, attendees (array), meeting
             "video_platform": video_platform,
             "calendar_system": calendar_system,
             "status": "scheduled",
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
             "calendar_link": f"https://{calendar_system}.example.com/event/{meeting_id}",
             "has_conflicts": conflict_check.get("has_conflicts", False)
         }
@@ -566,7 +566,7 @@ Return JSON with title, date, time, duration_minutes, attendees (array), meeting
         """Log automated action for audit trail."""
         return {
             "action_type": action_type,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "system": calendar_system,
             "meeting_id": scheduled_meeting.get("id"),
             "customer_id": customer_metadata.get("customer_id"),

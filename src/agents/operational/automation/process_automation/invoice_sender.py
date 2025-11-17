@@ -6,7 +6,7 @@ and automated follow-ups for unpaid invoices.
 """
 
 from typing import Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -67,15 +67,15 @@ Payment link included in email."""
     async def _generate_invoice(self, customer: Dict, invoice_data: Dict) -> Dict:
         """Generate invoice."""
         return {
-            "number": f"INV-{datetime.utcnow().strftime('%Y%m%d')}-{customer.get('customer_id', '001')}",
+            "number": f"INV-{datetime.now(UTC).strftime('%Y%m%d')}-{customer.get('customer_id', '001')}",
             "amount": invoice_data.get("amount", 1000),
-            "due_date": (datetime.utcnow() + timedelta(days=30)).strftime('%Y-%m-%d'),
-            "generated_at": datetime.utcnow().isoformat()
+            "due_date": (datetime.now(UTC) + timedelta(days=30)).strftime('%Y-%m-%d'),
+            "generated_at": datetime.now(UTC).isoformat()
         }
 
     async def _send_invoice_email(self, invoice: Dict, customer: Dict) -> Dict:
         """Send invoice via email."""
         return {
             "status": "sent",
-            "sent_at": datetime.utcnow().isoformat()
+            "sent_at": datetime.now(UTC).isoformat()
         }

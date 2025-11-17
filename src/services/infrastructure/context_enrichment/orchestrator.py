@@ -7,7 +7,7 @@ Implements parallel execution, timeout handling, caching, and result aggregation
 
 from typing import Dict, Any, Optional, List, Set
 import asyncio
-from datetime import datetime
+from datetime import datetime, UTC
 import structlog
 from uuid import UUID
 
@@ -117,7 +117,7 @@ class ContextOrchestrator:
             ... )
         """
         with MetricsTimer(self.metrics.enrichment_duration, {"agent_type": agent_type.value}):
-            start_time = datetime.utcnow()
+            start_time = datetime.now(UTC)
 
             self.logger.info(
                 "enrichment_started",
@@ -188,10 +188,10 @@ class ContextOrchestrator:
                 conversation_id=conversation_id,
                 data=filtered_data,
                 provider_results=results,
-                enriched_at=datetime.utcnow(),
+                enriched_at=datetime.now(UTC),
                 cache_hit=False,
                 relevance_score=self._calculate_overall_score(scored_data),
-                latency_ms=int((datetime.utcnow() - start_time).total_seconds() * 1000)
+                latency_ms=int((datetime.now(UTC) - start_time).total_seconds() * 1000)
             )
 
             # Store in cache
@@ -418,10 +418,10 @@ class ContextOrchestrator:
                 data={},
                 error="Provider not found",
                 latency_ms=0,
-                fetched_at=datetime.utcnow()
+                fetched_at=datetime.now(UTC)
             )
 
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         try:
             # Execute with timeout
@@ -434,7 +434,7 @@ class ContextOrchestrator:
                 timeout=timeout_ms / 1000.0
             )
 
-            latency_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            latency_ms = int((datetime.now(UTC) - start_time).total_seconds() * 1000)
 
             # Record metrics
             self.metrics.provider_calls.labels(
@@ -452,11 +452,11 @@ class ContextOrchestrator:
                 data=data,
                 error=None,
                 latency_ms=latency_ms,
-                fetched_at=datetime.utcnow()
+                fetched_at=datetime.now(UTC)
             )
 
         except asyncio.TimeoutError:
-            latency_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            latency_ms = int((datetime.now(UTC) - start_time).total_seconds() * 1000)
 
             self.logger.warning(
                 "provider_timeout",
@@ -481,11 +481,11 @@ class ContextOrchestrator:
                 data={},
                 error=f"Timeout after {timeout_ms}ms",
                 latency_ms=latency_ms,
-                fetched_at=datetime.utcnow()
+                fetched_at=datetime.now(UTC)
             )
 
         except Exception as e:
-            latency_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            latency_ms = int((datetime.now(UTC) - start_time).total_seconds() * 1000)
 
             self.logger.error(
                 "provider_error",
@@ -512,7 +512,7 @@ class ContextOrchestrator:
                 data={},
                 error=str(e),
                 latency_ms=latency_ms,
-                fetched_at=datetime.utcnow()
+                fetched_at=datetime.now(UTC)
             )
 
     async def _get_from_cache(
@@ -612,7 +612,7 @@ class ContextOrchestrator:
             conversation_id=conversation_id,
             data={},
             provider_results=[],
-            enriched_at=datetime.utcnow(),
+            enriched_at=datetime.now(UTC),
             cache_hit=False,
             relevance_score=0.0,
             latency_ms=0

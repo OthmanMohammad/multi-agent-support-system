@@ -6,7 +6,7 @@ and measures time savings to drive efficiency and product stickiness.
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime
+from datetime import datetime, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -252,7 +252,7 @@ class AutomationCoachAgent(BaseAgent):
             "automations_by_type": automations_by_type,
             "avg_automation_runs": round(avg_automation_runs, 1),
             "automation_gaps": automation_gaps,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat()
         }
 
     def _calculate_automation_score(

@@ -9,7 +9,7 @@ Business logic for interpreting metrics belongs in domain services.
 """
 
 from typing import Dict, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.core.result import Result
 from src.core.errors import InternalError
@@ -193,11 +193,11 @@ class AnalyticsService:
                 days=days
             )
             
-            since = datetime.utcnow() - timedelta(days=days)
+            since = datetime.now(UTC) - timedelta(days=days)
             
             conversations = await self.uow.conversations.get_by_date_range(
                 start_date=since,
-                end_date=datetime.utcnow()
+                end_date=datetime.now(UTC)
             )
             
             with_sentiment = [
@@ -285,11 +285,11 @@ class AnalyticsService:
     ) -> Result[Dict]:
         """Get resolution time trends"""
         try:
-            since = datetime.utcnow() - timedelta(days=days)
+            since = datetime.now(UTC) - timedelta(days=days)
             
             conversations = await self.uow.conversations.get_by_date_range(
                 start_date=since,
-                end_date=datetime.utcnow()
+                end_date=datetime.now(UTC)
             )
             
             resolved = [
@@ -385,11 +385,11 @@ class AnalyticsService:
     ) -> Result[Dict]:
         """Get KB usage metrics"""
         try:
-            since = datetime.utcnow() - timedelta(days=days)
+            since = datetime.now(UTC) - timedelta(days=days)
             
             conversations = await self.uow.conversations.get_by_date_range(
                 start_date=since,
-                end_date=datetime.utcnow()
+                end_date=datetime.now(UTC)
             )
             
             total = len(conversations)
@@ -444,7 +444,7 @@ class AnalyticsService:
     ) -> Result[None]:
         """Track an agent interaction for analytics"""
         try:
-            today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+            today = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
             
             existing = await self.uow.agent_performance.get_agent_metrics(
                 agent_name=agent_name,

@@ -6,7 +6,7 @@ Orchestrates kickoff, training, data migration, and success validation phases.
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -144,9 +144,9 @@ class OnboardingCoordinatorAgent(BaseAgent):
         if start_date_str:
             start_date = datetime.fromisoformat(start_date_str.replace('Z', '+00:00'))
         else:
-            start_date = datetime.utcnow()
+            start_date = datetime.now(UTC)
 
-        days_elapsed = (datetime.utcnow() - start_date).days
+        days_elapsed = (datetime.now(UTC) - start_date).days
 
         current_phase = onboarding_data.get("current_phase", "kickoff")
         milestones = onboarding_data.get("milestones_completed", [])
@@ -202,7 +202,7 @@ class OnboardingCoordinatorAgent(BaseAgent):
             "ttv_benchmark": self._get_ttv_benchmark(projected_ttv_days),
             "blockers": blockers,
             "health_indicators": health_indicators,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat()
         }
 
     def _calculate_phase_progress(self, current_phase: str, days_elapsed: int) -> Dict[str, Any]:
@@ -524,7 +524,7 @@ if __name__ == "__main__":
         )
         state1["entities"] = {
             "onboarding_data": {
-                "start_date": (datetime.utcnow() - timedelta(days=15)).isoformat(),
+                "start_date": (datetime.now(UTC) - timedelta(days=15)).isoformat(),
                 "current_phase": "training",
                 "milestones_completed": ["kickoff_complete", "success_plan_created", "training_scheduled"],
                 "total_milestones": 10,
@@ -556,7 +556,7 @@ if __name__ == "__main__":
         )
         state2["entities"] = {
             "onboarding_data": {
-                "start_date": (datetime.utcnow() - timedelta(days=30)).isoformat(),
+                "start_date": (datetime.now(UTC) - timedelta(days=30)).isoformat(),
                 "current_phase": "migration",
                 "milestones_completed": ["kickoff_complete", "training_scheduled"],
                 "total_milestones": 10,

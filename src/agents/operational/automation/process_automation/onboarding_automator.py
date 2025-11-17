@@ -6,7 +6,7 @@ welcome sequences, training scheduling, and initial configuration.
 """
 
 from typing import Dict, Any
-from datetime import datetime
+from datetime import datetime, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -78,5 +78,5 @@ Plan: {customer_metadata.get('plan_name', 'Standard')}
         return {
             "step": step,
             "status": "completed",
-            "completed_at": datetime.utcnow().isoformat()
+            "completed_at": datetime.now(UTC).isoformat()
         }

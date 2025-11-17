@@ -6,7 +6,7 @@ and error handling. Orchestrates complex automation sequences.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 import json
 
 from src.workflow.state import AgentState
@@ -113,7 +113,7 @@ Duration: {execution_result['duration_seconds']}s
         return {
             "workflow_id": workflow["id"],
             "status": "running",
-            "started_at": datetime.utcnow().isoformat(),
+            "started_at": datetime.now(UTC).isoformat(),
             "current_step": 0,
             "step_results": [],
             "variables": {}
@@ -121,13 +121,13 @@ Duration: {execution_result['duration_seconds']}s
 
     async def _execute_workflow(self, workflow: Dict, workflow_state: Dict) -> Dict:
         """Execute workflow steps."""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
         step_results = []
 
         for step in workflow["steps"]:
-            step_start = datetime.utcnow()
+            step_start = datetime.now(UTC)
             result = await self._execute_step(step, workflow_state)
-            step_end = datetime.utcnow()
+            step_end = datetime.now(UTC)
 
             step_results.append({
                 "step_name": step.get("action", step["type"]),
@@ -138,7 +138,7 @@ Duration: {execution_result['duration_seconds']}s
             if result["status"] != "success":
                 break
 
-        end_time = datetime.utcnow()
+        end_time = datetime.now(UTC)
 
         return {
             "status": "completed",

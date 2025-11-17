@@ -18,7 +18,7 @@ Part of: EPIC-004 Learning & Improvement Swarm (TASK-4050)
 
 from typing import Dict, Any, List, Optional, Tuple
 import structlog
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from collections import defaultdict, Counter
 
 from src.workflow.state import AgentState
@@ -200,7 +200,7 @@ Identify 5-7 most significant conversation patterns and provide actionable recom
         """Analyze conversation patterns from database."""
         async with get_db_session() as db:
             try:
-                end_date = datetime.utcnow()
+                end_date = datetime.now(UTC)
                 start_date = end_date - timedelta(days=lookback_days)
 
                 # Query conversations

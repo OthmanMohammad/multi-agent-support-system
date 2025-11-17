@@ -6,7 +6,7 @@ encryption, and automated restore testing.
 """
 
 from typing import Dict, Any
-from datetime import datetime
+from datetime import datetime, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -79,18 +79,18 @@ Status: {backup_result['status'].title()}
     async def _execute_backup(self, backup_type: str) -> Dict:
         """Execute backup operation."""
         return {
-            "backup_id": f"BACKUP-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}",
+            "backup_id": f"BACKUP-{datetime.now(UTC).strftime('%Y%m%d-%H%M%S')}",
             "type": backup_type,
             "status": "success",
             "size_mb": 1250,
             "duration_seconds": 45,
             "storage_location": "s3://backups/prod",
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(UTC).isoformat()
         }
 
     async def _verify_backup(self, backup: Dict) -> Dict:
         """Verify backup integrity."""
         return {
             "integrity_check": True,
-            "verified_at": datetime.utcnow().isoformat()
+            "verified_at": datetime.now(UTC).isoformat()
         }

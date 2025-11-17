@@ -6,7 +6,7 @@ identifies feature gaps, and generates battle cards.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -616,7 +616,7 @@ class FeatureComparator(BaseAgent):
 
             battle_card = {
                 "competitor": competitor.title(),
-                "last_updated": datetime.utcnow().isoformat(),
+                "last_updated": datetime.now(UTC).isoformat(),
                 "feature_advantages": [
                     {
                         "feature": adv["feature"],

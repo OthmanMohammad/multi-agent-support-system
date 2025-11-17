@@ -5,7 +5,7 @@ Fetches detailed feature adoption and usage patterns from database.
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -75,7 +75,7 @@ class FeatureUsageProvider(BaseContextProvider):
                 return self._get_fallback_data()
 
             # Calculate daily active features (last 24 hours)
-            daily_cutoff = datetime.utcnow() - timedelta(days=1)
+            daily_cutoff = datetime.now(UTC) - timedelta(days=1)
             daily_features = set()
             for usage in all_usage:
                 if (hasattr(usage, 'last_used_at') and usage.last_used_at and
@@ -86,7 +86,7 @@ class FeatureUsageProvider(BaseContextProvider):
             daily_active_features = len(daily_features)
 
             # Calculate weekly active features (last 7 days)
-            weekly_cutoff = datetime.utcnow() - timedelta(days=7)
+            weekly_cutoff = datetime.now(UTC) - timedelta(days=7)
             weekly_features = set()
             for usage in all_usage:
                 if (hasattr(usage, 'last_used_at') and usage.last_used_at and
@@ -97,7 +97,7 @@ class FeatureUsageProvider(BaseContextProvider):
             weekly_active_features = len(weekly_features)
 
             # Aggregate usage by feature (last 30 days)
-            monthly_cutoff = datetime.utcnow() - timedelta(days=30)
+            monthly_cutoff = datetime.now(UTC) - timedelta(days=30)
             feature_stats = {}
 
             for usage in all_usage:

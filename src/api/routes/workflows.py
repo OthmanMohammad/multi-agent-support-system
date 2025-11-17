@@ -15,9 +15,10 @@ Part of: Phase 2 - Agent & Workflow Endpoints
 import asyncio
 from typing import Dict, Any, Optional
 from uuid import UUID, uuid4
-from datetime import datetime, timedelta
+from datetime import datetime, UTC, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 import time
+import os
 
 from src.api.models.workflow_models import (
     SequentialWorkflowRequest,
@@ -38,6 +39,7 @@ from src.api.dependencies import get_current_user
 from src.api.auth.permissions import PermissionScope, require_scopes
 from src.database.models.user import User
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.services.job_store import RedisJobStore, InMemoryJobStore, JobType, JobStatus
 from src.workflow.patterns.sequential import SequentialWorkflow, SequentialStep
 from src.workflow.patterns.parallel import ParallelWorkflow
 from src.workflow.patterns.debate import DebateWorkflow
@@ -53,45 +55,44 @@ router = APIRouter(prefix="/workflows")
 
 
 # =============================================================================
-# IN-MEMORY JOB STORE (temporary - will be replaced with Redis/DB)
+# PRODUCTION JOB STORE (Redis-backed with in-memory fallback)
 # =============================================================================
 
-class WorkflowJobStore:
-    """In-memory job store for async workflow execution"""
+# Initialize job store (Redis if available, otherwise in-memory)
+def _initialize_workflow_job_store():
+    """Initialize workflow job store based on environment"""
+    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+    environment = os.getenv("ENVIRONMENT", "development")
 
-    def __init__(self):
-        self._jobs: Dict[UUID, Dict[str, Any]] = {}
-
-    def create_job(self, workflow_type: str, workflow_name: str, request: Any) -> UUID:
-        """Create a new workflow job"""
-        job_id = uuid4()
-        self._jobs[job_id] = {
-            "job_id": job_id,
-            "workflow_type": workflow_type,
-            "workflow_name": workflow_name,
-            "request": request,
-            "status": "pending",
-            "created_at": datetime.utcnow(),
-            "started_at": None,
-            "completed_at": None,
-            "progress": 0.0,
-            "result": None,
-            "error": None,
-        }
-        return job_id
-
-    def get_job(self, job_id: UUID) -> Optional[Dict[str, Any]]:
-        """Get job by ID"""
-        return self._jobs.get(job_id)
-
-    def update_job(self, job_id: UUID, **kwargs):
-        """Update job fields"""
-        if job_id in self._jobs:
-            self._jobs[job_id].update(kwargs)
+    # Use Redis in production, in-memory for development
+    if environment == "production":
+        logger.info("initializing_redis_workflow_job_store", redis_url=redis_url)
+        return RedisJobStore(redis_url=redis_url)
+    else:
+        logger.warning(
+            "using_in_memory_workflow_job_store",
+            message="Using in-memory job store. Jobs will not persist across restarts."
+        )
+        return InMemoryJobStore()
 
 
-# Global job store instance
-workflow_job_store = WorkflowJobStore()
+# Global workflow job store instance
+workflow_job_store = _initialize_workflow_job_store()
+
+
+# Initialize job store on startup
+@router.on_event("startup")
+async def startup_workflow_job_store():
+    """Initialize workflow job store on router startup"""
+    await workflow_job_store.initialize()
+    logger.info("workflow_job_store_initialized")
+
+
+@router.on_event("shutdown")
+async def shutdown_workflow_job_store():
+    """Close workflow job store on router shutdown"""
+    await workflow_job_store.close()
+    logger.info("workflow_job_store_closed")
 
 
 # =============================================================================
@@ -728,9 +729,17 @@ async def execute_workflow_async(
         user_id=str(current_user.id)
     )
 
-    # Create job
+    # Create job in job store
     workflow_name = request.get("name", f"{workflow_type}_workflow")
-    job_id = workflow_job_store.create_job(workflow_type, workflow_name, request)
+    job_id = await workflow_job_store.create_job(
+        job_type=JobType.WORKFLOW_EXECUTION,
+        metadata={
+            "workflow_type": workflow_type,
+            "workflow_name": workflow_name,
+            "request": request,
+            "user_id": str(current_user.id),
+        }
+    )
 
     # TODO: Start background task for workflow execution
     # For now, just create the job
@@ -740,7 +749,7 @@ async def execute_workflow_async(
         workflow_type=workflow_type,
         workflow_name=workflow_name,
         status="pending",
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(UTC),
         progress=0.0,
     )
 
@@ -759,21 +768,26 @@ async def get_workflow_job_status(
     """
     logger.debug("get_workflow_job_status", job_id=str(job_id), user_id=str(current_user.id))
 
-    job = workflow_job_store.get_job(job_id)
+    job = await workflow_job_store.get_job(str(job_id))
     if not job:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Workflow job {job_id} not found"
         )
 
+    # Extract workflow metadata
+    metadata = job.get("metadata", {})
+    workflow_type = metadata.get("workflow_type", "unknown")
+    workflow_name = metadata.get("workflow_name", "unknown")
+
     return WorkflowJobResponse(
-        job_id=job_id,
-        workflow_type=job["workflow_type"],
-        workflow_name=job["workflow_name"],
+        job_id=UUID(job["job_id"]),
+        workflow_type=workflow_type,
+        workflow_name=workflow_name,
         status=job["status"],
         created_at=job["created_at"],
-        started_at=job["started_at"],
-        completed_at=job["completed_at"],
+        started_at=job.get("started_at"),
+        completed_at=job.get("completed_at"),
         progress=job.get("progress", 0.0),
         result=job.get("result"),
     )

@@ -4,7 +4,7 @@ Performance tests for context enrichment.
 
 import pytest
 import asyncio
-from datetime import datetime
+from datetime import datetime, UTC
 from uuid import uuid4
 import statistics
 
@@ -19,12 +19,12 @@ async def test_enrichment_latency(performance_threshold_ms: int):
     orchestrator = get_orchestrator()
     customer_id = str(uuid4())
 
-    start = datetime.utcnow()
+    start = datetime.now(UTC)
     context = await orchestrator.enrich(
         customer_id=customer_id,
         agent_type=AgentType.SUPPORT
     )
-    latency_ms = (datetime.utcnow() - start).total_seconds() * 1000
+    latency_ms = (datetime.now(UTC) - start).total_seconds() * 1000
 
     assert latency_ms < performance_threshold_ms
 
@@ -43,12 +43,12 @@ async def test_cache_hit_latency():
     )
 
     # Measure cache hit latency
-    start = datetime.utcnow()
+    start = datetime.now(UTC)
     context = await orchestrator.enrich(
         customer_id=customer_id,
         agent_type=AgentType.SUPPORT
     )
-    latency_ms = (datetime.utcnow() - start).total_seconds() * 1000
+    latency_ms = (datetime.now(UTC) - start).total_seconds() * 1000
 
     assert context.cache_hit is True
     assert latency_ms < 10  # Sub-10ms for cache hit
@@ -63,13 +63,13 @@ async def test_p95_latency(load_test_customers: list):
 
     # Run enrichment for multiple customers
     for customer_id in load_test_customers[:20]:  # Test with 20 customers
-        start = datetime.utcnow()
+        start = datetime.now(UTC)
         await orchestrator.enrich(
             customer_id=customer_id,
             agent_type=AgentType.SUPPORT,
             force_refresh=True  # No cache to test real performance
         )
-        latency_ms = (datetime.utcnow() - start).total_seconds() * 1000
+        latency_ms = (datetime.now(UTC) - start).total_seconds() * 1000
         latencies.append(latency_ms)
 
     # Calculate p95
@@ -94,9 +94,9 @@ async def test_throughput():
         )
 
     # Run 100 concurrent requests
-    start = datetime.utcnow()
+    start = datetime.now(UTC)
     results = await asyncio.gather(*[enrich_customer(cid) for cid in customer_ids])
-    elapsed = (datetime.utcnow() - start).total_seconds()
+    elapsed = (datetime.now(UTC) - start).total_seconds()
 
     # Calculate throughput
     throughput = len(results) / elapsed  # requests per second
@@ -113,12 +113,12 @@ async def test_concurrent_requests():
     customer_id = str(uuid4())
 
     async def single_request():
-        start = datetime.utcnow()
+        start = datetime.now(UTC)
         context = await orchestrator.enrich(
             customer_id=customer_id,
             agent_type=AgentType.SUPPORT
         )
-        return (datetime.utcnow() - start).total_seconds() * 1000
+        return (datetime.now(UTC) - start).total_seconds() * 1000
 
     # Run 50 concurrent requests
     latencies = await asyncio.gather(*[single_request() for _ in range(50)])
@@ -146,12 +146,12 @@ async def test_cache_performance():
     cache_hit_latencies = []
     for _ in range(100):
         customer_id = customer_ids[_ % len(customer_ids)]
-        start = datetime.utcnow()
+        start = datetime.now(UTC)
         context = await orchestrator.enrich(
             customer_id=customer_id,
             agent_type=AgentType.SUPPORT
         )
-        latency_ms = (datetime.utcnow() - start).total_seconds() * 1000
+        latency_ms = (datetime.now(UTC) - start).total_seconds() * 1000
         if context.cache_hit:
             cache_hit_latencies.append(latency_ms)
 
@@ -211,13 +211,13 @@ async def test_provider_parallel_execution():
     orchestrator = ContextOrchestrator(registry=registry)
 
     # Enrich
-    start = datetime.utcnow()
+    start = datetime.now(UTC)
     context = await orchestrator.enrich(
         customer_id=str(uuid4()),
         agent_type=AgentType.SUPPORT,
         timeout_ms=5000
     )
-    latency_ms = (datetime.utcnow() - start).total_seconds() * 1000
+    latency_ms = (datetime.now(UTC) - start).total_seconds() * 1000
 
     # If sequential: 500ms (5 * 100ms)
     # If parallel: ~100ms

@@ -6,7 +6,7 @@ for important events and alerts.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 import json
 
 from src.workflow.state import AgentState
@@ -433,7 +433,7 @@ Return JSON with title, body, priority, action_url, and additional_context."""
             elif channel == "webhook":
                 channel_messages[channel] = {
                     "event_type": notification_type,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                     "title": notification_content['title'],
                     "body": notification_content['body'],
                     "metadata": notification_content.get("additional_context", {})
@@ -546,7 +546,7 @@ Return JSON with title, body, priority, action_url, and additional_context."""
 
             import hashlib
             notification_id = hashlib.md5(
-                f"{channel}{datetime.utcnow()}".encode()
+                f"{channel}{datetime.now(UTC)}".encode()
             ).hexdigest()[:12]
 
             notification_record = {
@@ -555,7 +555,7 @@ Return JSON with title, body, priority, action_url, and additional_context."""
                 "message": message,
                 "priority": priority,
                 "status": "sent",
-                "sent_at": datetime.utcnow().isoformat(),
+                "sent_at": datetime.now(UTC).isoformat(),
                 "delivery_status": "delivered",
                 "retry_count": 0
             }
@@ -614,7 +614,7 @@ Return JSON with title, body, priority, action_url, and additional_context."""
         """Log automated action for audit trail."""
         return {
             "action_type": action_type,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "notification_count": len(sent_notifications),
             "customer_id": customer_metadata.get("customer_id"),
             "success": all(n.get("status") == "sent" for n in sent_notifications),

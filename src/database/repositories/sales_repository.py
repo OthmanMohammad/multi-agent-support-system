@@ -4,7 +4,7 @@ Sales repository - Business logic for sales data access
 from typing import Optional, List
 from sqlalchemy import select, func, and_
 from uuid import UUID
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.database.base import BaseRepository
 from src.database.models import Employee, Lead, Deal, SalesActivity, Quote
@@ -183,7 +183,7 @@ class DealRepository(BaseRepository[Deal]):
         limit: int = 100
     ) -> List[Deal]:
         """Get deals closing in the next N days"""
-        cutoff = datetime.utcnow() + timedelta(days=days)
+        cutoff = datetime.now(UTC) + timedelta(days=days)
         result = await self.session.execute(
             select(Deal)
             .where(and_(
@@ -284,7 +284,7 @@ class SalesActivityRepository(BaseRepository[SalesActivity]):
         limit: int = 100
     ) -> List[SalesActivity]:
         """Get recent activities"""
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = datetime.now(UTC) - timedelta(days=days)
         result = await self.session.execute(
             select(SalesActivity)
             .where(SalesActivity.activity_date >= cutoff)
@@ -346,7 +346,7 @@ class QuoteRepository(BaseRepository[Quote]):
         limit: int = 100
     ) -> List[Quote]:
         """Get quotes expiring soon"""
-        cutoff = datetime.utcnow() + timedelta(days=days)
+        cutoff = datetime.now(UTC) + timedelta(days=days)
         result = await self.session.execute(
             select(Quote)
             .where(and_(

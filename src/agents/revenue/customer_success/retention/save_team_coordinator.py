@@ -6,7 +6,7 @@ teams, and executes comprehensive save plans to prevent high-value churn.
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -226,7 +226,7 @@ class SaveTeamCoordinatorAgent(BaseAgent):
             "categorized_indicators": categorized_indicators,
             "mobilization_sla_hours": self.URGENCY_LEVELS[urgency_level]["mobilization_sla_hours"],
             "exec_involvement": self.URGENCY_LEVELS[urgency_level]["exec_involvement"],
-            "assessed_at": datetime.utcnow().isoformat()
+            "assessed_at": datetime.now(UTC).isoformat()
         }
 
     def _determine_save_team_requirement(

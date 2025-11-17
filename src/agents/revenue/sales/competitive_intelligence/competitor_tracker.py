@@ -6,7 +6,7 @@ identifies competitive threats, and alerts on competitive deals.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -336,7 +336,7 @@ class CompetitorTracker(BaseAgent):
                 "competitor_name": competitor_data.get("name", competitor.title()),
                 "activity_type": activity_type,
                 "activity_description": self.ACTIVITY_TYPES.get(activity_type, {}).get("description", "Unknown activity"),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "customer_id": customer_metadata.get("customer_id"),
                 "company": customer_metadata.get("company"),
                 "deal_value": customer_metadata.get("deal_value", 0),
@@ -470,7 +470,7 @@ class CompetitorTracker(BaseAgent):
             "deal_value": customer_metadata.get("deal_value", 0),
             "deal_stage": customer_metadata.get("deal_stage", "unknown"),
             "action_required": self.ALERT_LEVELS[alert_level]["action"],
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "message": self._format_alert_message(competitors, activity_type, alert_level, customer_metadata)
         }
 

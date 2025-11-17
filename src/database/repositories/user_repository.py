@@ -7,7 +7,7 @@ Provides methods for user authentication, management, and authorization.
 from typing import Optional, List
 from sqlalchemy import select, func, or_
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, UTC
 
 from src.database.base import BaseRepository
 from src.database.models import User, UserRole, UserStatus
@@ -165,7 +165,7 @@ class UserRepository(BaseRepository[User]):
         return await self.update(
             user_id,
             is_verified=True,
-            email_verified_at=datetime.utcnow(),
+            email_verified_at=datetime.now(UTC),
             email_verification_token=None,
             status=UserStatus.ACTIVE
         )
@@ -229,7 +229,7 @@ class UserRepository(BaseRepository[User]):
         """
         return await self.update(
             user_id,
-            last_login_at=datetime.utcnow(),
+            last_login_at=datetime.now(UTC),
             last_login_ip=ip_address
         )
 

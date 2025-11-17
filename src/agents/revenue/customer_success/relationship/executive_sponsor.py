@@ -6,7 +6,7 @@ and shares strategic updates to maintain C-level engagement and alignment.
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -231,7 +231,7 @@ class ExecutiveSponsorAgent(BaseAgent):
 
         try:
             start = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
-            return (datetime.utcnow() - start).days
+            return (datetime.now(UTC) - start).days
         except:
             return 0
 
@@ -250,7 +250,7 @@ class ExecutiveSponsorAgent(BaseAgent):
         if last_contact:
             try:
                 last_contact_date = datetime.fromisoformat(last_contact.replace('Z', '+00:00'))
-                days_since_contact = (datetime.utcnow() - last_contact_date).days
+                days_since_contact = (datetime.now(UTC) - last_contact_date).days
             except:
                 days_since_contact = 999
         else:
@@ -302,7 +302,7 @@ class ExecutiveSponsorAgent(BaseAgent):
         if last_contact:
             try:
                 last_contact_date = datetime.fromisoformat(last_contact.replace('Z', '+00:00'))
-                days_since_last_contact = (datetime.utcnow() - last_contact_date).days
+                days_since_last_contact = (datetime.now(UTC) - last_contact_date).days
             except:
                 days_since_last_contact = cadence_config["frequency_days"] + 1
         else:
@@ -313,11 +313,11 @@ class ExecutiveSponsorAgent(BaseAgent):
             try:
                 next_contact = last_contact_date + timedelta(days=cadence_config["frequency_days"])
             except:
-                next_contact = datetime.utcnow() + timedelta(days=cadence_config["frequency_days"])
+                next_contact = datetime.now(UTC) + timedelta(days=cadence_config["frequency_days"])
         else:
-            next_contact = datetime.utcnow() + timedelta(days=7)  # Schedule soon if new
+            next_contact = datetime.now(UTC) + timedelta(days=7)  # Schedule soon if new
 
-        days_until_next_contact = (next_contact - datetime.utcnow()).days
+        days_until_next_contact = (next_contact - datetime.now(UTC)).days
 
         # Determine status
         if not sponsor_analysis["sponsor_identified"]:
@@ -540,9 +540,9 @@ if __name__ == "__main__":
                 "executive_sponsor": {
                     "name": "Sarah Johnson",
                     "title": "Chief Technology Officer",
-                    "start_date": (datetime.utcnow() - timedelta(days=400)).isoformat(),
+                    "start_date": (datetime.now(UTC) - timedelta(days=400)).isoformat(),
                     "engagement_level": "high",
-                    "last_contact_date": (datetime.utcnow() - timedelta(days=20)).isoformat()
+                    "last_contact_date": (datetime.now(UTC) - timedelta(days=20)).isoformat()
                 },
                 "all_contacts": []
             },

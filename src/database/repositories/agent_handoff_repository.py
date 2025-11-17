@@ -4,7 +4,7 @@ Agent handoff and collaboration repository - Business logic for agent coordinati
 from typing import Optional, List
 from sqlalchemy import select, func, and_
 from uuid import UUID
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.database.base import BaseRepository
 from src.database.models import AgentHandoff, AgentCollaboration, ConversationTag
@@ -62,7 +62,7 @@ class AgentHandoffRepository(BaseRepository[AgentHandoff]):
         limit: int = 20
     ) -> List[dict]:
         """Get most common handoff patterns"""
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = datetime.now(UTC) - timedelta(days=days)
         result = await self.session.execute(
             select(
                 AgentHandoff.from_agent,
@@ -100,7 +100,7 @@ class AgentHandoffRepository(BaseRepository[AgentHandoff]):
             )
 
         if days:
-            cutoff = datetime.utcnow() - timedelta(days=days)
+            cutoff = datetime.now(UTC) - timedelta(days=days)
             conditions.append(AgentHandoff.timestamp >= cutoff)
 
         result = await self.session.execute(
@@ -181,7 +181,7 @@ class AgentCollaborationRepository(BaseRepository[AgentCollaboration]):
             conditions.append(AgentCollaboration.collaboration_type == collaboration_type)
 
         if days:
-            cutoff = datetime.utcnow() - timedelta(days=days)
+            cutoff = datetime.now(UTC) - timedelta(days=days)
             conditions.append(AgentCollaboration.start_time >= cutoff)
 
         total_result = await self.session.execute(

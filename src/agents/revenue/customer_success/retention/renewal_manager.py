@@ -6,7 +6,7 @@ and identifies renewal risks to prevent churn at contract expiration.
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from decimal import Decimal
 
 from src.workflow.state import AgentState
@@ -168,9 +168,9 @@ class RenewalManagerAgent(BaseAgent):
             renewal_date = datetime.fromisoformat(renewal_date_str.replace('Z', '+00:00'))
         else:
             # Default to 90 days from now if not provided
-            renewal_date = datetime.utcnow() + timedelta(days=90)
+            renewal_date = datetime.now(UTC) + timedelta(days=90)
 
-        days_to_renewal = (renewal_date - datetime.utcnow()).days
+        days_to_renewal = (renewal_date - datetime.now(UTC)).days
 
         # Determine renewal window
         renewal_window = self._determine_renewal_window(days_to_renewal)
@@ -215,7 +215,7 @@ class RenewalManagerAgent(BaseAgent):
             "contract_history": contract_history,
             "usage_vs_contract": usage_vs_contract,
             "renewal_blockers": renewal_blockers,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat()
         }
 
     def _determine_renewal_window(self, days_to_renewal: int) -> str:
@@ -654,7 +654,7 @@ if __name__ == "__main__":
         )
         state1["entities"] = {
             "contract_data": {
-                "renewal_date": (datetime.utcnow() + timedelta(days=45)).isoformat(),
+                "renewal_date": (datetime.now(UTC) + timedelta(days=45)).isoformat(),
                 "contract_value": 75000,
                 "contracted_users": 50,
                 "payment_status": "current",
@@ -695,7 +695,7 @@ if __name__ == "__main__":
         )
         state2["entities"] = {
             "contract_data": {
-                "renewal_date": (datetime.utcnow() + timedelta(days=10)).isoformat(),
+                "renewal_date": (datetime.now(UTC) + timedelta(days=10)).isoformat(),
                 "contract_value": 45000,
                 "contracted_users": 25,
                 "payment_status": "past_due_7",

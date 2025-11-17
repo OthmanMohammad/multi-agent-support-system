@@ -6,7 +6,7 @@ support tickets, and interactions.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 import json
 
 from src.workflow.state import AgentState
@@ -267,7 +267,7 @@ Return JSON with extracted fields: company_info, pain_points, use_cases, budget_
             }
 
         # Add metadata
-        insights["extracted_at"] = datetime.utcnow().isoformat()
+        insights["extracted_at"] = datetime.now(UTC).isoformat()
         insights["source"] = "conversation"
 
         return insights
@@ -342,7 +342,7 @@ Return JSON with extracted fields: company_info, pain_points, use_cases, budget_
         # Add next steps
         if insights.get("next_steps"):
             field_updates["Account"]["Next_Steps__c"] = str(insights["next_steps"])
-            field_updates["Account"]["Last_Contact_Date__c"] = datetime.utcnow().isoformat()
+            field_updates["Account"]["Last_Contact_Date__c"] = datetime.now(UTC).isoformat()
 
         return field_updates
 
@@ -463,7 +463,7 @@ Return JSON with extracted fields: company_info, pain_points, use_cases, budget_
                 "fields_updated": list(target["fields"].keys()),
                 "field_count": len(target["fields"]),
                 "status": "success",
-                "updated_at": datetime.utcnow().isoformat()
+                "updated_at": datetime.now(UTC).isoformat()
             }
             updated_objects.append(update_record)
 
@@ -481,7 +481,7 @@ Return JSON with extracted fields: company_info, pain_points, use_cases, budget_
             "total_objects": len(updated_objects),
             "total_fields": sum(obj["field_count"] for obj in updated_objects),
             "status": "success",
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(UTC).isoformat()
         }
 
     async def _log_crm_activity(
@@ -505,13 +505,13 @@ Return JSON with extracted fields: company_info, pain_points, use_cases, budget_
         """
         # Create activity log entry
         activity = {
-            "id": f"ACT-{datetime.utcnow().timestamp()}",
+            "id": f"ACT-{datetime.now(UTC).timestamp()}",
             "type": "Note",
             "subject": "Customer Conversation - Auto-logged",
             "description": f"Conversation logged automatically:\n\n{message[:500]}...",
             "related_to": customer_metadata.get("crm_contact_id"),
             "created_by": "automation",
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
             "metadata": {
                 "source": "support_conversation",
                 "auto_updates": len(update_results.get("updated_objects", []))
@@ -529,7 +529,7 @@ Return JSON with extracted fields: company_info, pain_points, use_cases, budget_
         """Log automated action for audit trail."""
         return {
             "action_type": action_type,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "crm_system": update_results.get("crm_system"),
             "customer_id": customer_metadata.get("customer_id"),
             "success": update_results.get("status") == "success",

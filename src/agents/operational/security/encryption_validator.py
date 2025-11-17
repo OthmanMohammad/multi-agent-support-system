@@ -6,7 +6,7 @@ Ensures compliance with security standards and best practices.
 """
 
 from typing import Dict, Any, List, Optional, Set
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -378,7 +378,7 @@ class EncryptionValidatorAgent(BaseAgent):
             key_id = key.get("key_id", "unknown")
             key_type = key.get("key_type", "symmetric")
             algorithm = key.get("algorithm", "unknown")
-            created_at = datetime.fromisoformat(key.get("created_at", datetime.utcnow().isoformat()))
+            created_at = datetime.fromisoformat(key.get("created_at", datetime.now(UTC).isoformat()))
             last_rotated = datetime.fromisoformat(key.get("last_rotated", created_at.isoformat()))
 
             validation = {
@@ -402,7 +402,7 @@ class EncryptionValidatorAgent(BaseAgent):
 
             # Check rotation
             rotation_period = self.KEY_ROTATION_PERIODS.get(f"{key_type}_keys", 365)
-            days_since_rotation = (datetime.utcnow() - last_rotated).days
+            days_since_rotation = (datetime.now(UTC) - last_rotated).days
 
             if days_since_rotation > rotation_period:
                 validation["issues"].append(
@@ -427,8 +427,8 @@ class EncryptionValidatorAgent(BaseAgent):
 
         for cert in certificates:
             cert_name = cert.get("name", "unknown")
-            expiry_date = datetime.fromisoformat(cert.get("expiry_date", datetime.utcnow().isoformat()))
-            days_until_expiry = (expiry_date - datetime.utcnow()).days
+            expiry_date = datetime.fromisoformat(cert.get("expiry_date", datetime.now(UTC).isoformat()))
+            days_until_expiry = (expiry_date - datetime.now(UTC)).days
 
             if days_until_expiry < 0:
                 issues.append({
@@ -566,7 +566,7 @@ class EncryptionValidatorAgent(BaseAgent):
             "medium": timedelta(days=30),
             "low": timedelta(days=90)
         }
-        deadline = datetime.utcnow() + deadlines.get(severity, timedelta(days=30))
+        deadline = datetime.now(UTC) + deadlines.get(severity, timedelta(days=30))
         return deadline.isoformat()
 
     def _generate_recommendations(
@@ -676,7 +676,7 @@ class EncryptionValidatorAgent(BaseAgent):
             for rec in recommendations:
                 report += f"- {rec}\n"
 
-        report += f"\n*Encryption validation completed at {datetime.utcnow().isoformat()}*"
+        report += f"\n*Encryption validation completed at {datetime.now(UTC).isoformat()}*"
         report += f"\n*Standards: TLS 1.2+, AES-256, RSA 2048+*"
 
         return report

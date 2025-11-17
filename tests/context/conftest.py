@@ -4,7 +4,7 @@ Test fixtures for context enrichment tests.
 
 import pytest
 import asyncio
-from datetime import datetime
+from datetime import datetime, UTC
 from uuid import uuid4
 from typing import Dict, Any
 from unittest.mock import Mock, AsyncMock
@@ -56,7 +56,7 @@ def sample_provider_result() -> ProviderResult:
         },
         error=None,
         latency_ms=50,
-        fetched_at=datetime.utcnow()
+        fetched_at=datetime.now(UTC)
     )
 
 
@@ -80,7 +80,7 @@ def sample_enriched_context(sample_customer_id: str) -> EnrichedContext:
             }
         },
         provider_results=[],
-        enriched_at=datetime.utcnow(),
+        enriched_at=datetime.now(UTC),
         cache_hit=False,
         relevance_score=0.85,
         latency_ms=100
@@ -102,7 +102,7 @@ def sample_customer_data() -> Dict[str, Any]:
         "health_trend": "improving",
         "churn_risk": 0.15,
         "nps_score": 8,
-        "customer_since": datetime.utcnow(),
+        "customer_since": datetime.now(UTC),
         "account_age_days": 365,
         "segments": ["enterprise", "high_value", "engaged"],
         "primary_contact": {
@@ -274,7 +274,7 @@ def sample_database_customer():
     customer.id = uuid4()
     customer.name = "Test Company"
     customer.plan = "enterprise"
-    customer.created_at = datetime.utcnow()
+    customer.created_at = datetime.now(UTC)
     customer.extra_metadata = {
         "health_score": 85,
         "nps_score": 8,
@@ -299,8 +299,8 @@ def sample_database_subscription():
     subscription.seats_total = 50
     subscription.seats_used = 45
     subscription.seat_utilization = 90.0
-    subscription.current_period_start = datetime.utcnow()
-    subscription.current_period_end = datetime.utcnow()
+    subscription.current_period_start = datetime.now(UTC)
+    subscription.current_period_end = datetime.now(UTC)
     subscription.cancel_at_period_end = False
     subscription.trial_end = None
     return subscription

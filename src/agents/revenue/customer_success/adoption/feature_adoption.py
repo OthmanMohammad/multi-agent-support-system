@@ -6,7 +6,7 @@ and tracks ROI from feature adoption to drive product stickiness.
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -215,7 +215,7 @@ class FeatureAdoptionAgent(BaseAgent):
             "high_value_unused": high_value_unused,
             "adoption_velocity": adoption_velocity,
             "adoption_patterns": adoption_patterns,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat()
         }
 
     def _determine_adoption_stage(

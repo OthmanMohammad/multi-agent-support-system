@@ -6,7 +6,7 @@ Uses Claude Sonnet for nuanced sensitivity analysis and context understanding.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -382,7 +382,7 @@ class SensitivityCheckerAgent(BaseAgent):
 
         # Add timestamps and sort by severity
         for issue in all_issues:
-            issue["detected_at"] = datetime.utcnow().isoformat()
+            issue["detected_at"] = datetime.now(UTC).isoformat()
 
         severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
         all_issues.sort(key=lambda x: severity_order.get(x["severity"], 99))
@@ -539,6 +539,6 @@ class SensitivityCheckerAgent(BaseAgent):
             for rec in recommendations:
                 report += f"- {rec}\n"
 
-        report += f"\n*Sensitivity check completed at {datetime.utcnow().isoformat()}*"
+        report += f"\n*Sensitivity check completed at {datetime.now(UTC).isoformat()}*"
 
         return report

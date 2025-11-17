@@ -6,7 +6,7 @@ to increase product stickiness and reduce seat waste.
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -193,7 +193,7 @@ class UserActivationAgent(BaseAgent):
             "seat_waste_percentage": round(seat_waste_pct, 1),
             "activation_trend": activation_trend,
             "barriers": barriers,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat()
         }
 
     def _categorize_users(self, user_list: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
@@ -214,7 +214,7 @@ class UserActivationAgent(BaseAgent):
 
             try:
                 last_login_dt = datetime.fromisoformat(last_login.replace('Z', '+00:00'))
-                days_since_login = (datetime.utcnow() - last_login_dt).days
+                days_since_login = (datetime.now(UTC) - last_login_dt).days
 
                 for state, criteria in self.USER_STATES.items():
                     if days_since_login <= criteria["last_login_days"]:
@@ -508,7 +508,7 @@ if __name__ == "__main__":
                 "mau": 18,
                 "previous_month_active_users": 20,
                 "users": [
-                    {"id": f"user_{i}", "last_login_date": (datetime.utcnow() - timedelta(days=i*3)).isoformat()}
+                    {"id": f"user_{i}", "last_login_date": (datetime.now(UTC) - timedelta(days=i*3)).isoformat()}
                     for i in range(1, 31)
                 ] + [
                     {"id": f"zombie_{i}", "last_login_date": None}
@@ -544,7 +544,7 @@ if __name__ == "__main__":
                 "mau": 26,
                 "previous_month_active_users": 23,
                 "users": [
-                    {"id": f"user_{i}", "last_login_date": (datetime.utcnow() - timedelta(days=i)).isoformat()}
+                    {"id": f"user_{i}", "last_login_date": (datetime.now(UTC) - timedelta(days=i)).isoformat()}
                     for i in range(1, 31)
                 ]
             }

@@ -6,7 +6,7 @@ and recognizes active contributors to build customer engagement and loyalty.
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -315,7 +315,7 @@ class CommunityManagerAgent(BaseAgent):
             upcoming_events.append({
                 "type": "webinar",
                 "title": "Advanced Features Deep Dive",
-                "target_date": (datetime.utcnow() + timedelta(days=14)).isoformat(),
+                "target_date": (datetime.now(UTC) + timedelta(days=14)).isoformat(),
                 "target_attendance": 50,
                 "format": "virtual"
             })
@@ -323,7 +323,7 @@ class CommunityManagerAgent(BaseAgent):
             upcoming_events.append({
                 "type": "office_hours",
                 "title": "Weekly Community Office Hours",
-                "target_date": (datetime.utcnow() + timedelta(days=7)).isoformat(),
+                "target_date": (datetime.now(UTC) + timedelta(days=7)).isoformat(),
                 "target_attendance": 15,
                 "format": "virtual"
             })
@@ -332,7 +332,7 @@ class CommunityManagerAgent(BaseAgent):
             upcoming_events.append({
                 "type": "workshop",
                 "title": "Best Practices Workshop",
-                "target_date": (datetime.utcnow() + timedelta(days=30)).isoformat(),
+                "target_date": (datetime.now(UTC) + timedelta(days=30)).isoformat(),
                 "target_attendance": 30,
                 "format": "hybrid"
             })
@@ -341,7 +341,7 @@ class CommunityManagerAgent(BaseAgent):
         upcoming_events.append({
             "type": "virtual_meetup",
             "title": "Community Connection Session",
-            "target_date": (datetime.utcnow() + timedelta(days=21)).isoformat(),
+            "target_date": (datetime.now(UTC) + timedelta(days=21)).isoformat(),
             "target_attendance": 25,
             "format": "virtual"
         })
@@ -427,7 +427,7 @@ class CommunityManagerAgent(BaseAgent):
         return {
             "recognition_actions": recognition_actions[:3],
             "programs_available": self.RECOGNITION_PROGRAMS,
-            "next_recognition_date": (datetime.utcnow() + timedelta(days=7)).isoformat()
+            "next_recognition_date": (datetime.now(UTC) + timedelta(days=7)).isoformat()
         }
 
     def _create_community_action_plan(

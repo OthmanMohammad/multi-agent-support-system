@@ -5,7 +5,7 @@ Fetches customer profile data, business metrics, and key indicators from the dat
 """
 
 from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from uuid import UUID
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -132,7 +132,7 @@ class CustomerIntelligenceProvider(BaseContextProvider):
             customer_since = customer.created_at if hasattr(customer, 'created_at') else None
             account_age_days = 0
             if customer_since:
-                account_age_days = (datetime.utcnow() - customer_since.replace(tzinfo=None)).days
+                account_age_days = (datetime.now(UTC) - customer_since.replace(tzinfo=None)).days
 
             # Extract company size and industry from metadata
             company_size = customer.extra_metadata.get('company_size') if customer.extra_metadata else None

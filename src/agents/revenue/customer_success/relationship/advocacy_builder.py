@@ -6,7 +6,7 @@ and generates opportunities for customers to become brand advocates.
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -192,7 +192,7 @@ class AdvocacyBuilderAgent(BaseAgent):
         if customer_since:
             try:
                 since_date = datetime.fromisoformat(customer_since.replace('Z', '+00:00'))
-                tenure_days = (datetime.utcnow() - since_date).days
+                tenure_days = (datetime.now(UTC) - since_date).days
             except:
                 tenure_days = 0
         else:
@@ -244,7 +244,7 @@ class AdvocacyBuilderAgent(BaseAgent):
             "score_breakdown": {k: int(v) for k, v in scores.items()},
             "tenure_days": tenure_days,
             "nps_score": nps,
-            "assessed_at": datetime.utcnow().isoformat()
+            "assessed_at": datetime.now(UTC).isoformat()
         }
 
     def _identify_advocacy_opportunities(
@@ -581,7 +581,7 @@ if __name__ == "__main__":
                 "touchpoints_last_30d": 12
             },
             "business_data": {
-                "customer_since_date": (datetime.utcnow() - timedelta(days=200)).isoformat(),
+                "customer_since_date": (datetime.now(UTC) - timedelta(days=200)).isoformat(),
                 "roi_realized_percentage": 200
             },
             "health_data": {
@@ -619,7 +619,7 @@ if __name__ == "__main__":
                 "touchpoints_last_30d": 2
             },
             "business_data": {
-                "customer_since_date": (datetime.utcnow() - timedelta(days=20)).isoformat(),
+                "customer_since_date": (datetime.now(UTC) - timedelta(days=20)).isoformat(),
                 "roi_realized_percentage": 50
             },
             "health_data": {

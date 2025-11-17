@@ -6,7 +6,7 @@ and coordinates attendees to ensure productive strategic alignment meetings.
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -183,11 +183,11 @@ class QBRSchedulerAgent(BaseAgent):
             last_qbr_date = datetime.fromisoformat(last_qbr_str.replace('Z', '+00:00'))
         else:
             # No previous QBR - schedule first one
-            last_qbr_date = datetime.utcnow() - timedelta(days=cadence_config["frequency_days"])
+            last_qbr_date = datetime.now(UTC) - timedelta(days=cadence_config["frequency_days"])
 
         # Calculate next QBR date
         next_qbr_date = last_qbr_date + timedelta(days=cadence_config["frequency_days"])
-        days_until_qbr = (next_qbr_date - datetime.utcnow()).days
+        days_until_qbr = (next_qbr_date - datetime.now(UTC)).days
 
         # Determine status and urgency
         if days_until_qbr < 0:
@@ -698,8 +698,8 @@ if __name__ == "__main__":
                 "previous_quarter_nps": 8
             },
             "business_data": {
-                "last_qbr_date": (datetime.utcnow() - timedelta(days=75)).isoformat(),
-                "renewal_date": (datetime.utcnow() + timedelta(days=45)).isoformat(),
+                "last_qbr_date": (datetime.now(UTC) - timedelta(days=75)).isoformat(),
+                "renewal_date": (datetime.now(UTC) + timedelta(days=45)).isoformat(),
                 "contract_value": 120000,
                 "contracted_users": 100,
                 "qbr_count": 3
@@ -744,7 +744,7 @@ if __name__ == "__main__":
                 "previous_quarter_nps": 8
             },
             "business_data": {
-                "last_qbr_date": (datetime.utcnow() - timedelta(days=120)).isoformat(),
+                "last_qbr_date": (datetime.now(UTC) - timedelta(days=120)).isoformat(),
                 "contract_value": 45000,
                 "contracted_users": 75,
                 "qbr_count": 1

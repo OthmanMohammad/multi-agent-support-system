@@ -3,7 +3,7 @@ Health check routes - System health monitoring
 
 """
 from fastapi import APIRouter, Depends
-from datetime import datetime
+from datetime import datetime, UTC
 
 from src.api.dependencies import get_analytics_service
 from src.services.infrastructure.analytics_service import AnalyticsService
@@ -24,7 +24,7 @@ async def health_check():
     
     health_status = {
         "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "service": "multi-agent-support-system",
         "version": "3.0.0"
     }
@@ -58,7 +58,7 @@ async def detailed_health_check(
     
     health_status = {
         "status": "healthy" if database_healthy else "degraded",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "service": "multi-agent-support-system",
         "version": "3.0.0",
         "components": {

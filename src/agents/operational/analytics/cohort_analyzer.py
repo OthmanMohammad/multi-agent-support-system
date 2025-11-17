@@ -6,7 +6,7 @@ Provides insights into customer behavior patterns by cohort.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from decimal import Decimal
 
 from src.workflow.state import AgentState
@@ -154,7 +154,7 @@ class CohortAnalyzerAgent(BaseAgent):
             List of defined cohorts
         """
         # Mock cohort data - in production, query database
-        current_date = datetime.utcnow()
+        current_date = datetime.now(UTC)
 
         if cohort_type == "acquisition":
             # Monthly acquisition cohorts for last 6 months
@@ -527,6 +527,6 @@ class CohortAnalyzerAgent(BaseAgent):
                 icon = "🔴" if insight.get("type") == "alert" else "✅" if insight.get("type") == "positive" else "ℹ️"
                 report += f"{icon} {insight['message']}\n"
 
-        report += f"\n*Analysis completed at {datetime.utcnow().isoformat()}*"
+        report += f"\n*Analysis completed at {datetime.now(UTC).isoformat()}*"
 
         return report

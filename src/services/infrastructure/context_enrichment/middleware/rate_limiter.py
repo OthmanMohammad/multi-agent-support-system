@@ -5,7 +5,7 @@ Prevents abuse and ensures fair resource allocation.
 """
 
 from typing import Dict, Optional, Callable, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from collections import deque
 import asyncio
 import structlog
@@ -62,7 +62,7 @@ class RateLimiter:
             self._locks[key] = asyncio.Lock()
 
         async with self._locks[key]:
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
 
             # Initialize bucket if needed
             if key not in self._buckets:
@@ -118,7 +118,7 @@ class RateLimiter:
         if key not in self._buckets:
             return self.max_requests
 
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         cutoff = now - timedelta(seconds=self.period_seconds)
 
         bucket = self._buckets[key]

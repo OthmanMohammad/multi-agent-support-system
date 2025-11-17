@@ -7,7 +7,7 @@ for programmatic authentication.
 
 import secrets
 from typing import Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from passlib.context import CryptContext
 
 from src.utils.logging.setup import get_logger
@@ -232,7 +232,7 @@ class APIKeyManager:
             >>> print(expiration)
             2025-12-16 12:00:00+00:00
         """
-        return datetime.utcnow() + timedelta(days=days)
+        return datetime.now(UTC) + timedelta(days=days)
 
     @classmethod
     def is_expired(cls, expires_at: datetime) -> bool:
@@ -253,4 +253,4 @@ class APIKeyManager:
         """
         if not expires_at:
             return False
-        return datetime.utcnow() > expires_at
+        return datetime.now(UTC) > expires_at

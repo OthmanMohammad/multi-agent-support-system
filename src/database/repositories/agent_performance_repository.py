@@ -2,7 +2,7 @@
 Agent performance repository - Track agent metrics
 """
 from typing import List, Optional
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, UTC
 from uuid import UUID
 from sqlalchemy import select, and_, func
 
@@ -77,7 +77,7 @@ class AgentPerformanceRepository(BaseRepository[AgentPerformance]):
         Returns:
             List of performance records
         """
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(UTC) - timedelta(days=days)
         
         result = await self.session.execute(
             select(AgentPerformance)
@@ -101,7 +101,7 @@ class AgentPerformanceRepository(BaseRepository[AgentPerformance]):
         Returns:
             Dict with agent summaries
         """
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(UTC) - timedelta(days=days)
         
         result = await self.session.execute(
             select(
@@ -171,7 +171,7 @@ class AgentPerformanceRepository(BaseRepository[AgentPerformance]):
         Returns:
             List of top performing agent records
         """
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(UTC) - timedelta(days=days)
         
         # Get aggregated data
         result = await self.session.execute(
@@ -216,7 +216,7 @@ class AgentPerformanceRepository(BaseRepository[AgentPerformance]):
         Returns:
             Dict with comparison data
         """
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(UTC) - timedelta(days=days)
         
         comparison = {}
         

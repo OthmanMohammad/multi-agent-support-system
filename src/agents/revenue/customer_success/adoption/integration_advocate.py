@@ -6,7 +6,7 @@ and measures ecosystem impact to increase product stickiness.
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime
+from datetime import datetime, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -258,7 +258,7 @@ class IntegrationAdvocateAgent(BaseAgent):
             "data_flowing": data_flowing,
             "integration_gaps": integration_gaps,
             "stickiness_score": stickiness_score,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat()
         }
 
     def _categorize_integrations(

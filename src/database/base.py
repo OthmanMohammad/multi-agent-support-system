@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete, func, and_
 from sqlalchemy.orm import DeclarativeMeta
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, UTC
 
 ModelType = TypeVar("ModelType", bound=DeclarativeMeta)
 
@@ -251,7 +251,7 @@ class BaseRepository(Generic[ModelType]):
             )
         
         update_data = {
-            'deleted_at': datetime.utcnow()
+            'deleted_at': datetime.now(UTC)
         }
         
         if deleted_by and hasattr(self.model, 'deleted_by'):

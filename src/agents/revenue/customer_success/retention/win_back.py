@@ -6,7 +6,7 @@ addressing previous issues, and demonstrating product improvements.
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -175,9 +175,9 @@ class WinBackAgent(BaseAgent):
         if churn_date_str:
             churn_date = datetime.fromisoformat(churn_date_str.replace('Z', '+00:00'))
         else:
-            churn_date = datetime.utcnow() - timedelta(days=30)
+            churn_date = datetime.now(UTC) - timedelta(days=30)
 
-        months_since_churn = (datetime.utcnow() - churn_date).days / 30
+        months_since_churn = (datetime.now(UTC) - churn_date).days / 30
 
         # Determine win-back window
         winback_window = self._determine_winback_window(months_since_churn)
@@ -225,7 +225,7 @@ class WinBackAgent(BaseAgent):
             "customer_value_tier": customer_value_tier,
             "improvements_since_churn": improvements_since_churn,
             "winback_feasibility": feasibility,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat()
         }
 
     def _determine_winback_window(self, months_since_churn: float) -> str:
@@ -629,7 +629,7 @@ if __name__ == "__main__":
         )
         state1["entities"] = {
             "churn_data": {
-                "churn_date": (datetime.utcnow() - timedelta(days=20)).isoformat(),
+                "churn_date": (datetime.now(UTC) - timedelta(days=20)).isoformat(),
                 "churn_reason": "Pricing too high for current budget constraints",
                 "churn_sentiment": "neutral"
             },
@@ -662,7 +662,7 @@ if __name__ == "__main__":
         )
         state2["entities"] = {
             "churn_data": {
-                "churn_date": (datetime.utcnow() - timedelta(days=210)).isoformat(),
+                "churn_date": (datetime.now(UTC) - timedelta(days=210)).isoformat(),
                 "churn_reason": "Poor support response times and unresolved technical issues",
                 "churn_sentiment": "negative"
             },

@@ -9,7 +9,7 @@ Part of: STORY-002 Knowledge Base Swarm (TASK-207)
 
 from typing import List, Dict
 from collections import Counter
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 import json
 import numpy as np
 from sqlalchemy import select
@@ -154,7 +154,7 @@ class KBGapDetector(BaseAgent):
         Returns:
             List of query strings
         """
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        cutoff_date = datetime.now(UTC) - timedelta(days=days)
 
         try:
             async with get_db_session() as session:

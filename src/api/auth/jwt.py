@@ -5,7 +5,7 @@ This module handles JWT token generation, validation, and revocation.
 """
 
 from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from uuid import UUID, uuid4
 from jose import JWTError, jwt
 from fastapi import HTTPException, status
@@ -60,9 +60,9 @@ class JWTManager:
         """
         # Set expiration
         if expires_delta:
-            expire = datetime.utcnow() + expires_delta
+            expire = datetime.now(UTC) + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(
+            expire = datetime.now(UTC) + timedelta(
                 minutes=cls.ACCESS_TOKEN_EXPIRE_MINUTES
             )
 
@@ -74,7 +74,7 @@ class JWTManager:
             "scopes": scopes,               # Permission scopes
             "type": "access",               # Token type
             "exp": expire,                  # Expiration time
-            "iat": datetime.utcnow(),       # Issued at
+            "iat": datetime.now(UTC),       # Issued at
             "jti": str(uuid4())             # JWT ID (for revocation)
         }
 
@@ -111,9 +111,9 @@ class JWTManager:
         """
         # Set expiration
         if expires_delta:
-            expire = datetime.utcnow() + expires_delta
+            expire = datetime.now(UTC) + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(
+            expire = datetime.now(UTC) + timedelta(
                 days=cls.REFRESH_TOKEN_EXPIRE_DAYS
             )
 
@@ -122,7 +122,7 @@ class JWTManager:
             "sub": str(user_id),        # Subject (user ID)
             "type": "refresh",          # Token type
             "exp": expire,              # Expiration time
-            "iat": datetime.utcnow(),   # Issued at
+            "iat": datetime.now(UTC),   # Issued at
             "jti": str(uuid4())         # JWT ID (for revocation)
         }
 

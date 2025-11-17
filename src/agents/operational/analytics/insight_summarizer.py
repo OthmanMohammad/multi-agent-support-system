@@ -6,7 +6,7 @@ Transforms data into actionable business intelligence.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -330,7 +330,7 @@ Key recommendations:
         report = f"""**Analytics Insights Report**
 
 **Analysis Type:** {analysis_type.title()}
-**Generated:** {datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")}
+**Generated:** {datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")}
 
 **Key Takeaways:**
 """

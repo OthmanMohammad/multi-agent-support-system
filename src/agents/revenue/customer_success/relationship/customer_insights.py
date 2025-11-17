@@ -6,7 +6,7 @@ identifying patterns, trends, and opportunities for improved customer success.
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -364,7 +364,7 @@ class CustomerInsightsAgent(BaseAgent):
         if last_login:
             try:
                 last_login_date = datetime.fromisoformat(last_login.replace('Z', '+00:00'))
-                days_since_login = (datetime.utcnow() - last_login_date).days
+                days_since_login = (datetime.now(UTC) - last_login_date).days
                 if days_since_login > 14:
                     insights.append({
                         "category": "risk_indicator",
@@ -782,7 +782,7 @@ if __name__ == "__main__":
                 "nps_score": 9,
                 "support_tickets_last_30d": 3,
                 "touchpoints_last_30d": 12,
-                "last_login_date": (datetime.utcnow() - timedelta(days=1)).isoformat()
+                "last_login_date": (datetime.now(UTC) - timedelta(days=1)).isoformat()
             },
             "business_data": {
                 "contract_value": 120000,
@@ -833,7 +833,7 @@ if __name__ == "__main__":
                 "nps_score": 4,
                 "support_tickets_last_30d": 15,
                 "touchpoints_last_30d": 2,
-                "last_login_date": (datetime.utcnow() - timedelta(days=25)).isoformat()
+                "last_login_date": (datetime.now(UTC) - timedelta(days=25)).isoformat()
             },
             "business_data": {
                 "contract_value": 35000,

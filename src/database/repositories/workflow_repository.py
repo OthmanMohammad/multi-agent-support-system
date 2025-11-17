@@ -4,7 +4,7 @@ Workflow automation repository - Business logic for workflow data access
 from typing import Optional, List
 from sqlalchemy import select, func, and_
 from uuid import UUID
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.database.base import BaseRepository
 from src.database.models import Workflow, WorkflowExecution, ScheduledTask
@@ -90,7 +90,7 @@ class WorkflowExecutionRepository(BaseRepository[WorkflowExecution]):
         limit: int = 100
     ) -> List[WorkflowExecution]:
         """Get recent failed executions"""
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = datetime.now(UTC) - timedelta(days=days)
         result = await self.session.execute(
             select(WorkflowExecution)
             .where(and_(
@@ -111,7 +111,7 @@ class WorkflowExecutionRepository(BaseRepository[WorkflowExecution]):
         conditions = [WorkflowExecution.workflow_id == workflow_id]
 
         if days:
-            cutoff = datetime.utcnow() - timedelta(days=days)
+            cutoff = datetime.now(UTC) - timedelta(days=days)
             conditions.append(WorkflowExecution.started_at >= cutoff)
 
         total_result = await self.session.execute(
@@ -143,7 +143,7 @@ class WorkflowExecutionRepository(BaseRepository[WorkflowExecution]):
         ]
 
         if days:
-            cutoff = datetime.utcnow() - timedelta(days=days)
+            cutoff = datetime.now(UTC) - timedelta(days=days)
             conditions.append(WorkflowExecution.started_at >= cutoff)
 
         result = await self.session.execute(
@@ -199,7 +199,7 @@ class ScheduledTaskRepository(BaseRepository[ScheduledTask]):
             select(ScheduledTask)
             .where(and_(
                 ScheduledTask.is_active == True,
-                ScheduledTask.next_run_at <= datetime.utcnow()
+                ScheduledTask.next_run_at <= datetime.now(UTC)
             ))
             .order_by(ScheduledTask.next_run_at.asc())
             .limit(limit)
@@ -212,7 +212,7 @@ class ScheduledTaskRepository(BaseRepository[ScheduledTask]):
         limit: int = 100
     ) -> List[ScheduledTask]:
         """Get tasks that are overdue"""
-        cutoff = datetime.utcnow() - timedelta(hours=hours)
+        cutoff = datetime.now(UTC) - timedelta(hours=hours)
         result = await self.session.execute(
             select(ScheduledTask)
             .where(and_(
@@ -232,6 +232,6 @@ class ScheduledTaskRepository(BaseRepository[ScheduledTask]):
         """Update task after execution"""
         return await self.update(
             task_id,
-            last_run_at=datetime.utcnow(),
+            last_run_at=datetime.now(UTC),
             next_run_at=next_run_at
         )

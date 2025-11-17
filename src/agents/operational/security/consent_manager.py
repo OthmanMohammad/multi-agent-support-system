@@ -6,7 +6,7 @@ Handles consent tracking, opt-out mechanisms, and data access requests.
 """
 
 from typing import Dict, Any, List, Optional, Set
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -223,7 +223,7 @@ class ConsentManagerAgent(BaseAgent):
 
                 updated_consents[purpose] = {
                     "granted": granted,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                     "purpose": purpose_def["name"],
                     "description": purpose_def["description"]
                 }
@@ -233,7 +233,7 @@ class ConsentManagerAgent(BaseAgent):
             "message": "Consent preferences updated",
             "user_id": user_id,
             "consents": updated_consents,
-            "updated_at": datetime.utcnow().isoformat()
+            "updated_at": datetime.now(UTC).isoformat()
         }
 
     def _process_consent_withdrawal(
@@ -263,7 +263,7 @@ class ConsentManagerAgent(BaseAgent):
                 else:
                     withdrawn.append({
                         "purpose": purpose,
-                        "withdrawn_at": datetime.utcnow().isoformat(),
+                        "withdrawn_at": datetime.now(UTC).isoformat(),
                         "effect": self._get_withdrawal_effect(purpose)
                     })
 
@@ -273,7 +273,7 @@ class ConsentManagerAgent(BaseAgent):
             "user_id": user_id,
             "withdrawn": withdrawn,
             "cannot_withdraw": cannot_withdraw,
-            "processed_at": datetime.utcnow().isoformat()
+            "processed_at": datetime.now(UTC).isoformat()
         }
 
     def _process_dsar(
@@ -293,9 +293,9 @@ class ConsentManagerAgent(BaseAgent):
         Returns:
             Processing result
         """
-        request_id = f"DSAR-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+        request_id = f"DSAR-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}"
         sla = self.DSAR_RESPONSE_SLA.get(jurisdiction, timedelta(days=30))
-        deadline = datetime.utcnow() + sla
+        deadline = datetime.now(UTC) + sla
 
         if dsar_type == "access":
             result = self._process_access_request(user_id, request_id, deadline)
@@ -402,8 +402,8 @@ class ConsentManagerAgent(BaseAgent):
                 "data_sale",
                 "targeted_advertising"
             ],
-            "effective_date": datetime.utcnow().isoformat(),
-            "processed_at": datetime.utcnow().isoformat()
+            "effective_date": datetime.now(UTC).isoformat(),
+            "processed_at": datetime.now(UTC).isoformat()
         }
 
     def _get_withdrawal_effect(self, purpose: str) -> str:
@@ -452,7 +452,7 @@ class ConsentManagerAgent(BaseAgent):
             # DSAR response timeline
             if "deadline" in result:
                 deadline = datetime.fromisoformat(result["deadline"])
-                max_deadline = datetime.utcnow() + timedelta(days=30)
+                max_deadline = datetime.now(UTC) + timedelta(days=30)
                 if deadline > max_deadline:
                     compliant = False
                     issues.append("DSAR response deadline exceeds GDPR 30-day requirement")
@@ -461,7 +461,7 @@ class ConsentManagerAgent(BaseAgent):
         if jurisdiction == "CCPA":
             if "deadline" in result:
                 deadline = datetime.fromisoformat(result["deadline"])
-                max_deadline = datetime.utcnow() + timedelta(days=45)
+                max_deadline = datetime.now(UTC) + timedelta(days=45)
                 if deadline > max_deadline:
                     compliant = False
                     issues.append("DSAR response deadline exceeds CCPA 45-day requirement")
@@ -470,7 +470,7 @@ class ConsentManagerAgent(BaseAgent):
             "compliant": compliant,
             "jurisdiction": jurisdiction,
             "issues": issues,
-            "checked_at": datetime.utcnow().isoformat()
+            "checked_at": datetime.now(UTC).isoformat()
         }
 
     def _create_audit_entry(
@@ -482,8 +482,8 @@ class ConsentManagerAgent(BaseAgent):
     ) -> Dict[str, Any]:
         """Create audit trail entry."""
         return {
-            "audit_id": f"CONSENT-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
-            "timestamp": datetime.utcnow().isoformat(),
+            "audit_id": f"CONSENT-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}",
+            "timestamp": datetime.now(UTC).isoformat(),
             "request_type": request_type,
             "user_id": user_id,
             "status": result.get("status"),
@@ -600,7 +600,7 @@ class ConsentManagerAgent(BaseAgent):
             for rec in recommendations:
                 report += f"- {rec}\n"
 
-        report += f"\n*Consent management completed at {datetime.utcnow().isoformat()}*"
+        report += f"\n*Consent management completed at {datetime.now(UTC).isoformat()}*"
         report += f"\n*Compliance: {compliance_check['jurisdiction']}*"
 
         return report

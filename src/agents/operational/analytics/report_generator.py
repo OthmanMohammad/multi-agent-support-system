@@ -6,7 +6,7 @@ Compiles data from multiple sources into structured narrative reports.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -155,8 +155,8 @@ class ReportGeneratorAgent(BaseAgent):
         # Mock data collection - in production, query actual data sources
         return {
             "period": {
-                "start": period_start or (datetime.utcnow() - timedelta(days=30)).strftime("%Y-%m-%d"),
-                "end": period_end or datetime.utcnow().strftime("%Y-%m-%d")
+                "start": period_start or (datetime.now(UTC) - timedelta(days=30)).strftime("%Y-%m-%d"),
+                "end": period_end or datetime.now(UTC).strftime("%Y-%m-%d")
             },
             "financial_metrics": {
                 "mrr": 542000,
@@ -293,7 +293,7 @@ class ReportGeneratorAgent(BaseAgent):
         report = f"""# {report_name}
 
 **Reporting Period:** {period_start} to {period_end}
-**Generated:** {datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")}
+**Generated:** {datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")}
 
 ---
 

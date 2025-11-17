@@ -7,7 +7,7 @@ Ensures KB stays current with product changes.
 """
 
 from typing import Dict, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 import re
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -162,7 +162,7 @@ class KBUpdater(BaseAgent):
             "reasons": reasons,
             "suggested_updates": suggestions,
             "estimated_effort": effort,
-            "last_checked_at": datetime.utcnow().isoformat()
+            "last_checked_at": datetime.now(UTC).isoformat()
         }
 
     def _check_age(self, article: Dict) -> Optional[Dict]:

@@ -6,7 +6,7 @@ card update requests, and dunning management.
 """
 
 from typing import Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -75,10 +75,10 @@ Status: {retry_result['status'].title()}
         success = random.choice([True, False])  # Mock 50% success rate
 
         return {
-            "transaction_id": f"TXN-{datetime.utcnow().timestamp()}",
+            "transaction_id": f"TXN-{datetime.now(UTC).timestamp()}",
             "status": "success" if success else "failed",
             "attempt_number": payment.get("retry_count", 1),
-            "attempted_at": datetime.utcnow().isoformat()
+            "attempted_at": datetime.now(UTC).isoformat()
         }
 
     async def _handle_failed_retry(self, retry_result: Dict, customer: Dict) -> Dict:
@@ -86,7 +86,7 @@ Status: {retry_result['status'].title()}
         attempt = retry_result['attempt_number']
 
         if attempt < len(self.RETRY_SCHEDULE):
-            next_retry = datetime.utcnow() + timedelta(days=self.RETRY_SCHEDULE[attempt])
+            next_retry = datetime.now(UTC) + timedelta(days=self.RETRY_SCHEDULE[attempt])
             return {
                 "action": "schedule_retry",
                 "next_retry_date": next_retry.strftime('%Y-%m-%d')

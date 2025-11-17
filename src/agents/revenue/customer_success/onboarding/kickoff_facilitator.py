@@ -6,7 +6,7 @@ Ensures alignment on goals, timelines, and success criteria.
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -186,7 +186,7 @@ class KickoffFacilitatorAgent(BaseAgent):
             "goals_defined": goals_defined,
             "gaps": gaps,
             "checklist_completion": f"{completed_items}/{len(self.READINESS_CHECKLIST)}",
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat()
         }
 
     def _generate_success_plan(
@@ -258,7 +258,7 @@ class KickoffFacilitatorAgent(BaseAgent):
             "success_criteria": success_criteria,
             "milestones": milestones,
             "target_completion_days": 50,
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(UTC).isoformat()
         }
 
     def _create_action_items(

@@ -5,7 +5,7 @@ Prevents cascading failures by failing fast when a provider is unhealthy.
 """
 
 from typing import Optional, Callable, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 import asyncio
 import structlog
@@ -133,7 +133,7 @@ class CircuitBreaker:
         """Handle failed call"""
         async with self._lock:
             self._failure_count += 1
-            self._last_failure_time = datetime.utcnow()
+            self._last_failure_time = datetime.now(UTC)
 
             if self._state == CircuitState.HALF_OPEN:
                 logger.warning(
@@ -158,7 +158,7 @@ class CircuitBreaker:
         if not self._last_failure_time:
             return True
 
-        elapsed = datetime.utcnow() - self._last_failure_time
+        elapsed = datetime.now(UTC) - self._last_failure_time
         return elapsed.total_seconds() >= self.timeout
 
     async def reset(self):

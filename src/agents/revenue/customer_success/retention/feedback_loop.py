@@ -6,7 +6,7 @@ tracks implementation, and closes the loop with customers.
 """
 
 from typing import Dict, Any, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -171,7 +171,7 @@ class FeedbackLoopAgent(BaseAgent):
             "impact": impact,
             "requires_response": priority_score >= 60,
             "sla_days": 3 if urgency == "high" else 7 if urgency == "medium" else 14,
-            "routed_at": datetime.utcnow().isoformat()
+            "routed_at": datetime.now(UTC).isoformat()
         }
 
     def _auto_categorize_feedback(self, feedback_text: str) -> str:
@@ -261,7 +261,7 @@ class FeedbackLoopAgent(BaseAgent):
         status_updated_at = feedback_data.get("status_updated_at")
         if status_updated_at:
             status_date = datetime.fromisoformat(status_updated_at.replace('Z', '+00:00'))
-            days_in_status = (datetime.utcnow() - status_date).days
+            days_in_status = (datetime.now(UTC) - status_date).days
         else:
             days_in_status = 0
 
@@ -270,7 +270,7 @@ class FeedbackLoopAgent(BaseAgent):
         submission_date = feedback_data.get("submitted_at")
         if submission_date:
             submit_date = datetime.fromisoformat(submission_date.replace('Z', '+00:00'))
-            total_days = (datetime.utcnow() - submit_date).days
+            total_days = (datetime.now(UTC) - submit_date).days
             is_overdue = total_days > expected_cycle_time_days
         else:
             total_days = 0
@@ -447,8 +447,8 @@ if __name__ == "__main__":
                 "feedback_type": "bug_report",
                 "feedback_text": "Login page crashes on mobile",
                 "status": "planned",
-                "status_updated_at": (datetime.utcnow() - timedelta(days=25)).isoformat(),
-                "submitted_at": (datetime.utcnow() - timedelta(days=45)).isoformat(),
+                "status_updated_at": (datetime.now(UTC) - timedelta(days=25)).isoformat(),
+                "submitted_at": (datetime.now(UTC) - timedelta(days=45)).isoformat(),
                 "expected_cycle_time_days": 30,
                 "affected_users": 150,
                 "priority": "critical"

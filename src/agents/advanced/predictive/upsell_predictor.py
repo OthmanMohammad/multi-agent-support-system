@@ -7,7 +7,7 @@ Creates sales opportunities automatically in CRM for high-probability upsells.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -126,7 +126,7 @@ class UpsellPredictorAgent(BaseAgent):
                 "triggers": triggers,
                 "recommended_timing": timing,
                 "recommended_approach": self._recommend_approach(upsell_type),
-                "prediction_date": datetime.utcnow().isoformat()
+                "prediction_date": datetime.now(UTC).isoformat()
             }
 
             response = self._format_prediction_report(prediction)

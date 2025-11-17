@@ -6,7 +6,7 @@ Makes black-box models interpretable for business stakeholders.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -325,6 +325,6 @@ class PredictionExplainerAgent(BaseAgent):
         # Business interpretation
         report += f"\n**Business Interpretation:**\n{business_interpretation}\n"
 
-        report += f"\n*Explanation generated at {datetime.utcnow().isoformat()}*"
+        report += f"\n*Explanation generated at {datetime.now(UTC).isoformat()}*"
 
         return report

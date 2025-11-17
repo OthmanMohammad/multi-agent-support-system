@@ -6,7 +6,7 @@ Implements least privilege principle and validates all access requests.
 """
 
 from typing import Dict, Any, List, Optional, Set
-from datetime import datetime
+from datetime import datetime, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -226,7 +226,7 @@ class AccessControllerAgent(BaseAgent):
             "passed": session_valid,
             "reason": "Valid session" if session_valid else "Invalid or expired session",
             "user_id": user_id,
-            "checked_at": datetime.utcnow().isoformat()
+            "checked_at": datetime.now(UTC).isoformat()
         }
 
     def _check_permissions(self, user_role: str, operation: str) -> Dict[str, Any]:
@@ -381,7 +381,7 @@ class AccessControllerAgent(BaseAgent):
             Audit log entry
         """
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "user_id": user_id,
             "user_role": user_role,
             "operation": operation,
@@ -390,7 +390,7 @@ class AccessControllerAgent(BaseAgent):
             "access_granted": access_granted,
             "denial_reason": denial_reason,
             "ip_address": ip_address,
-            "log_id": f"ACCESS-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
+            "log_id": f"ACCESS-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}",
             "compliance_flags": ["SOC2", "ISO27001"]
         }
 
@@ -463,7 +463,7 @@ class AccessControllerAgent(BaseAgent):
                 "operation": operation,
                 "reason": denial_reason,
                 "message": "Access denied - potential unauthorized access attempt",
-                "detected_at": datetime.utcnow().isoformat()
+                "detected_at": datetime.now(UTC).isoformat()
             })
 
         # High-risk operations on sensitive resources
@@ -474,7 +474,7 @@ class AccessControllerAgent(BaseAgent):
                 "user_id": user_id,
                 "operation": operation,
                 "message": "High-risk operation performed - requires monitoring",
-                "detected_at": datetime.utcnow().isoformat()
+                "detected_at": datetime.now(UTC).isoformat()
             })
 
         return violations
@@ -520,7 +520,7 @@ class AccessControllerAgent(BaseAgent):
             for rec in recommendations:
                 report += f"- {rec}\n"
 
-        report += f"\n*Access control evaluated at {datetime.utcnow().isoformat()}*"
+        report += f"\n*Access control evaluated at {datetime.now(UTC).isoformat()}*"
         report += f"\n*Compliance: SOC 2, ISO 27001*"
 
         return report

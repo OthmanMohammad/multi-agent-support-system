@@ -8,7 +8,7 @@ to enable isolated unit testing without real database, Redis, or external APIs.
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, UTC
 
 
 # ===== Mock Unit of Work =====
@@ -55,7 +55,7 @@ def mock_customer():
     customer.name = "Test User"
     customer.plan = "free"
     customer.extra_metadata = {}
-    customer.created_at = datetime.utcnow()
+    customer.created_at = datetime.now(UTC)
     customer.updated_at = None
     return customer
 
@@ -72,7 +72,7 @@ def mock_conversation():
     conversation.sentiment_avg = None
     conversation.kb_articles_used = []
     conversation.extra_metadata = {}
-    conversation.started_at = datetime.utcnow()
+    conversation.started_at = datetime.now(UTC)
     conversation.ended_at = None
     conversation.resolution_time_seconds = None
     conversation.messages = []
@@ -93,7 +93,7 @@ def mock_message():
     message.confidence = None
     message.tokens_used = None
     message.extra_metadata = {}
-    message.created_at = datetime.utcnow()
+    message.created_at = datetime.now(UTC)
     return message
 
 
@@ -176,7 +176,7 @@ def customer_factory():
             "name": "Test User",
             "plan": "free",
             "extra_metadata": {},
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(UTC),
             "updated_at": None
         }
         defaults.update(kwargs)
@@ -209,7 +209,7 @@ def conversation_factory():
             "sentiment_avg": None,
             "kb_articles_used": [],
             "extra_metadata": {},
-            "started_at": datetime.utcnow(),
+            "started_at": datetime.now(UTC),
             "ended_at": None,
             "resolution_time_seconds": None,
             "messages": []

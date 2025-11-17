@@ -18,7 +18,7 @@ Part of: Phase 5 - Monitoring & Observability
 import aiohttp
 import asyncio
 from typing import Dict, Any, Optional, List
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 
 from src.core.config import get_settings
@@ -114,7 +114,7 @@ class DiscordAlerter:
                 "title": title,
                 "description": description,
                 "color": SEVERITY_COLORS.get(severity, 0x00B2FF),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "fields": fields or [],
             }
 
@@ -186,7 +186,7 @@ async def send_critical_error_alert(
 
     fields = [
         {"name": "Error Type", "value": error_type, "inline": True},
-        {"name": "Timestamp", "value": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"), "inline": True},
+        {"name": "Timestamp", "value": datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC"), "inline": True},
     ]
 
     if endpoint:
@@ -323,7 +323,7 @@ async def send_security_alert(
 
     fields = [
         {"name": "Event Type", "value": event_type, "inline": True},
-        {"name": "Timestamp", "value": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"), "inline": True},
+        {"name": "Timestamp", "value": datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC"), "inline": True},
     ]
 
     if ip_address:

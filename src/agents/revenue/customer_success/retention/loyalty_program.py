@@ -6,7 +6,7 @@ and recognizes customer milestones to drive retention and engagement.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -187,7 +187,7 @@ class LoyaltyProgramAgent(BaseAgent):
         member_since = loyalty_data.get("member_since")
         if member_since:
             member_date = datetime.fromisoformat(member_since.replace('Z', '+00:00'))
-            membership_days = (datetime.utcnow() - member_date).days
+            membership_days = (datetime.now(UTC) - member_date).days
         else:
             membership_days = 0
 
@@ -285,7 +285,7 @@ class LoyaltyProgramAgent(BaseAgent):
                     "base_points": base_points,
                     "multiplier": multiplier,
                     "points_earned": points_earned,
-                    "date": activity.get("date", datetime.utcnow().isoformat())
+                    "date": activity.get("date", datetime.now(UTC).isoformat())
                 })
 
         return {
@@ -475,15 +475,15 @@ if __name__ == "__main__":
             "loyalty_data": {
                 "points": 8500,
                 "tier": "gold",
-                "member_since": (datetime.utcnow() - timedelta(days=730)).isoformat(),
+                "member_since": (datetime.now(UTC) - timedelta(days=730)).isoformat(),
                 "lifetime_points_earned": 12000,
                 "lifetime_points_redeemed": 3500
             },
             "recent_activities": [
-                {"type": "monthly_renewal", "date": datetime.utcnow().isoformat()},
-                {"type": "referral_signup", "date": (datetime.utcnow() - timedelta(days=5)).isoformat()},
-                {"type": "product_review", "date": (datetime.utcnow() - timedelta(days=10)).isoformat()},
-                {"type": "nps_promoter", "date": (datetime.utcnow() - timedelta(days=15)).isoformat()}
+                {"type": "monthly_renewal", "date": datetime.now(UTC).isoformat()},
+                {"type": "referral_signup", "date": (datetime.now(UTC) - timedelta(days=5)).isoformat()},
+                {"type": "product_review", "date": (datetime.now(UTC) - timedelta(days=10)).isoformat()},
+                {"type": "nps_promoter", "date": (datetime.now(UTC) - timedelta(days=15)).isoformat()}
             ]
         }
 
@@ -514,13 +514,13 @@ if __name__ == "__main__":
             "loyalty_data": {
                 "points": 250,
                 "tier": "bronze",
-                "member_since": (datetime.utcnow() - timedelta(days=60)).isoformat(),
+                "member_since": (datetime.now(UTC) - timedelta(days=60)).isoformat(),
                 "lifetime_points_earned": 250,
                 "lifetime_points_redeemed": 0
             },
             "recent_activities": [
-                {"type": "training_completion", "date": datetime.utcnow().isoformat()},
-                {"type": "feature_adoption", "date": (datetime.utcnow() - timedelta(days=3)).isoformat()}
+                {"type": "training_completion", "date": datetime.now(UTC).isoformat()},
+                {"type": "feature_adoption", "date": (datetime.now(UTC) - timedelta(days=3)).isoformat()}
             ]
         }
 

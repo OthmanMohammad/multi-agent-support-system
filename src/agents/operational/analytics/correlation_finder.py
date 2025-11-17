@@ -6,7 +6,7 @@ Identifies significant relationships (r>0.7) between business metrics.
 """
 
 from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime
+from datetime import datetime, UTC
 import math
 
 from src.workflow.state import AgentState
@@ -459,6 +459,6 @@ class CorrelationFinderAgent(BaseAgent):
                 report += f"- {candidate['metric1']} → {candidate['metric2']} (r={candidate['correlation']:.3f})\n"
                 report += f"  Suggested analysis: {candidate['suggested_analysis']}\n\n"
 
-        report += f"*Analysis completed at {datetime.utcnow().isoformat()}*"
+        report += f"*Analysis completed at {datetime.now(UTC).isoformat()}*"
 
         return report

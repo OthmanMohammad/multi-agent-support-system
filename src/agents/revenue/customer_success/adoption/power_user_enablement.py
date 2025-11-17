@@ -6,7 +6,7 @@ and leverages advocates to drive broader adoption and expansion.
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -244,7 +244,7 @@ class PowerUserEnablementAgent(BaseAgent):
             "champion_score": round(champion_score, 1),
             "champion_maturity": champion_maturity,
             "champion_effectiveness": champion_effectiveness,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat()
         }
 
     def _classify_user(self, user: Dict[str, Any]) -> str:

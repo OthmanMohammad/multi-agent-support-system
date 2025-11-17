@@ -6,7 +6,7 @@ Provides comprehensive metric monitoring and aggregation capabilities.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from decimal import Decimal
 
 from src.workflow.state import AgentState
@@ -191,7 +191,7 @@ class MetricsTrackerAgent(BaseAgent):
         # In production, this would query actual data sources
         # For now, return mock data structure
 
-        current_time = datetime.utcnow()
+        current_time = datetime.now(UTC)
 
         # Determine categories to fetch
         if category == "all":
@@ -273,7 +273,7 @@ class MetricsTrackerAgent(BaseAgent):
         return {
             "metrics": metrics,
             "metric_count": len(metrics),
-            "last_updated": datetime.utcnow().isoformat()
+            "last_updated": datetime.now(UTC).isoformat()
         }
 
     def _calculate_aggregations(
@@ -436,7 +436,7 @@ class MetricsTrackerAgent(BaseAgent):
             "critical_alerts": len(critical_alerts),
             "warning_alerts": len(warning_alerts),
             "health_status": "critical" if critical_alerts else "warning" if warning_alerts else "healthy",
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(UTC).isoformat()
         }
 
     def _format_metrics_report(

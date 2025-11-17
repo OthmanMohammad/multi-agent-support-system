@@ -6,7 +6,7 @@ accuracy, and compliance with data standards.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 import re
 
 from src.workflow.state import AgentState
@@ -127,7 +127,7 @@ class DataValidatorAgent(BaseAgent):
             "cross_field_validation": cross_field_validation,
             "quality_score": quality_score,
             "auto_fixes": auto_fixes,
-            "validated_at": datetime.utcnow().isoformat()
+            "validated_at": datetime.now(UTC).isoformat()
         }
 
         # Log automation action
@@ -344,7 +344,7 @@ Quality Score: {quality_score['overall_score']:.0%}
         """Log automation action."""
         return {
             "action_type": action_type,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "quality_score": validation_report["quality_score"]["overall_score"],
             "customer_id": customer_metadata.get("customer_id"),
             "success": True

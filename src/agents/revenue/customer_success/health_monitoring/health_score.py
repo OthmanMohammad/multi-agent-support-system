@@ -6,7 +6,7 @@ identify at-risk customers. Analyzes usage, engagement, support, and financial m
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from decimal import Decimal
 
 from src.workflow.state import AgentState
@@ -190,7 +190,7 @@ class HealthScoreAgent(BaseAgent):
             "score_change": int(total_score - previous_score) if previous_score else 0,
             "risk_factors": risk_factors,
             "positive_signals": positive_signals,
-            "calculated_at": datetime.utcnow().isoformat()
+            "calculated_at": datetime.now(UTC).isoformat()
         }
 
     def _calculate_usage_score(self, usage_data: Dict[str, Any]) -> float:
@@ -235,8 +235,8 @@ class HealthScoreAgent(BaseAgent):
                 try:
                     last_login = datetime.fromisoformat(last_login.replace('Z', '+00:00'))
                 except:
-                    last_login = datetime.utcnow()
-            days_since_login = (datetime.utcnow() - last_login).days
+                    last_login = datetime.now(UTC)
+            days_since_login = (datetime.now(UTC) - last_login).days
             if days_since_login < 1:
                 score += 5
             elif days_since_login < 3:
@@ -575,7 +575,7 @@ if __name__ == "__main__":
                 "nps_score": 9,
                 "support_tickets_last_30d": 1,
                 "feature_requests": 3,
-                "last_login": datetime.utcnow().isoformat(),
+                "last_login": datetime.now(UTC).isoformat(),
                 "qbr_attended_last_quarter": True
             },
             "business_data": {
@@ -617,7 +617,7 @@ if __name__ == "__main__":
                 "nps_score": 4,
                 "support_tickets_last_30d": 12,
                 "feature_requests": 0,
-                "last_login": (datetime.utcnow() - timedelta(days=10)).isoformat(),
+                "last_login": (datetime.now(UTC) - timedelta(days=10)).isoformat(),
                 "qbr_attended_last_quarter": False
             },
             "business_data": {

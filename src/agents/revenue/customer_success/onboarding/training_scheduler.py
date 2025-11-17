@@ -6,7 +6,7 @@ Ensures users gain required product proficiency during onboarding.
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -172,7 +172,7 @@ class TrainingSchedulerAgent(BaseAgent):
             "effectiveness_score": effectiveness_score,
             "makeup_sessions_needed": makeup_needed,
             "issues": issues,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat()
         }
 
     def _calculate_attendance_metrics(
@@ -299,7 +299,7 @@ class TrainingSchedulerAgent(BaseAgent):
 
         try:
             scheduled_date = datetime.fromisoformat(scheduled_date_str.replace('Z', '+00:00'))
-            return datetime.utcnow() > scheduled_date
+            return datetime.now(UTC) > scheduled_date
         except:
             return False
 
@@ -468,8 +468,8 @@ if __name__ == "__main__":
         state1["entities"] = {
             "training_data": {
                 "scheduled_sessions": [
-                    {"type": "admin_training", "scheduled_date": (datetime.utcnow() + timedelta(days=3)).isoformat()},
-                    {"type": "user_training", "scheduled_date": (datetime.utcnow() + timedelta(days=7)).isoformat()}
+                    {"type": "admin_training", "scheduled_date": (datetime.now(UTC) + timedelta(days=3)).isoformat()},
+                    {"type": "user_training", "scheduled_date": (datetime.now(UTC) + timedelta(days=7)).isoformat()}
                 ],
                 "completed_sessions": [
                     {"type": "admin_training", "attended_count": 12, "invited_count": 15, "attendee_ids": [f"user_{i}" for i in range(12)]},

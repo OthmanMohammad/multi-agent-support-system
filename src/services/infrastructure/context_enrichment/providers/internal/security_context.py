@@ -5,7 +5,7 @@ Fetches security posture, compliance status, and incident information from datab
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -72,7 +72,7 @@ class SecurityContextProvider(BaseContextProvider):
             uow = UnitOfWork(session)
 
             # Fetch audit logs to analyze security events
-            cutoff = datetime.utcnow() - timedelta(days=90)
+            cutoff = datetime.now(UTC) - timedelta(days=90)
             audit_logs = await uow.audit_logs.find_by(customer_id=customer_id)
 
             # Filter to last 90 days
@@ -90,7 +90,7 @@ class SecurityContextProvider(BaseContextProvider):
             ]
 
             # Count failed login attempts (last 24 hours)
-            daily_cutoff = datetime.utcnow() - timedelta(days=1)
+            daily_cutoff = datetime.now(UTC) - timedelta(days=1)
             failed_logins_24h = sum(
                 1 for log in security_events
                 if (hasattr(log, 'event_type') and log.event_type == 'login_failed' and

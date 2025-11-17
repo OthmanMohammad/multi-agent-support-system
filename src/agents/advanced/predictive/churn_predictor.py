@@ -7,7 +7,7 @@ Provides SHAP explanations and triggers proactive interventions for high-risk cu
 """
 
 from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 import json
 
 from src.workflow.state import AgentState
@@ -127,8 +127,8 @@ class ChurnPredictorAgent(BaseAgent):
                 "risk_factors": risk_factors,
                 "recommended_actions": actions,
                 "confidence": confidence,
-                "prediction_date": datetime.utcnow().isoformat(),
-                "valid_until": (datetime.utcnow() + timedelta(days=1)).isoformat(),
+                "prediction_date": datetime.now(UTC).isoformat(),
+                "valid_until": (datetime.now(UTC) + timedelta(days=1)).isoformat(),
                 "model_version": "rule_based_v1.0"
             }
 

@@ -6,7 +6,7 @@ Ensures compliance with SOC 2, ISO 27001, and regulatory requirements.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 import hashlib
 import json
 
@@ -203,7 +203,7 @@ class AuditLoggerAgent(BaseAgent):
         Returns:
             Audit log entry
         """
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(UTC)
 
         return {
             "log_id": f"AUDIT-{timestamp.strftime('%Y%m%d%H%M%S%f')}",
@@ -337,7 +337,7 @@ class AuditLoggerAgent(BaseAgent):
             })
 
         # 2. After-hours access
-        current_hour = datetime.utcnow().hour
+        current_hour = datetime.now(UTC).hour
         if current_hour < 6 or current_hour > 22:
             if event_type in ["data_access", "data_export", "config_change"]:
                 anomalies.append({
@@ -515,7 +515,7 @@ class AuditLoggerAgent(BaseAgent):
             for rec in recommendations:
                 report += f"- {rec}\n"
 
-        report += f"\n*Audit log entry created at {datetime.utcnow().isoformat()}*"
+        report += f"\n*Audit log entry created at {datetime.now(UTC).isoformat()}*"
         report += f"\n*Tamper-proof logging enabled*"
 
         return report

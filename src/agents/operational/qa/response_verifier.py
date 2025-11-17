@@ -6,7 +6,7 @@ Orchestrates comprehensive quality checks and produces final pass/fail verdict.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
@@ -298,7 +298,7 @@ class ResponseVerifierAgent(BaseAgent):
             "issues": all_issues,
             "issues_by_severity": issues_by_severity,
             "avg_confidence": round(avg_confidence, 3),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(UTC).isoformat()
         }
 
     def _determine_verdict(
@@ -436,7 +436,7 @@ class ResponseVerifierAgent(BaseAgent):
     ) -> Dict[str, Any]:
         """Create record for storage in response_quality_checks table."""
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "response_length": len(response_text),
             "word_count": len(response_text.split()),
             "check_results": check_results,
