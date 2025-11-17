@@ -18,7 +18,8 @@ import pickle
 import structlog
 from dataclasses import dataclass, asdict
 
-from src.services.infrastructure.context_enrichment.types import EnrichedContext, AgentType
+from src.services.infrastructure.context_enrichment.models import EnrichedContext
+from src.services.infrastructure.context_enrichment.types import AgentType
 from src.core.config import get_settings
 
 logger = structlog.get_logger(__name__)
