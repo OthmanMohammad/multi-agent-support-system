@@ -111,11 +111,13 @@ def sample_kb_results(sample_kb_article):
 @pytest.fixture
 def mock_db_session(monkeypatch):
     """Mock database session"""
+    from contextlib import asynccontextmanager
+
     session = MagicMock()
 
-    # Mock async context manager
-    @contextmanager
-    def mock_get_session():
+    # Mock ASYNC context manager - this is critical!
+    @asynccontextmanager
+    async def mock_get_session():
         yield session
 
     # Configure mock session

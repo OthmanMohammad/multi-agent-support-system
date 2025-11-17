@@ -120,44 +120,44 @@ class DiscountNegotiator(BaseAgent):
             turn_count=state["turn_count"]
         )
 
-        # Determine if we can auto-approve
-        if discount_details["requested_percent"] <= self.MAX_AUTO_APPROVE_PERCENT:
-            # Check if customer qualifies
-            if self._customer_qualifies(customer_metadata, discount_details):
-                response = await self._approve_discount(
-                    customer_metadata,
-                    discount_details,
-                    state
-                )
-                state["discount_approved"] = True
-                state["discount_percent"] = discount_details["requested_percent"]
-                state["discount_reason"] = discount_details["reason"]
+        # Check if customer qualifies for the requested discount program
+        if self._customer_qualifies(customer_metadata, discount_details):
+            # Customer qualifies - approve the discount
+            response = await self._approve_discount(
+                customer_metadata,
+                discount_details,
+                state
+            )
+            state["discount_approved"] = True
+            state["discount_percent"] = discount_details["requested_percent"]
+            state["discount_reason"] = discount_details["reason"]
 
-                self.logger.info(
-                    "discount_approved",
-                    customer_id=state.get("customer_id"),
-                    percent=discount_details["requested_percent"],
-                    reason=discount_details["reason"]
-                )
+            self.logger.info(
+                "discount_approved",
+                customer_id=state.get("customer_id"),
+                percent=discount_details["requested_percent"],
+                reason=discount_details["reason"]
+            )
 
-            else:
-                # Customer doesn't qualify, offer alternatives
-                response = self._offer_alternative_discount(
-                    customer_metadata,
-                    discount_details
-                )
-                state["discount_approved"] = False
-                state["alternative_offered"] = True
+        elif discount_details["requested_percent"] <= self.MAX_AUTO_APPROVE_PERCENT:
+            # Doesn't qualify for specific program, but within auto-approve limit
+            # Offer alternative discounts
+            response = self._offer_alternative_discount(
+                customer_metadata,
+                discount_details
+            )
+            state["discount_approved"] = False
+            state["alternative_offered"] = True
 
-                self.logger.info(
-                    "discount_denied_alternative_offered",
-                    customer_id=state.get("customer_id"),
-                    requested_percent=discount_details["requested_percent"],
-                    reason=discount_details["reason"]
-                )
+            self.logger.info(
+                "discount_denied_alternative_offered",
+                customer_id=state.get("customer_id"),
+                requested_percent=discount_details["requested_percent"],
+                reason=discount_details["reason"]
+            )
 
         else:
-            # Escalate to human for approval
+            # Doesn't qualify AND above auto-approve limit - escalate
             response = self._escalate_for_approval(discount_details, customer_metadata)
             state["should_escalate"] = True
             state["escalation_reason"] = f"Discount request >{self.MAX_AUTO_APPROVE_PERCENT}%"

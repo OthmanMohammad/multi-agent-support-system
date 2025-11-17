@@ -277,14 +277,25 @@ class TrendAnalyzerAgent(BaseAgent):
         if len(time_series_data) < 2:
             return {
                 "status": "insufficient_data",
-                "trajectory": "unknown"
+                "trajectory": "unknown",
+                "total_change_pct": 0,
+                "slope": 0,
+                "r_squared": 0,
+                "cagr": 0
             }
 
         # Extract values
         values = [p.get("value", 0) for p in time_series_data if isinstance(p.get("value"), (int, float))]
 
         if not values:
-            return {"status": "no_data", "trajectory": "unknown"}
+            return {
+                "status": "no_data",
+                "trajectory": "unknown",
+                "total_change_pct": 0,
+                "slope": 0,
+                "r_squared": 0,
+                "cagr": 0
+            }
 
         # Calculate simple linear regression
         n = len(values)
