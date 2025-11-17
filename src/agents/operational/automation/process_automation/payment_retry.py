@@ -58,7 +58,10 @@ Status: {retry_result['status'].title()}
 
 """
         if next_action:
-            response += f"Next retry scheduled for: {next_action['next_retry_date']}"
+            if next_action.get("action") == "schedule_retry":
+                response += f"Next retry scheduled for: {next_action['next_retry_date']}"
+            elif next_action.get("action") == "request_card_update":
+                response += "Max retries exceeded. Please update your payment method."
 
         state["agent_response"] = response
         state["retry_result"] = retry_result

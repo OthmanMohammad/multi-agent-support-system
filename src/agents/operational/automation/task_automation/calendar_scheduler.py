@@ -451,17 +451,20 @@ Return JSON with title, date, time, duration_minutes, attendees (array), meeting
 
         end_datetime = start_datetime + timedelta(minutes=duration)
 
-        # Prepare meeting data
+        # Prepare meeting data with None-safe defaults
+        default_platform = "meet" if calendar_system == "google" else "teams"
+        video_platform = (meeting_details.get("video_platform") or default_platform) if meeting_details else default_platform
+
         meeting_data = {
-            "title": meeting_details.get("title", meeting_config["default_title"]),
-            "description": meeting_details.get("notes", f"Scheduled via automation for {customer_metadata.get('customer_name', 'customer')}"),
+            "title": (meeting_details.get("title") or meeting_config["default_title"]) if meeting_details else meeting_config["default_title"],
+            "description": (meeting_details.get("notes") or f"Scheduled via automation for {customer_metadata.get('customer_name', 'customer')}") if meeting_details else f"Scheduled via automation for {customer_metadata.get('customer_name', 'customer')}",
             "start_time": start_datetime.isoformat(),
             "end_time": end_datetime.isoformat(),
             "timezone": timezone_info["source_timezone_full"],
             "duration_minutes": duration,
-            "attendees": meeting_details.get("attendees", []),
+            "attendees": meeting_details.get("attendees", []) if meeting_details else [],
             "location": "Online",
-            "video_platform": meeting_details.get("video_platform", "meet" if calendar_system == "google" else "teams"),
+            "video_platform": video_platform,
             "reminders": [
                 {"type": "email", "minutes_before": 60},
                 {"type": "popup", "minutes_before": 10}
@@ -622,7 +625,7 @@ Timezone: {scheduled_meeting['timezone']}
 
 **How to Join:**
 Video Link: {scheduled_meeting['video_link']}
-Platform: {scheduled_meeting['video_platform'].title()}
+Platform: {(scheduled_meeting.get('video_platform') or 'meet').title()}
 
 **Attendees:** {len(scheduled_meeting.get('attendees', []))} person(s)
 
@@ -630,7 +633,7 @@ Platform: {scheduled_meeting['video_platform'].title()}
 """
 
         for reminder in reminders:
-            response += f"- {reminder['type'].title()}: {reminder['subject'] if 'subject' in reminder else reminder.get('message', 'Reminder')}\n"
+            response += f"- {(reminder.get('type') or 'reminder').title()}: {reminder['subject'] if 'subject' in reminder else reminder.get('message', 'Reminder')}\n"
 
         if conflict_check.get("has_conflicts"):
             response += f"\n**Note:** {conflict_check['conflict_count']} scheduling conflict(s) detected but meeting was scheduled.\n"

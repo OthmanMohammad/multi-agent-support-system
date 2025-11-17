@@ -168,24 +168,34 @@ def sample_conversation_data():
 @pytest.fixture(autouse=True)
 def mock_event_bus(monkeypatch):
     """Mock EventBus for all KB agent tests"""
+    # Create a comprehensive mock with all possible methods
     mock_bus = AsyncMock()
     mock_bus.publish = AsyncMock()
     mock_bus.subscribe = AsyncMock()
-    mock_bus.send = AsyncMock()  # Add send method
+    mock_bus.send = AsyncMock()
+    mock_bus.emit = AsyncMock()
+    mock_bus.dispatch = AsyncMock()
+    mock_bus.notify = AsyncMock()
+
+    # Mock class that returns the mock_bus instance
+    mock_bus_class = MagicMock(return_value=mock_bus)
 
     def get_mock_event_bus():
         return mock_bus
 
-    # Patch both get_event_bus function and EventBus class
-    monkeypatch.setattr(
-        'src.core.events.get_event_bus',
-        get_mock_event_bus
-    )
+    # Patch all possible EventBus locations
+    try:
+        monkeypatch.setattr('src.core.events.get_event_bus', get_mock_event_bus)
+        monkeypatch.setattr('src.core.events.EventBus', mock_bus_class)
+        monkeypatch.setattr('src.core.events._event_bus', mock_bus)
+    except (AttributeError, KeyError):
+        pass  # Module might not be loaded yet
 
-    # Also patch EventBus class initialization
-    monkeypatch.setattr(
-        'src.core.events.EventBus',
-        lambda: mock_bus
-    )
+    # Patch in services that use EventBus
+    try:
+        monkeypatch.setattr('src.services.application.conversation_service.get_event_bus', get_mock_event_bus)
+        monkeypatch.setattr('src.services.application.customer_service.get_event_bus', get_mock_event_bus)
+    except (AttributeError, KeyError):
+        pass  # Services might not be imported in these tests
 
     return mock_bus
