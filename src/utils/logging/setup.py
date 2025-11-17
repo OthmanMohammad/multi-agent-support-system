@@ -30,8 +30,8 @@ def add_correlation_id(
     Gets correlation ID from context (set by middleware or context manager)
     and adds it to every log entry.
     """
-    from utils.logging.context import get_correlation_id
-    
+    from src.utils.logging.context import get_correlation_id
+
     correlation_id = get_correlation_id()
     if correlation_id:
         event_dict["correlation_id"] = correlation_id
