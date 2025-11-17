@@ -17,7 +17,7 @@ Part of: EPIC-006 Advanced Workflow Patterns
 import asyncio
 from typing import List, Dict, Any, Optional, Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 import structlog
 
 from src.workflow.state import AgentState
@@ -157,7 +157,7 @@ class SequentialWorkflow:
         Returns:
             SequentialResult with execution details
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
         executed_steps: List[str] = []
         skipped_steps: List[str] = []
         step_results: Dict[str, Any] = {}
@@ -176,7 +176,7 @@ class SequentialWorkflow:
 
                 # Check overall timeout
                 if self.overall_timeout:
-                    elapsed = (datetime.utcnow() - start_time).total_seconds()
+                    elapsed = (datetime.now(UTC) - start_time).total_seconds()
                     if elapsed > self.overall_timeout:
                         raise WorkflowTimeoutError(
                             f"Workflow exceeded timeout of {self.overall_timeout}s"
@@ -233,7 +233,7 @@ class SequentialWorkflow:
                             steps_executed=executed_steps,
                             steps_skipped=skipped_steps,
                             final_state=current_state,
-                            execution_time=(datetime.utcnow() - start_time).total_seconds(),
+                            execution_time=(datetime.now(UTC) - start_time).total_seconds(),
                             step_results=step_results,
                             error=error_msg
                         )
@@ -255,13 +255,13 @@ class SequentialWorkflow:
                                 steps_executed=executed_steps,
                                 steps_skipped=skipped_steps,
                                 final_state=current_state,
-                                execution_time=(datetime.utcnow() - start_time).total_seconds(),
+                                execution_time=(datetime.now(UTC) - start_time).total_seconds(),
                                 step_results=step_results,
                                 error=f"Optional step failed: {step_result['error']}"
                             )
 
             # All steps completed
-            execution_time = (datetime.utcnow() - start_time).total_seconds()
+            execution_time = (datetime.now(UTC) - start_time).total_seconds()
 
             self.logger.info(
                 "workflow_completed",
@@ -286,7 +286,7 @@ class SequentialWorkflow:
                 steps_executed=executed_steps,
                 steps_skipped=skipped_steps,
                 final_state=current_state,
-                execution_time=(datetime.utcnow() - start_time).total_seconds(),
+                execution_time=(datetime.now(UTC) - start_time).total_seconds(),
                 step_results=step_results,
                 error=str(e)
             )
@@ -297,7 +297,7 @@ class SequentialWorkflow:
                 steps_executed=executed_steps,
                 steps_skipped=skipped_steps,
                 final_state=current_state,
-                execution_time=(datetime.utcnow() - start_time).total_seconds(),
+                execution_time=(datetime.now(UTC) - start_time).total_seconds(),
                 step_results=step_results,
                 error=f"Workflow error: {str(e)}"
             )
@@ -328,7 +328,7 @@ class SequentialWorkflow:
             attempts += 1
 
             try:
-                step_start = datetime.utcnow()
+                step_start = datetime.now(UTC)
 
                 self.logger.debug(
                     "step_executing",
@@ -343,7 +343,7 @@ class SequentialWorkflow:
                     timeout=step.timeout
                 )
 
-                execution_time = (datetime.utcnow() - step_start).total_seconds()
+                execution_time = (datetime.now(UTC) - step_start).total_seconds()
 
                 return {
                     "success": True,

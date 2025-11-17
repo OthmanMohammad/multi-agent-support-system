@@ -18,7 +18,7 @@ Part of: EPIC-006 Advanced Workflow Patterns
 import asyncio
 from typing import List, Dict, Any, Optional, Callable, Literal
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 import structlog
 
@@ -187,7 +187,7 @@ class ParallelWorkflow:
         Returns:
             ParallelResult with execution details
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
         individual_results: Dict[str, Any] = {}
         completed: List[str] = []
         failed: List[str] = []
@@ -266,7 +266,7 @@ class ParallelWorkflow:
                                 agents_failed=failed,
                                 aggregated_state=None,
                                 individual_results=individual_results,
-                                execution_time=(datetime.utcnow() - start_time).total_seconds(),
+                                execution_time=(datetime.now(UTC) - start_time).total_seconds(),
                                 error=error_msg
                             )
 
@@ -282,7 +282,7 @@ class ParallelWorkflow:
                     agents_failed=failed,
                     aggregated_state=None,
                     individual_results=individual_results,
-                    execution_time=(datetime.utcnow() - start_time).total_seconds(),
+                    execution_time=(datetime.now(UTC) - start_time).total_seconds(),
                     error=error_msg
                 )
 
@@ -292,7 +292,7 @@ class ParallelWorkflow:
                 initial_state
             )
 
-            execution_time = (datetime.utcnow() - start_time).total_seconds()
+            execution_time = (datetime.now(UTC) - start_time).total_seconds()
 
             self.logger.info(
                 "workflow_completed",
@@ -325,7 +325,7 @@ class ParallelWorkflow:
                 agents_failed=failed,
                 aggregated_state=None,
                 individual_results=individual_results,
-                execution_time=(datetime.utcnow() - start_time).total_seconds(),
+                execution_time=(datetime.now(UTC) - start_time).total_seconds(),
                 error=error_msg
             )
 
@@ -338,7 +338,7 @@ class ParallelWorkflow:
                 agents_failed=failed,
                 aggregated_state=None,
                 individual_results=individual_results,
-                execution_time=(datetime.utcnow() - start_time).total_seconds(),
+                execution_time=(datetime.now(UTC) - start_time).total_seconds(),
                 error=f"Workflow error: {str(e)}"
             )
 
@@ -349,7 +349,7 @@ class ParallelWorkflow:
         agent_executor: Callable
     ) -> Dict[str, Any]:
         """Execute a single agent with timeout."""
-        agent_start = datetime.utcnow()
+        agent_start = datetime.now(UTC)
 
         try:
             self.logger.debug("agent_executing", agent=agent.agent_name)
@@ -359,7 +359,7 @@ class ParallelWorkflow:
                 timeout=agent.timeout
             )
 
-            execution_time = (datetime.utcnow() - agent_start).total_seconds()
+            execution_time = (datetime.now(UTC) - agent_start).total_seconds()
 
             return {
                 "success": True,
@@ -384,7 +384,7 @@ class ParallelWorkflow:
             return {
                 "success": False,
                 "error": str(e),
-                "execution_time": (datetime.utcnow() - agent_start).total_seconds(),
+                "execution_time": (datetime.now(UTC) - agent_start).total_seconds(),
                 "weight": agent.weight
             }
 

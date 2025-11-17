@@ -19,7 +19,7 @@ Part of: EPIC-006 Advanced Workflow Patterns
 import asyncio
 from typing import List, Dict, Any, Optional, Callable, Literal
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 import structlog
 
@@ -220,7 +220,7 @@ class ExpertPanelWorkflow:
         Returns:
             ExpertPanelResult with synthesized solution
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
         contributions: List[ExpertContribution] = []
 
         self.logger.info(
@@ -259,7 +259,7 @@ class ExpertPanelWorkflow:
             # Step 3: Identify primary expert (if any)
             primary_expert = self._identify_primary_expert()
 
-            execution_time = (datetime.utcnow() - start_time).total_seconds()
+            execution_time = (datetime.now(UTC) - start_time).total_seconds()
 
             self.logger.info(
                 "expert_panel_completed",
@@ -291,7 +291,7 @@ class ExpertPanelWorkflow:
                 confidence=0.0,
                 consensus_level=0.0,
                 primary_expert=None,
-                execution_time=(datetime.utcnow() - start_time).total_seconds(),
+                execution_time=(datetime.now(UTC) - start_time).total_seconds(),
                 error=error
             )
 
@@ -306,7 +306,7 @@ class ExpertPanelWorkflow:
                 confidence=0.0,
                 consensus_level=0.0,
                 primary_expert=None,
-                execution_time=(datetime.utcnow() - start_time).total_seconds(),
+                execution_time=(datetime.now(UTC) - start_time).total_seconds(),
                 error=f"Expert panel error: {str(e)}"
             )
 
@@ -437,7 +437,7 @@ class ExpertPanelWorkflow:
                 confidence=confidence,
                 key_insights=key_insights,
                 recommendations=recommendations,
-                timestamp=datetime.utcnow()
+                timestamp=datetime.now(UTC)
             )
 
             self.logger.info(

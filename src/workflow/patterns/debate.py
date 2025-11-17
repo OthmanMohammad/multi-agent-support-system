@@ -19,7 +19,7 @@ Part of: EPIC-006 Advanced Workflow Patterns
 import asyncio
 from typing import List, Dict, Any, Optional, Callable, Literal
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 import structlog
 
@@ -215,7 +215,7 @@ class DebateWorkflow:
         Returns:
             DebateResult with final decision and debate transcript
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
         rounds: List[DebateRound] = []
         current_state = initial_state.copy()
 
@@ -246,7 +246,7 @@ class DebateWorkflow:
                 agent_executor
             )
 
-            execution_time = (datetime.utcnow() - start_time).total_seconds()
+            execution_time = (datetime.now(UTC) - start_time).total_seconds()
 
             self.logger.info(
                 "debate_completed",
@@ -277,7 +277,7 @@ class DebateWorkflow:
                 rounds=rounds,
                 participants=[p.agent_name for p in self.participants],
                 consensus_method=self.consensus_method,
-                execution_time=(datetime.utcnow() - start_time).total_seconds(),
+                execution_time=(datetime.now(UTC) - start_time).total_seconds(),
                 error=error
             )
 
@@ -291,7 +291,7 @@ class DebateWorkflow:
                 rounds=rounds,
                 participants=[p.agent_name for p in self.participants],
                 consensus_method=self.consensus_method,
-                execution_time=(datetime.utcnow() - start_time).total_seconds(),
+                execution_time=(datetime.now(UTC) - start_time).total_seconds(),
                 error=f"Debate error: {str(e)}"
             )
 
@@ -336,7 +336,7 @@ class DebateWorkflow:
                         speaker=participant.agent_name,
                         statement=statement,
                         confidence=confidence,
-                        timestamp=datetime.utcnow()
+                        timestamp=datetime.now(UTC)
                     )
 
                     rounds.append(debate_round)
@@ -389,7 +389,7 @@ class DebateWorkflow:
                     speaker=participant.agent_name,
                     statement=result.get("agent_response", ""),
                     confidence=result.get("response_confidence", 0.5),
-                    timestamp=datetime.utcnow()
+                    timestamp=datetime.now(UTC)
                 ))
             except Exception as e:
                 self.logger.warning("opening_failed", agent=participant.agent_name, error=str(e))
@@ -413,7 +413,7 @@ class DebateWorkflow:
                         speaker=participant.agent_name,
                         statement=result.get("agent_response", ""),
                         confidence=result.get("response_confidence", 0.5),
-                        timestamp=datetime.utcnow()
+                        timestamp=datetime.now(UTC)
                     ))
                 except Exception as e:
                     self.logger.warning("rebuttal_failed", agent=participant.agent_name, error=str(e))
@@ -435,7 +435,7 @@ class DebateWorkflow:
                     speaker=participant.agent_name,
                     statement=result.get("agent_response", ""),
                     confidence=result.get("response_confidence", 0.5),
-                    timestamp=datetime.utcnow()
+                    timestamp=datetime.now(UTC)
                 ))
             except Exception as e:
                 self.logger.warning("closing_failed", agent=participant.agent_name, error=str(e))
@@ -479,7 +479,7 @@ class DebateWorkflow:
                     speaker=participant.agent_name,
                     statement=result.get("agent_response", ""),
                     confidence=result.get("response_confidence", 0.5),
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(UTC),
                     response_to=last_speaker
                 ))
                 last_speaker = participant.agent_name
@@ -516,7 +516,7 @@ class DebateWorkflow:
                     speaker=questioner.agent_name,
                     statement=result.get("agent_response", ""),
                     confidence=result.get("response_confidence", 0.5),
-                    timestamp=datetime.utcnow()
+                    timestamp=datetime.now(UTC)
                 ))
             except Exception as e:
                 self.logger.warning("question_failed", error=str(e))
@@ -536,7 +536,7 @@ class DebateWorkflow:
                         speaker=responder.agent_name,
                         statement=result.get("agent_response", ""),
                         confidence=result.get("response_confidence", 0.5),
-                        timestamp=datetime.utcnow(),
+                        timestamp=datetime.now(UTC),
                         response_to=questioner.agent_name
                     ))
                 except Exception as e:

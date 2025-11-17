@@ -19,7 +19,7 @@ Part of: EPIC-006 Advanced Workflow Patterns
 import asyncio
 from typing import List, Dict, Any, Optional, Callable, Literal
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 import structlog
 
@@ -212,7 +212,7 @@ class VerificationWorkflow:
         Returns:
             VerificationResult with verification outcome
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
         all_findings: List[VerificationFinding] = []
         current_state = initial_state.copy()
         original_output = None
@@ -345,7 +345,7 @@ class VerificationWorkflow:
             # Calculate final verification score
             final_score = self._calculate_final_score(all_findings)
 
-            execution_time = (datetime.utcnow() - start_time).total_seconds()
+            execution_time = (datetime.now(UTC) - start_time).total_seconds()
 
             self.logger.info(
                 "workflow_completed",
@@ -380,7 +380,7 @@ class VerificationWorkflow:
                 verification_score=0.0,
                 verifier_confidence=0.0,
                 iterations=0,
-                execution_time=(datetime.utcnow() - start_time).total_seconds(),
+                execution_time=(datetime.now(UTC) - start_time).total_seconds(),
                 error=error
             )
 
@@ -396,7 +396,7 @@ class VerificationWorkflow:
                 verification_score=0.0,
                 verifier_confidence=0.0,
                 iterations=0,
-                execution_time=(datetime.utcnow() - start_time).total_seconds(),
+                execution_time=(datetime.now(UTC) - start_time).total_seconds(),
                 error=f"Verification error: {str(e)}"
             )
 
@@ -527,7 +527,7 @@ class MultiVerifierWorkflow:
         agent_executor: Callable[[str, AgentState], Any]
     ) -> VerificationResult:
         """Execute multi-verifier workflow."""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         # Step 1: Producer creates output
         producer_result = await agent_executor(self.producer_agent, initial_state)
@@ -587,7 +587,7 @@ class MultiVerifierWorkflow:
             verification_score=avg_score,
             verifier_confidence=0.8,
             iterations=1,
-            execution_time=(datetime.utcnow() - start_time).total_seconds()
+            execution_time=(datetime.now(UTC) - start_time).total_seconds()
         )
 
 

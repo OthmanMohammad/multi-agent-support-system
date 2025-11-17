@@ -11,7 +11,7 @@ Provides persistent, reliable job tracking with:
 """
 import asyncio
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Dict, Any, Optional, List
 from uuid import UUID, uuid4
 from enum import Enum
@@ -198,7 +198,7 @@ class RedisJobStore:
             await self.initialize()
 
         job_id = uuid4()
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         job_data = {
             "job_id": str(job_id),
@@ -326,9 +326,9 @@ class RedisJobStore:
 
                 # Set timestamps based on status
                 if status == JobStatus.RUNNING and not job_data.get("started_at"):
-                    job_data["started_at"] = datetime.utcnow().isoformat()
+                    job_data["started_at"] = datetime.now(UTC).isoformat()
                 elif status in [JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED, JobStatus.TIMEOUT]:
-                    job_data["completed_at"] = datetime.utcnow().isoformat()
+                    job_data["completed_at"] = datetime.now(UTC).isoformat()
                     job_data["progress"] = 100.0
 
             if progress is not None:
@@ -478,7 +478,7 @@ class RedisJobStore:
         if not self._initialized:
             await self.initialize()
 
-        cutoff = datetime.utcnow() - timedelta(hours=max_age_hours)
+        cutoff = datetime.now(UTC) - timedelta(hours=max_age_hours)
         deleted_count = 0
 
         try:
@@ -581,7 +581,7 @@ class InMemoryJobStore:
     ) -> UUID:
         """Create a new job in memory"""
         job_id = uuid4()
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         self._jobs[job_id] = {
             "job_id": str(job_id),
@@ -627,9 +627,9 @@ class InMemoryJobStore:
         if status is not None:
             job["status"] = status.value
             if status == JobStatus.RUNNING and not job.get("started_at"):
-                job["started_at"] = datetime.utcnow().isoformat()
+                job["started_at"] = datetime.now(UTC).isoformat()
             elif status in [JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED, JobStatus.TIMEOUT]:
-                job["completed_at"] = datetime.utcnow().isoformat()
+                job["completed_at"] = datetime.now(UTC).isoformat()
                 job["progress"] = 100.0
 
         if progress is not None:
@@ -667,7 +667,7 @@ class InMemoryJobStore:
 
     async def cleanup_old_jobs(self, max_age_hours: int = 24) -> int:
         """Clean up old jobs from memory"""
-        cutoff = datetime.utcnow() - timedelta(hours=max_age_hours)
+        cutoff = datetime.now(UTC) - timedelta(hours=max_age_hours)
         to_remove = []
 
         for job_id, job in self._jobs.items():
