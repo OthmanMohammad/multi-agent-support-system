@@ -226,8 +226,8 @@ class OverageAlert(BaseAgent):
 
             usage_percentage = (usage_value / limit) * 100 if limit > 0 else 0
 
-            # Check against thresholds
-            for threshold in self.ALERT_THRESHOLDS:
+            # Check against thresholds in reverse order to match highest threshold first
+            for threshold in reversed(self.ALERT_THRESHOLDS):
                 if usage_percentage >= threshold["percentage"]:
                     alerts.append({
                         "metric": metric,

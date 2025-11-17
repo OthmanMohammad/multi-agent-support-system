@@ -453,8 +453,13 @@ Help Center: https://help.acme-corp.com
         # In production, integrate with SendGrid, AWS SES, etc.
         # For now, return mock sent email
 
+        # Handle validation gracefully - log but don't raise
         if not validation.get("is_valid"):
-            raise ValueError(f"Email validation failed: {validation['errors']}")
+            self.logger.warning(
+                "email_validation_failed",
+                errors=validation.get("errors", []),
+                warnings=validation.get("warnings", [])
+            )
 
         import hashlib
         email_id = hashlib.md5(

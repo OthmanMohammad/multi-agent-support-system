@@ -12,51 +12,41 @@ from src.api.models.agent_models import (
 
 # Analytics models
 from src.api.models.analytics_models import (
-    AnalyticsQuery,
-    AnalyticsResponse,
-    MetricDefinition,
-    TimeSeriesData,
+    SystemOverviewResponse,
+    TimeSeriesResponse,
 )
 
 # Authentication models
 from src.api.models.auth_models import (
-    Token,
-    TokenData,
-    UserLogin,
-    UserCreate,
-    UserResponse,
-    APIKeyCreate,
+    LoginRequest,
+    LoginResponse,
+    APIKeyCreateRequest,
     APIKeyResponse,
 )
 
 # Conversation models
 from src.api.models.conversation_models import (
-    ConversationCreate,
-    ConversationResponse,
-    MessageCreate,
+    ConversationDetailResponse,
     MessageResponse,
 )
 
 # Customer models
 from src.api.models.customer_models import (
-    CustomerCreate,
-    CustomerUpdate,
+    CustomerCreateRequest,
+    CustomerUpdateRequest,
     CustomerResponse,
 )
 
 # Webhook models
 from src.api.models.webhook_models import (
-    WebhookEvent,
-    WebhookPayload,
-    WebhookConfig,
+    WebhookCreateRequest,
+    WebhookResponse,
 )
 
 # Workflow models
 from src.api.models.workflow_models import (
-    WorkflowExecuteRequest,
-    WorkflowExecuteResponse,
-    WorkflowStatus,
-    StepResult,
+    SequentialWorkflowRequest,
+    ParallelWorkflowRequest,
 )
 
 __all__ = [
@@ -64,34 +54,24 @@ __all__ = [
     "AgentExecuteRequest",
     "AgentExecuteResponse",
     # Analytics models
-    "AnalyticsQuery",
-    "AnalyticsResponse",
-    "MetricDefinition",
-    "TimeSeriesData",
+    "SystemOverviewResponse",
+    "TimeSeriesResponse",
     # Auth models
-    "Token",
-    "TokenData",
-    "UserLogin",
-    "UserCreate",
-    "UserResponse",
-    "APIKeyCreate",
+    "LoginRequest",
+    "LoginResponse",
+    "APIKeyCreateRequest",
     "APIKeyResponse",
     # Conversation models
-    "ConversationCreate",
-    "ConversationResponse",
-    "MessageCreate",
+    "ConversationDetailResponse",
     "MessageResponse",
     # Customer models
-    "CustomerCreate",
-    "CustomerUpdate",
+    "CustomerCreateRequest",
+    "CustomerUpdateRequest",
     "CustomerResponse",
     # Webhook models
-    "WebhookEvent",
-    "WebhookPayload",
-    "WebhookConfig",
+    "WebhookCreateRequest",
+    "WebhookResponse",
     # Workflow models
-    "WorkflowExecuteRequest",
-    "WorkflowExecuteResponse",
-    "WorkflowStatus",
-    "StepResult",
+    "SequentialWorkflowRequest",
+    "ParallelWorkflowRequest",
 ]
