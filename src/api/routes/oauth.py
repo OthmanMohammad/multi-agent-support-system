@@ -22,7 +22,7 @@ from src.api.auth.jwt import JWTManager
 from src.database.repositories.user_repository import UserRepository
 from src.database.models.user import User, UserRole, UserStatus
 from src.database.connection import get_db_session
-from src.database.uow import UnitOfWork
+from src.database.unit_of_work import UnitOfWork
 from src.core.config import get_settings
 from src.utils.logging.setup import get_logger
 

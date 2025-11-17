@@ -16,6 +16,8 @@ from src.api.dependencies.auth_dependencies import (
 
 from src.api.dependencies.service_dependencies import (
     get_conversation_application_service,
+    get_customer_application_service,
+    get_analytics_service,
 )
 
 __all__ = [
@@ -30,4 +32,6 @@ __all__ = [
     "get_current_user_or_api_key",
     # Service dependencies
     "get_conversation_application_service",
+    "get_customer_application_service",
+    "get_analytics_service",
 ]
