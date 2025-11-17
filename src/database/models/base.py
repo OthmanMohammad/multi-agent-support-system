@@ -57,8 +57,9 @@ class BaseModel(Base, TimestampMixin, AuditMixin):
     """
     Base model with common functionality
     All models should inherit from this
-    
+
     Features:
+    - UUID primary key (id)
     - Automatic timestamps (created_at, updated_at)
     - Audit trail (created_by, updated_by, deleted_by)
     - Soft delete support (deleted_at)
@@ -66,6 +67,15 @@ class BaseModel(Base, TimestampMixin, AuditMixin):
     - to_dict() helper method
     """
     __abstract__ = True
+
+    # Primary key (UUID)
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        nullable=False,
+        comment="Primary key (UUID)"
+    )
     
     @declared_attr
     def __tablename__(cls) -> str:
