@@ -434,11 +434,11 @@ def callback():
     # Check if user denied
     error = request.args.get('error')
     if error == 'access_denied':
-        return """
-            <h1>Authorization Denied</h1>
-            <p>You must authorize the app to continue.</p>
-            <a href="/login">Try Again</a>
-        """
+        return '''
+<h1>Authorization Denied</h1>
+<p>You must authorize the app to continue.</p>
+<a href="/login">Try Again</a>
+        '''
 
     # Continue normal flow...
 ```
@@ -1430,3 +1430,4 @@ if __name__ == "__main__":
         print(f"\nResponse preview:\n{result3['agent_response'][:300]}...")
 
     asyncio.run(test())
+    
