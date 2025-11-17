@@ -25,22 +25,29 @@ settings = get_settings()
 _redis_client: Optional[Redis] = None
 
 
-async def get_redis_client() -> Redis:
+async def get_redis_client() -> Optional[Redis]:
     """
     Get or create Redis client connection.
 
     Uses connection pooling for performance.
     Returns existing client if already initialized.
+    Returns None if Redis is disabled in settings.
 
     Returns:
-        Redis async client
+        Redis async client or None if disabled
 
     Example:
         >>> client = await get_redis_client()
-        >>> await client.set("key", "value")
-        >>> value = await client.get("key")
+        >>> if client:
+        ...     await client.set("key", "value")
+        ...     value = await client.get("key")
     """
     global _redis_client
+
+    # If Redis is disabled, return None
+    if not settings.redis.enabled:
+        logger.info("redis_disabled", message="Redis is disabled in configuration")
+        return None
 
     if _redis_client is None:
         logger.info("redis_client_initializing", url=settings.redis.url)
@@ -113,6 +120,10 @@ class TokenBlacklist:
             return
 
         client = await get_redis_client()
+        if client is None:
+            logger.warning("token_blacklist_unavailable", message="Redis not available")
+            return
+
         key = f"blacklist:token:{jti}"
 
         await client.setex(key, ttl_seconds, "1")
@@ -138,6 +149,11 @@ class TokenBlacklist:
             return False
 
         client = await get_redis_client()
+        if client is None:
+            # If Redis is unavailable, we cannot check blacklist
+            # Return False to allow token (fail open for availability)
+            return False
+
         key = f"blacklist:token:{jti}"
 
         exists = await client.exists(key)
@@ -188,6 +204,11 @@ class RateLimiter:
             return True, 0, max_requests
 
         client = await get_redis_client()
+        if client is None:
+            # If Redis is unavailable, allow all requests (fail open)
+            logger.warning("rate_limit_unavailable", message="Redis not available")
+            return True, 0, max_requests
+
         redis_key = f"ratelimit:{key}"
 
         # Increment counter
@@ -223,6 +244,9 @@ class RateLimiter:
             >>> await RateLimiter.reset_rate_limit("user:123")
         """
         client = await get_redis_client()
+        if client is None:
+            return
+
         redis_key = f"ratelimit:{key}"
         await client.delete(redis_key)
         logger.info("rate_limit_reset", key=key)
@@ -243,6 +267,9 @@ class RateLimiter:
             >>> print(f"Rate limit resets in {reset_time} seconds")
         """
         client = await get_redis_client()
+        if client is None:
+            return None
+
         redis_key = f"ratelimit:{key}"
         ttl = await client.ttl(redis_key)
         return ttl if ttl > 0 else None
@@ -276,6 +303,10 @@ class SessionCache:
             >>> await SessionCache.set_session("session-abc", session_data)
         """
         client = await get_redis_client()
+        if client is None:
+            logger.warning("session_cache_unavailable", message="Redis not available")
+            return
+
         key = f"session:{session_id}"
         await client.setex(key, ttl_seconds, data)
         logger.debug("session_cached", session_id=session_id, ttl=ttl_seconds)
@@ -298,6 +329,9 @@ class SessionCache:
             ...     session = json.loads(data)
         """
         client = await get_redis_client()
+        if client is None:
+            return None
+
         key = f"session:{session_id}"
         data = await client.get(key)
         return data
@@ -314,6 +348,9 @@ class SessionCache:
             >>> await SessionCache.delete_session("session-abc")
         """
         client = await get_redis_client()
+        if client is None:
+            return
+
         key = f"session:{session_id}"
         await client.delete(key)
         logger.debug("session_deleted", session_id=session_id)

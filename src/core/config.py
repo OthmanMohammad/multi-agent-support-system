@@ -263,6 +263,10 @@ class JWTConfig(BaseSettings):
 class RedisConfig(BaseSettings):
     """Redis configuration for caching and rate limiting"""
 
+    enabled: bool = Field(
+        default=True,
+        description="Enable Redis (set to False for development without Redis)"
+    )
     url: str = Field(
         default="redis://localhost:6379/0",
         description="Redis connection URL"

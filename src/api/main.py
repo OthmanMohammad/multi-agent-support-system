@@ -166,15 +166,21 @@ async def startup_event():
     await init_db()
     logger.info("database_initialized")
 
-    # Initialize Redis connection
+    # Initialize Redis connection (optional - will be None if disabled)
     logger.info("redis_initialization_started")
     redis_client = await get_redis_client()
-    logger.info(
-        "redis_initialized",
-        host=settings.redis.host,
-        port=settings.redis.port,
-        rate_limiting_enabled=settings.redis.rate_limit_enabled
-    )
+    if redis_client:
+        logger.info(
+            "redis_initialized",
+            url=settings.redis.url,
+            rate_limiting_enabled=settings.redis.rate_limit_enabled,
+            token_blacklist_enabled=settings.redis.token_blacklist_enabled
+        )
+    else:
+        logger.warning(
+            "redis_not_available",
+            message="Redis is disabled or unavailable. Rate limiting and token blacklist will not work."
+        )
 
     # Log CORS configuration
     logger.info(
