@@ -29,10 +29,22 @@ class CustomerApplicationService:
         self.uow = uow
         self.domain = domain_service
         self.infrastructure = infrastructure_service
-        self.event_bus = get_event_bus()
+        self._event_bus = None  # Lazy initialization
         self.logger = get_logger(__name__)
-        
+
         self.logger.debug("customer_application_service_initialized")
+
+    @property
+    def event_bus(self):
+        """Lazy-load event bus to allow test mocking"""
+        if self._event_bus is None:
+            self._event_bus = get_event_bus()
+        return self._event_bus
+
+    @event_bus.setter
+    def event_bus(self, value):
+        """Allow direct setting for tests"""
+        self._event_bus = value
     
     async def create_customer(
         self,
