@@ -1069,7 +1069,7 @@ def logout():
 
     def _guide_pkce(self) -> str:
         """Guide for PKCE (Proof Key for Code Exchange)"""
-        return """**🔐 PKCE (Proof Key for Code Exchange)**
+        return r"""**🔐 PKCE (Proof Key for Code Exchange)**
 
 PKCE adds security for mobile apps and SPAs (Single Page Apps).
 

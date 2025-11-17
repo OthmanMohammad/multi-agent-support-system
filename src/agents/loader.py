@@ -100,16 +100,16 @@ def load_all_agents():
         logger.debug("loaded_tier1_integration", count=5)
 
         from src.agents.essential.support.account import (
-            profile_manager,
-            team_manager,
-            security_advisor,
-            sso_specialist,
-            permissions_manager,
-            data_export_specialist,
-            account_deletion_specialist,
-            compliance_specialist,
-            audit_log_specialist,
-            notification_configurator,
+            ProfileManager,
+            TeamManager,
+            SecurityAdvisor,
+            SSOSpecialist,
+            PermissionManager,
+            DataExportSpecialist,
+            AccountDeletionSpecialist,
+            ComplianceSpecialist,
+            AuditLogSpecialist,
+            NotificationConfigurator,
         )
         logger.debug("loaded_tier1_account", count=10)
 
