@@ -23,7 +23,7 @@ from collections import defaultdict
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
 from src.services.infrastructure.agent_registry import AgentRegistry
-from src.database.session import get_db
+from src.database.connection import get_db_session
 from src.database.models.conversation import Conversation
 from src.database.models.message import Message
 from src.database.models.agent_performance import AgentPerformance

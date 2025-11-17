@@ -24,7 +24,7 @@ from collections import defaultdict, Counter
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
 from src.services.infrastructure.agent_registry import AgentRegistry
-from src.database.session import get_db
+from src.database.connection import get_db_session
 from src.database.models.conversation import Conversation
 from src.database.models.message import Message
 
@@ -198,49 +198,48 @@ Identify 5-7 most significant conversation patterns and provide actionable recom
         min_conversations: int
     ) -> Dict[str, Any]:
         """Analyze conversation patterns from database."""
-        db = next(get_db())
+        async with get_db_session() as db:
+            try:
+                end_date = datetime.utcnow()
+                start_date = end_date - timedelta(days=lookback_days)
 
-        try:
-            end_date = datetime.utcnow()
-            start_date = end_date - timedelta(days=lookback_days)
+                # Query conversations
+                conversations = db.query(Conversation).filter(
+                    Conversation.started_at >= start_date
+                ).all()
 
-            # Query conversations
-            conversations = db.query(Conversation).filter(
-                Conversation.started_at >= start_date
-            ).all()
+                if len(conversations) < min_conversations:
+                    return {
+                        "total_conversations": len(conversations),
+                        "insufficient_data": True
+                    }
 
-            if len(conversations) < min_conversations:
+                # Analyze patterns
+                flow_patterns = self._analyze_flow_patterns(conversations)
+                sentiment_patterns = self._analyze_sentiment_patterns(conversations)
+                resolution_patterns = self._analyze_resolution_patterns(conversations)
+                agent_patterns = self._analyze_agent_patterns(conversations)
+
                 return {
                     "total_conversations": len(conversations),
-                    "insufficient_data": True
+                    "date_range": {
+                        "start": start_date.isoformat(),
+                        "end": end_date.isoformat()
+                    },
+                    "flow_patterns": flow_patterns,
+                    "sentiment_patterns": sentiment_patterns,
+                    "resolution_patterns": resolution_patterns,
+                    "agent_patterns": agent_patterns,
+                    "pattern_count": (
+                        len(flow_patterns) +
+                        len(sentiment_patterns) +
+                        len(resolution_patterns) +
+                        len(agent_patterns)
+                    )
                 }
-
-            # Analyze patterns
-            flow_patterns = self._analyze_flow_patterns(conversations)
-            sentiment_patterns = self._analyze_sentiment_patterns(conversations)
-            resolution_patterns = self._analyze_resolution_patterns(conversations)
-            agent_patterns = self._analyze_agent_patterns(conversations)
-
-            return {
-                "total_conversations": len(conversations),
-                "date_range": {
-                    "start": start_date.isoformat(),
-                    "end": end_date.isoformat()
-                },
-                "flow_patterns": flow_patterns,
-                "sentiment_patterns": sentiment_patterns,
-                "resolution_patterns": resolution_patterns,
-                "agent_patterns": agent_patterns,
-                "pattern_count": (
-                    len(flow_patterns) +
-                    len(sentiment_patterns) +
-                    len(resolution_patterns) +
-                    len(agent_patterns)
-                )
-            }
-
-        finally:
-            db.close()
+            except Exception as e:
+                logger.error("conversation_analysis_failed", error=str(e))
+                return {"error": str(e), "total_conversations": 0}
 
     def _analyze_flow_patterns(self, conversations: List[Conversation]) -> Dict[str, Any]:
         """Analyze conversation flow patterns."""

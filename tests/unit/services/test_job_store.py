@@ -452,4 +452,3 @@ async def test_concurrent_job_updates(memory_store):
     # Job should exist and have some progress
     job = await memory_store.get_job(job_id)
     assert job is not None
-    

@@ -19,7 +19,7 @@ from datetime import datetime, timedelta
 from src.workflow.state import AgentState
 from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
 from src.services.infrastructure.agent_registry import AgentRegistry
-from src.database.session import get_db
+from src.database.connection import get_db_session
 
 logger = structlog.get_logger(__name__)
 
