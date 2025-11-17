@@ -135,7 +135,7 @@ class DashboardGeneratorAgent(BaseAgent):
     def __init__(self):
         config = AgentConfig(
             name="dashboard_generator",
-            type=AgentType.GENERATOR,
+            type=AgentType.ANALYZER,
             temperature=0.2,
             max_tokens=2000,
             capabilities=[AgentCapability.DATABASE_WRITE],

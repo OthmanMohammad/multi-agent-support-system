@@ -241,9 +241,9 @@ class ConversationDomainService:
         
         Priority Mapping:
         - Score >= 7: critical (1hr SLA)
-        - Score >= 5: high (4hr SLA)
-        - Score >= 3: medium (24hr SLA)
-        - Score < 3: low (3 day SLA)
+        - Score >= 4: high (4hr SLA)
+        - Score >= 2: medium (24hr SLA)
+        - Score < 2: low (3 day SLA)
         
         Args:
             customer_plan: Customer's plan
@@ -285,9 +285,9 @@ class ConversationDomainService:
         # Map score to priority
         if score >= 7:
             return "critical"
-        elif score >= 5:
+        elif score >= 4:
             return "high"
-        elif score >= 3:
+        elif score >= 2:
             return "medium"
         else:
             return "low"

@@ -163,3 +163,22 @@ def sample_conversation_data():
         "kb_match_score": 0.5,  # Low match
         "created_at": datetime.now()
     }
+
+
+@pytest.fixture(autouse=True)
+def mock_event_bus(monkeypatch):
+    """Mock EventBus for all KB agent tests"""
+    mock_bus = AsyncMock()
+    mock_bus.publish = AsyncMock()
+    mock_bus.subscribe = AsyncMock()
+
+    def get_mock_event_bus():
+        return mock_bus
+
+    # Patch get_event_bus to return our mock
+    monkeypatch.setattr(
+        'src.core.events.get_event_bus',
+        get_mock_event_bus
+    )
+
+    return mock_bus

@@ -127,8 +127,11 @@ class BaseService:
     
     def __init__(self):
         """Initialize base service with logger"""
-        self.logger = get_logger(self.__class__.__name__)
-        self.logger.debug("service_initialized", service_class=self.__class__.__name__)
+        logger_name = self.__class__.__name__
+        self.logger = get_logger(logger_name)
+        # Store logger name for tests and debugging
+        self.logger.name = logger_name
+        self.logger.debug("service_initialized", service_class=logger_name)
     
     # ===== Helper Methods =====
     

@@ -191,9 +191,12 @@ class UsageTracker(BaseAgent):
         """Extract current usage metrics from customer metadata"""
         usage = {}
 
+        # Check if usage data is nested in usage_data key
+        usage_data = customer_metadata.get("usage_data", customer_metadata)
+
         for metric in self.BILLABLE_METRICS.keys():
-            # Get from metadata or default to 0
-            usage[metric] = customer_metadata.get(metric, 0)
+            # Get from usage_data or metadata or default to 0
+            usage[metric] = usage_data.get(metric, 0)
 
         return usage
 

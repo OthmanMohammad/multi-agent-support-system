@@ -186,14 +186,14 @@ class VectorStore:
                     ]
                 )
             
-            # Search
-            results = self.client.search(
+            # Search (using query_points instead of deprecated search method)
+            results = self.client.query_points(
                 collection_name=self.collection_name,
-                query_vector=query_vector,
+                query=query_vector,
                 query_filter=query_filter,
                 limit=limit,
                 score_threshold=score_threshold
-            )
+            ).points
             
             # Format results
             documents = []

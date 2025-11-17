@@ -213,6 +213,8 @@ class InboundQualifier(BaseAgent):
         timeline_keywords = {
             "asap": "Immediate",
             "urgent": "Immediate",
+            "demo": "Immediate",  # Demo request indicates immediate interest
+            "trial": "Immediate",
             "this week": "This week",
             "this month": "This month",
             "this quarter": "This quarter",

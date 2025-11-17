@@ -205,6 +205,9 @@ class PredictionExplainerAgent(BaseAgent):
         """Generate what-if scenarios."""
         scenarios = []
 
+        if not feature_importance:
+            return scenarios
+
         # Get top 3 important features
         top_features = feature_importance[:3]
 
@@ -266,6 +269,9 @@ class PredictionExplainerAgent(BaseAgent):
         model_type: str
     ) -> str:
         """Generate business-friendly interpretation."""
+        if not feature_importance:
+            return "No feature importance data available for this prediction."
+
         top_features = feature_importance[:3]
 
         interpretation = f"This prediction is primarily driven by:\n\n"
@@ -274,7 +280,8 @@ class PredictionExplainerAgent(BaseAgent):
             impact_desc = "increasing" if feat["impact"] == "positive" else "decreasing"
             interpretation += f"{i}. **{feat['feature'].replace('_', ' ').title()}** ({feat['feature_value']}) - {impact_desc} the score by {abs(feat['shap_value']):.3f}\n"
 
-        interpretation += f"\nThe model's decision is most sensitive to changes in {top_features[0]['feature'].replace('_', ' ')}."
+        if top_features:
+            interpretation += f"\nThe model's decision is most sensitive to changes in {top_features[0]['feature'].replace('_', ' ')}."
 
         return interpretation
 
@@ -300,6 +307,9 @@ class PredictionExplainerAgent(BaseAgent):
 
 **Feature Importance (Top Features):**
 """
+
+        if not feature_importance:
+            report += "No feature importance data available.\n\n"
 
         for feat in feature_importance[:10]:
             impact_icon = "📈" if feat["impact"] == "positive" else "📉" if feat["impact"] == "negative" else "➡️"

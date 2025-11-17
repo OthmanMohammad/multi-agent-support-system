@@ -424,7 +424,16 @@ Return JSON with title, date, time, duration_minutes, attendees (array), meeting
         time_str = meeting_details.get("time", "14:00")
         duration = meeting_details.get("duration_minutes", meeting_config["duration_minutes"])
 
-        start_datetime = datetime.fromisoformat(f"{date_str}T{time_str}:00")
+        # Handle missing date
+        if not date_str:
+            date_str = (datetime.now(UTC) + timedelta(days=1)).strftime("%Y-%m-%d")
+
+        try:
+            start_datetime = datetime.fromisoformat(f"{date_str}T{time_str}:00")
+        except (ValueError, TypeError):
+            # Fallback to tomorrow at 2pm if date parsing fails
+            start_datetime = datetime.now(UTC).replace(hour=14, minute=0, second=0, microsecond=0) + timedelta(days=1)
+
         end_datetime = start_datetime + timedelta(minutes=duration)
 
         # Prepare meeting data

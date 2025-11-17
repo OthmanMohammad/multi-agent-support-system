@@ -20,30 +20,30 @@ from core.result import Result
 from core.errors import ValidationError, InternalError
 
 
-class TestServiceForTesting(BaseService):
-    """Concrete service class for testing"""
-    
+class ConcreteServiceForTesting(BaseService):
+    """Concrete service class for testing (renamed to avoid pytest collection)"""
+
     def sync_success(self) -> Result[str]:
         """Sync operation that succeeds"""
         return Result.ok("success")
-    
+
     async def async_success(self) -> Result[str]:
         """Async operation that succeeds"""
         await asyncio.sleep(0.001)
         return Result.ok("async_success")
-    
+
     def sync_failure(self) -> Result[str]:
         """Sync operation that returns failure"""
         return Result.fail(ValidationError(
             message="Test failure",
             field="test"
         ))
-    
+
     @handle_exceptions("test_operation")
     def sync_with_exception(self) -> Result[str]:
         """Sync operation that raises exception"""
         raise ValueError("Test exception")
-    
+
     @handle_exceptions("test_async_operation")
     async def async_with_exception(self) -> Result[str]:
         """Async operation that raises exception"""
@@ -56,18 +56,18 @@ class TestBaseServiceInitialization:
     
     def test_service_initialization(self):
         """Test service initializes with logger"""
-        service = TestServiceForTesting()
+        service = ConcreteServiceForTesting()
         
         assert service.logger is not None
-        assert service.logger.name == "TestServiceForTesting"
+        assert service.logger.name == "ConcreteServiceForTesting"
     
     def test_service_repr(self):
         """Test service string representation"""
-        service = TestServiceForTesting()
+        service = ConcreteServiceForTesting()
         
         repr_str = repr(service)
         
-        assert "TestServiceForTesting" in repr_str
+        assert "ConcreteServiceForTesting" in repr_str
 
 
 class TestAsyncOperations:
@@ -76,7 +76,7 @@ class TestAsyncOperations:
     @pytest.mark.asyncio
     async def test_async_success_operation(self):
         """Test successful async operation"""
-        service = TestServiceForTesting()
+        service = ConcreteServiceForTesting()
         
         result = await service.async_success()
         
@@ -86,7 +86,7 @@ class TestAsyncOperations:
     @pytest.mark.asyncio
     async def test_async_exception_handling(self):
         """Test async operation with exception handling"""
-        service = TestServiceForTesting()
+        service = ConcreteServiceForTesting()
         
         result = await service.async_with_exception()
         
@@ -97,7 +97,7 @@ class TestAsyncOperations:
     @pytest.mark.asyncio
     async def test_execute_async_success(self):
         """Test execute_async with successful operation"""
-        service = TestServiceForTesting()
+        service = ConcreteServiceForTesting()
         
         async def async_op():
             await asyncio.sleep(0.001)
@@ -111,7 +111,7 @@ class TestAsyncOperations:
     @pytest.mark.asyncio
     async def test_execute_async_failure(self):
         """Test execute_async with failing operation"""
-        service = TestServiceForTesting()
+        service = ConcreteServiceForTesting()
         
         async def async_op():
             await asyncio.sleep(0.001)
@@ -128,7 +128,7 @@ class TestSyncOperations:
     
     def test_sync_success_operation(self):
         """Test successful sync operation"""
-        service = TestServiceForTesting()
+        service = ConcreteServiceForTesting()
         
         result = service.sync_success()
         
@@ -137,7 +137,7 @@ class TestSyncOperations:
     
     def test_sync_failure_operation(self):
         """Test sync operation returning failure"""
-        service = TestServiceForTesting()
+        service = ConcreteServiceForTesting()
         
         result = service.sync_failure()
         
@@ -146,7 +146,7 @@ class TestSyncOperations:
     
     def test_sync_exception_handling(self):
         """Test sync operation with exception handling"""
-        service = TestServiceForTesting()
+        service = ConcreteServiceForTesting()
         
         result = service.sync_with_exception()
         
@@ -156,7 +156,7 @@ class TestSyncOperations:
     
     def test_execute_success(self):
         """Test execute with successful operation"""
-        service = TestServiceForTesting()
+        service = ConcreteServiceForTesting()
         
         def sync_op():
             return "result"
@@ -168,7 +168,7 @@ class TestSyncOperations:
     
     def test_execute_failure(self):
         """Test execute with failing operation"""
-        service = TestServiceForTesting()
+        service = ConcreteServiceForTesting()
         
         def sync_op():
             raise ValueError("Operation failed")
@@ -184,7 +184,7 @@ class TestEmailValidation:
     
     @pytest.fixture
     def service(self):
-        return TestServiceForTesting()
+        return ConcreteServiceForTesting()
     
     @pytest.mark.parametrize("email,expected", [
         ("user@example.com", True),
@@ -210,7 +210,7 @@ class TestUUIDValidation:
     
     @pytest.fixture
     def service(self):
-        return TestServiceForTesting()
+        return ConcreteServiceForTesting()
     
     def test_valid_uuid(self, service):
         """Test valid UUID string"""
@@ -234,7 +234,7 @@ class TestRequireValidation:
     
     @pytest.fixture
     def service(self):
-        return TestServiceForTesting()
+        return ConcreteServiceForTesting()
     
     def test_require_not_none_with_value(self, service):
         """Test require_not_none with valid value"""
@@ -278,7 +278,7 @@ class TestLogOperation:
     
     def test_log_operation_success(self, caplog):
         """Test logging successful operation"""
-        service = TestServiceForTesting()
+        service = ConcreteServiceForTesting()
         
         service.log_operation("test_op", success=True, user_id="123")
         
@@ -287,7 +287,7 @@ class TestLogOperation:
     
     def test_log_operation_failure(self, caplog):
         """Test logging failed operation"""
-        service = TestServiceForTesting()
+        service = ConcreteServiceForTesting()
         
         service.log_operation("test_op", success=False, error="Test error")
         
@@ -300,7 +300,7 @@ class TestHandleExceptionsDecorator:
     
     def test_decorator_catches_sync_exception(self):
         """Test decorator catches sync exceptions"""
-        service = TestServiceForTesting()
+        service = ConcreteServiceForTesting()
         
         result = service.sync_with_exception()
         
@@ -310,7 +310,7 @@ class TestHandleExceptionsDecorator:
     @pytest.mark.asyncio
     async def test_decorator_catches_async_exception(self):
         """Test decorator catches async exceptions"""
-        service = TestServiceForTesting()
+        service = ConcreteServiceForTesting()
         
         result = await service.async_with_exception()
         
@@ -319,13 +319,13 @@ class TestHandleExceptionsDecorator:
     
     def test_decorator_preserves_function_name(self):
         """Test decorator preserves original function name"""
-        service = TestServiceForTesting()
+        service = ConcreteServiceForTesting()
         
         assert service.sync_with_exception.__name__ == "sync_with_exception"
     
     def test_decorator_includes_operation_name(self):
         """Test decorator includes operation name in error"""
-        service = TestServiceForTesting()
+        service = ConcreteServiceForTesting()
         
         result = service.sync_with_exception()
         

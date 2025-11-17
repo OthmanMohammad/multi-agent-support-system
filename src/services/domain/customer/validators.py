@@ -28,9 +28,39 @@ class CustomerValidators:
                 constraint="required"
             ))
         
-        # Basic email regex pattern
-        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-        
+        # Strict email regex pattern
+        # Local part: alphanumeric, dots, underscores, hyphens, plus signs (but not starting/ending with dot)
+        # Domain: alphanumeric and hyphens (not starting/ending with hyphen), with dot-separated labels
+        # TLD: at least 2 letters
+        pattern = r'^[a-zA-Z0-9_%+-]+(?:\.[a-zA-Z0-9_%+-]+)*@[a-zA-Z0-9]+(?:[.-][a-zA-Z0-9]+)*\.[a-zA-Z]{2,}$'
+
+        # Additional validation: no spaces
+        if ' ' in email:
+            return Result.fail(ValidationError(
+                message="Invalid email format",
+                field="email",
+                value=email,
+                constraint="email_format"
+            ))
+
+        # Additional validation: no consecutive dots
+        if '..' in email:
+            return Result.fail(ValidationError(
+                message="Invalid email format",
+                field="email",
+                value=email,
+                constraint="email_format"
+            ))
+
+        # Additional validation: no multiple @ signs
+        if email.count('@') != 1:
+            return Result.fail(ValidationError(
+                message="Invalid email format",
+                field="email",
+                value=email,
+                constraint="email_format"
+            ))
+
         if not re.match(pattern, email):
             return Result.fail(ValidationError(
                 message="Invalid email format",

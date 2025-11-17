@@ -91,6 +91,9 @@ class PIIDetectorAgent(BaseAgent):
 
         # Extract parameters
         content = state.get("entities", {}).get("content", state.get("agent_response", ""))
+        # Ensure content is a string
+        if content is None:
+            content = ""
         redaction_mode = state.get("entities", {}).get("redaction_mode", "full")
         include_audit = state.get("entities", {}).get("include_audit", True)
         sensitivity_threshold = state.get("entities", {}).get("sensitivity_threshold", "low")

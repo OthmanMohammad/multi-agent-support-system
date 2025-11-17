@@ -78,6 +78,9 @@ class ResponseVerifierAgent(BaseAgent):
 
         # Extract parameters
         response_text = state.get("entities", {}).get("response_text", state.get("agent_response", ""))
+        # Ensure response_text is a string
+        if response_text is None:
+            response_text = ""
         check_level = state.get("entities", {}).get("check_level", "standard")  # standard, strict, minimal
         context = state.get("entities", {}).get("context", {})
 

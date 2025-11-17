@@ -322,12 +322,22 @@ Return JSON with extracted parameters relevant to the email template."""
             "customer_name": customer_metadata.get("customer_name", "Valued Customer"),
             "sender_name": "Support Team",
             "plan_name": customer_metadata.get("plan_name", "Standard Plan"),
+            "topic": "your request",  # Default topic
             **custom_params
         }
 
-        # Fill in template
-        subject = template["subject"].format(**{k: v for k, v in template_vars.items() if k in template["subject"]})
-        body = template["body"].format(**{k: v for k, v in template_vars.items() if k in template["body"]})
+        # Fill in template with safe formatting
+        try:
+            subject = template["subject"].format(**template_vars)
+        except KeyError as e:
+            # If key is missing, use template as-is
+            subject = template["subject"]
+
+        try:
+            body = template["body"].format(**template_vars)
+        except KeyError as e:
+            # If key is missing, use template as-is
+            body = template["body"]
 
         return {
             "subject": subject,

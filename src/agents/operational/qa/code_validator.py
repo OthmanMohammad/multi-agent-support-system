@@ -118,6 +118,9 @@ class CodeValidatorAgent(BaseAgent):
 
         # Extract parameters
         response_text = state.get("entities", {}).get("response_text", state.get("agent_response", ""))
+        # Ensure response_text is a string
+        if response_text is None:
+            response_text = ""
         strict_mode = state.get("entities", {}).get("strict_mode", False)
 
         self.logger.debug(
