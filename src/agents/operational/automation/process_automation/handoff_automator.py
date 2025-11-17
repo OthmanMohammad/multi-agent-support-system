@@ -69,7 +69,7 @@ The specialist will continue assisting you shortly."""
         state["handoff_result"] = handoff_result
         state["next_agent"] = target_agent
         state["response_confidence"] = 0.94
-        state["status"] = "handoff"
+        state["status"] = "resolved"  # Handoff completed successfully
 
         self.logger.info("handoff_completed", target=target_agent)
         return state

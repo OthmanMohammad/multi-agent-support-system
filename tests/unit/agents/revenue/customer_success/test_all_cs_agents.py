@@ -76,7 +76,7 @@ class TestCustomerSuccessAgents:
         agent = HealthScoreAgent()
         assert agent.config.name == "health_score"
         assert agent.config.tier == "revenue"
-        assert agent.config.model == "claude-3-sonnet-20240229"
+        assert agent.config.model == "claude-3-haiku-20240307"
 
     @pytest.mark.asyncio
     async def test_health_score_agent_process(self):

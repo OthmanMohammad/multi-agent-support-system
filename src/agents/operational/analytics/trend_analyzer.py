@@ -195,6 +195,7 @@ class TrendAnalyzerAgent(BaseAgent):
             "previous_value": round(previous_avg, 2),
             "absolute_change": round(absolute_change, 2),
             "percent_change": round(percent_change, 2),
+            "total_change_pct": round(percent_change, 2),  # Alias for compatibility
             "direction": direction,
             "strength": strength,
             "trend": "positive" if percent_change > 0 else "negative" if percent_change < 0 else "neutral"

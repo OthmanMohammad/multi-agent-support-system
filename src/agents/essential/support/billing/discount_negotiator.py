@@ -345,9 +345,9 @@ You can upload documents at: Settings → Billing → Discount Verification
 Once verified, your discount will be applied automatically.
 
 **What you'll save:**
-- Current price: ${mrr}/month
-- With {percent}% discount: ${new_mrr:.2f}/month
-- Monthly savings: ${monthly_savings:.2f}
+- Current price: ${int(mrr)}/month
+- With {percent}% discount: ${int(new_mrr)}/month
+- Monthly savings: ${int(monthly_savings)}
 
 Is there anything else I can help you with?"""
 
@@ -359,16 +359,16 @@ Is there anything else I can help you with?"""
 
             message = f"""Great news! I can offer you a {percent}% discount{duration_text}.
 
-**Current plan:** ${mrr}/month
-**With discount:** ${new_mrr:.2f}/month
-**You save:** ${monthly_savings:.2f}/month
+**Current plan:** ${int(mrr)}/month
+**With discount:** ${int(new_mrr)}/month
+**You save:** ${int(monthly_savings)}/month
 
 **Discount program:** {reason.title()} discount
 
 This discount will be applied to your next invoice{duration_text}. """
 
             if discount_details.get("duration_months", 12) < 12:
-                message += f"After {discount_details['duration_months']} months, your rate will return to ${mrr}/month (you can cancel anytime)."
+                message += f"After {discount_details['duration_months']} months, your rate will return to ${int(mrr)}/month (you can cancel anytime)."
 
             message += "\n\nWould you like me to apply this discount to your account?"
 

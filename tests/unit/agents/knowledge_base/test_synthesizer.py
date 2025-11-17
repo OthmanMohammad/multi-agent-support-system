@@ -18,7 +18,7 @@ class TestKBSynthesizer:
     def test_initialization(self, kb_synthesizer):
         """Test KB Synthesizer initializes correctly"""
         assert kb_synthesizer.config.name == "kb_synthesizer"
-        assert kb_synthesizer.config.model == "claude-3-sonnet-20240229"
+        assert kb_synthesizer.config.model == "claude-3-haiku-20240307"
 
     @pytest.mark.asyncio
     async def test_synthesize_single_article(self, kb_synthesizer, mock_llm, sample_kb_article):

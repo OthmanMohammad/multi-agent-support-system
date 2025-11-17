@@ -18,7 +18,7 @@ class TestFAQGenerator:
     def test_initialization(self, faq_generator):
         """Test FAQ Generator initializes correctly"""
         assert faq_generator.config.name == "faq_generator"
-        assert faq_generator.config.model == "claude-3-sonnet-20240229"
+        assert faq_generator.config.model == "claude-3-haiku-20240307"
 
     @pytest.mark.asyncio
     async def test_generate_faqs_no_questions(self, faq_generator, mock_db_session):

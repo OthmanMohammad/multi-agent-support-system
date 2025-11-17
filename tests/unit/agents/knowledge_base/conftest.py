@@ -5,6 +5,7 @@ Shared fixtures for Knowledge Base agent tests.
 import pytest
 from unittest.mock import Mock, MagicMock, patch, AsyncMock
 from datetime import datetime, timedelta
+from contextlib import contextmanager
 import uuid
 
 
@@ -108,22 +109,34 @@ def sample_kb_results(sample_kb_article):
 
 
 @pytest.fixture
-def mock_db_session():
+def mock_db_session(monkeypatch):
     """Mock database session"""
     session = MagicMock()
 
     # Mock async context manager
-    async def mock_get_session():
+    @contextmanager
+    def mock_get_session():
         yield session
 
+    # Configure mock session
     session.query.return_value.filter.return_value.first.return_value = None
     session.query.return_value.filter.return_value.all.return_value = []
-    session.execute = AsyncMock(return_value=MagicMock(
-        scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[])))
-    ))
+
+    # Mock execute to return a result with .all() method
+    mock_result = MagicMock()
+    mock_result.all.return_value = []
+    mock_result.scalars.return_value = MagicMock(all=MagicMock(return_value=[]))
+    session.execute = AsyncMock(return_value=mock_result)
+
     session.commit = AsyncMock()
     session.rollback = AsyncMock()
     session.add = MagicMock()
+
+    # Patch get_db_session to return our mock
+    monkeypatch.setattr(
+        'src.database.connection.get_db_session',
+        mock_get_session
+    )
 
     return session
 

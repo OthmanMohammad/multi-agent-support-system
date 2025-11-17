@@ -81,7 +81,12 @@ Resolution SLA: {sla['resolution_hours']} hours
     def _check_sla_compliance(self, ticket_data: Dict, sla: Dict) -> Dict:
         """Check if ticket is within SLA."""
         created_at = ticket_data.get("created_at", datetime.now(UTC).isoformat())
-        created = datetime.fromisoformat(created_at.replace('Z', '+00:00').split('+')[0])
+        # Parse datetime and ensure it's timezone-aware
+        created_str = created_at.replace('Z', '+00:00')
+        created = datetime.fromisoformat(created_str.split('+')[0])
+        # Make timezone-aware if naive
+        if created.tzinfo is None:
+            created = created.replace(tzinfo=UTC)
         elapsed = (datetime.now(UTC) - created).total_seconds() / 60
 
         target = sla["first_response_minutes"]
