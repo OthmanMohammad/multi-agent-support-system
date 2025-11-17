@@ -58,10 +58,6 @@ class ChatResponse(BaseModel):
     }
 
 
-# Alias for backward compatibility
-ConversationResponse = ConversationDetailResponse
-
-
 # =============================================================================
 # MESSAGE MODELS
 # =============================================================================
@@ -232,3 +228,11 @@ class ConversationStats(BaseModel):
             }]
         }
     }
+
+
+# =============================================================================
+# BACKWARD COMPATIBILITY ALIASES
+# =============================================================================
+
+# Alias for backward compatibility with existing routes
+ConversationResponse = ConversationDetailResponse
