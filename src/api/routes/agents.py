@@ -16,6 +16,7 @@ from uuid import UUID, uuid4
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 import time
+import os
 
 from src.api.models.agent_models import (
     AgentListResponse,
@@ -32,6 +33,7 @@ from src.api.dependencies import get_current_user
 from src.api.auth.permissions import PermissionScope, require_scopes, require_any_scope
 from src.database.models.user import User
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.services.job_store import RedisJobStore, InMemoryJobStore, JobType, JobStatus
 from src.agents.base.agent_types import AgentType
 from src.agents.base.base_agent import AgentConfig
 from src.workflow.state import AgentState
@@ -44,57 +46,44 @@ router = APIRouter(prefix="/agents")
 
 
 # =============================================================================
-# IN-MEMORY JOB STORE (temporary - will be replaced with Redis/DB)
+# PRODUCTION JOB STORE (Redis-backed with in-memory fallback)
 # =============================================================================
 
-class JobStore:
-    """In-memory job store for async agent execution"""
+# Initialize job store (Redis if available, otherwise in-memory)
+def _initialize_job_store():
+    """Initialize job store based on environment"""
+    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+    environment = os.getenv("ENVIRONMENT", "development")
 
-    def __init__(self):
-        self._jobs: Dict[UUID, Dict[str, Any]] = {}
-
-    def create_job(self, agent_name: str, request: AgentExecuteAsyncRequest) -> UUID:
-        """Create a new job"""
-        job_id = uuid4()
-        self._jobs[job_id] = {
-            "job_id": job_id,
-            "agent_name": agent_name,
-            "request": request,
-            "status": "pending",
-            "created_at": datetime.utcnow(),
-            "started_at": None,
-            "completed_at": None,
-            "progress": 0.0,
-            "result": None,
-            "error": None,
-        }
-        return job_id
-
-    def get_job(self, job_id: UUID) -> Optional[Dict[str, Any]]:
-        """Get job by ID"""
-        return self._jobs.get(job_id)
-
-    def update_job(self, job_id: UUID, **kwargs):
-        """Update job fields"""
-        if job_id in self._jobs:
-            self._jobs[job_id].update(kwargs)
-
-    def cleanup_old_jobs(self, max_age_hours: int = 24):
-        """Remove jobs older than max_age_hours"""
-        cutoff = datetime.utcnow() - timedelta(hours=max_age_hours)
-        to_remove = [
-            job_id
-            for job_id, job in self._jobs.items()
-            if job["created_at"] < cutoff
-        ]
-        for job_id in to_remove:
-            del self._jobs[job_id]
-
-        return len(to_remove)
+    # Use Redis in production, in-memory for development
+    if environment == "production":
+        logger.info("initializing_redis_job_store", redis_url=redis_url)
+        return RedisJobStore(redis_url=redis_url)
+    else:
+        logger.warning(
+            "using_in_memory_job_store",
+            message="Using in-memory job store. Jobs will not persist across restarts."
+        )
+        return InMemoryJobStore()
 
 
 # Global job store instance
-job_store = JobStore()
+job_store = _initialize_job_store()
+
+
+# Initialize job store on startup
+@router.on_event("startup")
+async def startup_job_store():
+    """Initialize job store on router startup"""
+    await job_store.initialize()
+    logger.info("job_store_initialized")
+
+
+@router.on_event("shutdown")
+async def shutdown_job_store():
+    """Close job store on router shutdown"""
+    await job_store.close()
+    logger.info("job_store_closed")
 
 
 # =============================================================================
@@ -439,12 +428,27 @@ async def execute_agent_async(
         )
 
     # Create job
-    job_id = job_store.create_job(request.agent_name, request)
+    job_id = await job_store.create_job(
+        job_type=JobType.AGENT_EXECUTION,
+        agent_name=request.agent_name,
+        input_data={
+            "query": request.query,
+            "context": request.context,
+            "timeout": request.timeout,
+            "temperature": request.temperature,
+            "max_tokens": request.max_tokens
+        },
+        metadata={
+            "user_id": str(current_user.id),
+            "conversation_id": str(request.conversation_id) if request.conversation_id else None,
+            "callback_url": request.callback_url
+        }
+    )
 
     # Start background task
     async def run_agent_job(job_id: UUID):
         """Background task to execute agent"""
-        job_store.update_job(job_id, status="running", started_at=datetime.utcnow())
+        await job_store.update_job(job_id, status=JobStatus.RUNNING)
 
         try:
             result = await execute_agent(
@@ -456,11 +460,9 @@ async def execute_agent_async(
                 max_tokens=request.max_tokens,
             )
 
-            job_store.update_job(
+            await job_store.update_job(
                 job_id,
-                status="completed",
-                completed_at=datetime.utcnow(),
-                progress=100.0,
+                status=JobStatus.COMPLETED,
                 result=result.model_dump(),
             )
 
@@ -469,27 +471,27 @@ async def execute_agent_async(
                 logger.info("webhook_callback", url=request.callback_url, job_id=str(job_id))
 
         except Exception as e:
-            job_store.update_job(
+            await job_store.update_job(
                 job_id,
-                status="failed",
-                completed_at=datetime.utcnow(),
+                status=JobStatus.FAILED,
                 error=str(e),
+                error_type=type(e).__name__
             )
 
     # Start task in background (don't await)
     asyncio.create_task(run_agent_job(job_id))
 
     # Return job response
-    job = job_store.get_job(job_id)
+    job = await job_store.get_job(job_id)
     estimated_completion = datetime.utcnow() + timedelta(seconds=request.timeout)
 
     return AgentJobResponse(
         job_id=job_id,
         agent_name=request.agent_name,
         status=job["status"],
-        created_at=job["created_at"],
-        started_at=job["started_at"],
-        completed_at=job["completed_at"],
+        created_at=datetime.fromisoformat(job["created_at"]),
+        started_at=datetime.fromisoformat(job["started_at"]) if job.get("started_at") else None,
+        completed_at=datetime.fromisoformat(job["completed_at"]) if job.get("completed_at") else None,
         estimated_completion=estimated_completion,
     )
 
@@ -508,8 +510,9 @@ async def get_job_status(
     """
     logger.debug("get_job_status", job_id=str(job_id), user_id=str(current_user.id))
 
-    job = job_store.get_job(job_id)
-    if not job:
+    try:
+        job = await job_store.get_job(job_id)
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Job {job_id} not found"
@@ -517,14 +520,14 @@ async def get_job_status(
 
     # Build response
     result = None
-    if job["status"] == "completed" and job["result"]:
+    if job["status"] == JobStatus.COMPLETED.value and job["result"]:
         result = AgentExecuteResponse(**job["result"])
 
     return AgentJobStatusResponse(
         job_id=job_id,
         status=job["status"],
         progress=job.get("progress", 0.0),
-        message=job.get("error") if job["status"] == "failed" else None,
+        message=job.get("error") if job["status"] == JobStatus.FAILED.value else None,
         result=result,
     )
 
