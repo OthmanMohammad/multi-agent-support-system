@@ -60,7 +60,7 @@ class TestDomainEvent:
         
         result = event.to_dict()
         
-        assert result["event_type"] == "TestEvent"
+        assert result["event_type"] == "SampleEvent"
         assert result["message"] == "Test"
         assert result["count"] == 42
     
@@ -94,7 +94,7 @@ class TestDomainEvent:
         
         repr_str = repr(event)
         
-        assert "TestEvent" in repr_str
+        assert "SampleEvent" in repr_str
         assert str(event.event_id) in repr_str
 
 
@@ -108,9 +108,9 @@ class TestEventBus:
         def handler(event):
             called.append(event)
         
-        event_bus.subscribe(TestEvent, handler)
+        event_bus.subscribe(SampleEvent, handler)
         
-        assert event_bus.handler_count(TestEvent) == 1
+        assert event_bus.handler_count(SampleEvent) == 1
     
     def test_publish_calls_subscribed_handler(self, event_bus):
         """Test that publish calls registered handlers"""
@@ -119,7 +119,7 @@ class TestEventBus:
         def handler(event):
             called.append(event)
         
-        event_bus.subscribe(TestEvent, handler)
+        event_bus.subscribe(SampleEvent, handler)
         event = SampleEvent(message="Test", count=1)
         event_bus.publish(event)
         
@@ -131,8 +131,8 @@ class TestEventBus:
         called1 = []
         called2 = []
         
-        event_bus.subscribe(TestEvent, lambda e: called1.append(e))
-        event_bus.subscribe(TestEvent, lambda e: called2.append(e))
+        event_bus.subscribe(SampleEvent, lambda e: called1.append(e))
+        event_bus.subscribe(SampleEvent, lambda e: called2.append(e))
         
         event = SampleEvent(message="Test", count=1)
         event_bus.publish(event)
@@ -144,9 +144,9 @@ class TestEventBus:
         """Test that handlers are called in order registered"""
         order = []
         
-        event_bus.subscribe(TestEvent, lambda e: order.append(1))
-        event_bus.subscribe(TestEvent, lambda e: order.append(2))
-        event_bus.subscribe(TestEvent, lambda e: order.append(3))
+        event_bus.subscribe(SampleEvent, lambda e: order.append(1))
+        event_bus.subscribe(SampleEvent, lambda e: order.append(2))
+        event_bus.subscribe(SampleEvent, lambda e: order.append(3))
         
         event_bus.publish(SampleEvent(message="Test", count=1))
         
@@ -164,7 +164,7 @@ class TestEventBus:
         test_called = []
         another_called = []
         
-        event_bus.subscribe(TestEvent, lambda e: test_called.append(e))
+        event_bus.subscribe(SampleEvent, lambda e: test_called.append(e))
         event_bus.subscribe(AnotherSampleEvent, lambda e: another_called.append(e))
         
         event_bus.publish(SampleEvent(message="Test", count=1))
@@ -182,8 +182,8 @@ class TestEventBus:
         def working_handler(event):
             called.append(event)
         
-        event_bus.subscribe(TestEvent, failing_handler)
-        event_bus.subscribe(TestEvent, working_handler)
+        event_bus.subscribe(SampleEvent, failing_handler)
+        event_bus.subscribe(SampleEvent, working_handler)
         
         event_bus.publish(SampleEvent(message="Test", count=1))
         
@@ -196,11 +196,11 @@ class TestEventBus:
         def handler(event):
             called.append(event)
         
-        event_bus.subscribe(TestEvent, handler)
-        result = event_bus.unsubscribe(TestEvent, handler)
+        event_bus.subscribe(SampleEvent, handler)
+        result = event_bus.unsubscribe(SampleEvent, handler)
         
         assert result is True
-        assert event_bus.handler_count(TestEvent) == 0
+        assert event_bus.handler_count(SampleEvent) == 0
         
         event_bus.publish(SampleEvent(message="Test", count=1))
         assert len(called) == 0
@@ -210,7 +210,7 @@ class TestEventBus:
         def handler(event):
             pass
         
-        result = event_bus.unsubscribe(TestEvent, handler)
+        result = event_bus.unsubscribe(SampleEvent, handler)
         
         assert result is False
     
@@ -242,20 +242,20 @@ class TestEventBus:
     
     def test_clear_removes_all_handlers(self, event_bus):
         """Test that clear removes all handlers"""
-        event_bus.subscribe(TestEvent, lambda e: None)
+        event_bus.subscribe(SampleEvent, lambda e: None)
         event_bus.subscribe(AnotherSampleEvent, lambda e: None)
         event_bus.subscribe_to_all(lambda e: None)
         
         event_bus.clear()
         
-        assert event_bus.handler_count(TestEvent) == 0
+        assert event_bus.handler_count(SampleEvent) == 0
         assert event_bus.handler_count(AnotherSampleEvent) == 0
         assert event_bus.handler_count() == 0
     
     def test_handler_count_total(self, event_bus):
         """Test handler_count returns total when no type specified"""
-        event_bus.subscribe(TestEvent, lambda e: None)
-        event_bus.subscribe(TestEvent, lambda e: None)
+        event_bus.subscribe(SampleEvent, lambda e: None)
+        event_bus.subscribe(SampleEvent, lambda e: None)
         event_bus.subscribe(AnotherSampleEvent, lambda e: None)
         event_bus.subscribe_to_all(lambda e: None)
         
@@ -263,11 +263,11 @@ class TestEventBus:
     
     def test_handler_count_by_type(self, event_bus):
         """Test handler_count for specific event type"""
-        event_bus.subscribe(TestEvent, lambda e: None)
-        event_bus.subscribe(TestEvent, lambda e: None)
+        event_bus.subscribe(SampleEvent, lambda e: None)
+        event_bus.subscribe(SampleEvent, lambda e: None)
         event_bus.subscribe(AnotherSampleEvent, lambda e: None)
         
-        assert event_bus.handler_count(TestEvent) == 2
+        assert event_bus.handler_count(SampleEvent) == 2
         assert event_bus.handler_count(AnotherSampleEvent) == 1
     
     def test_duplicate_subscription_adds_multiple_calls(self, event_bus):
@@ -277,8 +277,8 @@ class TestEventBus:
         def handler(event):
             called.append(event)
         
-        event_bus.subscribe(TestEvent, handler)
-        event_bus.subscribe(TestEvent, handler)
+        event_bus.subscribe(SampleEvent, handler)
+        event_bus.subscribe(SampleEvent, handler)
         
         event_bus.publish(SampleEvent(message="Test", count=1))
         
@@ -298,13 +298,13 @@ class TestGlobalEventBus:
     def test_reset_creates_new_instance(self, reset_global_event_bus):
         """Test that reset_event_bus creates fresh instance"""
         bus1 = get_event_bus()
-        bus1.subscribe(TestEvent, lambda e: None)
+        bus1.subscribe(SampleEvent, lambda e: None)
         
         reset_event_bus()
         bus2 = get_event_bus()
         
         assert bus2 is not bus1
-        assert bus2.handler_count(TestEvent) == 0
+        assert bus2.handler_count(SampleEvent) == 0
     
     def test_global_bus_isolated_between_tests(self, reset_global_event_bus):
         """Test that reset fixture isolates tests"""
@@ -347,13 +347,13 @@ class TestEventBusIntegration:
         def handler(event):
             called.append(event.__class__.__name__)
         
-        event_bus.subscribe(TestEvent, handler)
+        event_bus.subscribe(SampleEvent, handler)
         event_bus.subscribe(AnotherSampleEvent, handler)
         
         event_bus.publish(SampleEvent(message="Test", count=1))
         event_bus.publish(AnotherSampleEvent(value="Value"))
         
-        assert called == ["TestEvent", "AnotherSampleEvent"]
+        assert called == ["SampleEvent", "AnotherSampleEvent"]
 
 
 @pytest.mark.parametrize("handler_count", [1, 3, 5, 10])
@@ -362,7 +362,7 @@ def test_multiple_handlers_all_called(event_bus, handler_count):
     called = []
     
     for i in range(handler_count):
-        event_bus.subscribe(TestEvent, lambda e, i=i: called.append(i))
+        event_bus.subscribe(SampleEvent, lambda e, i=i: called.append(i))
     
     event_bus.publish(SampleEvent(message="Test", count=1))
     

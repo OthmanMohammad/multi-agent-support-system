@@ -171,14 +171,21 @@ def mock_event_bus(monkeypatch):
     mock_bus = AsyncMock()
     mock_bus.publish = AsyncMock()
     mock_bus.subscribe = AsyncMock()
+    mock_bus.send = AsyncMock()  # Add send method
 
     def get_mock_event_bus():
         return mock_bus
 
-    # Patch get_event_bus to return our mock
+    # Patch both get_event_bus function and EventBus class
     monkeypatch.setattr(
         'src.core.events.get_event_bus',
         get_mock_event_bus
+    )
+
+    # Also patch EventBus class initialization
+    monkeypatch.setattr(
+        'src.core.events.EventBus',
+        lambda: mock_bus
     )
 
     return mock_bus

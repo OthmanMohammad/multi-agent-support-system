@@ -382,6 +382,14 @@ Help Center: https://help.acme-corp.com
         personalized["from_email"] = "support@acme-corp.com"
         personalized["reply_to"] = "support@acme-corp.com"
 
+        # Extract recipient email from customer metadata
+        recipient_email = customer_metadata.get("email") or customer_metadata.get("customer_email")
+        if recipient_email:
+            personalized["to"] = recipient_email
+        else:
+            # Try to extract from entities or state
+            personalized["to"] = None
+
         return personalized
 
     def _validate_email(
@@ -405,8 +413,9 @@ Help Center: https://help.acme-corp.com
             "errors": []
         }
 
-        # Validate recipient
-        if not customer_metadata.get("email"):
+        # Validate recipient - check both email dict and customer_metadata
+        recipient = email.get("to") or customer_metadata.get("email") or customer_metadata.get("customer_email")
+        if not recipient:
             validation["is_valid"] = False
             validation["errors"].append("No recipient email address")
 
@@ -460,7 +469,7 @@ Help Center: https://help.acme-corp.com
             "body": email["body"] + email.get("signature", ""),
             "from": email.get("from_email", "support@acme-corp.com"),
             "from_name": email.get("from_name", "Support Team"),
-            "to": email.get("to", "customer@example.com"),
+            "to": email.get("to") or "customer@example.com",  # Use None-coalescing to ensure we have a value
             "reply_to": email.get("reply_to"),
             "priority": priority,
             "importance": priority_config["importance"],

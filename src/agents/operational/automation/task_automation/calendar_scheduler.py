@@ -337,9 +337,14 @@ Return JSON with title, date, time, duration_minutes, attendees (array), meeting
         requested_date = meeting_details.get("date")
         requested_time = meeting_details.get("time", "14:00")
 
-        # Simple business hours check
-        hour = int(requested_time.split(":")[0])
-        is_business_hours = 9 <= hour <= 17
+        # Simple business hours check with proper None/invalid time handling
+        is_business_hours = True
+        if requested_time and isinstance(requested_time, str) and ":" in requested_time:
+            try:
+                hour = int(requested_time.split(":")[0])
+                is_business_hours = 9 <= hour <= 17
+            except (ValueError, IndexError):
+                is_business_hours = True  # Default to available if can't parse
 
         return {
             "requested_time_available": is_business_hours,
@@ -374,20 +379,26 @@ Return JSON with title, date, time, duration_minutes, attendees (array), meeting
         requested_time = meeting_details.get("time", "14:00")
         duration = meeting_details.get("duration_minutes", 30)
 
-        # Check against existing meetings
-        for meeting in existing_meetings:
-            if meeting.get("date") == requested_date:
-                # Simple time overlap check
-                existing_time = meeting.get("time", "00:00")
-                if abs(
-                    int(requested_time.split(":")[0]) - int(existing_time.split(":")[0])
-                ) < 2:
-                    conflicts.append({
-                        "meeting_id": meeting.get("id"),
-                        "title": meeting.get("title"),
-                        "time": existing_time,
-                        "type": "time_overlap"
-                    })
+        # Check against existing meetings with proper time validation
+        if requested_time and isinstance(requested_time, str) and ":" in requested_time:
+            for meeting in existing_meetings:
+                if meeting.get("date") == requested_date:
+                    # Simple time overlap check
+                    existing_time = meeting.get("time", "00:00")
+                    if existing_time and isinstance(existing_time, str) and ":" in existing_time:
+                        try:
+                            req_hour = int(requested_time.split(":")[0])
+                            exist_hour = int(existing_time.split(":")[0])
+                            if abs(req_hour - exist_hour) < 2:
+                                conflicts.append({
+                                    "meeting_id": meeting.get("id"),
+                                    "title": meeting.get("title"),
+                                    "time": existing_time,
+                                    "type": "time_overlap"
+                                })
+                        except (ValueError, IndexError):
+                            # Skip invalid time formats
+                            continue
 
         return {
             "has_conflicts": len(conflicts) > 0,
@@ -424,13 +435,17 @@ Return JSON with title, date, time, duration_minutes, attendees (array), meeting
         time_str = meeting_details.get("time", "14:00")
         duration = meeting_details.get("duration_minutes", meeting_config["duration_minutes"])
 
-        # Handle missing date
-        if not date_str:
+        # Handle missing or invalid date
+        if not date_str or date_str == "RECURRING":
             date_str = (datetime.now(UTC) + timedelta(days=1)).strftime("%Y-%m-%d")
+
+        # Handle missing or invalid time
+        if not time_str or not isinstance(time_str, str) or ":" not in time_str or time_str == "RECURRING":
+            time_str = "14:00"
 
         try:
             start_datetime = datetime.fromisoformat(f"{date_str}T{time_str}:00")
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, AttributeError):
             # Fallback to tomorrow at 2pm if date parsing fails
             start_datetime = datetime.now(UTC).replace(hour=14, minute=0, second=0, microsecond=0) + timedelta(days=1)
 

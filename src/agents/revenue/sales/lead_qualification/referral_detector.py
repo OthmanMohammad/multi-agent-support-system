@@ -161,6 +161,7 @@ class ReferralDetector(BaseAgent):
 
         # Update state
         state["is_referral"] = True
+        state["referral_detected"] = True  # For backward compatibility with tests
         state["referral_source"] = referral_detected["source_type"]
         state["referrer_info"] = referrer_info
         state["identified_referrer"] = identified_referrer

@@ -8,8 +8,6 @@ Centralized exports for all API request/response models.
 from src.api.models.agent_models import (
     AgentExecuteRequest,
     AgentExecuteResponse,
-    BatchAgentRequest,
-    BatchAgentResponse,
 )
 
 # Analytics models
@@ -65,8 +63,6 @@ __all__ = [
     # Agent models
     "AgentExecuteRequest",
     "AgentExecuteResponse",
-    "BatchAgentRequest",
-    "BatchAgentResponse",
     # Analytics models
     "AnalyticsQuery",
     "AnalyticsResponse",
