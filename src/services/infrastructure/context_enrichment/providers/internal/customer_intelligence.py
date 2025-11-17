@@ -260,7 +260,7 @@ class CustomerIntelligenceProvider(BaseContextProvider):
             if contacts:
                 # Find primary contact or use first one
                 primary = next(
-                    (c for c in contacts if c.is_primary if hasattr(c, 'is_primary') else False),
+                    (c for c in contacts if (c.is_primary if hasattr(c, 'is_primary') else False)),
                     contacts[0]
                 )
                 return {
