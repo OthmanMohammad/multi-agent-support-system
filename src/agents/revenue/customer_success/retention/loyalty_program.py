@@ -5,7 +5,7 @@ Manages customer loyalty programs, tracks loyalty points, offers rewards,
 and recognizes customer milestones to drive retention and engagement.
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 
 from src.workflow.state import AgentState
