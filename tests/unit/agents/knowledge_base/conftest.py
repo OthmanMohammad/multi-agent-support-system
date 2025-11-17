@@ -7,6 +7,38 @@ from unittest.mock import Mock, MagicMock, patch, AsyncMock
 from datetime import datetime, timedelta
 from contextlib import contextmanager
 import uuid
+import sys
+
+
+# Mock EventBus BEFORE any imports that might use it
+def _create_mock_event_bus():
+    """Create comprehensive EventBus mock"""
+    mock_bus = AsyncMock()
+    mock_bus.publish = AsyncMock()
+    mock_bus.subscribe = AsyncMock()
+    mock_bus.send = AsyncMock()
+    mock_bus.emit = AsyncMock()
+    mock_bus.dispatch = AsyncMock()
+    mock_bus.notify = AsyncMock()
+    return mock_bus
+
+
+# Install mock at module level before imports
+_global_mock_bus = _create_mock_event_bus()
+
+
+def pytest_configure(config):
+    """Configure pytest to mock EventBus before any imports"""
+    # Mock the EventBus module-level singleton
+    if 'src.core.events' in sys.modules:
+        sys.modules['src.core.events']._event_bus = _global_mock_bus
+
+    # Patch get_event_bus function
+    def mock_get_event_bus():
+        return _global_mock_bus
+
+    if 'src.core.events' in sys.modules:
+        sys.modules['src.core.events'].get_event_bus = mock_get_event_bus
 
 
 @pytest.fixture

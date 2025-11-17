@@ -12,6 +12,57 @@ from pydantic import BaseModel, Field
 
 
 # =============================================================================
+# CHAT REQUEST/RESPONSE (for POST endpoints)
+# =============================================================================
+
+class ChatRequest(BaseModel):
+    """Request to send a message in a conversation"""
+
+    message: str = Field(..., min_length=1, description="User message content")
+    customer_email: Optional[str] = Field(None, description="Customer email for new conversations")
+    context: Optional[dict] = Field(None, description="Additional context for the message")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [{
+                "message": "I want to upgrade my plan",
+                "customer_email": "customer@example.com",
+                "context": {"source": "web_chat"}
+            }]
+        }
+    }
+
+
+class ChatResponse(BaseModel):
+    """Response after sending a message"""
+
+    conversation_id: UUID
+    message_id: UUID
+    response: str
+    agent_name: Optional[str] = None
+    confidence: Optional[float] = None
+    created_at: datetime
+
+    model_config = {
+        "from_attributes": True,
+        "json_schema_extra": {
+            "examples": [{
+                "conversation_id": "123e4567-e89b-12d3-a456-426614174000",
+                "message_id": "987fcdeb-51a2-43d7-8c9f-123456789abc",
+                "response": "I can help you upgrade your plan...",
+                "agent_name": "billing_agent",
+                "confidence": 0.95,
+                "created_at": "2025-11-16T12:30:00Z"
+            }]
+        }
+    }
+
+
+# Alias for backward compatibility
+ConversationResponse = ConversationDetailResponse
+
+
+# =============================================================================
 # MESSAGE MODELS
 # =============================================================================
 

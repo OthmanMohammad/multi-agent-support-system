@@ -26,6 +26,9 @@ from src.api.models.auth_models import (
 
 # Conversation models
 from src.api.models.conversation_models import (
+    ChatRequest,
+    ChatResponse,
+    ConversationResponse,
     ConversationDetailResponse,
     MessageResponse,
 )
@@ -62,6 +65,9 @@ __all__ = [
     "APIKeyCreateRequest",
     "APIKeyResponse",
     # Conversation models
+    "ChatRequest",
+    "ChatResponse",
+    "ConversationResponse",
     "ConversationDetailResponse",
     "MessageResponse",
     # Customer models
