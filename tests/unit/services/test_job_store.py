@@ -6,7 +6,7 @@ Tests both RedisJobStore and InMemoryJobStore implementations.
 import pytest
 import asyncio
 from uuid import UUID
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from src.services.job_store import (
     RedisJobStore,
@@ -313,7 +313,7 @@ async def test_cleanup_old_completed_jobs(memory_store):
     )
 
     # Mark as completed with old timestamp
-    old_time = (datetime.utcnow() - timedelta(hours=25)).isoformat()
+    old_time = (datetime.now(UTC) - timedelta(hours=25)).isoformat()
     await memory_store.update_job(
         job_id,
         status=JobStatus.COMPLETED
@@ -452,3 +452,4 @@ async def test_concurrent_job_updates(memory_store):
     # Job should exist and have some progress
     job = await memory_store.get_job(job_id)
     assert job is not None
+    
