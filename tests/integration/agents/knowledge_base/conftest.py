@@ -9,7 +9,7 @@ from typing import AsyncGenerator, Dict, List
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-from src.database.models import Base, Conversation, Message, KBArticle
+from src.database.models import Base, Ticket, Conversation, Message, KnowledgeBaseArticle
 from src.database.session import get_db_session
 
 
@@ -55,48 +55,64 @@ async def test_db_session(test_db_engine) -> AsyncGenerator[AsyncSession, None]:
 
 
 @pytest.fixture
-async def sample_kb_articles(test_db_session: AsyncSession) -> List[KBArticle]:
+async def sample_kb_articles(test_db_session: AsyncSession) -> List[KnowledgeBaseArticle]:
     """Create sample KB articles for testing"""
     articles = [
-        KBArticle(
+        KnowledgeBaseArticle(
+            article_id="kb_001",
             title="How to Upgrade Your Plan",
             content="To upgrade your plan, navigate to Settings > Billing > Change Plan. Select your desired plan and confirm.",
             category="billing",
             tags=["billing", "upgrade", "plans"],
-            quality_score=85.0,
+            quality_score=85,
+            helpfulness_ratio=0.92,
             view_count=250,
             helpful_count=230,
             not_helpful_count=20,
+            created_at=datetime.now() - timedelta(days=90),
+            updated_at=datetime.now() - timedelta(days=30)
         ),
-        KBArticle(
+        KnowledgeBaseArticle(
+            article_id="kb_002",
             title="API Authentication Guide",
             content="Our API uses OAuth 2.0 for authentication. Generate an API key from your dashboard...",
             category="integrations",
             tags=["api", "authentication", "oauth"],
-            quality_score=90.0,
+            quality_score=90,
+            helpfulness_ratio=0.95,
             view_count=500,
             helpful_count=475,
             not_helpful_count=25,
+            created_at=datetime.now() - timedelta(days=60),
+            updated_at=datetime.now() - timedelta(days=10)
         ),
-        KBArticle(
+        KnowledgeBaseArticle(
+            article_id="kb_003",
             title="Troubleshooting Login Issues",
             content="If you're having trouble logging in, try clearing your browser cache...",
             category="technical",
             tags=["login", "troubleshooting", "authentication"],
-            quality_score=70.0,
+            quality_score=70,
+            helpfulness_ratio=0.65,
             view_count=150,
             helpful_count=98,
             not_helpful_count=52,
+            created_at=datetime.now() - timedelta(days=200),
+            updated_at=datetime.now() - timedelta(days=190)
         ),
-        KBArticle(
+        KnowledgeBaseArticle(
+            article_id="kb_004",
             title="Data Export Instructions",
             content="You can export your data in CSV or JSON format. Navigate to Settings > Data Export...",
             category="usage",
             tags=["data", "export", "csv", "json"],
-            quality_score=88.0,
+            quality_score=88,
+            helpfulness_ratio=0.89,
             view_count=180,
             helpful_count=160,
             not_helpful_count=20,
+            created_at=datetime.now() - timedelta(days=45),
+            updated_at=datetime.now() - timedelta(days=5)
         )
     ]
 
@@ -109,23 +125,11 @@ async def sample_kb_articles(test_db_session: AsyncSession) -> List[KBArticle]:
 
 
 @pytest.fixture
-async def sample_tickets(test_db_session: AsyncSession) -> List[Conversation]:
-    """Create sample conversations for testing (replacing tickets)"""
-    from uuid import uuid4
-    from src.database.models import Customer
+async def sample_tickets(test_db_session: AsyncSession) -> List[Ticket]:
+    """Create sample tickets for testing"""
+    tickets = []
 
-    # Create a test customer first
-    customer = Customer(
-        name="Test Customer",
-        email="test@example.com",
-        plan="premium"
-    )
-    test_db_session.add(customer)
-    await test_db_session.flush()
-
-    conversations = []
-
-    # Create conversations with common questions
+    # Create tickets with common questions
     questions = [
         ("How do I upgrade my plan?", "billing_upgrade"),
         ("Can I upgrade to premium?", "billing_upgrade"),
@@ -137,46 +141,63 @@ async def sample_tickets(test_db_session: AsyncSession) -> List[Conversation]:
     ]
 
     for i, (question, intent) in enumerate(questions):
-        conversation = Conversation(
-            customer_id=customer.id,
+        ticket = Ticket(
+            ticket_id=f"ticket_{i+1:03d}",
+            subject=question,
             status="resolved",
-            channel="chat",
-            sentiment="neutral",
-            extra_metadata={"intent": intent, "subject": question}
+            priority="medium",
+            intent=intent,
+            sentiment_score=0.5,
+            created_at=datetime.now() - timedelta(days=15-i)
+        )
+        tickets.append(ticket)
+        test_db_session.add(ticket)
+
+    await test_db_session.commit()
+
+    return tickets
+
+
+@pytest.fixture
+async def sample_conversations(test_db_session: AsyncSession, sample_tickets: List[Ticket]) -> List[Conversation]:
+    """Create sample conversations for testing"""
+    conversations = []
+
+    for i, ticket in enumerate(sample_tickets[:5]):
+        conversation = Conversation(
+            conversation_id=f"conv_{i+1:03d}",
+            ticket_id=ticket.ticket_id,
+            channel="email",
+            status="resolved",
+            kb_match_score=0.5 if i < 3 else 0.9,  # First 3 have low scores
+            resolution_time_seconds=1800,
+            created_at=ticket.created_at
         )
         conversations.append(conversation)
         test_db_session.add(conversation)
 
-    await test_db_session.commit()
-
-    return conversations
-
-
-@pytest.fixture
-async def sample_conversations(test_db_session: AsyncSession, sample_tickets: List[Conversation]) -> List[Conversation]:
-    """Create sample conversations with messages for testing"""
-    # sample_tickets are already conversations, add messages to them
-    for i, conversation in enumerate(sample_tickets[:5]):
-        subject = conversation.extra_metadata.get("subject", "Question")
-
         # Add messages
         user_message = Message(
-            conversation_id=conversation.id,
-            role="user",
-            content=subject,
+            message_id=f"msg_{i+1:03d}_user",
+            conversation_id=conversation.conversation_id,
+            sender_type="user",
+            content=ticket.subject,
+            created_at=ticket.created_at
         )
         test_db_session.add(user_message)
 
         agent_message = Message(
-            conversation_id=conversation.id,
-            role="assistant",
+            message_id=f"msg_{i+1:03d}_agent",
+            conversation_id=conversation.conversation_id,
+            sender_type="agent",
             content="Here's how to resolve your issue...",
+            created_at=ticket.created_at + timedelta(minutes=10)
         )
         test_db_session.add(agent_message)
 
     await test_db_session.commit()
 
-    return sample_tickets[:5]
+    return conversations
 
 
 @pytest.fixture

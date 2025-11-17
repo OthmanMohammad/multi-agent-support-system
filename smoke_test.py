@@ -78,11 +78,10 @@ class SmokeTest:
     async def test_database_connection(self) -> bool:
         """Test 2: Database Connection"""
         try:
-            from src.database.connection import DatabaseConnection
+            from src.database.connection import get_db_session
             from sqlalchemy import text
 
-            # Try to get a session
-            async with DatabaseConnection.get_session() as session:
+            async with get_db_session() as session:
                 # Try a simple query
                 result = await session.execute(text("SELECT 1"))
                 value = result.scalar()
@@ -243,12 +242,10 @@ class SmokeTest:
         """Test 7: Agent Base Class"""
         try:
             from src.agents.base.base_agent import BaseAgent
-            import inspect
 
-            # Check class exists and is usable
-            is_class = inspect.isclass(BaseAgent)
-            has_execute = hasattr(BaseAgent, 'execute')
-            has_methods = is_class and has_execute
+            # Check class exists and has required methods
+            required_methods = ['execute', '_execute']
+            has_methods = all(hasattr(BaseAgent, m) for m in required_methods)
 
             if has_methods:
                 self.log_test(
@@ -335,21 +332,15 @@ class SmokeTest:
     async def test_datetime_fixes(self) -> bool:
         """Test 10: DateTime Fixes - Verify no deprecated usage"""
         try:
-            from pathlib import Path
+            import subprocess
+            result = subprocess.run(
+                ['grep', '-r', 'datetime.utcnow()', 'src/', '--include=*.py'],
+                capture_output=True,
+                text=True
+            )
 
-            # Search for deprecated datetime usage in Python files
-            src_dir = Path(__file__).parent / "src"
-            deprecated_count = 0
-
-            for py_file in src_dir.rglob("*.py"):
-                try:
-                    content = py_file.read_text(encoding='utf-8')
-                    if 'datetime.utcnow()' in content:
-                        deprecated_count += 1
-                except Exception:
-                    pass  # Skip files that can't be read
-
-            if deprecated_count == 0:
+            # If grep finds nothing, return code is 1
+            if result.returncode == 1:
                 self.log_test(
                     "DateTime Deprecations",
                     "PASS",
@@ -357,10 +348,11 @@ class SmokeTest:
                 )
                 return True
             else:
+                count = len(result.stdout.split('\n')) - 1
                 self.log_test(
                     "DateTime Deprecations",
                     "FAIL",
-                    f"{deprecated_count} files still have deprecated usage"
+                    f"{count} instances still remain"
                 )
                 return False
 

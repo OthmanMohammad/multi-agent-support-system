@@ -4,7 +4,7 @@ import pytest
 from src.agents.advanced.predictive.churn_predictor import ChurnPredictorAgent
 from src.agents.advanced.predictive.upsell_predictor import UpsellPredictorAgent
 from src.agents.advanced.personalization.persona_identifier import PersonaIdentifierAgent
-from src.agents.advanced.content.kb_article_writer import KBArticleWriterAgent
+from src.agents.advanced.content.kb_article_writer import KbArticleWriterAgent
 from src.agents.advanced.learning.conversation_analyzer import ConversationAnalyzerAgent
 
 

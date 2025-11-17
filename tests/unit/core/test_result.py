@@ -13,13 +13,9 @@ Tests cover:
 import pytest
 from uuid import uuid4
 
-from core.result import (
+from src.core.result import (
     Result,
     Error,
-    validation_error,
-    not_found_error,
-    business_rule_error,
-    conflict_error,
 )
 
 

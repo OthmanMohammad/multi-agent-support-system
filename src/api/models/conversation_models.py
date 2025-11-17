@@ -15,26 +15,6 @@ from pydantic import BaseModel, Field
 # MESSAGE MODELS
 # =============================================================================
 
-class MessageCreateRequest(BaseModel):
-    """Create a new message in a conversation"""
-
-    conversation_id: UUID
-    role: Literal["user", "assistant", "system"]
-    content: str
-    metadata: Optional[dict] = None
-
-    model_config = {
-        "json_schema_extra": {
-            "examples": [{
-                "conversation_id": "123e4567-e89b-12d3-a456-426614174000",
-                "role": "user",
-                "content": "How do I upgrade my plan?",
-                "metadata": {"channel": "chat"}
-            }]
-        }
-    }
-
-
 class MessageResponse(BaseModel):
     """Individual message in a conversation"""
 
@@ -137,42 +117,6 @@ class ConversationDetailResponse(BaseModel):
 # =============================================================================
 # CONVERSATION MUTATIONS
 # =============================================================================
-
-class ConversationCreateRequest(BaseModel):
-    """Create a new conversation"""
-
-    customer_id: UUID
-    channel: Optional[str] = "chat"
-    status: Optional[Literal["open", "resolved", "escalated"]] = "open"
-    assigned_agent: Optional[str] = None
-    metadata: Optional[dict] = None
-
-    model_config = {
-        "json_schema_extra": {
-            "examples": [{
-                "customer_id": "987fcdeb-51a2-43d7-8c9f-123456789abc",
-                "channel": "chat",
-                "status": "open",
-                "assigned_agent": "support_agent"
-            }]
-        }
-    }
-
-
-class ConversationResponse(BaseModel):
-    """Response after creating or updating a conversation"""
-
-    id: UUID
-    customer_id: UUID
-    status: str
-    channel: Optional[str] = None
-    created_at: datetime
-    updated_at: datetime
-    assigned_agent: Optional[str] = None
-    metadata: Optional[dict] = None
-
-    model_config = {"from_attributes": True}
-
 
 class ConversationUpdateRequest(BaseModel):
     """Update conversation details"""
