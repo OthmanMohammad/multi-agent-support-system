@@ -118,7 +118,7 @@ class PlanUpgrade(BaseAgent):
         config = AgentConfig(
             name="plan_upgrade",
             type=AgentType.SPECIALIST,
-            model="claude-3-sonnet-20241022",  # Sonnet for upgrade sales
+            model="claude-3-5-sonnet-20240620",  # Sonnet for upgrade sales
             temperature=0.3,
             max_tokens=600,
             capabilities=[

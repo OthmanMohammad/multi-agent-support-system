@@ -9,7 +9,7 @@ class CaseStudyCreatorAgent(BaseAgent):
     """Case Study Creator."""
     
     def __init__(self):
-        config = AgentConfig(name="case_study_creator", type=AgentType.COORDINATOR, model="claude-3-5-sonnet-20241022", temperature=0.5, max_tokens=4000, capabilities=[AgentCapability.KB_SEARCH, AgentCapability.DATABASE_WRITE], tier="advanced")
+        config = AgentConfig(name="case_study_creator", type=AgentType.COORDINATOR, model="claude-3-5-sonnet-20240620", temperature=0.5, max_tokens=4000, capabilities=[AgentCapability.KB_SEARCH, AgentCapability.DATABASE_WRITE], tier="advanced")
         super().__init__(config)
         self.logger = get_logger(__name__)
     

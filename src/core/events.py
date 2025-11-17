@@ -34,7 +34,7 @@ Example:
 """
 
 from abc import ABC
-from datetime import datetime
+from datetime import datetime, UTC
 from uuid import UUID, uuid4
 from typing import List, Callable, Dict, Type, Any
 from dataclasses import dataclass, field
@@ -51,7 +51,21 @@ def _get_logger():
         _logger = get_logger(__name__)
     return _logger
 
+
+# Create a lazy logger proxy to avoid circular imports
+class _LoggerProxy:
+    """Proxy object that lazily initializes the logger on first use"""
+    def __getattr__(self, name):
+        return getattr(_get_logger(), name)
+
+logger = _LoggerProxy()
+
 __all__ = ["DomainEvent", "EventBus", "get_event_bus", "reset_event_bus"]
+
+
+def _utc_now() -> datetime:
+    """Helper function for default factory to get current UTC time"""
+    return datetime.now(UTC)
 
 
 @dataclass
@@ -75,7 +89,7 @@ class DomainEvent(ABC):
     """
     
     event_id: UUID = field(default_factory=uuid4)
-    occurred_at: datetime = field(default_factory=datetime.utcnow)
+    occurred_at: datetime = field(default_factory=_utc_now)
     
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -126,6 +140,7 @@ class EventBus:
     def __init__(self):
         """Initialize event bus"""
         self._subscribers: Dict[Type[DomainEvent], List[Callable]] = {}
+        self._all_handlers: List[Callable] = []  # Handlers that receive all events
         logger.debug("event_bus_initialized")
     
     def subscribe(
@@ -162,13 +177,16 @@ class EventBus:
         self,
         event_type: Type[DomainEvent],
         handler: Callable[[DomainEvent], None]
-    ) -> None:
+    ) -> bool:
         """
         Unsubscribe from events
-        
+
         Args:
             event_type: Event type to unsubscribe from
             handler: Handler function to remove
+
+        Returns:
+            True if handler was removed, False if not found
         """
         if event_type in self._subscribers:
             try:
@@ -178,13 +196,60 @@ class EventBus:
                     event_type=event_type.__name__,
                     handler=handler.__name__
                 )
+                return True
             except ValueError:
                 logger.warning(
                     "handler_not_found_for_unsubscribe",
                     event_type=event_type.__name__,
                     handler=handler.__name__
                 )
-    
+                return False
+        return False
+
+    def subscribe_to_all(self, handler: Callable[[DomainEvent], None]) -> None:
+        """
+        Subscribe to all events regardless of type
+
+        Args:
+            handler: Function to call for any published event
+
+        Example:
+            >>> def log_all_events(event):
+            ...     print(f"Event: {event}")
+            >>>
+            >>> bus.subscribe_to_all(log_all_events)
+        """
+        self._all_handlers.append(handler)
+        logger.debug(
+            "subscribed_to_all_events",
+            handler=handler.__name__,
+            total_all_handlers=len(self._all_handlers)
+        )
+
+    def unsubscribe_from_all(self, handler: Callable[[DomainEvent], None]) -> bool:
+        """
+        Unsubscribe from all events
+
+        Args:
+            handler: Handler function to remove
+
+        Returns:
+            True if handler was removed, False if not found
+        """
+        try:
+            self._all_handlers.remove(handler)
+            logger.debug(
+                "unsubscribed_from_all_events",
+                handler=handler.__name__
+            )
+            return True
+        except ValueError:
+            logger.warning(
+                "handler_not_found_for_unsubscribe_all",
+                handler=handler.__name__
+            )
+            return False
+
     def publish(self, event: DomainEvent) -> None:
         """
         Publish event to all subscribers
@@ -209,18 +274,11 @@ class EventBus:
             event_type=event_type.__name__,
             event_id=str(event.event_id)
         )
-        
+
         # Get subscribers for this event type
         handlers = self._subscribers.get(event_type, [])
-        
-        if not handlers:
-            logger.debug(
-                "no_subscribers_for_event",
-                event_type=event_type.__name__
-            )
-            return
-        
-        # Notify each subscriber
+
+        # Notify type-specific subscribers
         for handler in handlers:
             try:
                 handler(event)
@@ -238,19 +296,65 @@ class EventBus:
                     error_type=type(e).__name__,
                     exc_info=True
                 )
+
+        # Notify "all events" subscribers
+        for handler in self._all_handlers:
+            try:
+                handler(event)
+                logger.debug(
+                    "all_events_handler_executed",
+                    event_type=event_type.__name__,
+                    handler=handler.__name__
+                )
+            except Exception as e:
+                logger.error(
+                    "all_events_handler_failed",
+                    event_type=event_type.__name__,
+                    handler=handler.__name__,
+                    error=str(e),
+                    error_type=type(e).__name__,
+                    exc_info=True
+                )
     
     def clear(self) -> None:
         """Clear all subscriptions (useful for testing)"""
         logger.debug("event_bus_cleared")
         self._subscribers.clear()
+        self._all_handlers.clear()
     
+    def handler_count(self, event_type: Type[DomainEvent] = None) -> int:
+        """
+        Get count of handlers
+
+        Args:
+            event_type: Optional event type to count handlers for.
+                       If None, returns total count of all handlers.
+
+        Returns:
+            Number of handlers registered
+
+        Example:
+            >>> bus.handler_count()  # Total handlers
+            5
+            >>> bus.handler_count(MyEvent)  # Handlers for MyEvent
+            2
+        """
+        if event_type is None:
+            # Return total count: all type-specific handlers + all_handlers
+            total = sum(len(handlers) for handlers in self._subscribers.values())
+            total += len(self._all_handlers)
+            return total
+        else:
+            # Return count for specific event type
+            return len(self._subscribers.get(event_type, []))
+
     def get_subscribers(self, event_type: Type[DomainEvent]) -> List[Callable]:
         """
         Get list of subscribers for event type
-        
+
         Args:
             event_type: Event type
-        
+
         Returns:
             List of handler functions
         """

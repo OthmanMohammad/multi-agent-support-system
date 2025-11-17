@@ -90,7 +90,7 @@ class PricingExperiment(BaseAgent):
         config = AgentConfig(
             name="pricing_experiment",
             type=AgentType.SPECIALIST,
-            model="claude-3-sonnet-20241022",  # Sonnet for experimental design
+            model="claude-3-5-sonnet-20240620",  # Sonnet for experimental design
             temperature=0.2,  # Low for analytical precision
             max_tokens=700,
             capabilities=[

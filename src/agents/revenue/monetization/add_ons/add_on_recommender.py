@@ -128,7 +128,7 @@ class AddOnRecommender(BaseAgent):
         config = AgentConfig(
             name="add_on_recommender",
             type=AgentType.SPECIALIST,
-            model="claude-3-sonnet-20241022",  # Sonnet for nuanced recommendations
+            model="claude-3-5-sonnet-20240620",  # Sonnet for nuanced recommendations
             temperature=0.4,
             max_tokens=600,
             capabilities=[

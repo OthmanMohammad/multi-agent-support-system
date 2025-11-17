@@ -121,7 +121,7 @@ class PremiumSupportSeller(BaseAgent):
         config = AgentConfig(
             name="premium_support_seller",
             type=AgentType.SPECIALIST,
-            model="claude-3-sonnet-20241022",  # Sonnet for sales conversations
+            model="claude-3-5-sonnet-20240620",  # Sonnet for sales conversations
             temperature=0.3,
             max_tokens=600,
             capabilities=[

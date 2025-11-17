@@ -3,6 +3,7 @@ Unit tests for KB Embedder agent.
 """
 
 import pytest
+from unittest import mock
 from src.agents.essential.knowledge_base.embedder import KBEmbedder
 from src.workflow.state import create_initial_state
 
@@ -13,8 +14,8 @@ class TestKBEmbedder:
     @pytest.fixture
     def kb_embedder(self, mock_embedding_model):
         """KB Embedder instance"""
-        with pytest.mock.patch('src.agents.essential.knowledge_base.embedder.SentenceTransformer'):
-            with pytest.mock.patch('src.agents.essential.knowledge_base.embedder.QdrantClient'):
+        with mock.patch('src.agents.essential.knowledge_base.embedder.SentenceTransformer'):
+            with mock.patch('src.agents.essential.knowledge_base.embedder.QdrantClient'):
                 embedder = KBEmbedder()
                 if embedder.embedding_model:
                     embedder.embedding_model = mock_embedding_model

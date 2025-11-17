@@ -163,7 +163,7 @@ class ProposalGenerator(BaseAgent):
         config = AgentConfig(
             name="proposal_generator",
             type=AgentType.SPECIALIST,
-            model="claude-3-5-sonnet-20241022",
+            model="claude-3-5-sonnet-20240620",
             temperature=0.2,  # Low temperature for accuracy
             max_tokens=2000,
             capabilities=[

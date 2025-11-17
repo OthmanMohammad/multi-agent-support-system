@@ -101,7 +101,7 @@ class DemoPreparer(BaseAgent):
         config = AgentConfig(
             name="demo_preparer",
             type=AgentType.SPECIALIST,
-            model="claude-3-5-sonnet-20241022",
+            model="claude-3-5-sonnet-20240620",
             temperature=0.3,
             max_tokens=1200,
             capabilities=[

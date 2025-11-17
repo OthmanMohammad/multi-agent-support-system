@@ -291,7 +291,7 @@ class IntegrationObjectionHandler(BaseAgent):
         config = AgentConfig(
             name="integration_objection_handler",
             type=AgentType.SPECIALIST,
-            model="claude-3-5-sonnet-20241022",
+            model="claude-3-5-sonnet-20240620",
             temperature=0.3,
             max_tokens=1000,
             capabilities=[

@@ -100,7 +100,7 @@ class LandAndExpand(BaseAgent):
         config = AgentConfig(
             name="land_and_expand",
             type=AgentType.SPECIALIST,
-            model="claude-3-sonnet-20241022",  # Sonnet for strategic expansion
+            model="claude-3-5-sonnet-20240620",  # Sonnet for strategic expansion
             temperature=0.4,
             max_tokens=700,
             capabilities=[

@@ -79,7 +79,7 @@ class TestDomainEvent:
         """Test that UUID fields are converted to strings"""
         from uuid import uuid4
         
-        @dataclass
+        @dataclass(kw_only=True)
         class EventWithUUID(DomainEvent):
             user_id: UUID
         
@@ -320,11 +320,11 @@ class TestEventBusIntegration:
     def test_event_chain_propagation(self, event_bus, captured_events):
         """Test that events can trigger other events"""
         
-        @dataclass
+        @dataclass(kw_only=True)
         class FirstEvent(DomainEvent):
             value: int
-        
-        @dataclass
+
+        @dataclass(kw_only=True)
         class SecondEvent(DomainEvent):
             doubled: int
         

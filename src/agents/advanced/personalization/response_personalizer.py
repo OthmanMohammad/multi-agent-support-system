@@ -10,7 +10,7 @@ class ResponsePersonalizerAgent(BaseAgent):
     """Personalize responses based on persona and preferences."""
     
     def __init__(self):
-        config = AgentConfig(name="response_personalizer", type=AgentType.COORDINATOR, model="claude-3-5-sonnet-20241022", temperature=0.3, max_tokens=1500, capabilities=[AgentCapability.CONTEXT_AWARE], tier="advanced")
+        config = AgentConfig(name="response_personalizer", type=AgentType.COORDINATOR, model="claude-3-5-sonnet-20240620", temperature=0.3, max_tokens=1500, capabilities=[AgentCapability.CONTEXT_AWARE], tier="advanced")
         super().__init__(config)
         self.logger = get_logger(__name__)
     

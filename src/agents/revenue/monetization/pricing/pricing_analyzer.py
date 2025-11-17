@@ -94,7 +94,7 @@ class PricingAnalyzer(BaseAgent):
         config = AgentConfig(
             name="pricing_analyzer",
             type=AgentType.SPECIALIST,
-            model="claude-3-sonnet-20241022",  # Sonnet for complex analysis
+            model="claude-3-5-sonnet-20240620",  # Sonnet for complex analysis
             temperature=0.2,  # Low for analytical accuracy
             max_tokens=700,
             capabilities=[

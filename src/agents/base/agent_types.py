@@ -17,6 +17,9 @@ class AgentType(Enum):
     COORDINATOR = "coordinator"
     ANALYZER = "analyzer"
     GENERATOR = "generator"
+    UTILITY = "utility"
+    AUTOMATOR = "automator"
+    SECURITY = "security"
 
 
 class AgentCapability(Enum):
@@ -27,6 +30,7 @@ class AgentCapability(Enum):
     COLLABORATION = "collaboration"
     EXTERNAL_API = "external_api"
     DATABASE_WRITE = "database_write"
+    DATABASE_READ = "database_read"
     SENTIMENT_ANALYSIS = "sentiment_analysis"
     ENTITY_EXTRACTION = "entity_extraction"
 

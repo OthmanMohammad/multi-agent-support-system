@@ -65,7 +65,7 @@ class FeatureExplainer(BaseAgent):
         config = AgentConfig(
             name="feature_explainer",
             type=AgentType.SPECIALIST,
-            model="claude-3-5-sonnet-20241022",
+            model="claude-3-5-sonnet-20240620",
             temperature=0.4,
             max_tokens=1200,
             capabilities=[

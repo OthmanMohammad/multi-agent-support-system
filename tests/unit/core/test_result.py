@@ -17,6 +17,12 @@ from src.core.result import (
     Result,
     Error,
 )
+from src.core.errors import (
+    ValidationError,
+    NotFoundError,
+    BusinessRuleError,
+    ConflictError,
+)
 
 
 class TestError:
@@ -164,7 +170,7 @@ class TestResult:
     
     def test_post_init_validation_both_set(self):
         """Test that Result validates exactly one of value/error is set"""
-        with pytest.raises(ValueError, match="must have either value or error"):
+        with pytest.raises(ValueError, match="cannot have both value and error"):
             Result(_value=42, _error=Error("ERROR", "Message"))
     
     def test_post_init_validation_neither_set(self):
@@ -403,8 +409,8 @@ class TestHelperFunctions:
     """Test suite for error helper functions"""
     
     def test_validation_error_with_all_params(self):
-        """Test validation_error() with all parameters"""
-        error = validation_error(
+        """Test ValidationError() with all parameters"""
+        error = ValidationError(
             message="Email is required",
             field="email",
             value="invalid",
@@ -416,25 +422,25 @@ class TestHelperFunctions:
         assert error.details["value"] == "invalid"
     
     def test_validation_error_minimal(self):
-        """Test validation_error() with minimal parameters"""
-        error = validation_error(message="Invalid input")
+        """Test ValidationError() with minimal parameters"""
+        error = ValidationError(message="Invalid input")
         
         assert error.code == "VALIDATION_ERROR"
         assert error.message == "Invalid input"
         assert error.details is None
     
-    def test_not_found_error(self):
-        """Test not_found_error() helper"""
-        error = not_found_error(resource="Customer", identifier="123")
-        
+    def test_NotFoundError(self):
+        """Test NotFoundError() helper"""
+        error = NotFoundError(resource="Customer", identifier="123")
+
         assert error.code == "NOT_FOUND"
-        assert error.message == "Customer not found"
+        assert error.message == "Customer not found: 123"
         assert error.details["resource"] == "Customer"
         assert error.details["identifier"] == "123"
     
     def test_business_rule_error_with_rule(self):
-        """Test business_rule_error() with rule name"""
-        error = business_rule_error(
+        """Test BusinessRuleError() with rule name"""
+        error = BusinessRuleError(
             message="Cannot resolve without messages",
             rule="ConversationResolutionRule"
         )
@@ -444,15 +450,15 @@ class TestHelperFunctions:
         assert error.details["rule"] == "ConversationResolutionRule"
     
     def test_business_rule_error_without_rule(self):
-        """Test business_rule_error() without rule name"""
-        error = business_rule_error(message="Rule violated")
+        """Test BusinessRuleError() without rule name"""
+        error = BusinessRuleError(message="Rule violated")
         
         assert error.code == "BUSINESS_RULE_VIOLATION"
         assert error.details is None
     
-    def test_conflict_error(self):
-        """Test conflict_error() helper"""
-        error = conflict_error(
+    def test_ConflictError(self):
+        """Test ConflictError() helper"""
+        error = ConflictError(
             message="Email already exists",
             conflicting_id="user@example.com"
         )
@@ -471,12 +477,12 @@ class TestResultChaining:
             try:
                 return Result.ok(int(s))
             except ValueError:
-                return Result.fail(validation_error("Invalid integer", value=s))
+                return Result.fail(ValidationError("Invalid integer", value=s))
         
         def validate_positive(n: int) -> Result[int]:
             if n > 0:
                 return Result.ok(n)
-            return Result.fail(business_rule_error("Must be positive"))
+            return Result.fail(BusinessRuleError("Must be positive"))
         
         def double(n: int) -> Result[int]:
             return Result.ok(n * 2)
@@ -496,7 +502,7 @@ class TestResultChaining:
         
         def parse_int(s: str) -> Result[int]:
             operations_called.append("parse")
-            return Result.fail(validation_error("Invalid"))
+            return Result.fail(ValidationError("Invalid"))
         
         def validate_positive(n: int) -> Result[int]:
             operations_called.append("validate")

@@ -89,7 +89,7 @@ class AnthropicConfig(BaseSettings):
     """Anthropic Claude API configuration"""
 
     api_key: str = Field(..., min_length=10)
-    model: str = Field(default="claude-3-5-sonnet-20241022")
+    model: str = Field(default="claude-3-5-sonnet-20240620")
     max_tokens: int = Field(default=4096, ge=1, le=200000)
     temperature: float = Field(default=0.7, ge=0.0, le=1.0)
     timeout: int = Field(default=60, ge=1)
