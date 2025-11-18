@@ -178,7 +178,7 @@ class ConversationApplicationService:
             
             # Save agent response
             agent_name = agent_path[-1] if agent_path else "router"
-            await self.uow.messages.create_message(
+            agent_message = await self.uow.messages.create_message(
                 conversation_id=conversation.id,
                 role="assistant",
                 content=response_text,
@@ -270,16 +270,19 @@ class ConversationApplicationService:
             )
             
             return Result.ok({
-                "conversation_id": str(conversation.id),
-                "customer_id": str(customer.id),
-                "message": response_text,
-                "intent": intent,
+                "conversation_id": conversation.id,
+                "message_id": agent_message.id,
+                "response": response_text,
+                "agent_name": agent_name,
                 "confidence": confidence,
+                "created_at": agent_message.created_at,
+                # Additional metadata (not in ChatResponse but useful for logging)
+                "customer_id": str(customer.id),
+                "intent": intent,
                 "sentiment": sentiment,
                 "agent_path": agent_path,
                 "kb_articles_used": kb_articles,
-                "status": status,
-                "timestamp": datetime.now(timezone.utc).isoformat()
+                "status": status
             })
             
         except Exception as e:
