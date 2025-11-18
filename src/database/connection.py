@@ -137,14 +137,15 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
 
 async def init_db():
     """
-    Initialize database - verify connection
+    Initialize database - verify connection and check table status
     Should be called on application startup
 
-    Note: Table creation is handled by Alembic migrations.
-    This function just verifies the database is accessible.
+    Note: Tables should be created by running create_tables.py script
+    or using Alembic migrations (alembic upgrade head).
+    This function just verifies the database is accessible and reports status.
     """
     from src.database.models import Base
-    from sqlalchemy.exc import ProgrammingError
+    from sqlalchemy import inspect
 
     logger.info(
         "database_initialization_started",
@@ -152,19 +153,42 @@ async def init_db():
     )
     engine = get_engine()
 
-    # Create tables if they don't exist
-    # checkfirst=True means it only creates missing tables - safe for all environments
-    # Note: Indexes may already exist, so we catch and ignore duplicate errors
+    # Just verify connection and report table status
     try:
         async with engine.begin() as conn:
-            await conn.run_sync(lambda sync_conn: Base.metadata.create_all(sync_conn, checkfirst=True))
-            logger.info("database_tables_verified_or_created")
-    except ProgrammingError as e:
-        # Ignore duplicate table/index errors - they already exist
-        if "already exists" in str(e):
-            logger.info("database_tables_already_exist", detail=str(e)[:100])
-        else:
-            raise
+            # Get list of existing tables
+            def get_existing_tables(sync_conn):
+                inspector = inspect(sync_conn)
+                return set(inspector.get_table_names())
+
+            existing_tables = await conn.run_sync(get_existing_tables)
+
+            # Get list of tables in our models
+            model_tables = set(Base.metadata.tables.keys())
+
+            # Find missing tables
+            missing_tables = model_tables - existing_tables
+
+            if missing_tables:
+                logger.error(
+                    "missing_database_tables",
+                    missing_count=len(missing_tables),
+                    total_expected=len(model_tables),
+                    missing_tables=sorted(list(missing_tables))[:20]  # Log first 20
+                )
+                logger.error(
+                    "database_not_initialized",
+                    message="Run 'alembic upgrade head' to create all tables using migrations"
+                )
+            else:
+                logger.info("database_tables_verified", table_count=len(model_tables))
+    except Exception as e:
+        logger.error(
+            "database_connection_failed",
+            error=str(e),
+            error_type=type(e).__name__
+        )
+        raise
 
 
 async def close_db():
