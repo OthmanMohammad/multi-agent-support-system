@@ -124,7 +124,11 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             response.headers["Content-Security-Policy"] = self.csp_policy
 
         # Remove server header (information disclosure)
-        response.headers.pop("Server", None)
+        # MutableHeaders doesn't have pop(), use del with try/except
+        try:
+            del response.headers["Server"]
+        except KeyError:
+            pass
 
         # Add custom header to identify API
         response.headers["X-API-Version"] = "1.0.0"
