@@ -150,6 +150,7 @@ Output ONLY valid JSON. Choose exactly ONE category."""
                 self.logger.warning("sales_router_empty_message")
                 state["sales_category"] = "qualification"
                 state["sales_category_confidence"] = 0.5
+                state["next_agent"] = "escalation"  # Route to escalation as fallback
                 return state
 
             # Build context for routing
@@ -214,6 +215,16 @@ Classify into: qualification, education, objection, or progression."""
             state["sales_category_confidence"] = confidence
             state["sales_category_reasoning"] = reasoning
 
+            # Map category to actual agent for routing
+            # TODO: Add sales-specific agents to graph, for now route to escalation
+            category_to_agent = {
+                "qualification": "escalation",  # Needs sales specialist
+                "education": "escalation",       # Needs sales specialist
+                "objection": "escalation",       # Needs sales specialist
+                "progression": "escalation"      # Needs sales specialist
+            }
+            state["next_agent"] = category_to_agent.get(category, "escalation")
+
             # Calculate latency
             latency_ms = int((datetime.now() - start_time).total_seconds() * 1000)
 
@@ -226,6 +237,7 @@ Classify into: qualification, education, objection, or progression."""
             self.logger.info(
                 "sales_query_routed",
                 category=category,
+                next_agent=state["next_agent"],
                 confidence=confidence,
                 latency_ms=latency_ms
             )
@@ -243,6 +255,7 @@ Classify into: qualification, education, objection, or progression."""
             state["sales_category"] = "qualification"
             state["sales_category_confidence"] = 0.5
             state["sales_category_reasoning"] = "Fallback due to routing error"
+            state["next_agent"] = "escalation"  # Route to escalation as fallback
             return state
 
     def _parse_response(self, response: str) -> Dict[str, Any]:
