@@ -152,6 +152,7 @@ Output ONLY valid JSON. Choose exactly ONE category."""
                 self.logger.warning("support_router_empty_message")
                 state["support_category"] = "usage"
                 state["support_category_confidence"] = 0.5
+                state["next_agent"] = "usage"  # Route to usage agent as fallback
                 return state
 
             # Build context for routing
@@ -208,6 +209,16 @@ Classify into: billing, technical, usage, integration, or account."""
             state["support_category_confidence"] = confidence
             state["support_category_reasoning"] = reasoning
 
+            # Map category to actual agent for routing
+            category_to_agent = {
+                "billing": "billing",
+                "technical": "technical",
+                "usage": "usage",
+                "integration": "api",
+                "account": "technical"  # Account issues go to technical
+            }
+            state["next_agent"] = category_to_agent.get(category, "escalation")
+
             # Calculate latency
             latency_ms = int((datetime.now() - start_time).total_seconds() * 1000)
 
@@ -220,6 +231,7 @@ Classify into: billing, technical, usage, integration, or account."""
             self.logger.info(
                 "support_query_routed",
                 category=category,
+                next_agent=state["next_agent"],
                 confidence=confidence,
                 latency_ms=latency_ms
             )
@@ -237,6 +249,7 @@ Classify into: billing, technical, usage, integration, or account."""
             state["support_category"] = "usage"
             state["support_category_confidence"] = 0.5
             state["support_category_reasoning"] = "Fallback due to routing error"
+            state["next_agent"] = "usage"  # Route to usage agent as fallback
             return state
 
     def _parse_response(self, response: str) -> Dict[str, Any]:
