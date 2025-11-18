@@ -216,12 +216,11 @@ Classify into: qualification, education, objection, or progression."""
             state["sales_category_reasoning"] = reasoning
 
             # Map category to actual agent for routing
-            # TODO: Add sales-specific agents to graph, for now route to escalation
             category_to_agent = {
-                "qualification": "escalation",  # Needs sales specialist
-                "education": "escalation",       # Needs sales specialist
-                "objection": "escalation",       # Needs sales specialist
-                "progression": "escalation"      # Needs sales specialist
+                "qualification": "sales_qualification",  # inbound_qualifier
+                "education": "sales_education",           # demo_scheduler
+                "objection": "sales_objection",           # price_objection_handler
+                "progression": "sales_progression"        # closer
             }
             state["next_agent"] = category_to_agent.get(category, "escalation")
 
