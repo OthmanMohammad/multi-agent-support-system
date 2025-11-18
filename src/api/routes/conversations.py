@@ -22,29 +22,32 @@ async def create_conversation(
     service: ConversationApplicationService = Depends(get_conversation_application_service)
 ):
     """Create new conversation with initial message"""
+    # Use customer_email if provided, otherwise use default
+    customer_email = getattr(request, 'customer_email', None) or getattr(request, 'customer_id', 'default@example.com')
+
     logger.info(
         "create_conversation_endpoint_called",
-        customer_id=request.customer_id,
+        customer_email=customer_email,
         message_length=len(request.message)
     )
-    
+
     result = await service.create_conversation(
-        customer_email=request.customer_id,
+        customer_email=customer_email,
         message=request.message
     )
-    
+
     if result.is_failure:
         logger.warning(
             "create_conversation_failed",
-            customer_id=request.customer_id,
+            customer_email=customer_email,
             error_type=type(result.error).__name__
         )
         raise map_error_to_http(result.error)
-    
+
     logger.info(
         "create_conversation_success",
         conversation_id=result.value.get("conversation_id"),
-        customer_id=request.customer_id,
+        customer_email=customer_email,
         status=result.value.get("status")
     )
     
