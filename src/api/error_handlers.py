@@ -145,10 +145,9 @@ def setup_error_handlers(app: FastAPI) -> None:
         context = get_exception_context(exc)
         
         # Log the error with full context
+        # Note: error_type and error_message are already in context from get_exception_context()
         logger.error(
             "unexpected_exception",
-            error=str(exc),
-            error_type=type(exc).__name__,
             path=request.url.path,
             method=request.method,
             **context,

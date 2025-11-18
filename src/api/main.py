@@ -113,7 +113,9 @@ setup_error_handlers(app)
 # =============================================================================
 
 # Health check (no auth required)
-app.include_router(health.router, prefix="/api", tags=["Health"])
+# Register both at root and /api for compatibility
+app.include_router(health.router, tags=["Health"])  # /health
+app.include_router(health.router, prefix="/api", tags=["Health"])  # /api/health
 
 # Authentication & user management
 app.include_router(auth.router, prefix="/api", tags=["Authentication"])
