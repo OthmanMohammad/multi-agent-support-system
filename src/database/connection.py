@@ -144,6 +144,7 @@ async def init_db():
     This function just verifies the database is accessible.
     """
     from src.database.models import Base
+    from sqlalchemy.exc import ProgrammingError
 
     logger.info(
         "database_initialization_started",
@@ -153,9 +154,17 @@ async def init_db():
 
     # Create tables if they don't exist
     # checkfirst=True means it only creates missing tables - safe for all environments
-    async with engine.begin() as conn:
-        await conn.run_sync(lambda sync_conn: Base.metadata.create_all(sync_conn, checkfirst=True))
-        logger.info("database_tables_verified_or_created")
+    # Note: Indexes may already exist, so we catch and ignore duplicate errors
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(lambda sync_conn: Base.metadata.create_all(sync_conn, checkfirst=True))
+            logger.info("database_tables_verified_or_created")
+    except ProgrammingError as e:
+        # Ignore duplicate table/index errors - they already exist
+        if "already exists" in str(e):
+            logger.info("database_tables_already_exist", detail=str(e)[:100])
+        else:
+            raise
 
 
 async def close_db():
