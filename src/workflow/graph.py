@@ -54,15 +54,20 @@ class SupportGraph:
 
         self.router = router_class()
 
-        # Map legacy agent names to new specialist agents
-        # These will be dynamically resolved from the registry
+        # Map agent names to registry names
+        # Includes domain routers and specialist agents
         self.agent_mapping = {
-            # For backward compatibility with old routing logic
-            "billing": "billing_upgrade_specialist",  # Default billing agent
-            "technical": "bug_triager",  # Default technical agent
-            "usage": "onboarding_guide",  # Default usage agent
-            "api": "api_debugger",  # Default API/integration agent
-            "escalation": "escalation_decider",  # Escalation coordinator
+            # Domain routers (tier 2 routing)
+            "support_domain_router": "support_domain_router",
+            "sales_domain_router": "sales_domain_router",
+            "cs_domain_router": "cs_domain_router",
+
+            # Specialist agents (correct registry names)
+            "billing": "billing_agent",
+            "technical": "technical_agent",
+            "usage": "usage_agent",
+            "api": "api_agent",
+            "escalation": "escalation_decider",
         }
 
         # Initialize specialist agents dynamically
@@ -144,17 +149,27 @@ class SupportGraph:
         routing_map = {agent_name: agent_name for agent_name in self.agents.keys()}
         routing_map[END] = END
 
-        # Add conditional routing from router to specialists
+        # Add conditional routing from meta router to domain routers
         workflow.add_conditional_edges(
             "router",
             route_from_router,
             routing_map
         )
 
-        # All specialist agents end after responding
-        # Single-hop architecture: no routing between specialists
+        # Domain routers can route to specialists
+        domain_routers = ["support_domain_router", "sales_domain_router", "cs_domain_router"]
+        for domain_router in domain_routers:
+            if domain_router in self.agents:
+                workflow.add_conditional_edges(
+                    domain_router,
+                    route_from_router,  # Reuse same routing logic
+                    routing_map
+                )
+
+        # Specialist agents end after responding (not routers)
         for agent_name in self.agents.keys():
-            workflow.add_edge(agent_name, END)
+            if agent_name not in domain_routers:
+                workflow.add_edge(agent_name, END)
 
         # Compile the graph
         compiled = workflow.compile()
