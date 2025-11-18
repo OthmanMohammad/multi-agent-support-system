@@ -7,30 +7,21 @@ from sqlalchemy import pool
 
 from alembic import context
 
-# Load .env file if it exists
-try:
-    from dotenv import load_dotenv
-    env_path = Path(__file__).parent.parent / '.env'
-    if env_path.exists():
-        load_dotenv(env_path)
-except ImportError:
-    # dotenv not installed, skip loading
-    pass
-
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
-# SECURITY FIX: Load database URL from environment variable
-database_url = os.getenv("DATABASE_URL")
-if not database_url:
-    raise ValueError(
-        "DATABASE_URL environment variable is required for migrations.\n"
-        "Set it to your database connection string:\n"
-        "  export DATABASE_URL=postgresql+asyncpg://user:password@host:5432/dbname\n"
-        "Then run migrations:\n"
-        "  alembic upgrade head"
-    )
+# Add src to path early so we can import settings
+import sys
+project_root = Path(__file__).parent.parent
+src_path = project_root / 'src'
+sys.path.insert(0, str(src_path))
+
+# Use centralized configuration system (same as main application)
+from src.core.config import get_settings
+
+settings = get_settings()
+database_url = str(settings.database.url)
 
 # IMPORTANT: Convert async URL to sync URL for Alembic
 # Alembic uses synchronous connections, so we need psycopg2 instead of asyncpg
@@ -47,14 +38,6 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-import sys
-from pathlib import Path
-
-# Add src to path
-project_root = Path(__file__).parent.parent
-src_path = project_root / 'src'
-sys.path.insert(0, str(src_path))
-
 from src.database.models import Base
 
 # Import all models explicitly for autogenerate to detect them
