@@ -7,6 +7,7 @@ Provides application service instances for route handlers.
 from typing import AsyncGenerator
 from fastapi import Depends
 
+from src.database.connection import get_db_session
 from src.database.unit_of_work import UnitOfWork
 from src.services.application.conversation_service import ConversationApplicationService
 from src.services.application.customer_service import CustomerApplicationService
@@ -27,27 +28,29 @@ async def get_conversation_application_service() -> AsyncGenerator[ConversationA
     Yields:
         ConversationApplicationService instance
     """
-    # Create dependencies
-    uow = UnitOfWork()
-    domain_service = ConversationDomainService()
-    customer_service = CustomerInfrastructureService()
-    workflow_engine = AgentWorkflowEngine()
-    analytics_service = AnalyticsService()
+    # Create database session
+    async with get_db_session() as session:
+        # Create dependencies
+        uow = UnitOfWork(session)
+        domain_service = ConversationDomainService()
+        customer_service = CustomerInfrastructureService()
+        workflow_engine = AgentWorkflowEngine()
+        analytics_service = AnalyticsService()
 
-    # Create and yield the service
-    service = ConversationApplicationService(
-        uow=uow,
-        domain_service=domain_service,
-        customer_service=customer_service,
-        workflow_engine=workflow_engine,
-        analytics_service=analytics_service
-    )
+        # Create and yield the service
+        service = ConversationApplicationService(
+            uow=uow,
+            domain_service=domain_service,
+            customer_service=customer_service,
+            workflow_engine=workflow_engine,
+            analytics_service=analytics_service
+        )
 
-    try:
-        yield service
-    finally:
-        # Cleanup if needed
-        pass
+        try:
+            yield service
+        finally:
+            # Cleanup if needed
+            pass
 
 
 async def get_customer_application_service() -> AsyncGenerator[CustomerApplicationService, None]:
@@ -57,20 +60,22 @@ async def get_customer_application_service() -> AsyncGenerator[CustomerApplicati
     Yields:
         CustomerApplicationService instance
     """
-    uow = UnitOfWork()
-    domain_service = CustomerDomainService()
-    infrastructure_service = CustomerInfrastructureService()
+    # Create database session
+    async with get_db_session() as session:
+        uow = UnitOfWork(session)
+        domain_service = CustomerDomainService()
+        infrastructure_service = CustomerInfrastructureService()
 
-    service = CustomerApplicationService(
-        uow=uow,
-        domain_service=domain_service,
-        infrastructure_service=infrastructure_service
-    )
+        service = CustomerApplicationService(
+            uow=uow,
+            domain_service=domain_service,
+            infrastructure_service=infrastructure_service
+        )
 
-    try:
-        yield service
-    finally:
-        pass
+        try:
+            yield service
+        finally:
+            pass
 
 
 async def get_analytics_service() -> AsyncGenerator[AnalyticsService, None]:
