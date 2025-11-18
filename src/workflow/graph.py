@@ -62,11 +62,27 @@ class SupportGraph:
             "sales_domain_router": "sales_domain_router",
             "cs_domain_router": "cs_domain_router",
 
-            # Specialist agents (correct registry names)
+            # Support specialist agents
             "billing": "billing_agent",
             "technical": "technical_agent",
             "usage": "usage_agent",
             "api": "api_agent",
+            "account": "account_deletion_specialist",
+
+            # Sales specialist agents
+            "sales_qualification": "inbound_qualifier",
+            "sales_education": "demo_scheduler",
+            "sales_objection": "price_objection_handler",
+            "sales_progression": "closer",
+
+            # Customer Success specialist agents
+            "cs_health": "health_score",
+            "cs_onboarding": "onboarding_coordinator",
+            "cs_adoption": "feature_adoption",
+            "cs_retention": "renewal_manager",
+            "cs_expansion": "upsell_identifier",
+
+            # Escalation
             "escalation": "escalation_decider",
         }
 
