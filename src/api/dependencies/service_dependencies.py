@@ -33,7 +33,7 @@ async def get_conversation_application_service() -> AsyncGenerator[ConversationA
         # Create dependencies
         uow = UnitOfWork(session)
         domain_service = ConversationDomainService()
-        customer_service = CustomerInfrastructureService()
+        customer_service = CustomerInfrastructureService(uow)
         workflow_engine = AgentWorkflowEngine()
         analytics_service = AnalyticsService()
 
@@ -64,7 +64,7 @@ async def get_customer_application_service() -> AsyncGenerator[CustomerApplicati
     async with get_db_session() as session:
         uow = UnitOfWork(session)
         domain_service = CustomerDomainService()
-        infrastructure_service = CustomerInfrastructureService()
+        infrastructure_service = CustomerInfrastructureService(uow)
 
         service = CustomerApplicationService(
             uow=uow,
