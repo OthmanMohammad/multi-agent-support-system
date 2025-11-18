@@ -280,23 +280,17 @@ class AgentWorkflowEngine:
     
     async def _run_graph(self, state: AgentState) -> AgentState:
         """
-        Run LangGraph workflow (wrapper for async execution)
-        
-        LangGraph's invoke() is synchronous, so we run it in
-        an executor to make it async-compatible.
-        
+        Run LangGraph workflow asynchronously
+
+        Uses LangGraph's ainvoke() method for async execution.
+
         Args:
             state: Initial state
-            
+
         Returns:
             Final state after graph execution
         """
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None,
-            self.graph.app.invoke,
-            state
-        )
+        return await self.graph.app.ainvoke(state)
     
     def classify_intent(self, message: str) -> Dict[str, Any]:
         """
