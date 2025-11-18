@@ -90,6 +90,8 @@ class BillingAgent(BaseAgent):
         # Update state
         state["agent_response"] = response
         state["response_confidence"] = 0.85
+        state["primary_intent"] = intent  # Track primary intent
+        state["intent_confidence"] = 0.9  # Track confidence in intent classification
         state["next_agent"] = None  # End conversation
         state["status"] = "resolved"
 
