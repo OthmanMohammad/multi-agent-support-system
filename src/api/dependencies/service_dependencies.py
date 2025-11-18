@@ -35,7 +35,7 @@ async def get_conversation_application_service() -> AsyncGenerator[ConversationA
         domain_service = ConversationDomainService()
         customer_service = CustomerInfrastructureService(uow)
         workflow_engine = AgentWorkflowEngine()
-        analytics_service = AnalyticsService()
+        analytics_service = AnalyticsService(uow)
 
         # Create and yield the service
         service = ConversationApplicationService(
@@ -85,10 +85,13 @@ async def get_analytics_service() -> AsyncGenerator[AnalyticsService, None]:
     Yields:
         AnalyticsService instance
     """
-    service = AnalyticsService()
+    # Create database session
+    async with get_db_session() as session:
+        uow = UnitOfWork(session)
+        service = AnalyticsService(uow)
 
-    try:
-        yield service
-    finally:
-        pass
+        try:
+            yield service
+        finally:
+            pass
     
