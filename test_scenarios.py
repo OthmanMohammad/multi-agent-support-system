@@ -76,7 +76,6 @@ def send_message(customer_id: str, message: str, metadata: Dict[str, Any] = None
     """Send a customer message to the API"""
     try:
         payload = {
-            "customer_id": customer_id,
             "message": message
         }
 
@@ -84,7 +83,7 @@ def send_message(customer_id: str, message: str, metadata: Dict[str, Any] = None
             payload["metadata"] = metadata
 
         response = requests.post(
-            f"{BASE_URL}/api/v1/conversations",
+            f"{BASE_URL}/api/conversations",
             json=payload,
             timeout=30
         )
