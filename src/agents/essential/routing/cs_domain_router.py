@@ -240,12 +240,12 @@ Classify into: health, onboarding, adoption, retention, or expansion."""
             state["cs_category_reasoning"] = reasoning
 
             # Map category to actual agent for routing
-            # TODO: Add CS-specific agents to graph, for now route to escalation
             category_to_agent = {
-                "adoption": "escalation",    # Needs CS specialist
-                "expansion": "escalation",   # Needs CS specialist
-                "retention": "escalation",   # Needs CS specialist
-                "advocacy": "escalation"     # Needs CS specialist
+                "health": "cs_health",           # health_score
+                "onboarding": "cs_onboarding",   # onboarding_coordinator
+                "adoption": "cs_adoption",       # feature_adoption
+                "retention": "cs_retention",     # renewal_manager
+                "expansion": "cs_expansion"      # upsell_identifier
             }
             state["next_agent"] = category_to_agent.get(category, "escalation")
 
