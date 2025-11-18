@@ -162,6 +162,7 @@ Output ONLY valid JSON. Choose exactly ONE category."""
                 self.logger.warning("cs_router_empty_message")
                 state["cs_category"] = "adoption"
                 state["cs_category_confidence"] = 0.5
+                state["next_agent"] = "escalation"  # Route to escalation as fallback
                 return state
 
             # Build context for routing (CRITICAL for CS routing)
@@ -238,6 +239,16 @@ Classify into: health, onboarding, adoption, retention, or expansion."""
             state["cs_category_confidence"] = confidence
             state["cs_category_reasoning"] = reasoning
 
+            # Map category to actual agent for routing
+            # TODO: Add CS-specific agents to graph, for now route to escalation
+            category_to_agent = {
+                "adoption": "escalation",    # Needs CS specialist
+                "expansion": "escalation",   # Needs CS specialist
+                "retention": "escalation",   # Needs CS specialist
+                "advocacy": "escalation"     # Needs CS specialist
+            }
+            state["next_agent"] = category_to_agent.get(category, "escalation")
+
             # Calculate latency
             latency_ms = int((datetime.now() - start_time).total_seconds() * 1000)
 
@@ -250,6 +261,7 @@ Classify into: health, onboarding, adoption, retention, or expansion."""
             self.logger.info(
                 "cs_query_routed",
                 category=category,
+                next_agent=state["next_agent"],
                 confidence=confidence,
                 latency_ms=latency_ms
             )
@@ -267,6 +279,7 @@ Classify into: health, onboarding, adoption, retention, or expansion."""
             state["cs_category"] = "adoption"
             state["cs_category_confidence"] = 0.5
             state["cs_category_reasoning"] = "Fallback due to routing error"
+            state["next_agent"] = "escalation"  # Route to escalation as fallback
             return state
 
     def _apply_context_overrides(
