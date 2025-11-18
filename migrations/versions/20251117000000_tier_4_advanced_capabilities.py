@@ -20,7 +20,7 @@ import uuid
 
 # revision identifiers, used by Alembic.
 revision = '20251117000000'
-down_revision = '20251116000000'
+down_revision = '20251116120000'  # Fixed: Should point to authentication migration
 branch_labels = None
 depends_on = None
 
