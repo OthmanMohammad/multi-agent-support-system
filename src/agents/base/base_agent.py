@@ -209,7 +209,7 @@ class BaseAgent(ABC):
             self.logger.warning("kb_service_not_available")
             # Try using the legacy search_articles function
             try:
-                from knowledge_base import search_articles
+                from src.knowledge_base import search_articles
                 category = category or self.config.kb_category
                 results = search_articles(query=query, category=category, limit=limit)
                 self.logger.info(
