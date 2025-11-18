@@ -151,16 +151,11 @@ async def init_db():
     )
     engine = get_engine()
 
-    # Just verify connection works (don't create tables - use migrations)
+    # Create tables if they don't exist
+    # checkfirst=True means it only creates missing tables - safe for all environments
     async with engine.begin() as conn:
-        # Only create tables if they don't exist (for development)
-        # In production, use: alembic upgrade head
-        if settings.environment == "development":
-            await conn.run_sync(lambda sync_conn: Base.metadata.create_all(sync_conn, checkfirst=True))
-            logger.info("database_tables_verified_or_created")
-        else:
-            # Production: assume migrations have been run
-            logger.info("database_connection_verified")
+        await conn.run_sync(lambda sync_conn: Base.metadata.create_all(sync_conn, checkfirst=True))
+        logger.info("database_tables_verified_or_created")
 
 
 async def close_db():

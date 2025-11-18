@@ -360,7 +360,7 @@ class Settings(BaseSettings):
 
     # Application environment
     environment: Literal["staging", "production"] = Field(
-        ...,
+        default="staging",
         description="Application environment (staging or production only)"
     )
 
