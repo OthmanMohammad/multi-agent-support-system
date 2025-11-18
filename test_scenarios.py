@@ -88,7 +88,7 @@ def send_message(customer_id: str, message: str, metadata: Dict[str, Any] = None
             timeout=30
         )
 
-        if response.status_code == 200:
+        if response.status_code in [200, 201]:  # Accept both 200 OK and 201 Created
             return response.json()
         else:
             return {
