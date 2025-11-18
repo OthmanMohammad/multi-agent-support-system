@@ -74,6 +74,8 @@ class TechnicalAgent(BaseAgent):
 
         state["agent_response"] = response
         state["response_confidence"] = 0.8
+        state["primary_intent"] = intent  # Track primary intent
+        state["intent_confidence"] = 0.85  # Track confidence in intent classification
         state["next_agent"] = None
         state["status"] = "resolved"
 
