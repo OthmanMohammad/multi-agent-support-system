@@ -1,0 +1,165 @@
+# =============================================================================
+# PROMETHEUS CONFIGURATION
+# Multi-Agent Support System Monitoring
+# =============================================================================
+
+global:
+  scrape_interval: 15s                     # Scrape targets every 15 seconds
+  evaluation_interval: 15s                 # Evaluate rules every 15 seconds
+  scrape_timeout: 10s                      # Timeout after 10 seconds
+
+  external_labels:
+    cluster: 'multi-agent-production'
+    environment: 'oracle-cloud'
+    region: 'oracle-free-tier'
+
+# =============================================================================
+# ALERTING (Optional - configure Alertmanager)
+# =============================================================================
+
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets:
+#           - 'alertmanager:9093'
+
+# =============================================================================
+# RULE FILES
+# =============================================================================
+
+rule_files:
+  - '/etc/prometheus/rules/*.yml'
+
+# =============================================================================
+# SCRAPE CONFIGURATIONS
+# =============================================================================
+
+scrape_configs:
+
+  # ---------------------------------------------------------------------------
+  # Prometheus Self-Monitoring
+  # ---------------------------------------------------------------------------
+
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+          tier: 'monitoring'
+
+  # ---------------------------------------------------------------------------
+  # FastAPI Application Metrics
+  # ---------------------------------------------------------------------------
+
+  - job_name: 'fastapi'
+    scrape_interval: 10s
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['fastapi:8000']
+        labels:
+          service: 'api'
+          tier: 'application'
+          component: 'backend'
+
+    # Relabel for better organization
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'fastapi'
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Metrics (via postgres_exporter)
+  # ---------------------------------------------------------------------------
+
+  - job_name: 'postgres'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+        labels:
+          service: 'database'
+          tier: 'data'
+          component: 'postgres'
+
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'postgres'
+
+  # ---------------------------------------------------------------------------
+  # Redis Metrics (via redis_exporter)
+  # ---------------------------------------------------------------------------
+
+  - job_name: 'redis'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['redis-exporter:9121']
+        labels:
+          service: 'cache'
+          tier: 'data'
+          component: 'redis'
+
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'redis'
+
+  # ---------------------------------------------------------------------------
+  # System Metrics (via node_exporter)
+  # ---------------------------------------------------------------------------
+
+  - job_name: 'node'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          service: 'system'
+          tier: 'infrastructure'
+          component: 'host'
+
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'oracle-cloud-host'
+
+  # ---------------------------------------------------------------------------
+  # Docker Container Metrics (if using cAdvisor - optional)
+  # ---------------------------------------------------------------------------
+
+  # - job_name: 'cadvisor'
+  #   scrape_interval: 15s
+  #   static_configs:
+  #     - targets: ['cadvisor:8080']
+  #       labels:
+  #         service: 'containers'
+  #         tier: 'infrastructure'
+
+  # ---------------------------------------------------------------------------
+  # Qdrant Vector Store Metrics
+  # ---------------------------------------------------------------------------
+
+  - job_name: 'qdrant'
+    scrape_interval: 30s
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['qdrant:6333']
+        labels:
+          service: 'vector-store'
+          tier: 'data'
+          component: 'qdrant'
+
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'qdrant'
+
+  # ---------------------------------------------------------------------------
+  # Nginx Metrics (if using nginx-prometheus-exporter - optional)
+  # ---------------------------------------------------------------------------
+
+  # - job_name: 'nginx'
+  #   scrape_interval: 30s
+  #   static_configs:
+  #     - targets: ['nginx-exporter:9113']
+  #       labels:
+  #         service: 'proxy'
+  #         tier: 'edge'
