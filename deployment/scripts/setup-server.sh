@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================================
-# ORACLE CLOUD SERVER SETUP SCRIPT
-# Automated setup for Ubuntu 22.04 ARM64 on Oracle Cloud
+# ORACLE LINUX SERVER SETUP SCRIPT
+# Automated setup for Oracle Linux 8 ARM64 on Oracle Cloud
 # =============================================================================
 
 set -e
@@ -38,108 +38,60 @@ section() {
 
 # Check if running as root
 if [ "$EUID" -eq 0 ]; then
-    error "Do not run this script as root. Run as ubuntu user with sudo access."
+    error "Do not run this script as root. Run as opc user with sudo access."
     exit 1
 fi
 
 section "1. SYSTEM UPDATE"
 
 log "Updating system packages..."
-sudo apt update && sudo apt upgrade -y
+sudo dnf update -y
 
 log "Installing essential tools..."
-sudo apt install -y \
+sudo dnf install -y \
     git \
     curl \
     wget \
     vim \
     htop \
     net-tools \
-    ufw \
-    fail2ban \
-    unattended-upgrades \
     ca-certificates \
-    gnupg \
-    lsb-release \
-    software-properties-common
+    openssl
 
-section "2. FIREWALL CONFIGURATION (UFW)"
+section "2. FIREWALL CONFIGURATION (firewalld)"
 
-log "Configuring UFW firewall..."
+log "Configuring firewalld..."
 
-# Reset UFW to default state
-sudo ufw --force reset
+# Start and enable firewalld
+sudo systemctl start firewalld
+sudo systemctl enable firewalld
 
-# Set default policies
-sudo ufw default deny incoming
-sudo ufw default allow outgoing
-
-# Get current IP for SSH restriction (optional)
-MY_IP=$(curl -s ifconfig.me)
-if [ -n "$MY_IP" ]; then
-    info "Your current IP: $MY_IP"
-    read -p "Restrict SSH to your IP only? (recommended) [y/N]: " RESTRICT_SSH
-    if [[ "$RESTRICT_SSH" =~ ^[Yy]$ ]]; then
-        sudo ufw allow from "$MY_IP" to any port 22 proto tcp
-        log "SSH restricted to $MY_IP"
-    else
-        sudo ufw allow 22/tcp
-        warn "SSH open to all IPs (not recommended for production)"
-    fi
-else
-    warn "Could not detect your IP. Allowing SSH from all IPs."
-    sudo ufw allow 22/tcp
-fi
+# Allow SSH (already open but make sure)
+sudo firewall-cmd --permanent --add-service=ssh
 
 # Allow HTTP/HTTPS
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
+sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --permanent --add-service=https
 
-# Allow monitoring ports (restrict these after initial setup)
+# Allow monitoring ports
 info "Opening monitoring ports (9090, 3000) - restrict these after setup!"
-sudo ufw allow 9090/tcp comment "Prometheus"
-sudo ufw allow 3000/tcp comment "Grafana"
+sudo firewall-cmd --permanent --add-port=9090/tcp  # Prometheus
+sudo firewall-cmd --permanent --add-port=3000/tcp  # Grafana
 
-# Enable firewall
-sudo ufw --force enable
+# Reload firewall
+sudo firewall-cmd --reload
 
 log "✓ Firewall configured and enabled"
-sudo ufw status verbose
+sudo firewall-cmd --list-all
 
-section "3. FAIL2BAN SETUP (SSH Protection)"
-
-log "Configuring Fail2ban..."
-
-sudo tee /etc/fail2ban/jail.local << 'EOF'
-[DEFAULT]
-bantime = 3600
-findtime = 600
-maxretry = 3
-destemail = root@localhost
-sendername = Fail2Ban
-action = %(action_)s
-
-[sshd]
-enabled = true
-port = 22
-filter = sshd
-logpath = /var/log/auth.log
-maxretry = 3
-EOF
-
-sudo systemctl enable fail2ban
-sudo systemctl restart fail2ban
-
-log "✓ Fail2ban configured and running"
-
-section "4. SSH HARDENING"
+section "3. SSH HARDENING"
 
 log "Hardening SSH configuration..."
 
 # Backup original sshd_config
 sudo cp /etc/ssh/sshd_config /etc/ssh/sshd_config.backup
 
-# Disable password authentication
+# Disable password authentication (keys only)
 sudo sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
 sudo sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
 
@@ -155,38 +107,27 @@ sudo systemctl restart sshd
 
 log "✓ SSH hardened (password auth disabled, keys only)"
 
-section "5. AUTOMATIC SECURITY UPDATES"
-
-log "Configuring automatic security updates..."
-
-sudo dpkg-reconfigure -plow unattended-upgrades
-
-# Verify configuration
-if grep -q "APT::Periodic::Unattended-Upgrade \"1\"" /etc/apt/apt.conf.d/20auto-upgrades; then
-    log "✓ Automatic security updates enabled"
-else
-    warn "Automatic updates may not be fully configured"
-fi
-
-section "6. DOCKER INSTALLATION"
+section "4. DOCKER INSTALLATION"
 
 log "Installing Docker..."
 
-# Add Docker's official GPG key
-sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
-    sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+# Remove old versions if any
+sudo dnf remove -y docker docker-client docker-client-latest docker-common \
+    docker-latest docker-latest-logrotate docker-logrotate docker-engine \
+    podman runc 2>/dev/null || true
 
-# Set up repository
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-  https://download.docker.com/linux/ubuntu \
-  $(lsb_release -cs) stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+# Install required packages
+sudo dnf install -y dnf-plugins-core
+
+# Add Docker repository
+sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 
 # Install Docker
-sudo apt update
-sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# Start and enable Docker
+sudo systemctl start docker
+sudo systemctl enable docker
 
 # Add user to docker group
 sudo usermod -aG docker $USER
@@ -194,10 +135,11 @@ sudo usermod -aG docker $USER
 log "✓ Docker installed: $(docker --version)"
 log "✓ Docker Compose installed: $(docker compose version)"
 
-section "7. DOCKER PRODUCTION CONFIGURATION"
+section "5. DOCKER PRODUCTION CONFIGURATION"
 
 log "Configuring Docker for production..."
 
+sudo mkdir -p /etc/docker
 sudo tee /etc/docker/daemon.json << 'EOF'
 {
   "log-driver": "json-file",
@@ -219,11 +161,10 @@ sudo tee /etc/docker/daemon.json << 'EOF'
 EOF
 
 sudo systemctl restart docker
-sudo systemctl enable docker
 
 log "✓ Docker configured for production"
 
-section "8. CREATE APPLICATION DIRECTORY"
+section "6. CREATE APPLICATION DIRECTORY"
 
 log "Creating application directory structure..."
 
@@ -232,18 +173,15 @@ mkdir -p "$APP_DIR"/{logs,backups}
 
 log "✓ Directory created: $APP_DIR"
 
-section "9. ORACLE CLI INSTALLATION (Optional)"
+section "7. SELINUX CONFIGURATION"
 
-read -p "Install Oracle Cloud CLI for backup to Object Storage? [y/N]: " INSTALL_OCI
+log "Configuring SELinux for Docker..."
 
-if [[ "$INSTALL_OCI" =~ ^[Yy]$ ]]; then
-    log "Installing Oracle Cloud CLI..."
-    bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh)" -- --accept-all-defaults
-    log "✓ OCI CLI installed"
-    info "Configure OCI CLI with: oci setup config"
-else
-    info "Skipping OCI CLI installation"
-fi
+# Set SELinux to permissive for Docker (required for Oracle Linux)
+sudo setenforce 0
+sudo sed -i 's/^SELINUX=enforcing/SELINUX=permissive/' /etc/selinux/config
+
+warn "SELinux set to permissive mode for Docker compatibility"
 
 section "✅ SERVER SETUP COMPLETE"
 
@@ -252,22 +190,23 @@ log "━━━━━━━━━━━━━━━━━━━━━━━━━
 log "Server setup completed successfully!"
 log "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
+info "IMPORTANT: Log out and log back in for Docker group to take effect"
+echo ""
 info "NEXT STEPS:"
 echo ""
-echo "1. Log out and log back in for Docker group to take effect:"
+echo "1. Log out and log back in:"
 echo "   exit"
-echo "   ssh ubuntu@your-server-ip"
+echo "   ssh opc@your-server-ip"
 echo ""
-echo "2. Clone the repository:"
-echo "   cd $APP_DIR"
-echo "   git clone https://github.com/YOUR_USERNAME/multi-agent-support-system.git ."
+echo "2. Navigate to repository:"
+echo "   cd ~/multi-agent-support-system"
 echo ""
-echo "3. Set up environment variables (use Doppler or create .env file)"
+echo "3. Set up environment variables:"
+echo "   cp .env.production.example .env"
+echo "   nano .env"
 echo ""
 echo "4. Generate SSL certificate:"
 echo "   ./deployment/nginx/generate-self-signed-cert.sh"
-echo "   # Or for Let's Encrypt with domain:"
-echo "   # ./deployment/scripts/setup-letsencrypt.sh your-domain.com your@email.com"
 echo ""
 echo "5. Deploy the stack:"
 echo "   ./deployment/scripts/deploy.sh"
