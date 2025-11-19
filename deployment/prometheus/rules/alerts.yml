@@ -1,0 +1,353 @@
+# =============================================================================
+# PROMETHEUS ALERT RULES
+# Multi-Agent Support System
+# =============================================================================
+
+groups:
+
+  # ===========================================================================
+  # APPLICATION ALERTS
+  # ===========================================================================
+
+  - name: application_alerts
+    interval: 30s
+    rules:
+
+      # API is down
+      - alert: APIDown
+        expr: up{job="fastapi"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: "FastAPI application is down"
+          description: "The FastAPI application has been down for more than 2 minutes."
+
+      # High error rate
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{status=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: "High HTTP 5xx error rate"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+
+      # High request latency
+      - alert: HighRequestLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (le)
+          ) > 2
+        for: 10m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "High request latency (p95)"
+          description: "95th percentile request latency is {{ $value }}s (threshold: 2s)"
+
+      # Too many requests queued
+      - alert: HighRequestQueueDepth
+        expr: http_requests_in_progress > 50
+        for: 5m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "High number of requests in progress"
+          description: "{{ $value }} requests are currently being processed (threshold: 50)"
+
+  # ===========================================================================
+  # DATABASE ALERTS
+  # ===========================================================================
+
+  - name: database_alerts
+    interval: 30s
+    rules:
+
+      # PostgreSQL is down
+      - alert: PostgreSQLDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL has been unreachable for more than 1 minute."
+
+      # Too many connections
+      - alert: PostgreSQLTooManyConnections
+        expr: |
+          (
+            sum(pg_stat_database_numbackends)
+            /
+            pg_settings_max_connections
+          ) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "PostgreSQL connection pool nearly exhausted"
+          description: "{{ $value | humanizePercentage }} of max connections in use (threshold: 80%)"
+
+      # High query time
+      - alert: PostgreSQLSlowQueries
+        expr: rate(pg_stat_database_tup_returned[5m]) / rate(pg_stat_database_tup_fetched[5m]) < 0.1
+        for: 10m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "PostgreSQL inefficient queries detected"
+          description: "Query efficiency is {{ $value | humanizePercentage }} (threshold: 10%)"
+
+      # Dead locks
+      - alert: PostgreSQLDeadlocks
+        expr: rate(pg_stat_database_deadlocks[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "PostgreSQL deadlocks detected"
+          description: "{{ $value }} deadlocks per second detected"
+
+      # Replication lag (if replication enabled)
+      # - alert: PostgreSQLReplicationLag
+      #   expr: pg_replication_lag > 10
+      #   for: 5m
+      #   labels:
+      #     severity: warning
+      #     component: database
+      #   annotations:
+      #     summary: "PostgreSQL replication lag"
+      #     description: "Replication lag is {{ $value }}s (threshold: 10s)"
+
+  # ===========================================================================
+  # REDIS ALERTS
+  # ===========================================================================
+
+  - name: redis_alerts
+    interval: 30s
+    rules:
+
+      # Redis is down
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: cache
+        annotations:
+          summary: "Redis is down"
+          description: "Redis has been unreachable for more than 1 minute."
+
+      # Memory usage high
+      - alert: RedisMemoryHigh
+        expr: |
+          (
+            redis_memory_used_bytes
+            /
+            redis_memory_max_bytes
+          ) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "Redis memory usage high"
+          description: "Memory usage is {{ $value | humanizePercentage }} (threshold: 90%)"
+
+      # Too many rejected connections
+      - alert: RedisRejectedConnections
+        expr: rate(redis_rejected_connections_total[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "Redis rejecting connections"
+          description: "{{ $value }} connections rejected per second"
+
+      # High eviction rate
+      - alert: RedisHighEvictionRate
+        expr: rate(redis_evicted_keys_total[5m]) > 10
+        for: 10m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "High Redis key eviction rate"
+          description: "{{ $value }} keys evicted per second (threshold: 10/s)"
+
+  # ===========================================================================
+  # SYSTEM RESOURCE ALERTS
+  # ===========================================================================
+
+  - name: system_alerts
+    interval: 30s
+    rules:
+
+      # High CPU usage
+      - alert: HighCPUUsage
+        expr: |
+          (
+            100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+          ) > 80
+        for: 10m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is {{ $value | humanize }}% (threshold: 80%)"
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes)
+            /
+            node_memory_MemTotal_bytes
+          ) > 0.85
+        for: 10m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is {{ $value | humanizePercentage }} (threshold: 85%)"
+
+      # Disk space low
+      - alert: DiskSpaceLow
+        expr: |
+          (
+            (node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|fuse.lxcfs|squashfs|vfat"} * 100)
+            /
+            node_filesystem_size_bytes{mountpoint="/"}
+          ) < 15
+        for: 10m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Only {{ $value | humanize }}% disk space remaining (threshold: 15%)"
+
+      # Disk space critical
+      - alert: DiskSpaceCritical
+        expr: |
+          (
+            (node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|fuse.lxcfs|squashfs|vfat"} * 100)
+            /
+            node_filesystem_size_bytes{mountpoint="/"}
+          ) < 5
+        for: 5m
+        labels:
+          severity: critical
+          component: system
+        annotations:
+          summary: "Critical disk space on {{ $labels.instance }}"
+          description: "Only {{ $value | humanize }}% disk space remaining (threshold: 5%)"
+
+      # High disk I/O
+      - alert: HighDiskIO
+        expr: rate(node_disk_io_time_seconds_total[5m]) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "High disk I/O on {{ $labels.instance }}"
+          description: "Disk I/O utilization is {{ $value | humanizePercentage }} (threshold: 80%)"
+
+  # ===========================================================================
+  # CONTAINER ALERTS
+  # ===========================================================================
+
+  - name: container_alerts
+    interval: 30s
+    rules:
+
+      # Container down
+      - alert: ContainerDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: container
+        annotations:
+          summary: "Container {{ $labels.job }} is down"
+          description: "Container has been down for more than 2 minutes"
+
+      # Container restarting
+      - alert: ContainerRestarting
+        expr: rate(container_last_seen[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: container
+        annotations:
+          summary: "Container {{ $labels.name }} is restarting"
+          description: "Container has restarted {{ $value }} times in the last 5 minutes"
+
+  # ===========================================================================
+  # BUSINESS LOGIC ALERTS (Custom metrics from FastAPI)
+  # ===========================================================================
+
+  - name: business_alerts
+    interval: 30s
+    rules:
+
+      # LLM API errors
+      - alert: HighLLMErrorRate
+        expr: |
+          (
+            sum(rate(llm_api_errors_total[5m]))
+            /
+            sum(rate(llm_api_calls_total[5m]))
+          ) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          component: llm
+        annotations:
+          summary: "High LLM API error rate"
+          description: "LLM error rate is {{ $value | humanizePercentage }} (threshold: 10%)"
+
+      # Agent execution failures
+      - alert: HighAgentFailureRate
+        expr: |
+          (
+            sum(rate(agent_execution_failed_total[5m]))
+            /
+            sum(rate(agent_execution_total[5m]))
+          ) > 0.2
+        for: 10m
+        labels:
+          severity: warning
+          component: agent
+        annotations:
+          summary: "High agent execution failure rate"
+          description: "Agent failure rate is {{ $value | humanizePercentage }} (threshold: 20%)"
+
+      # Long-running workflows
+      - alert: LongRunningWorkflows
+        expr: workflow_execution_duration_seconds > 300
+        for: 5m
+        labels:
+          severity: info
+          component: workflow
+        annotations:
+          summary: "Long-running workflow detected"
+          description: "Workflow {{ $labels.workflow_id }} has been running for {{ $value }}s (threshold: 300s)"
