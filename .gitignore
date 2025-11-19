@@ -166,6 +166,12 @@ secrets/
 !.env.example
 .doppler.yaml
 
+# SSH keys
+*.key
+*.key.pub
+ssh-key-*.key
+ssh-key-*.key.pub
+
 # Database
 *.db
 *.sqlite
