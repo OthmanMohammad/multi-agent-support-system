@@ -117,6 +117,10 @@ until docker compose exec -T postgres pg_isready -U postgres > /dev/null 2>&1; d
     sleep 2
 done
 
+log "✓ PostgreSQL health check passed"
+log "Waiting additional 10 seconds for PostgreSQL to fully initialize..."
+sleep 10
+
 log "✓ Database is ready"
 
 # Run migrations
