@@ -425,8 +425,9 @@ deploy_application() {
     log_success "Application built"
 
     # Start infrastructure services first (database, cache)
+    # Note: Using Qdrant Cloud (external service), so only starting postgres and redis
     log_info "Starting infrastructure services..."
-    doppler run --token="$DOPPLER_TOKEN" -- docker compose up -d postgres redis qdrant 2>&1 | tee -a "$LOG_FILE"
+    doppler run --token="$DOPPLER_TOKEN" -- docker compose up -d postgres redis 2>&1 | tee -a "$LOG_FILE"
 
     # Wait for databases to be healthy
     log_info "Waiting for databases to be ready..."
@@ -519,12 +520,20 @@ setup_knowledge_base() {
         log_warn "Knowledge base script not found. Skipping."
     fi
 
-    # Verify Qdrant collections
+    # Verify Qdrant collections (works with both local and Qdrant Cloud)
     log_info "Verifying Qdrant collections..."
     docker compose exec -T fastapi python -c "
+import os
 from qdrant_client import QdrantClient
 try:
-    client = QdrantClient(url='http://qdrant:6333')
+    qdrant_url = os.getenv('QDRANT_URL', 'http://qdrant:6333')
+    qdrant_api_key = os.getenv('QDRANT_API_KEY')
+
+    if qdrant_api_key:
+        client = QdrantClient(url=qdrant_url, api_key=qdrant_api_key)
+    else:
+        client = QdrantClient(url=qdrant_url)
+
     collections = client.get_collections()
     print(f'✓ Collections found: {len(collections.collections)}')
     for col in collections.collections:
