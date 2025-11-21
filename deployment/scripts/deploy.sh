@@ -152,21 +152,23 @@ clean_existing_deployment() {
 configure_system() {
     log_step "2" "Configure system for production"
 
-    # Update system packages
-    log_info "Updating system packages..."
-    sudo dnf update -y -q 2>&1 | tee -a "$LOG_FILE" | grep -i "complete\|error" || true
-    log_success "System updated"
+    # Skip system updates (takes too long, not critical for deployment)
+    log_info "Skipping system updates (use 'sudo dnf update' manually if needed)"
 
-    # Install essential tools (Oracle Linux compatible)
-    log_info "Installing essential tools..."
-    # Core tools that should always be available
-    sudo dnf install -y -q git curl wget vim jq net-tools bind-utils python3 python3-pip 2>&1 | tee -a "$LOG_FILE" | tail -3 || true
+    # Verify essential tools are present (likely already installed)
+    log_info "Checking essential tools..."
+    local missing_tools=()
+    for tool in git curl wget docker jq; do
+        if ! command -v "$tool" &>/dev/null; then
+            missing_tools+=("$tool")
+        fi
+    done
 
-    # Optional tools - install if available, skip if not
-    sudo dnf install -y -q htop 2>/dev/null || log_warn "htop not available (optional)"
-    sudo dnf install -y -q ncdu 2>/dev/null || log_warn "ncdu not available (optional)"
-
-    log_success "Essential tools installed"
+    if [ ${#missing_tools[@]} -gt 0 ]; then
+        log_warn "Installing missing tools: ${missing_tools[*]}"
+        sudo dnf install -y -q "${missing_tools[@]}" 2>&1 | tail -3
+    fi
+    log_success "Essential tools ready"
 
     # Configure firewall (Oracle Cloud uses security lists + iptables)
     log_info "Checking firewall configuration..."
@@ -184,14 +186,8 @@ configure_system() {
         log_info "  - 3000 (Grafana), 9090 (Prometheus)"
     fi
 
-    # fail2ban protection (optional on Oracle Cloud)
-    log_info "Checking fail2ban..."
-    if sudo dnf install -y -q fail2ban 2>/dev/null; then
-        sudo systemctl enable --now fail2ban 2>/dev/null || true
-        log_success "fail2ban enabled"
-    else
-        log_warn "fail2ban not available (optional - Oracle has DDoS protection)"
-    fi
+    # Skip fail2ban (Oracle Cloud has built-in DDoS protection)
+    log_info "Skipping fail2ban (Oracle Cloud has DDoS protection)"
 
     # Optimize kernel parameters for production
     log_info "Optimizing kernel parameters..."
@@ -274,6 +270,11 @@ EOF
     # Start and enable Docker
     sudo systemctl enable --now docker
     sudo systemctl restart docker
+
+    # Wait for Docker to be ready
+    log_info "Waiting for Docker to be ready..."
+    sleep 3
+
     log_success "Docker daemon configured"
 
     # Add user to docker group
@@ -282,9 +283,12 @@ EOF
         log_warn "Added to docker group. You may need to log out and back in."
     fi
 
-    # Verify Docker
-    docker version | head -5 | tee -a "$LOG_FILE"
-    log_success "Docker ready"
+    # Verify Docker (with timeout)
+    if timeout 5 docker version &>/dev/null; then
+        log_success "Docker ready: $(docker --version)"
+    else
+        log_warn "Docker version check timed out (continuing anyway)"
+    fi
 }
 
 # =============================================================================
