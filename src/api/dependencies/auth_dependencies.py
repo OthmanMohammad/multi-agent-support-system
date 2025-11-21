@@ -10,8 +10,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from src.database.models.user import User, UserStatus
 from src.database.models.api_key import APIKey
-from src.database.unit_of_work import UnitOfWork
-from src.database.connection import get_db_session
+from src.database.unit_of_work import get_unit_of_work
 from src.api.auth.jwt import JWTManager
 from src.api.auth.api_key_manager import APIKeyManager
 from src.api.auth.redis_client import TokenBlacklist
@@ -29,8 +28,7 @@ security = HTTPBearer(auto_error=False)
 # =============================================================================
 
 async def get_current_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
-    session = Depends(get_db_session)
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
 ) -> User:
     """
     Get current user from JWT access token.
@@ -108,7 +106,7 @@ async def get_current_user(
         )
 
     # Get user from database
-    async with UnitOfWork(session) as uow:
+    async with get_unit_of_work() as uow:
         user = await uow.users.get(user_id)
 
         if not user:
@@ -190,8 +188,7 @@ async def get_current_active_user(
 
 
 async def get_optional_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
-    session = Depends(get_db_session)
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
 ) -> Optional[User]:
     """
     Get current user if authenticated, None otherwise.
@@ -217,7 +214,7 @@ async def get_optional_user(
         return None
 
     try:
-        return await get_current_user(credentials, session)
+        return await get_current_user(credentials)
     except HTTPException:
         return None
 
@@ -228,8 +225,7 @@ async def get_optional_user(
 
 async def verify_api_key(
     x_api_key: str = Header(..., description="API key for authentication"),
-    request: Request = None,
-    session = Depends(get_db_session)
+    request: Request = None
 ) -> APIKey:
     """
     Verify API key from X-API-Key header.
@@ -265,7 +261,7 @@ async def verify_api_key(
     prefix = APIKeyManager.extract_prefix(x_api_key)
 
     # Get API key from database
-    async with UnitOfWork(session) as uow:
+    async with get_unit_of_work() as uow:
         api_key = await uow.api_keys.get_by_prefix(prefix)
 
         if not api_key:
@@ -328,8 +324,7 @@ async def verify_api_key(
 
 
 async def get_user_from_api_key(
-    api_key: APIKey = Depends(verify_api_key),
-    session = Depends(get_db_session)
+    api_key: APIKey = Depends(verify_api_key)
 ) -> User:
     """
     Get user associated with API key.
@@ -351,7 +346,7 @@ async def get_user_from_api_key(
         async def api_user_route(user: User = Depends(get_user_from_api_key)):
             return {"user_id": user.id}
     """
-    async with UnitOfWork(session) as uow:
+    async with get_unit_of_work() as uow:
         user = await uow.users.get(api_key.user_id)
 
         if not user:
@@ -375,8 +370,7 @@ async def get_user_from_api_key(
 async def get_current_user_or_api_key(
     jwt_credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     x_api_key: Optional[str] = Header(None, description="API key for authentication"),
-    request: Request = None,
-    session = Depends(get_db_session)
+    request: Request = None
 ) -> User:
     """
     Authenticate via JWT token OR API key.
@@ -403,15 +397,15 @@ async def get_current_user_or_api_key(
     # Try JWT authentication first
     if jwt_credentials:
         try:
-            return await get_current_user(jwt_credentials, session)
+            return await get_current_user(jwt_credentials)
         except HTTPException:
             pass
 
     # Try API key authentication
     if x_api_key:
         try:
-            api_key = await verify_api_key(x_api_key, request, session)
-            return await get_user_from_api_key(api_key, session)
+            api_key = await verify_api_key(x_api_key, request)
+            return await get_user_from_api_key(api_key)
         except HTTPException:
             pass
 
