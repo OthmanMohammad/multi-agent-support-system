@@ -22,12 +22,10 @@ from typing import List
 from uuid import UUID
 from datetime import datetime, timedelta, UTC
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.models.user import User, UserRole, UserStatus
 from src.database.models.api_key import APIKey
-from src.database.unit_of_work import UnitOfWork
-from src.database.connection import get_db_session
+from src.database.unit_of_work import get_unit_of_work
 from src.api.models.auth_models import (
     UserRegisterRequest,
     UserRegisterResponse,
@@ -72,8 +70,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 @router.post("/register", response_model=UserRegisterResponse, status_code=status.HTTP_201_CREATED)
 async def register_user(
-    request: UserRegisterRequest,
-    session: AsyncSession = Depends(get_db_session)
+    request: UserRegisterRequest
 ):
     """
     Register a new user account.
@@ -97,7 +94,7 @@ async def register_user(
             detail=error
         )
 
-    async with UnitOfWork(session) as uow:
+    async with get_unit_of_work() as uow:
         # Check if email already exists
         if await uow.users.email_exists(request.email):
             logger.warning("registration_email_exists", email=request.email)
@@ -170,8 +167,7 @@ async def register_user(
 
 @router.post("/login", response_model=LoginResponse)
 async def login(
-    request: LoginRequest,
-    session: AsyncSession = Depends(get_db_session)
+    request: LoginRequest
 ):
     """
     Authenticate user and return JWT tokens.
@@ -183,7 +179,7 @@ async def login(
     """
     logger.info("user_login_attempt", email=request.email)
 
-    async with UnitOfWork(session) as uow:
+    async with get_unit_of_work() as uow:
         # Get user by email
         user = await uow.users.get_by_email(request.email)
 
@@ -261,8 +257,7 @@ async def login(
 
 @router.post("/refresh", response_model=RefreshTokenResponse)
 async def refresh_token(
-    request: RefreshTokenRequest,
-    session: AsyncSession = Depends(get_db_session)
+    request: RefreshTokenRequest
 ):
     """
     Refresh access token using refresh token.
@@ -304,7 +299,7 @@ async def refresh_token(
             detail="Invalid refresh token"
         )
 
-    async with UnitOfWork(session) as uow:
+    async with get_unit_of_work() as uow:
         # Get user
         user = await uow.users.get(user_id)
 
@@ -367,8 +362,7 @@ async def logout(current_user: User = Depends(get_current_user)):
 
 @router.post("/reset-password", response_model=PasswordResetResponse)
 async def request_password_reset(
-    request: PasswordResetRequest,
-    session: AsyncSession = Depends(get_db_session)
+    request: PasswordResetRequest
 ):
     """
     Request password reset email.
@@ -380,7 +374,7 @@ async def request_password_reset(
     """
     logger.info("password_reset_requested", email=request.email)
 
-    async with UnitOfWork(session) as uow:
+    async with get_unit_of_work() as uow:
         user = await uow.users.get_by_email(request.email)
 
         if user:
@@ -411,8 +405,7 @@ async def request_password_reset(
 
 @router.post("/reset-password/confirm")
 async def confirm_password_reset(
-    request: PasswordResetConfirm,
-    session: AsyncSession = Depends(get_db_session)
+    request: PasswordResetConfirm
 ):
     """
     Complete password reset with token.
@@ -432,7 +425,7 @@ async def confirm_password_reset(
             detail=error
         )
 
-    async with UnitOfWork(session) as uow:
+    async with get_unit_of_work() as uow:
         # Find user with this reset token
         # Note: This is a simplified query - in production, add index on reset token
         users = await uow.users.get_active_users(limit=1000)
@@ -476,8 +469,7 @@ async def confirm_password_reset(
 
 @router.post("/verify-email", response_model=EmailVerificationResponse)
 async def verify_email(
-    request: EmailVerificationRequest,
-    session: AsyncSession = Depends(get_db_session)
+    request: EmailVerificationRequest
 ):
     """
     Verify email address with token.
@@ -486,7 +478,7 @@ async def verify_email(
     """
     logger.info("email_verification_started")
 
-    async with UnitOfWork(session) as uow:
+    async with get_unit_of_work() as uow:
         # Find user with this verification token
         users = await uow.users.get_by_status(UserStatus.PENDING_VERIFICATION, limit=1000)
         user = None
@@ -531,8 +523,7 @@ async def verify_email(
 
 @router.post("/resend-verification")
 async def resend_verification_email(
-    request: ResendVerificationRequest,
-    session: AsyncSession = Depends(get_db_session)
+    request: ResendVerificationRequest
 ):
     """
     Resend email verification link.
@@ -541,7 +532,7 @@ async def resend_verification_email(
     """
     logger.info("resend_verification_requested", email=request.email)
 
-    async with UnitOfWork(session) as uow:
+    async with get_unit_of_work() as uow:
         user = await uow.users.get_by_email(request.email)
 
         if user and not user.is_verified:
@@ -592,8 +583,7 @@ async def get_current_user_profile(current_user: User = Depends(get_current_user
 @router.put("/me", response_model=UserProfile)
 async def update_current_user_profile(
     request: UpdateUserProfile,
-    current_user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_db_session)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Update current user profile.
@@ -603,7 +593,7 @@ async def update_current_user_profile(
     """
     logger.info("update_user_profile", user_id=str(current_user.id))
 
-    async with UnitOfWork(session) as uow:
+    async with get_unit_of_work() as uow:
         # Build update dict (only update provided fields)
         update_data = {}
         if request.full_name is not None:
@@ -641,8 +631,7 @@ async def update_current_user_profile(
 @router.post("/me/change-password")
 async def change_password(
     request: ChangePasswordRequest,
-    current_user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_db_session)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Change current user password.
@@ -676,7 +665,7 @@ async def change_password(
     # Hash new password
     password_hash = PasswordManager.hash_password(request.new_password.get_secret_value())
 
-    async with UnitOfWork(session) as uow:
+    async with get_unit_of_work() as uow:
         await uow.users.update(current_user.id, password_hash=password_hash)
         await uow.commit()
 
@@ -691,8 +680,7 @@ async def change_password(
 
 @router.get("/api-keys", response_model=APIKeyListResponse)
 async def list_api_keys(
-    current_user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_db_session)
+    current_user: User = Depends(get_current_user)
 ):
     """
     List all API keys for current user.
@@ -701,7 +689,7 @@ async def list_api_keys(
     """
     logger.debug("list_api_keys", user_id=str(current_user.id))
 
-    async with UnitOfWork(session) as uow:
+    async with get_unit_of_work() as uow:
         api_keys = await uow.api_keys.get_user_keys(current_user.id, include_inactive=True)
 
         key_responses = [
@@ -729,8 +717,7 @@ async def list_api_keys(
 @router.post("/api-keys", response_model=APIKeyResponse, status_code=status.HTTP_201_CREATED)
 async def create_api_key(
     request: APIKeyCreateRequest,
-    current_user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_db_session)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Create a new API key.
@@ -748,7 +735,7 @@ async def create_api_key(
     is_test = settings.environment == "staging"
     full_key, key_prefix, key_hash = APIKeyManager.generate_api_key(is_test=is_test)
 
-    async with UnitOfWork(session) as uow:
+    async with get_unit_of_work() as uow:
         # Create API key
         api_key = await uow.api_keys.create(
             user_id=current_user.id,
@@ -789,8 +776,7 @@ async def create_api_key(
 @router.delete("/api-keys/{key_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def revoke_api_key(
     key_id: UUID,
-    current_user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_db_session)
+    current_user: User = Depends(get_current_user)
 ):
     """
     Revoke an API key.
@@ -801,7 +787,7 @@ async def revoke_api_key(
     """
     logger.info("revoke_api_key_started", user_id=str(current_user.id), key_id=str(key_id))
 
-    async with UnitOfWork(session) as uow:
+    async with get_unit_of_work() as uow:
         # Get API key
         api_key = await uow.api_keys.get(key_id)
 
@@ -831,3 +817,4 @@ async def revoke_api_key(
         logger.info("api_key_revoked", user_id=str(current_user.id), key_id=str(key_id))
 
         return None  # 204 No Content
+    

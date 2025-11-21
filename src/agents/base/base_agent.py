@@ -21,6 +21,7 @@ from src.agents.base.exceptions import (
     AgentLLMError,
     AgentKnowledgeBaseError
 )
+from src.llm.client import llm_client
 
 logger = structlog.get_logger(__name__)
 
@@ -81,16 +82,27 @@ class BaseAgent(ABC):
 
         Args:
             config: Agent configuration
-            anthropic_client: Optional Anthropic client (created if not provided)
+            anthropic_client: Optional Anthropic client (deprecated, kept for compatibility)
             kb_service: Optional knowledge base service
             context_service: Optional context enrichment service
         """
         self.config = config
         self.logger = logger.bind(agent=config.name, agent_type=config.type.value)
 
-        # Initialize Anthropic client
+        # Legacy Anthropic client (kept for backward compatibility)
         settings = get_settings()
         self.client = anthropic_client or Anthropic(api_key=settings.anthropic.api_key)
+
+        # NEW: Unified LLM client (LiteLLM abstraction)
+        self.llm_client = llm_client
+
+        # Map model names to tiers for LiteLLM
+        self._model_tier_map = {
+            "claude-3-haiku-20240307": "haiku",
+            "claude-3-5-sonnet-20241022": "sonnet",
+            "claude-3-5-sonnet-20240620": "sonnet",
+            "claude-3-opus-20240229": "opus",
+        }
 
         # Optional services
         self.kb_service = kb_service
@@ -128,7 +140,12 @@ class BaseAgent(ABC):
         max_tokens: Optional[int] = None
     ) -> str:
         """
-        Call Claude API with error handling and logging.
+        Call LLM via unified client with error handling and logging.
+
+        NOW USES: LiteLLM abstraction for multi-backend support (Anthropic/vLLM)
+
+        This method is backend-agnostic - it works with any configured backend
+        (Anthropic Claude API or vLLM) without code changes.
 
         Args:
             system_prompt: System instructions
@@ -143,24 +160,24 @@ class BaseAgent(ABC):
             AgentLLMError: If LLM call fails
         """
         try:
-            response = self.client.messages.create(
-                model=self.config.model,
-                max_tokens=max_tokens or self.config.max_tokens,
-                temperature=temperature or self.config.temperature,
-                system=system_prompt,
-                messages=[{"role": "user", "content": user_message}]
+            # Get model tier from config model name
+            model_tier = self._model_tier_map.get(self.config.model, "haiku")
+
+            # Convert to LiteLLM message format (system prompt as system message)
+            messages = [
+                {"role": "user", "content": f"{system_prompt}\n\n{user_message}"}
+            ]
+
+            # Call unified LLM client (automatically uses current backend)
+            content = await self.llm_client.chat_completion(
+                messages=messages,
+                model_tier=model_tier,
+                temperature=temperature if temperature is not None else self.config.temperature,
+                max_tokens=max_tokens if max_tokens is not None else self.config.max_tokens,
             )
 
-            content = response.content[0].text
-
-            # Log usage
-            self.logger.info(
-                "llm_call_success",
-                model=self.config.model,
-                input_tokens=response.usage.input_tokens,
-                output_tokens=response.usage.output_tokens,
-                total_tokens=response.usage.input_tokens + response.usage.output_tokens
-            )
+            # Note: Metrics and cost tracking are handled inside llm_client.chat_completion()
+            # No need to log here - llm_client already logs everything
 
             return content
 
