@@ -107,7 +107,7 @@ async def get_current_user(
 
     # Get user from database
     async with get_unit_of_work() as uow:
-        user = await uow.users.get(user_id)
+        user = await uow.users.get_by_id(user_id)
 
         if not user:
             logger.warning(
@@ -347,7 +347,7 @@ async def get_user_from_api_key(
             return {"user_id": user.id}
     """
     async with get_unit_of_work() as uow:
-        user = await uow.users.get(api_key.user_id)
+        user = await uow.users.get_by_id(api_key.user_id)
 
         if not user:
             logger.error(
