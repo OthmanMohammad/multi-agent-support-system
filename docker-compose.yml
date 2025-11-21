@@ -13,7 +13,7 @@ version: '3.8'
 # - FastAPI application (2GB RAM)
 # - PostgreSQL 15 (6GB RAM)
 # - Redis 7 (2GB RAM)
-# - Qdrant (4GB RAM)
+# - Qdrant Cloud (external service - not in this stack)
 # - Nginx (512MB RAM)
 # - Prometheus (2GB RAM)
 # - Grafana (1GB RAM)
@@ -86,8 +86,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      qdrant:
-        condition: service_started
+      # qdrant: Using Qdrant Cloud (external service)
     networks:
       - app-network
     healthcheck:
@@ -174,35 +173,38 @@ services:
           cpus: '0.5'
           memory: 1G
 
-  qdrant:
-    image: qdrant/qdrant:latest
-    container_name: multi-agent-qdrant
-    restart: unless-stopped
-    ports:
-      - "6333:6333"
-      - "6334:6334"
-    environment:
-      QDRANT__SERVICE__HTTP_PORT: 6333
-      QDRANT__SERVICE__GRPC_PORT: 6334
-      QDRANT__STORAGE__STORAGE_PATH: /qdrant/storage
-    volumes:
-      - qdrant-data:/qdrant/storage
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:6333/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
-    deploy:
-      resources:
-        limits:
-          cpus: '2'
-          memory: 4G
-        reservations:
-          cpus: '1'
-          memory: 2G
+  # qdrant: Disabled - Using Qdrant Cloud (external service)
+  # Configure QDRANT_URL and QDRANT_API_KEY in Doppler to use Qdrant Cloud
+  #
+  # qdrant:
+  #   image: qdrant/qdrant:latest
+  #   container_name: multi-agent-qdrant
+  #   restart: unless-stopped
+  #   ports:
+  #     - "6333:6333"
+  #     - "6334:6334"
+  #   environment:
+  #     QDRANT__SERVICE__HTTP_PORT: 6333
+  #     QDRANT__SERVICE__GRPC_PORT: 6334
+  #     QDRANT__STORAGE__STORAGE_PATH: /qdrant/storage
+  #   volumes:
+  #     - qdrant-data:/qdrant/storage
+  #   networks:
+  #     - app-network
+  #   healthcheck:
+  #     test: ["CMD", "wget", "--spider", "-q", "http://localhost:6333/health"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 20s
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: '2'
+  #         memory: 4G
+  #       reservations:
+  #         cpus: '1'
+  #         memory: 2G
 
   # ===========================================================================
   # REVERSE PROXY & SSL
@@ -408,9 +410,11 @@ volumes:
     driver: local
   redis-data:
     driver: local
-  qdrant-data:
-    driver: local
+  # qdrant-data: Not needed - using Qdrant Cloud
+  # qdrant-data:
+  #   driver: local
   prometheus-data:
     driver: local
   grafana-data:
     driver: local
+    
