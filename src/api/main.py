@@ -24,7 +24,7 @@ if str(project_root) not in sys.path:
 from fastapi import FastAPI
 
 # Import routes
-from src.api.routes import conversations, customers, health, analytics, auth, agents, workflows, oauth
+from src.api.routes import conversations, customers, health, analytics, auth, agents, workflows, oauth, admin
 from src.api.error_handlers import setup_error_handlers
 
 # Import middleware
@@ -129,6 +129,9 @@ app.include_router(workflows.router, prefix="/api", tags=["Workflows"])
 app.include_router(conversations.router, prefix="/api", tags=["Conversations"])
 app.include_router(customers.router, prefix="/api", tags=["Customers"])
 app.include_router(analytics.router, prefix="/api", tags=["Analytics"])
+
+# Admin endpoints (LLM backend management, cost tracking, metrics)
+app.include_router(admin.router, tags=["Admin"])
 
 
 @app.on_event("startup")
