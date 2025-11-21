@@ -6,6 +6,10 @@
 
 set -e
 
+# Get script directory and project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
 # Colors for output
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -25,7 +29,7 @@ warn() {
 }
 
 # Configuration
-BACKUP_DIR="${BACKUP_DIR:-/home/ubuntu/multi-agent-system/backups}"
+BACKUP_DIR="${BACKUP_DIR:-$PROJECT_ROOT/backups}"
 DB_NAME="${POSTGRES_DB:-support_agent}"
 DB_USER="${POSTGRES_USER:-postgres}"
 
