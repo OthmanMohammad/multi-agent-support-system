@@ -38,7 +38,7 @@ class APIConfig(BaseSettings):
     """API server configuration"""
 
     title: str = Field(default="Multi-Agent Support System")
-    version: str = Field(default="1.0.0")
+    version: str = Field(default="1.4.0")
     host: str = Field(default="0.0.0.0")
     port: int = Field(default=8000, ge=1, le=65535)
     workers: int = Field(default=4, ge=1, le=32)

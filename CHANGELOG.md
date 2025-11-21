@@ -5,6 +5,170 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2025-11-21
+
+### Added
+
+- Add multi-stage ARM64 Dockerfile
+- Add Grafana dashboard provisioning
+- Add Prometheus datasource for Grafana
+- Add Nginx site configuration
+- Add SSL certificate generation script
+- Add production Nginx configuration
+- Add PostgreSQL production configuration
+- Add Prometheus monitoring configuration
+- Add Prometheus alert rules
+- Add Redis production configuration
+- Add database backup script
+- Add deployment script
+- Add database restore script
+- Add SSL setup script
+- Add server setup script
+- Add status check script
+- Add production Docker Compose stack
+- Update setup script for Oracle Linux compatibility
+- Implement real-time cost tracking system
+- Add comprehensive LLM metrics tracking
+- Implement backend orchestration manager
+- Add admin API for system management
+- Integrate LLM abstraction into BaseAgent
+- Add LiteLLM multi-backend abstraction layer
+
+### Documentation
+
+- Add deployment quick reference
+- Add comprehensive deployment guide
+- Add migration testing and documentation
+- Docs: Add comprehensive LiteLLM and Admin API documentation
+- Created src/llm/README.md explaining LiteLLM integration architecture
+- Documented usage patterns, backend switching, cost tracking, metrics
+- Added troubleshooting guide and API reference
+- Created docs/ADMIN_API.md with complete admin endpoint documentation
+- Included authentication, error handling, rate limiting details
+- Added practical examples and monitoring scripts
+
+### Fixed
+
+- Fix: Remove Windows-only pywin32 package for Linux deployment
+- Removed pywin32==311 which is Windows-only and breaks Linux builds
+- Fixed encoding corruption in requirements.txt (UTF-16 -> UTF-8)
+- Remove Windows-only pywin32 package for Linux deployment
+- Remove Windows-only pywin32 package for Linux deployment
+- Remove obsolete stats_temp_directory parameter for PostgreSQL 15 compatibility
+- Remove inline comments from Redis save directives for Redis 7.4.7 compatibility
+- Add additional wait time after PostgreSQL health check to ensure full initialization
+- Configure PostgreSQL to listen on all interfaces for Docker network connectivity
+- Fix: Remove invalid uvicorn log-config and configure HuggingFace cache directory
+- Remove --log-config /dev/null which causes RuntimeError in newer uvicorn versions
+- Add writable cache directory /app/.cache for HuggingFace model downloads
+- Set environment variables to use /app/.cache for all ML model caching
+- This fixes both the FastAPI crash and the knowledge base initialization permission errors
+- Fix: Remove uvloop dependency from Dockerfile CMD
+- uvloop is not in requirements.txt
+- Default asyncio loop works fine for production
+- Prevents ModuleNotFoundError on startup
+- Fix: Fix requirements.txt encoding and add JWT authentication dependencies
+- Rewrote requirements.txt in proper UTF-8 encoding (was corrupted with null bytes)
+- Added python-jose[cryptography]==3.3.0 for JWT token handling
+- Added passlib[bcrypt]==1.7.4 for password hashing
+- Added bcrypt==4.0.1 for bcrypt password algorithm support
+- Required by src/api/auth/jwt.py for authentication
+- Fix: Disable Redis protected-mode for Docker network connectivity
+- Set protected-mode to no in redis.conf
+- Required for Docker container-to-container communication
+- Safe since Redis is not exposed externally and runs on private Docker network
+- Fixes 'Connection lost' error when FastAPI tries to connect to Redis
+- Fix: Make deploy script compatible with Oracle Linux
+Oracle Linux differences handled:
+- Some packages not in default repos (htop, ncdu, yq, fail2ban)
+- firewalld is masked by default (Oracle uses security lists)
+
+Changes:
+- Split package installation into core (required) and optional
+- Gracefully skip missing optional packages
+- Check if firewalld is available before configuring
+- Add helpful message about Oracle Cloud Security Lists
+- Handle fail2ban as optional (Oracle has DDoS protection)
+
+Script now continues even if optional tools aren't available.
+- Fix: Remove slow operations from deploy script for fast deployment
+Removed bottlenecks:
+- Skip 'dnf update' (takes 10+ minutes, not needed for deployment)
+- Only install missing essential tools (git, curl, wget, docker, jq)
+- Skip fail2ban installation (Oracle has DDoS protection)
+- Add timeout to docker version check (was hanging)
+- Add 3-second wait after Docker restart
+- Fix: Correct SSL certificate filenames to match nginx config
+Changed SSL certificate generation from selfsigned.crt/selfsigned.key to
+cert.pem/key.pem to match nginx configuration expectations.
+
+Also made backup script executable automatically during deployment.
+- Fix: Remove hardcoded /home/ubuntu paths from backup scripts
+Fixed hardcoded /home/ubuntu paths in backup and restore scripts.
+Now dynamically determines project root regardless of user.
+
+Changes:
+- backup-database.sh: Use /backups instead of /home/ubuntu
+- restore-database.sh: Use /backups instead of /home/ubuntu
+- Fix: Run initial backup with Doppler credentials in deploy.sh
+The initial backup test in deploy.sh was running without Doppler,
+causing database connection failures. Now uses doppler run just like
+the cron job to access database credentials.
+- Fix: Remove local Qdrant container (using Qdrant Cloud)
+Disabled the local Qdrant service since we're using Qdrant Cloud (external).
+This prevents 'unhealthy container' errors during deployment.
+
+Changes:
+- Removed qdrant dependency from fastapi service
+- Commented out qdrant service definition
+- Commented out qdrant-data volume
+- Updated stack documentation
+
+The system uses QDRANT_URL and QDRANT_API_KEY from Doppler to connect
+to Qdrant Cloud, which is working correctly with 25 vectors.
+- Fix: Remove qdrant service reference from deploy.sh startup
+Removed qdrant from infrastructure service startup since we're using
+Qdrant Cloud (external service).
+
+Also updated Qdrant verification to use QDRANT_URL and QDRANT_API_KEY
+environment variables, so it works with both local and cloud instances.
+
+Fixes 'no such service: qdrant' error during deployment.
+- Fix: Exclude qdrant container from health checks in deploy.sh
+The health check was failing because it was checking for the qdrant
+container which is no longer defined (using Qdrant Cloud instead).
+
+Now explicitly excludes 'multi-agent-qdrant' from health checks.
+
+Also note: The variable warnings (POSTGRES_PASSWORD, etc.) are cosmetic
+only - they appear when running 'docker compose ps' without doppler
+prefix, but the running containers already have the secrets they need.
+- Fix: Replace UnitOfWork context manager with get_unit_of_work in auth routes
+- Changed all 12 auth endpoints to use get_unit_of_work() instead of UnitOfWork(session)
+- Removed AsyncSession dependency from function signatures
+- Fixes TypeError: 'UnitOfWork' object does not support async context manager protocol
+- Enables proper authentication for Phase 2 admin API testing
+- Fix: Add server_default to updated_at column in BaseModel
+- Added server_default=func.now() to ensure updated_at is set on INSERT
+- Changed nullable=True to nullable=False to match database constraint
+- Fixes IntegrityError: null value in column 'updated_at' violates not-null constraint
+- Resolves registration failures in auth endpoints
+- Fix: Replace UnitOfWork with get_unit_of_work in auth_dependencies
+- Removed all UnitOfWork(session) usages in authentication dependencies
+- Changed to use get_unit_of_work() context manager pattern
+- Removed session parameters from all dependency functions
+- Fixes 500 Internal Server Error on /api/auth/me and /api/admin/* endpoints
+- Resolves TypeError: UnitOfWork does not support async context manager protocol
+- Fix: Change users.get() to users.get_by_id() in auth dependencies
+- UserRepository inherits from BaseRepository which provides get_by_id(), not get()
+- Fixed get_current_user to use get_by_id(user_id)
+- Fixed get_user_from_api_key to use get_by_id(api_key.user_id)
+- Resolves AttributeError: 'UserRepository' object has no attribute 'get'
+
+### Miscellaneous
+
+- Add SSH keys to gitignore
+
 ## [1.3.0] - 2025-11-18
 
 ### Added
@@ -780,6 +944,10 @@ Fixes: relation 'sla_compliance' does not exist error
 - Correct consent_records schema to match ConsentRecord model
 - Correct QA table schemas (code_validation_results, link_check_results, etc)
 
+### Miscellaneous
+
+- Prepare release v1.3.0
+
 ### Refactored
 
 - Remove deprecated router_new.py backward compatibility wrapper
@@ -1387,6 +1555,7 @@ Fixes: relation 'sla_compliance' does not exist error
 - Add audit trail and soft delete fields to all tables
 - Complete schema with audit trail and optimized indexes
 
+[1.4.0]: https://github.com/othmanmohammad/multi-agent-support-system/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/othmanmohammad/multi-agent-support-system/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/othmanmohammad/multi-agent-support-system/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/othmanmohammad/multi-agent-support-system/compare/v1.0.0...v1.1.0
