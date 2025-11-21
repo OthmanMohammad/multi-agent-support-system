@@ -631,7 +631,8 @@ run_health_checks() {
 
     # Check 1: Container health
     log_info "Checking container health..."
-    local unhealthy=$(docker compose ps --format json | jq -r 'select(.Health != "healthy" and .Health != "") | .Name' 2>/dev/null)
+    # Note: Excluding qdrant since we use Qdrant Cloud (external service)
+    local unhealthy=$(docker compose ps --format json 2>/dev/null | jq -r 'select(.Name != "multi-agent-qdrant") | select(.Health != "healthy" and .Health != "") | .Name' 2>/dev/null)
     if [ -z "$unhealthy" ]; then
         log_success "All containers healthy"
         ((passed++))
