@@ -401,16 +401,17 @@ deploy_application() {
     log_success "Directories created"
 
     # Generate self-signed SSL certificate (for immediate use)
-    if [ ! -f deployment/nginx/ssl/selfsigned.crt ]; then
+    # Note: Using cert.pem/key.pem to match nginx configuration
+    if [ ! -f deployment/nginx/ssl/cert.pem ]; then
         log_info "Generating self-signed SSL certificate..."
         openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-            -keyout deployment/nginx/ssl/selfsigned.key \
-            -out deployment/nginx/ssl/selfsigned.crt \
+            -keyout deployment/nginx/ssl/key.pem \
+            -out deployment/nginx/ssl/cert.pem \
             -subj "/C=US/ST=State/L=City/O=Organization/CN=multi-agent-system" \
             2>&1 | tee -a "$LOG_FILE"
-        chmod 644 deployment/nginx/ssl/selfsigned.crt
-        chmod 600 deployment/nginx/ssl/selfsigned.key
-        log_success "SSL certificate generated"
+        chmod 644 deployment/nginx/ssl/cert.pem
+        chmod 600 deployment/nginx/ssl/key.pem
+        log_success "SSL certificate generated (cert.pem/key.pem)"
     fi
 
     # Pull latest images
@@ -562,14 +563,17 @@ setup_automated_backups() {
     log_info "Configured cron jobs:"
     crontab -l 2>/dev/null | grep -v "^#" | grep -v "^$" | tee -a "$LOG_FILE"
 
+    # Make backup script executable
+    chmod +x deployment/scripts/backup-database.sh 2>/dev/null || true
+
     # Run initial backup
     log_info "Running initial backup..."
     cd "$PROJECT_ROOT"
-    if [ -x deployment/scripts/backup-database.sh ]; then
+    if [ -f deployment/scripts/backup-database.sh ]; then
         ./deployment/scripts/backup-database.sh 2>&1 | tee -a "$LOG_FILE" | tail -20
         log_success "Initial backup completed"
     else
-        log_warn "Backup script not executable or not found"
+        log_warn "Backup script not found"
     fi
 }
 
