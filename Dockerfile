@@ -54,12 +54,17 @@ WORKDIR /app
 # Copy application code
 COPY --chown=appuser:appuser . .
 
-# Create necessary directories
-RUN mkdir -p /app/logs /app/data && \
+# Create necessary directories and cache directory for HuggingFace models
+RUN mkdir -p /app/logs /app/data /app/.cache && \
     chown -R appuser:appuser /app
 
 # Switch to non-root user
 USER appuser
+
+# Set HuggingFace cache directory to writable location
+ENV HF_HOME=/app/.cache/huggingface
+ENV TRANSFORMERS_CACHE=/app/.cache/huggingface
+ENV SENTENCE_TRANSFORMERS_HOME=/app/.cache/sentence-transformers
 
 # Expose port
 EXPOSE 8000
@@ -73,5 +78,5 @@ CMD ["uvicorn", "src.api.main:app", \
      "--host", "0.0.0.0", \
      "--port", "8000", \
      "--workers", "4", \
-     "--loop", "uvloop", \
-     "--log-config", "/dev/null"]
+     "--loop", "uvloop"]
+     
