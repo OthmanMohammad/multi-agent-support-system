@@ -566,11 +566,11 @@ setup_automated_backups() {
     # Make backup script executable
     chmod +x deployment/scripts/backup-database.sh 2>/dev/null || true
 
-    # Run initial backup
+    # Run initial backup (with Doppler for database credentials)
     log_info "Running initial backup..."
     cd "$PROJECT_ROOT"
     if [ -f deployment/scripts/backup-database.sh ]; then
-        ./deployment/scripts/backup-database.sh 2>&1 | tee -a "$LOG_FILE" | tail -20
+        doppler run --token="$DOPPLER_TOKEN" -- ./deployment/scripts/backup-database.sh 2>&1 | tee -a "$LOG_FILE" | tail -20
         log_success "Initial backup completed"
     else
         log_warn "Backup script not found"
