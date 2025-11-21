@@ -157,28 +157,41 @@ configure_system() {
     sudo dnf update -y -q 2>&1 | tee -a "$LOG_FILE" | grep -i "complete\|error" || true
     log_success "System updated"
 
-    # Install essential tools
+    # Install essential tools (Oracle Linux compatible)
     log_info "Installing essential tools..."
-    sudo dnf install -y -q \
-        git curl wget vim htop ncdu \
-        jq yq net-tools bind-utils \
-        fail2ban firewalld \
-        python3 python3-pip \
-        2>&1 | tee -a "$LOG_FILE" | grep -i "complete\|error" || true
+    # Core tools that should always be available
+    sudo dnf install -y -q git curl wget vim jq net-tools bind-utils python3 python3-pip 2>&1 | tee -a "$LOG_FILE" | tail -3 || true
+
+    # Optional tools - install if available, skip if not
+    sudo dnf install -y -q htop 2>/dev/null || log_warn "htop not available (optional)"
+    sudo dnf install -y -q ncdu 2>/dev/null || log_warn "ncdu not available (optional)"
+
     log_success "Essential tools installed"
 
-    # Configure firewall
-    log_info "Configuring firewall..."
-    sudo systemctl enable --now firewalld
-    sudo firewall-cmd --permanent --add-service=http --add-service=https || true
-    sudo firewall-cmd --permanent --add-port=3000/tcp --add-port=9090/tcp || true
-    sudo firewall-cmd --reload || true
-    log_success "Firewall configured"
+    # Configure firewall (Oracle Cloud uses security lists + iptables)
+    log_info "Checking firewall configuration..."
+    if systemctl is-enabled firewalld &>/dev/null 2>&1; then
+        log_info "Configuring firewalld..."
+        sudo systemctl enable --now firewalld || true
+        sudo firewall-cmd --permanent --add-service=http --add-service=https 2>/dev/null || true
+        sudo firewall-cmd --permanent --add-port=3000/tcp --add-port=9090/tcp 2>/dev/null || true
+        sudo firewall-cmd --reload 2>/dev/null || true
+        log_success "Firewall configured"
+    else
+        log_warn "firewalld not available - using Oracle Cloud Security Lists"
+        log_info "Ensure these ports are open in Oracle Cloud Console:"
+        log_info "  - 22 (SSH), 80 (HTTP), 443 (HTTPS)"
+        log_info "  - 3000 (Grafana), 9090 (Prometheus)"
+    fi
 
-    # Configure fail2ban
-    log_info "Configuring fail2ban..."
-    sudo systemctl enable --now fail2ban || true
-    log_success "Fail2ban enabled"
+    # fail2ban protection (optional on Oracle Cloud)
+    log_info "Checking fail2ban..."
+    if sudo dnf install -y -q fail2ban 2>/dev/null; then
+        sudo systemctl enable --now fail2ban 2>/dev/null || true
+        log_success "fail2ban enabled"
+    else
+        log_warn "fail2ban not available (optional - Oracle has DDoS protection)"
+    fi
 
     # Optimize kernel parameters for production
     log_info "Optimizing kernel parameters..."
