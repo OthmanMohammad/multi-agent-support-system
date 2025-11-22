@@ -349,6 +349,229 @@ class ContextEnrichmentConfig(BaseSettings):
     )
 
 
+class VastAIConfig(BaseSettings):
+    """
+    Vast.ai GPU orchestration configuration.
+
+    Part of Phase 3: On-demand GPU rental for vLLM backend.
+    """
+
+    # Vast.ai API configuration
+    api_key: Optional[str] = Field(
+        default=None,
+        description="Vast.ai API key (optional - vLLM backend requires this)"
+    )
+
+    # Budget and cost management
+    budget_limit: float = Field(
+        default=15.0,
+        ge=0.0,
+        description="Maximum budget in USD for GPU rental"
+    )
+    session_budget_limit: float = Field(
+        default=2.0,
+        ge=0.0,
+        description="Maximum budget per GPU session in USD"
+    )
+
+    # GPU instance settings
+    default_keep_alive_minutes: int = Field(
+        default=45,
+        ge=5,
+        le=180,
+        description="Default keep-alive time for GPU instances (minutes)"
+    )
+    max_startup_time_minutes: int = Field(
+        default=10,
+        ge=1,
+        le=30,
+        description="Maximum time to wait for vLLM to start (minutes)"
+    )
+
+    # Health check settings
+    health_check_interval_seconds: int = Field(
+        default=60,
+        ge=10,
+        le=300,
+        description="Interval for GPU instance health checks (seconds)"
+    )
+    health_check_timeout_seconds: int = Field(
+        default=5,
+        ge=1,
+        le=30,
+        description="Timeout for individual health check requests (seconds)"
+    )
+
+    # Search and retry settings
+    max_search_retries: int = Field(
+        default=3,
+        ge=1,
+        le=10,
+        description="Maximum retries for GPU search/launch"
+    )
+    search_timeout_seconds: int = Field(
+        default=30,
+        ge=10,
+        le=120,
+        description="Timeout for Vast.ai API search requests (seconds)"
+    )
+
+    # vLLM configuration
+    vllm_model: str = Field(
+        default="Qwen/Qwen2.5-7B-Instruct",
+        description="Model to load in vLLM"
+    )
+    vllm_gpu_memory_utilization: float = Field(
+        default=0.95,
+        ge=0.1,
+        le=1.0,
+        description="GPU memory utilization for vLLM (0-1)"
+    )
+    vllm_max_model_len: int = Field(
+        default=4096,
+        ge=512,
+        le=32768,
+        description="Maximum context length for vLLM model"
+    )
+
+    # Safety settings
+    auto_destroy_on_error: bool = Field(
+        default=True,
+        description="Automatically destroy GPU instance on errors"
+    )
+    auto_destroy_on_shutdown: bool = Field(
+        default=True,
+        description="Automatically destroy GPU instance on application shutdown"
+    )
+    orphan_cleanup_enabled: bool = Field(
+        default=True,
+        description="Enable automatic cleanup of orphaned instances"
+    )
+
+    @field_validator("api_key")
+    @classmethod
+    def validate_api_key(cls, v: Optional[str]) -> Optional[str]:
+        """Validate Vast.ai API key format if provided"""
+        if v and not v.startswith(("sk_", "vastai_")):
+            # Note: Vast.ai API keys may have different formats
+            # This is a lenient check
+            pass
+        return v
+
+    model_config = SettingsConfigDict(
+        env_prefix="VASTAI_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
+
+
+class ModalConfig(BaseSettings):
+    """
+    Modal.com serverless GPU configuration.
+
+    Part of Phase 3: Serverless vLLM deployment (alternative to Vast.ai).
+
+    Key Differences from Vast.ai:
+        - No instance management (Modal auto-scales)
+        - No budget tracking (set limits in Modal dashboard)
+        - Pay-per-second of GPU usage
+        - Simpler configuration (just web URL + token)
+    """
+
+    # Modal API configuration
+    token_id: Optional[str] = Field(
+        default=None,
+        description="Modal API token ID (optional - only needed for deployment)"
+    )
+    token_secret: Optional[str] = Field(
+        default=None,
+        description="Modal API token secret (optional - only needed for deployment)"
+    )
+
+    # Modal deployment
+    web_url: Optional[str] = Field(
+        default=None,
+        description="Modal web URL (e.g., https://yourapp--modal-run.modal.run)"
+    )
+    app_name: str = Field(
+        default="multi-agent-vllm-inference",
+        description="Modal app name"
+    )
+
+    # vLLM model configuration
+    model: str = Field(
+        default="Qwen/Qwen2.5-7B-Instruct",
+        description="Model to deploy on Modal"
+    )
+    gpu_type: Literal["L4", "A100", "H100", "A10G"] = Field(
+        default="L4",
+        description="GPU type (L4: $0.80/hr, A100: $3/hr, H100: $4.50/hr, A10G: $1/hr)"
+    )
+    scaledown_window_minutes: int = Field(
+        default=5,
+        ge=1,
+        le=60,
+        description="Keep GPU warm for N minutes after last request"
+    )
+
+    # Health and timeout settings
+    health_check_timeout_seconds: int = Field(
+        default=30,
+        ge=5,
+        le=120,
+        description="Timeout for health check requests (seconds)"
+    )
+    startup_timeout_minutes: int = Field(
+        default=10,
+        ge=1,
+        le=30,
+        description="Maximum time to wait for Modal to start (minutes)"
+    )
+
+    # Request settings
+    max_retries: int = Field(
+        default=3,
+        ge=1,
+        le=10,
+        description="Maximum retry attempts for failed requests"
+    )
+    request_timeout_seconds: int = Field(
+        default=120,
+        ge=30,
+        le=600,
+        description="Timeout for chat completion requests (seconds)"
+    )
+
+    @field_validator("web_url")
+    @classmethod
+    def validate_web_url(cls, v: Optional[str]) -> Optional[str]:
+        """Validate Modal web URL format if provided"""
+        if v:
+            if not v.startswith("https://"):
+                raise ValueError("Modal web URL must start with https://")
+            if not (".modal.run" in v or "modal.com" in v):
+                raise ValueError("Modal web URL must contain .modal.run or modal.com")
+        return v
+
+    @field_validator("token_id")
+    @classmethod
+    def validate_token_id(cls, v: Optional[str]) -> Optional[str]:
+        """Validate Modal token ID format if provided"""
+        if v and not v.startswith("ak-"):
+            raise ValueError("Modal token ID must start with 'ak-'")
+        return v
+
+    model_config = SettingsConfigDict(
+        env_prefix="MODAL_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
+
+
 class Settings(BaseSettings):
     """
     Main application settings.
@@ -381,6 +604,8 @@ class Settings(BaseSettings):
     notification: NotificationConfig = Field(default_factory=NotificationConfig)
     cache: CacheConfig = Field(default_factory=CacheConfig)
     context_enrichment: ContextEnrichmentConfig = Field(default_factory=ContextEnrichmentConfig)
+    vastai: VastAIConfig = Field(default_factory=VastAIConfig)
+    modal: ModalConfig = Field(default_factory=ModalConfig)
 
     @field_validator("debug")
     @classmethod
