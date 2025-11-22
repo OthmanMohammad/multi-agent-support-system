@@ -23,8 +23,8 @@ import structlog
 
 from src.llm.litellm_config import litellm_config, LLMBackend
 from src.llm.client import llm_client
-from src.vllm.orchestrator import gpu_orchestrator
-from src.vllm.modal_orchestrator import get_modal_orchestrator, init_modal_orchestrator, is_modal_configured
+from src.vllm.vastai.orchestrator import gpu_orchestrator
+from src.vllm import get_modal_orchestrator, init_modal_orchestrator, is_modal_configured
 from src.core.config import get_settings
 
 logger = structlog.get_logger(__name__)
