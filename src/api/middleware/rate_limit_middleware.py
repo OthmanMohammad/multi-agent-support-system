@@ -169,8 +169,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             logger.debug("rate_limiting_disabled")
             return await call_next(request)
 
-        # Skip rate limiting for health check
-        if request.url.path in ["/api/health", "/health", "/"]:
+        # Skip rate limiting for health check and metrics
+        if request.url.path in ["/api/health", "/health", "/", "/metrics"]:
             return await call_next(request)
 
         # Get rate limit key and tier

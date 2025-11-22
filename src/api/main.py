@@ -215,11 +215,28 @@ async def startup_event():
 async def shutdown_event():
     """
     Cleanup on application shutdown
+
+    Phase 3: Added GPU orchestrator cleanup for safe shutdown
     """
     logger.info(
         "application_shutdown_initiated",
         environment=settings.environment
     )
+
+    # Phase 3: Cleanup GPU instances before shutdown
+    if settings.vastai.auto_destroy_on_shutdown:
+        try:
+            logger.info("vllm_gpu_shutdown_started")
+            from src.vllm.orchestrator import gpu_orchestrator
+            await gpu_orchestrator.close()
+            logger.info("vllm_gpu_shutdown_complete")
+        except Exception as e:
+            logger.error(
+                "vllm_gpu_shutdown_error",
+                error=str(e),
+                exc_info=True,
+                message="Failed to cleanup GPU instance - manual cleanup may be required"
+            )
 
     # Close Redis connection
     logger.info("redis_shutdown_started")

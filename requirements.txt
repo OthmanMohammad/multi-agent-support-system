@@ -99,3 +99,9 @@ watchfiles==1.1.1
 websockets==15.0.1
 xxhash==3.6.0
 zstandard==0.25.0
+
+# Phase 3: Vast.ai GPU Orchestration
+# Note: Vast.ai API accessed via httpx (already included above)
+# No official SDK needed - using REST API directly
+prometheus-client==0.21.1  # Metrics for vLLM monitoring
+aiofiles==24.1.0  # Async file operations for vLLM logs
