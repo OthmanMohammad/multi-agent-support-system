@@ -1,0 +1,190 @@
+{
+  "folders": [
+    {
+      "name": "🔧 Backend (FastAPI)",
+      "path": "."
+    },
+    {
+      "name": "🎨 Frontend (Next.js)",
+      "path": "./frontend"
+    }
+  ],
+  "settings": {
+    // Global settings
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit",
+      "source.organizeImports": "explicit"
+    },
+    "files.exclude": {
+      "**/.git": true,
+      "**/.DS_Store": true,
+      "**/node_modules": true,
+      "**/__pycache__": true,
+      "**/.pytest_cache": true,
+      "**/.next": true,
+      "**/out": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/.next": true,
+      "**/out": true,
+      "**/.git": true
+    },
+
+    // TypeScript/JavaScript (Frontend)
+    "[typescript]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.formatOnSave": true,
+      "editor.tabSize": 2
+    },
+    "[typescriptreact]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.formatOnSave": true,
+      "editor.tabSize": 2
+    },
+    "[javascript]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.formatOnSave": true,
+      "editor.tabSize": 2
+    },
+    "[javascriptreact]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.formatOnSave": true,
+      "editor.tabSize": 2
+    },
+    "[json]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.formatOnSave": true,
+      "editor.tabSize": 2
+    },
+
+    // Python (Backend)
+    "[python]": {
+      "editor.defaultFormatter": "ms-python.black-formatter",
+      "editor.formatOnSave": true,
+      "editor.tabSize": 4,
+      "editor.insertSpaces": true
+    },
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": true,
+    "python.formatting.provider": "black",
+
+    // Tailwind CSS IntelliSense
+    "tailwindCSS.experimental.classRegex": [
+      ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+      ["cx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+    ],
+    "tailwindCSS.includeLanguages": {
+      "typescript": "javascript",
+      "typescriptreact": "javascript"
+    },
+
+    // File associations
+    "files.associations": {
+      "*.css": "tailwindcss",
+      ".env.example": "dotenv",
+      ".env.local": "dotenv"
+    },
+
+    // Terminal settings
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
+    "terminal.integrated.fontSize": 14,
+
+    // Git settings
+    "git.enableSmartCommit": true,
+    "git.confirmSync": false,
+    "git.autofetch": true,
+
+    // ESLint
+    "eslint.workingDirectories": [
+      "./frontend"
+    ],
+    "eslint.validate": [
+      "javascript",
+      "javascriptreact",
+      "typescript",
+      "typescriptreact"
+    ]
+  },
+  "extensions": {
+    "recommendations": [
+      // Frontend essentials
+      "esbenp.prettier-vscode",
+      "dbaeumer.vscode-eslint",
+      "bradlc.vscode-tailwindcss",
+      "csstools.postcss",
+
+      // TypeScript/JavaScript
+      "ms-vscode.vscode-typescript-next",
+      "formulahendry.auto-rename-tag",
+      "formulahendry.auto-close-tag",
+      "christian-kohler.npm-intellisense",
+      "christian-kohler.path-intellisense",
+
+      // Python (Backend)
+      "ms-python.python",
+      "ms-python.vscode-pylance",
+      "ms-python.black-formatter",
+
+      // Git
+      "eamodio.gitlens",
+      "mhutchie.git-graph",
+
+      // Utilities
+      "usernamehw.errorlens",
+      "streetsidesoftware.code-spell-checker",
+      "wayou.vscode-todo-highlight",
+      "gruntfuggly.todo-tree",
+
+      // Docker
+      "ms-azuretools.vscode-docker",
+
+      // Markdown
+      "yzhang.markdown-all-in-one",
+
+      // Icons
+      "pkief.material-icon-theme"
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "🎨 Frontend: Dev Server",
+        "type": "node-terminal",
+        "request": "launch",
+        "command": "cd frontend && pnpm dev",
+        "cwd": "${workspaceFolder}"
+      },
+      {
+        "name": "🔧 Backend: FastAPI",
+        "type": "python",
+        "request": "launch",
+        "module": "uvicorn",
+        "args": [
+          "src.api.main:app",
+          "--reload",
+          "--port",
+          "8000"
+        ],
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}"
+        }
+      }
+    ],
+    "compounds": [
+      {
+        "name": "🚀 Full Stack",
+        "configurations": [
+          "🔧 Backend: FastAPI",
+          "🎨 Frontend: Dev Server"
+        ]
+      }
+    ]
+  }
+}
