@@ -176,6 +176,218 @@ async def set_vllm_endpoint(
 
 
 # ============================================================================
+# vLLM GPU Orchestration Endpoints (Phase 3)
+# ============================================================================
+
+class VLLMLaunchRequest(BaseModel):
+    """Request to launch vLLM GPU instance"""
+    keep_alive_minutes: int = 45
+    auto_switch: bool = True
+
+
+class VLLMExtendRequest(BaseModel):
+    """Request to extend keep-alive time"""
+    additional_minutes: int = 15
+
+
+@router.post("/vllm/launch")
+async def launch_vllm_gpu(
+    request: VLLMLaunchRequest,
+    _user = Depends(require_admin),
+):
+    """
+    Launch vLLM GPU instance on Vast.ai.
+
+    **Phase 3 Feature:** On-demand GPU rental with automatic orchestration.
+
+    This endpoint:
+    1. Searches for available GPU across 10 fallback configurations
+    2. Launches the cheapest compatible instance
+    3. Waits for vLLM to be ready
+    4. Optionally switches backend to vLLM
+
+    **Permissions:** Admin only
+
+    **Example:**
+    ```bash
+    curl -X POST https://your-domain.com/api/admin/vllm/launch \\
+      -H "Authorization: Bearer <TOKEN>" \\
+      -H "Content-Type: application/json" \\
+      -d '{"keep_alive_minutes": 45, "auto_switch": true}'
+    ```
+
+    **Response:**
+    ```json
+    {
+      "success": true,
+      "endpoint": "http://165.22.45.67:8000",
+      "instance": {
+        "id": 12345,
+        "gpu_name": "RTX 3090",
+        "price_per_hour": 0.14
+      },
+      "keep_alive_until": "2024-11-22T12:00:00",
+      "estimated_cost": 0.105,
+      "backend_switched": true
+    }
+    ```
+    """
+    try:
+        result = await backend_manager.launch_vllm_gpu(
+            keep_alive_minutes=request.keep_alive_minutes,
+            auto_switch=request.auto_switch,
+        )
+
+        if not result["success"]:
+            raise HTTPException(
+                status_code=500,
+                detail=result.get("message", "Failed to launch vLLM GPU")
+            )
+
+        logger.info(
+            "admin_vllm_gpu_launched",
+            endpoint=result.get("endpoint"),
+            instance_id=result.get("instance", {}).get("id"),
+        )
+
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("admin_vllm_launch_error", error=str(e), exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to launch vLLM GPU: {str(e)}"
+        )
+
+
+@router.post("/vllm/destroy")
+async def destroy_vllm_gpu(_user = Depends(require_admin)):
+    """
+    Destroy vLLM GPU instance.
+
+    Terminates the current GPU instance and stops billing.
+
+    **Permissions:** Admin only
+
+    **Example:**
+    ```bash
+    curl -X POST https://your-domain.com/api/admin/vllm/destroy \\
+      -H "Authorization: Bearer <TOKEN>"
+    ```
+    """
+    try:
+        result = await backend_manager.destroy_vllm_gpu()
+
+        if not result["success"]:
+            logger.warning("admin_vllm_destroy_failed", message=result.get("message"))
+
+        logger.info("admin_vllm_gpu_destroyed", success=result["success"])
+
+        return result
+
+    except Exception as e:
+        logger.error("admin_vllm_destroy_error", error=str(e), exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to destroy vLLM GPU: {str(e)}")
+
+
+@router.get("/vllm/status")
+async def get_vllm_status(_user = Depends(require_admin)):
+    """
+    Get vLLM GPU instance status.
+
+    Returns current instance details, runtime, and costs.
+
+    **Permissions:** Admin only
+
+    **Response:**
+    ```json
+    {
+      "status": "running",
+      "instance": {
+        "id": 12345,
+        "gpu_name": "RTX 3090",
+        "endpoint": "http://165.22.45.67:8000",
+        "price_per_hour": 0.14
+      },
+      "runtime_minutes": 22.5,
+      "keep_alive_until": "2024-11-22T12:00:00",
+      "estimated_cost": 0.0525,
+      "health_failures": 0
+    }
+    ```
+    """
+    try:
+        status = await backend_manager.get_vllm_status()
+
+        logger.debug("admin_vllm_status_checked", status=status.get("status"))
+
+        return status
+
+    except Exception as e:
+        logger.error("admin_vllm_status_error", error=str(e), exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get vLLM status: {str(e)}")
+
+
+@router.post("/vllm/extend")
+async def extend_vllm_keep_alive(
+    request: VLLMExtendRequest,
+    _user = Depends(require_admin),
+):
+    """
+    Extend vLLM GPU keep-alive time.
+
+    Adds additional minutes to prevent automatic shutdown.
+
+    **Permissions:** Admin only
+
+    **Example:**
+    ```bash
+    curl -X POST https://your-domain.com/api/admin/vllm/extend \\
+      -H "Authorization: Bearer <TOKEN>" \\
+      -H "Content-Type: application/json" \\
+      -d '{"additional_minutes": 15}'
+    ```
+    """
+    try:
+        from src.vllm.orchestrator import gpu_orchestrator
+
+        # Check if instance running
+        status = gpu_orchestrator.get_status()
+        if status["status"] != "running":
+            raise HTTPException(
+                status_code=400,
+                detail="No vLLM GPU instance running"
+            )
+
+        # Extend keep-alive
+        await gpu_orchestrator.extend_keep_alive(request.additional_minutes)
+
+        # Get updated status
+        updated_status = gpu_orchestrator.get_status()
+
+        logger.info(
+            "admin_vllm_keep_alive_extended",
+            additional_minutes=request.additional_minutes,
+            new_keep_alive=updated_status.get("keep_alive_until"),
+        )
+
+        return {
+            "success": True,
+            "additional_minutes": request.additional_minutes,
+            "keep_alive_until": updated_status.get("keep_alive_until"),
+            "message": f"Keep-alive extended by {request.additional_minutes} minutes",
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("admin_vllm_extend_error", error=str(e), exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to extend keep-alive: {str(e)}")
+
+
+# ============================================================================
 # Cost Tracking Endpoints
 # ============================================================================
 
