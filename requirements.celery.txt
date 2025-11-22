@@ -1,0 +1,19 @@
+# =============================================================================
+# CELERY & BACKGROUND TASK PROCESSING
+# Add these to your main requirements.txt
+# =============================================================================
+
+# Celery - Distributed task queue
+celery[redis]==5.4.0
+
+# Kombu - Messaging library (Celery dependency)
+kombu==5.4.2
+
+# Flower - Celery monitoring UI
+flower==2.0.1
+
+# Celery Beat - Scheduled task scheduler
+# (included with celery[redis])
+
+# Additional monitoring
+celery-exporter==1.7.0  # Prometheus metrics for Celery
