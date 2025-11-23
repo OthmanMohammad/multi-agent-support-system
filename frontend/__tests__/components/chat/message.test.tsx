@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { Message } from "@/components/chat/message";
-import type { Message as MessageType } from "@prisma/client";
+import type { ConversationMessage as MessageType } from "@/lib/types/api";
 
 // Mock clipboard API
 Object.assign(navigator, {
