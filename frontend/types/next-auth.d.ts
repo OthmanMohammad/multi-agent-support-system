@@ -1,31 +1,45 @@
-import type { DefaultSession, DefaultUser } from "next-auth";
-import type { JWT as DefaultJWT } from "next-auth/jwt";
-import type { UserRole } from "@prisma/client";
+/**
+ * NextAuth Type Definitions
+ *
+ * Extends NextAuth types to include backend JWT tokens and user role.
+ */
+
+import { DefaultSession } from "next-auth";
+import { JWT } from "next-auth/jwt";
 
 declare module "next-auth" {
   /**
-   * Returned by `useSession`, `auth`, `getSession` and received as a prop on the `SessionProvider` React Context
+   * Returned by `useSession`, `getSession` and received as a prop on the `SessionProvider` React Context
    */
   interface Session {
     user: {
       id: string;
-      role: UserRole;
+      email: string;
+      name: string;
+      role: string;
     } & DefaultSession["user"];
+    accessToken: string;
+    refreshToken: string;
   }
 
-  /**
-   * The shape of the user object returned in the OAuth providers' `profile` callback,
-   * or the second parameter of the `session` callback, when using a database.
-   */
-  interface User extends DefaultUser {
-    role: UserRole;
+  interface User {
+    id: string;
+    email: string;
+    name: string;
+    role?: string;
+    accessToken?: string;
+    refreshToken?: string;
   }
 }
 
 declare module "next-auth/jwt" {
-  /** Returned by the `jwt` callback and `auth`, when using JWT sessions */
-  interface JWT extends DefaultJWT {
+  /** Returned by the `jwt` callback and `getToken`, when using JWT sessions */
+  interface JWT {
     id: string;
-    role: UserRole;
+    email: string;
+    name: string;
+    role: string;
+    accessToken: string;
+    refreshToken: string;
   }
 }
