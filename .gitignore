@@ -235,3 +235,7 @@ service_account.json
 
 data/conversations/*.json
 RELEASE_GUIDE.md
+
+# Node.js / Frontend
+node_modules/
+package-lock.json
