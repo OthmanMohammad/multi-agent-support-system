@@ -7,6 +7,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
+import { authAPI } from "@/lib/api/auth";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,25 +52,26 @@ export default function SignUpPage(): JSX.Element {
     setError(null);
 
     try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: data.name,
-          email: data.email,
-          password: data.password,
-        }),
+      // Register user via backend API
+      const result = await authAPI.register({
+        email: data.email,
+        password: data.password,
+        full_name: data.name,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to create account");
+      if (!result.success) {
+        throw new Error(result.error.message || "Failed to create account");
       }
+
+      // Show success message
+      toast.success("Account created successfully! Please sign in.");
 
       // Redirect to sign in page with success message
       router.push("/auth/signin?registered=true");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred. Please try again.");
+      const errorMessage = err instanceof Error ? err.message : "An error occurred. Please try again.";
+      setError(errorMessage);
+      toast.error(errorMessage);
       console.error("Sign up error:", err);
     } finally {
       setIsLoading(false);
