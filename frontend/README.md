@@ -1,16 +1,16 @@
 # Multi-Agent Support System - Frontend
 
-built with Next.js 16, React 19, TypeScript, and Tailwind CSS 4.
+Production-grade frontend built with Next.js 16, React 19, TypeScript, and Tailwind CSS 4.
 
 ## 🚀 Tech Stack
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| **Next.js** | 16.0.3 | React framework with App Router, RSC, Turbopack |
-| **React** | 19.2.0 | UI library with improved concurrent rendering |
-| **TypeScript** | 5.9.3 | Type-safe JavaScript with strict mode |
-| **Tailwind CSS** | 4.1.17 | Utility-first CSS framework |
-| **pnpm** | 10.23.0 | Fast, efficient package manager |
+| Technology       | Version | Purpose                                         |
+| ---------------- | ------- | ----------------------------------------------- |
+| **Next.js**      | 16.0.3  | React framework with App Router, RSC, Turbopack |
+| **React**        | 19.2.0  | UI library with improved concurrent rendering   |
+| **TypeScript**   | 5.9.3   | Type-safe JavaScript with strict mode           |
+| **Tailwind CSS** | 4.1.17  | Utility-first CSS framework                     |
+| **pnpm**         | 10.23.0 | Fast, efficient package manager                 |
 
 ## 📁 Project Structure
 
@@ -107,12 +107,14 @@ pnpm validate     # Run all checks (type-check + lint + format)
 ### Colors (ChatGPT/Claude-Inspired)
 
 **Light Mode:**
+
 - Background: `#ffffff`
 - Surface: `#f7f7f8`
 - Text: `#1f1f1f`
 - Accent: `#10a37f` (ChatGPT green)
 
 **Dark Mode:**
+
 - Background: `#212121`
 - Surface: `#2a2a2a`
 - Text: `#ececec`
@@ -126,6 +128,7 @@ pnpm validate     # Run all checks (type-check + lint + format)
 ### Components
 
 All UI components use:
+
 - **Tailwind CSS** for styling
 - **Radix UI** for accessible primitives (via shadcn/ui)
 - **Framer Motion** for animations
@@ -135,6 +138,7 @@ All UI components use:
 ### TypeScript (Ultra-Strict Mode)
 
 17+ strict compiler options enabled:
+
 - `noUncheckedIndexedAccess`
 - `noImplicitAny`
 - `strictNullChecks`
@@ -171,6 +175,7 @@ NEXTAUTH_URL=http://localhost:3000
 ```
 
 Optional variables:
+
 - Google/GitHub OAuth credentials
 - Analytics (Umami)
 - Error tracking (Sentry)
@@ -200,6 +205,34 @@ pnpm start
 # Check for errors
 pnpm lint && pnpm type-check
 ```
+
+## 🚢 Deployment
+
+### Option 1: Vercel (Recommended)
+
+```bash
+# Install Vercel CLI
+pnpm add -g vercel
+
+# Deploy
+vercel deploy
+```
+
+### Option 2: Docker (Self-Hosted)
+
+```bash
+# Build Docker image
+docker build -t frontend .
+
+# Run container
+docker run -p 3000:3000 frontend
+```
+
+### Option 3: Oracle Cloud (With Backend)
+
+Deployed via `docker-compose.yml` in root directory.
+
+## 🎯 Best Practices
 
 ### Code Organization
 
@@ -262,3 +295,14 @@ pnpm type-check
 ## 📝 License
 
 Same as parent project (see root LICENSE file).
+
+## 🤝 Contributing
+
+1. Create a feature branch
+2. Make your changes
+3. Run `pnpm validate` (must pass)
+4. Submit a pull request
+
+---
+
+**Built with ❤️ using the latest web technologies**
