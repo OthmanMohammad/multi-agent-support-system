@@ -1,0 +1,1502 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Multi-Agent Support System API",
+    "description": "FastAPI backend for enterprise-grade multi-agent customer support",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "Local development server"
+    },
+    {
+      "url": "https://api.thatagentsproject.com",
+      "description": "Production server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "conversations",
+      "description": "Conversation management endpoints"
+    },
+    {
+      "name": "messages",
+      "description": "Message management and streaming"
+    },
+    {
+      "name": "customers",
+      "description": "Customer management and profiles"
+    },
+    {
+      "name": "analytics",
+      "description": "Analytics and metrics"
+    },
+    {
+      "name": "agents",
+      "description": "AI agent management"
+    },
+    {
+      "name": "admin",
+      "description": "Administrative operations"
+    },
+    {
+      "name": "health",
+      "description": "Health check and monitoring"
+    }
+  ],
+  "paths": {
+    "/api/conversations": {
+      "get": {
+        "tags": ["conversations"],
+        "summary": "List conversations",
+        "description": "Get all conversations for the current user",
+        "operationId": "listConversations",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["active", "archived", "all"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of conversations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationList"
+                }
+              }
+            }
+          }
+        },
+        "security": [{"BearerAuth": []}]
+      },
+      "post": {
+        "tags": ["conversations"],
+        "summary": "Create conversation",
+        "description": "Create a new conversation",
+        "operationId": "createConversation",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateConversationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Conversation created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Conversation"
+                }
+              }
+            }
+          }
+        },
+        "security": [{"BearerAuth": []}]
+      }
+    },
+    "/api/conversations/{conversationId}": {
+      "get": {
+        "tags": ["conversations"],
+        "summary": "Get conversation",
+        "description": "Get a single conversation by ID",
+        "operationId": "getConversation",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conversation details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Conversation"
+                }
+              }
+            }
+          }
+        },
+        "security": [{"BearerAuth": []}]
+      },
+      "patch": {
+        "tags": ["conversations"],
+        "summary": "Update conversation",
+        "description": "Update a conversation",
+        "operationId": "updateConversation",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateConversationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Conversation updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Conversation"
+                }
+              }
+            }
+          }
+        },
+        "security": [{"BearerAuth": []}]
+      },
+      "delete": {
+        "tags": ["conversations"],
+        "summary": "Delete conversation",
+        "description": "Delete a conversation",
+        "operationId": "deleteConversation",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Conversation deleted"
+          }
+        },
+        "security": [{"BearerAuth": []}]
+      }
+    },
+    "/api/conversations/{conversationId}/messages": {
+      "get": {
+        "tags": ["messages"],
+        "summary": "List messages",
+        "description": "Get messages for a conversation",
+        "operationId": "listMessages",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of messages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageList"
+                }
+              }
+            }
+          }
+        },
+        "security": [{"BearerAuth": []}]
+      },
+      "post": {
+        "tags": ["messages"],
+        "summary": "Send message",
+        "description": "Send a message in a conversation",
+        "operationId": "sendMessage",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendMessageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Message sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          }
+        },
+        "security": [{"BearerAuth": []}]
+      }
+    },
+    "/api/conversations/{conversationId}/messages/{messageId}": {
+      "patch": {
+        "tags": ["messages"],
+        "summary": "Update message",
+        "description": "Update a message",
+        "operationId": "updateMessage",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMessageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Message updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          }
+        },
+        "security": [{"BearerAuth": []}]
+      },
+      "delete": {
+        "tags": ["messages"],
+        "summary": "Delete message",
+        "description": "Delete a message",
+        "operationId": "deleteMessage",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Message deleted"
+          }
+        },
+        "security": [{"BearerAuth": []}]
+      }
+    },
+    "/api/conversations/{conversationId}/messages/{messageId}/stream": {
+      "get": {
+        "tags": ["messages"],
+        "summary": "Stream message response",
+        "description": "Stream AI response for a message using Server-Sent Events",
+        "operationId": "streamMessageResponse",
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SSE stream of message chunks",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [{"BearerAuth": []}]
+      }
+    },
+    "/api/customers": {
+      "get": {
+        "tags": ["customers"],
+        "summary": "List customers",
+        "description": "Get all customers",
+        "operationId": "listCustomers",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of customers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerList"
+                }
+              }
+            }
+          }
+        },
+        "security": [{"BearerAuth": []}]
+      }
+    },
+    "/api/customers/{customerId}": {
+      "get": {
+        "tags": ["customers"],
+        "summary": "Get customer",
+        "description": "Get customer details",
+        "operationId": "getCustomer",
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Customer"
+                }
+              }
+            }
+          }
+        },
+        "security": [{"BearerAuth": []}]
+      },
+      "patch": {
+        "tags": ["customers"],
+        "summary": "Update customer",
+        "description": "Update customer details",
+        "operationId": "updateCustomer",
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCustomerRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Customer updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Customer"
+                }
+              }
+            }
+          }
+        },
+        "security": [{"BearerAuth": []}]
+      }
+    },
+    "/api/customers/{customerId}/interactions": {
+      "get": {
+        "tags": ["customers"],
+        "summary": "Get customer interactions",
+        "description": "Get all interactions for a customer",
+        "operationId": "getCustomerInteractions",
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer interactions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerInteractions"
+                }
+              }
+            }
+          }
+        },
+        "security": [{"BearerAuth": []}]
+      }
+    },
+    "/api/analytics/overview": {
+      "get": {
+        "tags": ["analytics"],
+        "summary": "Get analytics overview",
+        "description": "Get high-level analytics metrics",
+        "operationId": "getAnalyticsOverview",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["24h", "7d", "30d", "90d"],
+              "default": "7d"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Analytics overview",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyticsOverview"
+                }
+              }
+            }
+          }
+        },
+        "security": [{"BearerAuth": []}]
+      }
+    },
+    "/api/analytics/conversations": {
+      "get": {
+        "tags": ["analytics"],
+        "summary": "Get conversation analytics",
+        "description": "Get detailed conversation metrics",
+        "operationId": "getConversationAnalytics",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["24h", "7d", "30d", "90d"],
+              "default": "7d"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conversation analytics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationAnalytics"
+                }
+              }
+            }
+          }
+        },
+        "security": [{"BearerAuth": []}]
+      }
+    },
+    "/api/analytics/agents": {
+      "get": {
+        "tags": ["analytics"],
+        "summary": "Get agent performance",
+        "description": "Get agent performance metrics",
+        "operationId": "getAgentPerformance",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["24h", "7d", "30d", "90d"],
+              "default": "7d"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agent performance metrics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentPerformance"
+                }
+              }
+            }
+          }
+        },
+        "security": [{"BearerAuth": []}]
+      }
+    },
+    "/api/agents": {
+      "get": {
+        "tags": ["agents"],
+        "summary": "List agents",
+        "description": "Get all configured AI agents",
+        "operationId": "listAgents",
+        "responses": {
+          "200": {
+            "description": "List of agents",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentList"
+                }
+              }
+            }
+          }
+        },
+        "security": [{"BearerAuth": []}]
+      },
+      "post": {
+        "tags": ["agents"],
+        "summary": "Create agent",
+        "description": "Create a new AI agent configuration",
+        "operationId": "createAgent",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAgentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Agent created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Agent"
+                }
+              }
+            }
+          }
+        },
+        "security": [{"BearerAuth": []}]
+      }
+    },
+    "/api/agents/{agentId}": {
+      "get": {
+        "tags": ["agents"],
+        "summary": "Get agent",
+        "description": "Get agent details",
+        "operationId": "getAgent",
+        "parameters": [
+          {
+            "name": "agentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agent details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Agent"
+                }
+              }
+            }
+          }
+        },
+        "security": [{"BearerAuth": []}]
+      },
+      "patch": {
+        "tags": ["agents"],
+        "summary": "Update agent",
+        "description": "Update agent configuration",
+        "operationId": "updateAgent",
+        "parameters": [
+          {
+            "name": "agentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAgentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Agent updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Agent"
+                }
+              }
+            }
+          }
+        },
+        "security": [{"BearerAuth": []}]
+      },
+      "delete": {
+        "tags": ["agents"],
+        "summary": "Delete agent",
+        "description": "Delete an agent",
+        "operationId": "deleteAgent",
+        "parameters": [
+          {
+            "name": "agentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Agent deleted"
+          }
+        },
+        "security": [{"BearerAuth": []}]
+      }
+    },
+    "/api/admin/health": {
+      "get": {
+        "tags": ["admin"],
+        "summary": "Health check",
+        "description": "Check backend health status",
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "description": "Health status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/costs": {
+      "get": {
+        "tags": ["admin"],
+        "summary": "Get cost tracking",
+        "description": "Get API usage and cost tracking",
+        "operationId": "getCostTracking",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["24h", "7d", "30d", "90d"],
+              "default": "30d"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cost tracking data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CostTracking"
+                }
+              }
+            }
+          }
+        },
+        "security": [{"BearerAuth": []}]
+      }
+    },
+    "/api/admin/backend/switch": {
+      "post": {
+        "tags": ["admin"],
+        "summary": "Switch backend",
+        "description": "Switch between OpenAI and Anthropic backends",
+        "operationId": "switchBackend",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwitchBackendRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Backend switched",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackendStatus"
+                }
+              }
+            }
+          }
+        },
+        "security": [{"BearerAuth": []}]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Conversation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "metadata": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": ["id", "userId", "title", "createdAt", "updatedAt"]
+      },
+      "ConversationList": {
+        "type": "object",
+        "properties": {
+          "conversations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Conversation"
+            }
+          },
+          "total": {
+            "type": "integer"
+          }
+        },
+        "required": ["conversations", "total"]
+      },
+      "CreateConversationRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object",
+            "nullable": true
+          }
+        }
+      },
+      "UpdateConversationRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object",
+            "nullable": true
+          }
+        }
+      },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "conversationId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["USER", "ASSISTANT", "SYSTEM"]
+          },
+          "content": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["id", "conversationId", "userId", "role", "content", "createdAt"]
+      },
+      "MessageList": {
+        "type": "object",
+        "properties": {
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Message"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          },
+          "hasMore": {
+            "type": "boolean"
+          }
+        },
+        "required": ["messages", "hasMore"]
+      },
+      "SendMessageRequest": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["USER", "ASSISTANT", "SYSTEM"]
+          },
+          "metadata": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": ["content", "role"]
+      },
+      "UpdateMessageRequest": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string"
+          }
+        },
+        "required": ["content"]
+      },
+      "Customer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "company": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastInteraction": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "totalInteractions": {
+            "type": "integer"
+          },
+          "metadata": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": ["id", "name", "email", "createdAt", "totalInteractions"]
+      },
+      "CustomerList": {
+        "type": "object",
+        "properties": {
+          "customers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Customer"
+            }
+          },
+          "total": {
+            "type": "integer"
+          }
+        },
+        "required": ["customers", "total"]
+      },
+      "UpdateCustomerRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "company": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "metadata": {
+            "type": "object",
+            "nullable": true
+          }
+        }
+      },
+      "CustomerInteractions": {
+        "type": "object",
+        "properties": {
+          "customerId": {
+            "type": "string"
+          },
+          "conversations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Conversation"
+            }
+          },
+          "totalInteractions": {
+            "type": "integer"
+          },
+          "avgResponseTime": {
+            "type": "number"
+          },
+          "satisfactionScore": {
+            "type": "number",
+            "nullable": true
+          }
+        },
+        "required": ["customerId", "conversations", "totalInteractions", "avgResponseTime"]
+      },
+      "AnalyticsOverview": {
+        "type": "object",
+        "properties": {
+          "totalConversations": {
+            "type": "integer"
+          },
+          "totalMessages": {
+            "type": "integer"
+          },
+          "totalCustomers": {
+            "type": "integer"
+          },
+          "avgResponseTime": {
+            "type": "number"
+          },
+          "satisfactionScore": {
+            "type": "number"
+          },
+          "activeAgents": {
+            "type": "integer"
+          },
+          "period": {
+            "type": "string"
+          }
+        },
+        "required": ["totalConversations", "totalMessages", "totalCustomers", "avgResponseTime", "satisfactionScore", "activeAgents", "period"]
+      },
+      "ConversationAnalytics": {
+        "type": "object",
+        "properties": {
+          "period": {
+            "type": "string"
+          },
+          "conversationsByDay": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "messagesByDay": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "avgMessagesPerConversation": {
+            "type": "number"
+          },
+          "avgConversationDuration": {
+            "type": "number"
+          }
+        },
+        "required": ["period", "conversationsByDay", "messagesByDay", "avgMessagesPerConversation", "avgConversationDuration"]
+      },
+      "AgentPerformance": {
+        "type": "object",
+        "properties": {
+          "period": {
+            "type": "string"
+          },
+          "agents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "agentId": {
+                  "type": "string"
+                },
+                "agentName": {
+                  "type": "string"
+                },
+                "totalConversations": {
+                  "type": "integer"
+                },
+                "totalMessages": {
+                  "type": "integer"
+                },
+                "avgResponseTime": {
+                  "type": "number"
+                },
+                "satisfactionScore": {
+                  "type": "number"
+                },
+                "costUsd": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "required": ["period", "agents"]
+      },
+      "Agent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "model": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string",
+            "enum": ["openai", "anthropic"]
+          },
+          "systemPrompt": {
+            "type": "string",
+            "nullable": true
+          },
+          "temperature": {
+            "type": "number"
+          },
+          "maxTokens": {
+            "type": "integer"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["id", "name", "model", "provider", "temperature", "maxTokens", "isActive", "createdAt", "updatedAt"]
+      },
+      "AgentList": {
+        "type": "object",
+        "properties": {
+          "agents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Agent"
+            }
+          }
+        },
+        "required": ["agents"]
+      },
+      "CreateAgentRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "model": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string",
+            "enum": ["openai", "anthropic"]
+          },
+          "systemPrompt": {
+            "type": "string",
+            "nullable": true
+          },
+          "temperature": {
+            "type": "number",
+            "default": 0.7
+          },
+          "maxTokens": {
+            "type": "integer",
+            "default": 2048
+          }
+        },
+        "required": ["name", "model", "provider"]
+      },
+      "UpdateAgentRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "model": {
+            "type": "string"
+          },
+          "systemPrompt": {
+            "type": "string",
+            "nullable": true
+          },
+          "temperature": {
+            "type": "number"
+          },
+          "maxTokens": {
+            "type": "integer"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "HealthStatus": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["healthy", "degraded", "unhealthy"]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "string"
+          },
+          "database": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string"
+              },
+              "latency": {
+                "type": "number"
+              }
+            }
+          },
+          "aiProviders": {
+            "type": "object",
+            "properties": {
+              "openai": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string"
+                  },
+                  "latency": {
+                    "type": "number"
+                  }
+                }
+              },
+              "anthropic": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string"
+                  },
+                  "latency": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "required": ["status", "timestamp", "version"]
+      },
+      "CostTracking": {
+        "type": "object",
+        "properties": {
+          "period": {
+            "type": "string"
+          },
+          "totalCostUsd": {
+            "type": "number"
+          },
+          "costByProvider": {
+            "type": "object",
+            "properties": {
+              "openai": {
+                "type": "number"
+              },
+              "anthropic": {
+                "type": "number"
+              }
+            }
+          },
+          "costByDay": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string"
+                },
+                "cost": {
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "tokenUsage": {
+            "type": "object",
+            "properties": {
+              "input": {
+                "type": "integer"
+              },
+              "output": {
+                "type": "integer"
+              },
+              "total": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "required": ["period", "totalCostUsd", "costByProvider", "costByDay", "tokenUsage"]
+      },
+      "SwitchBackendRequest": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": ["openai", "anthropic"]
+          },
+          "model": {
+            "type": "string"
+          }
+        },
+        "required": ["provider"]
+      },
+      "BackendStatus": {
+        "type": "object",
+        "properties": {
+          "currentProvider": {
+            "type": "string"
+          },
+          "currentModel": {
+            "type": "string"
+          },
+          "switchedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["currentProvider", "currentModel", "switchedAt"]
+      }
+    }
+  }
+}
