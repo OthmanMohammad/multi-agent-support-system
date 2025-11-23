@@ -439,23 +439,38 @@ class ConversationApplicationService:
                 message_count=len(conversation.messages)
             )
             
+            # Determine resolved_at and escalated_at based on status and ended_at
+            resolved_at = conversation.ended_at if conversation.status == 'resolved' and conversation.ended_at else None
+            escalated_at = conversation.ended_at if conversation.status == 'escalated' and conversation.ended_at else None
+
+            # Get assigned agent (first agent if available)
+            assigned_agent = conversation.agents_involved[0] if conversation.agents_involved else None
+
+            # Get customer email if available
+            customer_email = conversation.customer.email if hasattr(conversation, 'customer') and conversation.customer else None
+
             return Result.ok({
-                "conversation_id": str(conversation.id),
-                "customer_id": str(conversation.customer_id),
+                "id": conversation.id,
+                "customer_id": conversation.customer_id,
+                "customer_email": customer_email,
                 "status": conversation.status,
-                "started_at": conversation.started_at.isoformat(),
-                "last_updated": conversation.updated_at.isoformat() if conversation.updated_at else conversation.started_at.isoformat(),
                 "messages": [
                     {
+                        "id": msg.id,
+                        "conversation_id": msg.conversation_id,
                         "role": msg.role,
                         "content": msg.content,
-                        "agent_name": msg.agent_name,
-                        "timestamp": msg.created_at.isoformat()
+                        "created_at": msg.created_at,
+                        "metadata": msg.extra_metadata if msg.extra_metadata else None
                     }
                     for msg in conversation.messages
                 ],
-                "agent_history": conversation.agents_involved or [],
-                "primary_intent": conversation.primary_intent
+                "created_at": conversation.created_at,
+                "updated_at": conversation.updated_at,
+                "resolved_at": resolved_at,
+                "escalated_at": escalated_at,
+                "assigned_agent": assigned_agent,
+                "metadata": conversation.extra_metadata if conversation.extra_metadata else None
             })
             
         except Exception as e:
