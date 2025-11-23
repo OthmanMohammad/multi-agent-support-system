@@ -6,6 +6,9 @@ import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { QueryProvider } from "@/lib/react-query/provider";
 import { ToastProvider } from "@/components/providers/toast-provider";
+import { CommandPalette } from "@/components/command-palette";
+import { KeyboardShortcutsOverlay } from "@/components/keyboard-shortcuts-overlay";
+import { PerformanceMonitor } from "@/components/performance-monitor";
 import { siteConfig } from "@/config/site";
 
 import "./globals.css";
@@ -72,6 +75,9 @@ export default function RootLayout({
             <ThemeProvider>
               {children}
               <ToastProvider />
+              <CommandPalette />
+              <KeyboardShortcutsOverlay />
+              <PerformanceMonitor showDebugPanel={false} />
             </ThemeProvider>
           </QueryProvider>
         </SessionProvider>
