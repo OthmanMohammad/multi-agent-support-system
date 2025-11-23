@@ -4,8 +4,9 @@ import type { NextRequest } from "next/server";
 
 /**
  * Protected routes that require authentication
+ * Temporarily disabled for development with MSW mocks
  */
-const protectedRoutes = ["/chat", "/dashboard", "/settings", "/analytics"];
+const protectedRoutes: string[] = []; // ["/chat", "/dashboard", "/settings", "/analytics"];
 
 /**
  * Public routes that should redirect to dashboard if authenticated
