@@ -1,5 +1,6 @@
 import * as React from "react";
-import { type VariantProps, cva } from "class-variance-authority";
+import type { JSX } from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
@@ -12,8 +13,7 @@ const badgeVariants = cva(
           "border-transparent bg-accent text-accent-foreground hover:bg-accent-hover",
         secondary:
           "border-transparent bg-surface text-foreground hover:bg-surface-hover",
-        destructive:
-          "border-transparent bg-error text-white hover:bg-error/80",
+        destructive: "border-transparent bg-error text-white hover:bg-error/80",
         outline: "text-foreground border-border",
       },
     },
@@ -28,7 +28,9 @@ export interface BadgeProps
     VariantProps<typeof badgeVariants> {}
 
 const Badge = ({ className, variant, ...props }: BadgeProps): JSX.Element => {
-  return <div className={cn(badgeVariants({ variant }), className)} {...props} />;
+  return (
+    <div className={cn(badgeVariants({ variant }), className)} {...props} />
+  );
 };
 
 export { Badge, badgeVariants };

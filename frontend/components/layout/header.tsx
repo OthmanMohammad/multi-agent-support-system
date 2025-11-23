@@ -1,11 +1,12 @@
 "use client";
 
+import type { JSX } from "react";
 import Link from "next/link";
 import { Menu } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { siteConfig } from "@/config/site";
+import { navConfig, siteConfig } from "@/config/site";
 
 export const Header = (): JSX.Element => {
   return (
@@ -22,7 +23,7 @@ export const Header = (): JSX.Element => {
           </Link>
 
           <nav className="hidden md:flex gap-6">
-            {siteConfig.navConfig.mainNav.map((item) => (
+            {navConfig.mainNav.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}

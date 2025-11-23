@@ -26,6 +26,7 @@ components/
 ## UI Components
 
 ### Button
+
 ```tsx
 import { Button } from "@/components/ui/button";
 
@@ -38,6 +39,7 @@ import { Button } from "@/components/ui/button";
 ```
 
 ### Input
+
 ```tsx
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,45 +49,53 @@ import { Label } from "@/components/ui/label";
 ```
 
 ### Card
+
 ```tsx
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
 
 <Card>
   <CardHeader>
     <CardTitle>Card Title</CardTitle>
     <CardDescription>Card description</CardDescription>
   </CardHeader>
-  <CardContent>
-    Card content goes here
-  </CardContent>
-</Card>
+  <CardContent>Card content goes here</CardContent>
+</Card>;
 ```
 
 ## Theme System
 
 ### Theme Provider
+
 Wrap your app with `ThemeProvider` (already done in `app/layout.tsx`):
 
 ```tsx
 import { ThemeProvider } from "@/components/theme-provider";
 
-<ThemeProvider>{children}</ThemeProvider>
+<ThemeProvider>{children}</ThemeProvider>;
 ```
 
 ### Theme Toggle
+
 ```tsx
 import { ThemeToggle } from "@/components/theme-toggle";
 
-<ThemeToggle />
+<ThemeToggle />;
 ```
 
 ## Layout Components
 
 ### Header
+
 ```tsx
 import { Header } from "@/components/layout/header";
 
-<Header />
+<Header />;
 ```
 
 ## Best Practices
