@@ -21,6 +21,11 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
     "playwright:install": "playwright install --with-deps",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "db:seed": "tsx prisma/seed.ts",
     "prepare": "cd .. && husky frontend/.husky",
     "validate": "pnpm run type-check && pnpm run lint && pnpm run format:check && pnpm run test:ci"
   },
