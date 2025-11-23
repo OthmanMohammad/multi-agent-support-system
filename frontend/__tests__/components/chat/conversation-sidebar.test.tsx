@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { ConversationSidebar } from "@/components/chat/conversation-sidebar";
 import { useConversations, useCreateConversation } from "@/lib/api/hooks/useConversations";
 import { useChatStore } from "@/stores/chat-store";
-import type { Conversation } from "@prisma/client";
+import type { Conversation } from "@/lib/types/api";
 
 // Mock dependencies
 jest.mock("@/lib/api/hooks/useConversations");
