@@ -3,7 +3,7 @@
 import type { JSX } from "react";
 import { useState } from "react";
 import { MoreVertical, Download, Trash2 } from "lucide-react";
-import type { Conversation } from "@prisma/client";
+import type { Conversation } from "@/lib/types/api";
 import { Button } from "@/components/ui/button";
 import { useDeleteConversation } from "@/lib/api/hooks/useConversations";
 import { useChatStore } from "@/stores/chat-store";
