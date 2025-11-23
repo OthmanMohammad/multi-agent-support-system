@@ -2,12 +2,11 @@
 
 import type { JSX } from "react";
 import { useState } from "react";
-import { MoreVertical, Trash2, Edit2 } from "lucide-react";
+import { MoreVertical, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { Conversation } from "@/lib/types/api";
 import { Button } from "@/components/ui/button";
-import { useDeleteConversation, useUpdateConversation } from "@/lib/api/hooks/useConversations";
-import { Input } from "@/components/ui/input";
+import { useConversations } from "@/lib/hooks/useConversations";
 import { cn } from "@/lib/utils";
 
 interface ConversationItemProps {
@@ -29,42 +28,18 @@ export function ConversationItem({
   const displayTitle = conversation.primary_intent ||
     `Conversation ${conversation.conversation_id.slice(0, 8)}...`;
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [title, setTitle] = useState(displayTitle);
   const [showActions, setShowActions] = useState(false);
 
-  const deleteConversation = useDeleteConversation();
-  const updateConversation = useUpdateConversation(conversation.conversation_id);
+  const { deleteConversation } = useConversations();
 
   const handleDelete = async (e: React.MouseEvent): Promise<void> => {
     e.stopPropagation();
     if (window.confirm("Are you sure you want to delete this conversation?")) {
       try {
-        await deleteConversation.mutateAsync(conversation.conversation_id);
+        await deleteConversation(conversation.conversation_id);
       } catch (error) {
         console.error("Failed to delete conversation:", error);
       }
-    }
-  };
-
-  const handleRename = async (): Promise<void> => {
-    if (title.trim() && title !== displayTitle) {
-      try {
-        await updateConversation.mutateAsync({ title: title.trim() });
-      } catch (error) {
-        console.error("Failed to update conversation:", error);
-        setTitle(displayTitle);
-      }
-    }
-    setIsEditing(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent): void => {
-    if (e.key === "Enter") {
-      void handleRename();
-    } else if (e.key === "Escape") {
-      setTitle(displayTitle);
-      setIsEditing(false);
     }
   };
 
@@ -79,45 +54,22 @@ export function ConversationItem({
       onMouseLeave={() => setShowActions(false)}
     >
       <div className="flex-1 overflow-hidden">
-        {isEditing ? (
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onBlur={handleRename}
-            onKeyDown={handleKeyDown}
-            onClick={(e) => e.stopPropagation()}
-            className="h-8 text-sm"
-            autoFocus
-          />
-        ) : (
-          <>
-            <p className="truncate text-sm font-medium">{displayTitle}</p>
-            <p className="text-xs text-foreground-secondary">
-              {formatDistanceToNow(new Date(conversation.last_updated), {
-                addSuffix: true,
-              })}
-            </p>
-          </>
-        )}
+        <p className="truncate text-sm font-medium">{displayTitle}</p>
+        <p className="text-xs text-foreground-secondary">
+          {formatDistanceToNow(new Date(conversation.last_updated), {
+            addSuffix: true,
+          })}
+        </p>
       </div>
 
       {/* Actions */}
-      {showActions && !isEditing && (
+      {showActions && (
         <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7"
-            onClick={() => setIsEditing(true)}
-          >
-            <Edit2 className="h-3.5 w-3.5" />
-          </Button>
           <Button
             size="icon"
             variant="ghost"
             className="h-7 w-7 text-error hover:text-error"
             onClick={handleDelete}
-            disabled={deleteConversation.isPending}
           >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>

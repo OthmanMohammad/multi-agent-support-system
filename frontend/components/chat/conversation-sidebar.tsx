@@ -3,7 +3,7 @@
 import type { JSX } from "react";
 import { useState } from "react";
 import { Plus, Search, X, Menu } from "lucide-react";
-import { useConversations, useCreateConversation } from "@/lib/api/hooks/useConversations";
+import { useConversations } from "@/lib/hooks/useConversations";
 import { useChatStore } from "@/stores/chat-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,8 +17,7 @@ import { ConversationItemSkeleton } from "./conversation-skeleton";
  */
 export function ConversationSidebar(): JSX.Element {
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: conversations, isLoading } = useConversations();
-  const createConversation = useCreateConversation();
+  const { conversations, isLoading, createConversation } = useConversations();
 
   const currentConversationId = useChatStore((state) => state.currentConversationId);
   const setCurrentConversation = useChatStore((state) => state.setCurrentConversation);
@@ -27,10 +26,10 @@ export function ConversationSidebar(): JSX.Element {
 
   const handleNewConversation = async (): Promise<void> => {
     try {
-      const newConversation = await createConversation.mutateAsync({
-        title: "New Conversation",
-      });
-      setCurrentConversation(newConversation.conversation_id);
+      const response = await createConversation("Hello, I need help");
+      if (response) {
+        setCurrentConversation(response.conversation_id);
+      }
     } catch (error) {
       console.error("Failed to create conversation:", error);
     }

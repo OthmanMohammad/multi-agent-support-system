@@ -5,7 +5,7 @@ import { useState } from "react";
 import { MoreVertical, Download, Trash2 } from "lucide-react";
 import type { Conversation } from "@/lib/types/api";
 import { Button } from "@/components/ui/button";
-import { useDeleteConversation } from "@/lib/api/hooks/useConversations";
+import { useConversations } from "@/lib/hooks/useConversations";
 import { useChatStore } from "@/stores/chat-store";
 import { ExportDialog } from "./export-dialog";
 
@@ -20,7 +20,7 @@ interface ChatHeaderProps {
 export function ChatHeader({ conversation }: ChatHeaderProps): JSX.Element {
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
-  const deleteConversation = useDeleteConversation();
+  const { deleteConversation } = useConversations();
   const setCurrentConversation = useChatStore(
     (state) => state.setCurrentConversation
   );
@@ -29,7 +29,7 @@ export function ChatHeader({ conversation }: ChatHeaderProps): JSX.Element {
   const handleDelete = async (): Promise<void> => {
     if (window.confirm("Are you sure you want to delete this conversation?")) {
       try {
-        await deleteConversation.mutateAsync(conversation.id);
+        await deleteConversation(conversation.conversation_id);
         setCurrentConversation(null);
       } catch (error) {
         console.error("Failed to delete conversation:", error);
@@ -41,11 +41,14 @@ export function ChatHeader({ conversation }: ChatHeaderProps): JSX.Element {
     setIsExportDialogOpen(true);
   };
 
+  const displayTitle = conversation.primary_intent ||
+    `Conversation ${conversation.conversation_id.slice(0, 8)}...`;
+
   return (
     <>
       <header className="flex items-center justify-between border-b border-border p-4">
         <div>
-          <h1 className="text-lg font-semibold">{conversation.title}</h1>
+          <h1 className="text-lg font-semibold">{displayTitle}</h1>
           <p className="text-sm text-foreground-secondary">
             AI-powered multi-agent support
           </p>
