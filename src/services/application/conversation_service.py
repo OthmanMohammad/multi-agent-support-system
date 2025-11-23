@@ -447,27 +447,31 @@ class ConversationApplicationService:
             assigned_agent = conversation.agents_involved[0] if conversation.agents_involved else None
 
             return Result.ok({
-                "id": conversation.id,
-                "customer_id": conversation.customer_id,
+                "conversation_id": str(conversation.id),
+                "customer_id": str(conversation.customer_id),
                 "customer_email": None,  # TODO: Eagerly load customer relationship to get email
                 "status": conversation.status,
                 "messages": [
                     {
-                        "id": msg.id,
-                        "conversation_id": msg.conversation_id,
+                        "id": str(msg.id),
+                        "conversation_id": str(msg.conversation_id),
                         "role": msg.role,
                         "content": msg.content,
-                        "created_at": msg.created_at,
+                        "created_at": msg.created_at.isoformat(),
                         "metadata": msg.extra_metadata if msg.extra_metadata else None
                     }
                     for msg in conversation.messages
                 ],
-                "created_at": conversation.created_at,
-                "updated_at": conversation.updated_at,
-                "resolved_at": resolved_at,
-                "escalated_at": escalated_at,
+                "created_at": conversation.created_at.isoformat(),
+                "updated_at": conversation.updated_at.isoformat(),
+                "resolved_at": resolved_at.isoformat() if resolved_at else None,
+                "escalated_at": escalated_at.isoformat() if escalated_at else None,
                 "assigned_agent": assigned_agent,
-                "metadata": conversation.extra_metadata if conversation.extra_metadata else None
+                "metadata": conversation.extra_metadata if conversation.extra_metadata else None,
+                "started_at": conversation.started_at.isoformat(),
+                "last_updated": conversation.updated_at.isoformat(),
+                "agent_history": conversation.agents_involved or [],
+                "primary_intent": conversation.primary_intent
             })
             
         except Exception as e:
