@@ -9,6 +9,7 @@ import { useStreamResponse } from "@/lib/api/hooks/useStreamResponse";
 import { useChatStore } from "@/stores/chat-store";
 import { cn } from "@/lib/utils";
 import { nanoid } from "nanoid";
+import { toast, fileToast } from "@/lib/utils/toast";
 
 interface MessageInputProps {
   conversationId: string;
@@ -119,7 +120,19 @@ export function MessageInput({ conversationId }: MessageInputProps): JSX.Element
     } catch (error) {
       console.error("Failed to send message:", error);
       setIsStreaming(false);
-      // TODO: Show error toast and restore message
+
+      // Show error toast
+      toast.error("Failed to send message", {
+        description: error instanceof Error ? error.message : "Please try again.",
+        action: {
+          label: "Retry",
+          onClick: () => {
+            // Restore the message
+            setMessage(content);
+            setAttachments(messageAttachments);
+          },
+        },
+      });
     }
   };
 
@@ -154,7 +167,7 @@ export function MessageInput({ conversationId }: MessageInputProps): JSX.Element
     files.forEach((file) => {
       // Validate file size
       if (file.size > MAX_FILE_SIZE) {
-        console.error(`File ${file.name} exceeds 10MB limit`);
+        fileToast.sizeLimit("10MB");
         return;
       }
 
@@ -163,7 +176,7 @@ export function MessageInput({ conversationId }: MessageInputProps): JSX.Element
       const isAllowedFile = ALLOWED_FILE_TYPES.includes(file.type);
 
       if (!isImage && !isAllowedFile) {
-        console.error(`File type ${file.type} not supported`);
+        fileToast.typeError([...ALLOWED_IMAGE_TYPES, ...ALLOWED_FILE_TYPES]);
         return;
       }
 
