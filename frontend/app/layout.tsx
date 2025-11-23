@@ -5,6 +5,7 @@ import { SessionProvider } from "next-auth/react";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { QueryProvider } from "@/lib/react-query/provider";
+import { ToastProvider } from "@/components/providers/toast-provider";
 import { siteConfig } from "@/config/site";
 
 import "./globals.css";
@@ -68,7 +69,10 @@ export default function RootLayout({
       >
         <SessionProvider>
           <QueryProvider>
-            <ThemeProvider>{children}</ThemeProvider>
+            <ThemeProvider>
+              {children}
+              <ToastProvider />
+            </ThemeProvider>
           </QueryProvider>
         </SessionProvider>
       </body>
