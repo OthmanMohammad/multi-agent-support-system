@@ -4,7 +4,7 @@ import type { JSX } from "react";
 import { useState } from "react";
 import { format } from "date-fns";
 import { Copy, Check, User, Bot } from "lucide-react";
-import type { Message as MessageType } from "@prisma/client";
+import type { ConversationMessage as MessageType } from "@/lib/types/api";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
