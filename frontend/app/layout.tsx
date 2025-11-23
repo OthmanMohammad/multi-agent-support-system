@@ -1,8 +1,10 @@
 import type { JSX } from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SessionProvider } from "next-auth/react";
 
 import { ThemeProvider } from "@/components/theme-provider";
+import { QueryProvider } from "@/lib/react-query/provider";
 import { siteConfig } from "@/config/site";
 
 import "./globals.css";
@@ -64,7 +66,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider>{children}</ThemeProvider>
+        <SessionProvider>
+          <QueryProvider>
+            <ThemeProvider>{children}</ThemeProvider>
+          </QueryProvider>
+        </SessionProvider>
       </body>
     </html>
   );
