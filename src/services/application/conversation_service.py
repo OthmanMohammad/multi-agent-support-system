@@ -446,13 +446,10 @@ class ConversationApplicationService:
             # Get assigned agent (first agent if available)
             assigned_agent = conversation.agents_involved[0] if conversation.agents_involved else None
 
-            # Get customer email if available
-            customer_email = conversation.customer.email if hasattr(conversation, 'customer') and conversation.customer else None
-
             return Result.ok({
                 "id": conversation.id,
                 "customer_id": conversation.customer_id,
-                "customer_email": customer_email,
+                "customer_email": None,  # TODO: Eagerly load customer relationship to get email
                 "status": conversation.status,
                 "messages": [
                     {
