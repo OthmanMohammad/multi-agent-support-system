@@ -262,4 +262,3 @@ pnpm type-check
 ## 📝 License
 
 Same as parent project (see root LICENSE file).
-
