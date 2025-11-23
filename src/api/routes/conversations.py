@@ -54,7 +54,7 @@ async def create_conversation(
     return ChatResponse(**result.value)
 
 
-@router.get("/conversations/{conversation_id}", response_model=ConversationResponse)
+@router.get("/conversations/{conversation_id}")
 async def get_conversation(
     conversation_id: UUID,
     service: ConversationApplicationService = Depends(get_conversation_application_service)
@@ -64,9 +64,9 @@ async def get_conversation(
         "get_conversation_endpoint_called",
         conversation_id=str(conversation_id)
     )
-    
+
     result = await service.get_conversation(conversation_id)
-    
+
     if result.is_failure:
         logger.warning(
             "get_conversation_failed",
@@ -74,14 +74,14 @@ async def get_conversation(
             error_type=type(result.error).__name__
         )
         raise map_error_to_http(result.error)
-    
+
     logger.debug(
         "get_conversation_success",
         conversation_id=str(conversation_id),
         message_count=len(result.value.get("messages", []))
     )
-    
-    return ConversationResponse(**result.value)
+
+    return result.value
 
 
 @router.post("/conversations/{conversation_id}/messages", response_model=ChatResponse)
