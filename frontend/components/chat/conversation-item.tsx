@@ -25,18 +25,22 @@ export function ConversationItem({
   isActive,
   onClick,
 }: ConversationItemProps): JSX.Element {
+  // Generate title from primary_intent or use fallback
+  const displayTitle = conversation.primary_intent ||
+    `Conversation ${conversation.conversation_id.slice(0, 8)}...`;
+
   const [isEditing, setIsEditing] = useState(false);
-  const [title, setTitle] = useState(conversation.title);
+  const [title, setTitle] = useState(displayTitle);
   const [showActions, setShowActions] = useState(false);
 
   const deleteConversation = useDeleteConversation();
-  const updateConversation = useUpdateConversation(conversation.id);
+  const updateConversation = useUpdateConversation(conversation.conversation_id);
 
   const handleDelete = async (e: React.MouseEvent): Promise<void> => {
     e.stopPropagation();
     if (window.confirm("Are you sure you want to delete this conversation?")) {
       try {
-        await deleteConversation.mutateAsync(conversation.id);
+        await deleteConversation.mutateAsync(conversation.conversation_id);
       } catch (error) {
         console.error("Failed to delete conversation:", error);
       }
@@ -44,12 +48,12 @@ export function ConversationItem({
   };
 
   const handleRename = async (): Promise<void> => {
-    if (title.trim() && title !== conversation.title) {
+    if (title.trim() && title !== displayTitle) {
       try {
         await updateConversation.mutateAsync({ title: title.trim() });
       } catch (error) {
         console.error("Failed to update conversation:", error);
-        setTitle(conversation.title);
+        setTitle(displayTitle);
       }
     }
     setIsEditing(false);
@@ -59,7 +63,7 @@ export function ConversationItem({
     if (e.key === "Enter") {
       void handleRename();
     } else if (e.key === "Escape") {
-      setTitle(conversation.title);
+      setTitle(displayTitle);
       setIsEditing(false);
     }
   };
@@ -87,9 +91,9 @@ export function ConversationItem({
           />
         ) : (
           <>
-            <p className="truncate text-sm font-medium">{conversation.title}</p>
+            <p className="truncate text-sm font-medium">{displayTitle}</p>
             <p className="text-xs text-foreground-secondary">
-              {formatDistanceToNow(new Date(conversation.updatedAt), {
+              {formatDistanceToNow(new Date(conversation.last_updated), {
                 addSuffix: true,
               })}
             </p>

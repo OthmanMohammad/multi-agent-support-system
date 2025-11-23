@@ -30,15 +30,16 @@ export function ConversationSidebar(): JSX.Element {
       const newConversation = await createConversation.mutateAsync({
         title: "New Conversation",
       });
-      setCurrentConversation(newConversation.id);
+      setCurrentConversation(newConversation.conversation_id);
     } catch (error) {
       console.error("Failed to create conversation:", error);
     }
   };
 
-  const filteredConversations = conversations?.filter((conv) =>
-    conv.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredConversations = conversations?.filter((conv) => {
+    const title = conv.primary_intent || `Conversation ${conv.conversation_id.slice(0, 8)}`;
+    return title.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   return (
     <>
@@ -101,10 +102,10 @@ export function ConversationSidebar(): JSX.Element {
               <div className="space-y-1 p-2">
                 {filteredConversations?.map((conversation) => (
                   <ConversationItem
-                    key={conversation.id}
+                    key={conversation.conversation_id}
                     conversation={conversation}
-                    isActive={currentConversationId === conversation.id}
-                    onClick={() => setCurrentConversation(conversation.id)}
+                    isActive={currentConversationId === conversation.conversation_id}
+                    onClick={() => setCurrentConversation(conversation.conversation_id)}
                   />
                 ))}
               </div>
