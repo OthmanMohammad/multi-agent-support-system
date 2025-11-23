@@ -3,7 +3,7 @@
 import type { JSX } from "react";
 import { useState } from "react";
 import { Download, FileText, FileJson, File, Printer, Check } from "lucide-react";
-import type { Conversation, Message } from "@prisma/client";
+import type { Conversation, ConversationMessage as Message } from "@/lib/types/api";
 import { Button } from "@/components/ui/button";
 import { exportConversation, getExportSize, type ExportFormat } from "@/lib/utils/export-chat";
 import { cn } from "@/lib/utils";
