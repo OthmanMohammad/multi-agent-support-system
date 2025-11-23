@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import type { JSX } from "react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 
 type ThemeProviderProps = Parameters<typeof NextThemesProvider>[0];
