@@ -6,6 +6,7 @@ import { useChatStore } from "@/stores/chat-store";
 import { ConversationSidebar } from "@/components/chat/conversation-sidebar";
 import { ChatArea } from "@/components/chat/chat-area";
 import { EmptyState } from "@/components/chat/empty-state";
+import { ErrorBoundaryAdvanced } from "@/components/error-boundary-advanced";
 
 /**
  * Chat Page - Main chat interface
@@ -24,22 +25,30 @@ export default function ChatPage(): JSX.Element {
   const isSidebarOpen = useChatStore((state) => state.isSidebarOpen);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      {/* Conversation Sidebar */}
-      <ConversationSidebar />
+    <ErrorBoundaryAdvanced
+      onError={(error, errorInfo) => {
+        // Log to monitoring service
+        console.error("Chat page error:", error, errorInfo);
+        // TODO: Send to Sentry or other monitoring service
+      }}
+    >
+      <div className="flex h-screen overflow-hidden bg-background">
+        {/* Conversation Sidebar */}
+        <ConversationSidebar />
 
-      {/* Main Chat Area */}
-      <main
-        className={`flex flex-1 flex-col transition-all duration-300 ${
-          isSidebarOpen ? "ml-0" : "-ml-80"
-        }`}
-      >
-        {currentConversationId ? (
-          <ChatArea conversationId={currentConversationId} />
-        ) : (
-          <EmptyState />
-        )}
-      </main>
-    </div>
+        {/* Main Chat Area */}
+        <main
+          className={`flex flex-1 flex-col transition-all duration-300 ${
+            isSidebarOpen ? "ml-0" : "-ml-80"
+          }`}
+        >
+          {currentConversationId ? (
+            <ChatArea conversationId={currentConversationId} />
+          ) : (
+            <EmptyState />
+          )}
+        </main>
+      </div>
+    </ErrorBoundaryAdvanced>
   );
 }

@@ -198,6 +198,15 @@ body {
   }
 }
 
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 .animate-fade-in {
   animation: fade-in var(--transition-normal) ease-in-out;
 }
@@ -208,4 +217,8 @@ body {
 
 .animate-pulse-dot {
   animation: pulse-dot 1.4s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
 }

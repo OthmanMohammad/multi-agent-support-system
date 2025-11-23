@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ConversationItem } from "./conversation-item";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ConversationItemSkeleton } from "./conversation-skeleton";
 
 /**
  * Conversation Sidebar Component
@@ -87,8 +88,10 @@ export function ConversationSidebar(): JSX.Element {
           {/* Conversation List */}
           <ScrollArea className="flex-1">
             {isLoading ? (
-              <div className="p-4 text-center text-sm text-foreground-secondary">
-                Loading conversations...
+              <div className="space-y-2 p-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <ConversationItemSkeleton key={i} />
+                ))}
               </div>
             ) : filteredConversations?.length === 0 ? (
               <div className="p-4 text-center text-sm text-foreground-secondary">

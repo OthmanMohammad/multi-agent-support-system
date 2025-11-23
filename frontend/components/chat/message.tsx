@@ -11,6 +11,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github-dark.css";
+import { CodeBlock, InlineCode } from "./code-block";
 
 interface MessageProps {
   message: MessageType;
@@ -75,16 +76,17 @@ export function Message({ message, isStreaming = false }: MessageProps): JSX.Ele
                   a: ({ node, ...props }) => (
                     <a {...props} target="_blank" rel="noopener noreferrer" />
                   ),
-                  // Custom code block styling
-                  code: ({ node, inline, ...props }) =>
-                    inline ? (
-                      <code
-                        className="rounded bg-surface px-1 py-0.5 text-sm"
-                        {...props}
-                      />
+                  // Custom code block with copy button
+                  code: ({ node, inline, className, children, ...props }) => {
+                    const codeString = String(children).replace(/\n$/, "");
+                    return inline ? (
+                      <InlineCode>{codeString}</InlineCode>
                     ) : (
-                      <code {...props} />
-                    ),
+                      <CodeBlock className={className} language={className?.replace("language-", "")}>
+                        {codeString}
+                      </CodeBlock>
+                    );
+                  },
                 }}
               >
                 {message.content}
