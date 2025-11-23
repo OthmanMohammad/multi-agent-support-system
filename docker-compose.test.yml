@@ -1,0 +1,64 @@
+version: '3.8'
+
+# Testing environment
+# Usage: docker-compose -f docker-compose.test.yml up --exit-code-from backend
+
+services:
+  backend:
+    build:
+      context: .
+      target: testing
+      dockerfile: Dockerfile
+    container_name: backend-test
+    command: pytest tests/ -v --cov=src --cov-report=xml --cov-report=term --cov-report=html
+    environment:
+      ENVIRONMENT: testing
+      DATABASE_URL: postgresql+asyncpg://test:test@postgres-test:5432/test_db
+      REDIS_URL: redis://redis-test:6379/0
+      CELERY_BROKER_URL: redis://redis-test:6379/1
+      CELERY_RESULT_BACKEND: redis://redis-test:6379/2
+      PYTHONUNBUFFERED: 1
+    depends_on:
+      - postgres-test
+      - redis-test
+    volumes:
+      - ./test-results:/app/test-results
+      - ./coverage:/app/coverage
+      - ./htmlcov:/app/htmlcov
+    networks:
+      - test-network
+
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: postgres-test
+    environment:
+      POSTGRES_DB: test_db
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_HOST_AUTH_METHOD: trust
+    tmpfs:
+      - /var/lib/postgresql/data  # In-memory DB for speed
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test -d test_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis-test:
+    image: redis:7-alpine
+    container_name: redis-test
+    tmpfs:
+      - /data  # In-memory cache for speed
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+networks:
+  test-network:
+    driver: bridge

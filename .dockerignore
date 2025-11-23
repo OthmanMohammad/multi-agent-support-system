@@ -1,0 +1,78 @@
+# Version control
+.git
+.gitignore
+.github
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv
+*.egg-info
+dist/
+build/
+
+# Testing
+.pytest_cache
+.coverage
+htmlcov/
+test-results/
+coverage/
+.tox/
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*.swn
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Documentation
+*.md
+docs/
+!README.md
+
+# CI/CD
+Jenkinsfile
+.github/
+
+# Docker
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+
+# Backups
+*.backup
+*.bak
+backups/
+
+# Large files
+*.mp4
+*.mov
+*.zip
+*.tar.gz
+*.rar
+
+# Development
+.env.local
+.env.development
+.env.*.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+tmp/
+temp/
+*.tmp

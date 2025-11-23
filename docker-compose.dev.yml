@@ -1,0 +1,47 @@
+version: '3.8'
+
+# Development overrides for docker-compose.yml
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  fastapi:
+    build:
+      target: development
+    command: uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000 --log-level debug
+    volumes:
+      - ./src:/app/src:cached
+      - ./tests:/app/tests:cached
+      - ./alembic:/app/alembic:cached
+    ports:
+      - "5678:5678"  # debugpy port
+    environment:
+      LOG_LEVEL: DEBUG
+      ENVIRONMENT: development
+    # Remove resource limits for dev
+    deploy: {}
+
+  postgres:
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./backups:/backups:cached
+
+  redis:
+    ports:
+      - "6379:6379"
+
+  # Remove monitoring stack in dev (too heavy) - use profiles to optionally enable
+  prometheus:
+    profiles: ["monitoring"]
+
+  grafana:
+    profiles: ["monitoring"]
+
+  node-exporter:
+    profiles: ["monitoring"]
+
+  postgres-exporter:
+    profiles: ["monitoring"]
+
+  redis-exporter:
+    profiles: ["monitoring"]
