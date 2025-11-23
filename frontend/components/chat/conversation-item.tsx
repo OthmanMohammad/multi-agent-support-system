@@ -4,7 +4,7 @@ import type { JSX } from "react";
 import { useState } from "react";
 import { MoreVertical, Trash2, Edit2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import type { Conversation } from "@prisma/client";
+import type { Conversation } from "@/lib/types/api";
 import { Button } from "@/components/ui/button";
 import { useDeleteConversation, useUpdateConversation } from "@/lib/api/hooks/useConversations";
 import { Input } from "@/components/ui/input";
