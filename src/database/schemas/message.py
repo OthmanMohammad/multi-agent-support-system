@@ -34,14 +34,21 @@ class MessageUpdate(BaseModel):
 
 
 class MessageInDB(MessageBase):
-    """Message as stored in database"""
+    """Message as stored in database
+
+    Note: Uses field aliases for API compatibility with frontend:
+    - created_at → timestamp (alternative name frontend might use)
+    """
     id: UUID
     conversation_id: UUID
     tokens_used: Optional[int] = None
-    extra_metadata: dict
-    created_at: datetime
-    
-    model_config = ConfigDict(from_attributes=True)
+    extra_metadata: dict = Field(default_factory=dict, serialization_alias="metadata")
+    created_at: datetime = Field(serialization_alias="timestamp", default=None)
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True  # Allow both field names
+    )
 
 
 class MessageResponse(MessageInDB):
