@@ -1,6 +1,6 @@
 # Multi-Agent Support System - Frontend
 
-Production-grade frontend built with Next.js 16, React 19, TypeScript, and Tailwind CSS 4.
+built with Next.js 16, React 19, TypeScript, and Tailwind CSS 4.
 
 ## 🚀 Tech Stack
 
@@ -201,34 +201,6 @@ pnpm start
 pnpm lint && pnpm type-check
 ```
 
-## 🚢 Deployment
-
-### Option 1: Vercel (Recommended)
-
-```bash
-# Install Vercel CLI
-pnpm add -g vercel
-
-# Deploy
-vercel deploy
-```
-
-### Option 2: Docker (Self-Hosted)
-
-```bash
-# Build Docker image
-docker build -t frontend .
-
-# Run container
-docker run -p 3000:3000 frontend
-```
-
-### Option 3: Oracle Cloud (With Backend)
-
-Deployed via `docker-compose.yml` in root directory.
-
-## 🎯 Best Practices
-
 ### Code Organization
 
 - ✅ **Feature-based structure** (not type-based)
@@ -291,13 +263,3 @@ pnpm type-check
 
 Same as parent project (see root LICENSE file).
 
-## 🤝 Contributing
-
-1. Create a feature branch
-2. Make your changes
-3. Run `pnpm validate` (must pass)
-4. Submit a pull request
-
----
-
-**Built with ❤️ using the latest web technologies**
