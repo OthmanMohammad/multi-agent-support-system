@@ -74,11 +74,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": [
-    "node_modules",
-    ".next",
-    "out",
-    "dist",
-    "build"
-  ]
+  "exclude": ["node_modules", ".next", "out", "dist", "build"]
 }
