@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
-import type { Message } from "@prisma/client";
+import type { ConversationMessage } from "@/lib/types/api";
 
 /**
  * Zustand store for chat state management
@@ -13,9 +13,9 @@ interface ChatState {
   setCurrentConversation: (id: string | null) => void;
 
   // Messages
-  messages: Message[];
-  addMessage: (message: Message) => void;
-  setMessages: (messages: Message[]) => void;
+  messages: ConversationMessage[];
+  addMessage: (message: ConversationMessage) => void;
+  setMessages: (messages: ConversationMessage[]) => void;
   clearMessages: () => void;
 
   // Streaming state
