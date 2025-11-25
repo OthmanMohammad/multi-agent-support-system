@@ -229,6 +229,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         // Tokens are stored by authAPI.login() via TokenManager
 
+        // Mark manual auth as completed BEFORE signIn to prevent useEffect race condition
+        // When signIn updates the NextAuth session, useEffect will check this flag
+        manualAuthCompletedRef.current = true;
+
         // Step 2: Create NextAuth session for cookie-based persistence
         const nextAuthResult = await signIn("credentials", {
           email,
@@ -243,9 +247,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         // Step 3: Update state with user data
         const user = result.data.user;
-
-        // Mark manual auth as completed to prevent useEffect from resetting state
-        manualAuthCompletedRef.current = true;
 
         setState({
           user,
@@ -299,6 +300,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         // Tokens are stored by authAPI.register() via TokenManager
 
+        // Mark manual auth as completed BEFORE signIn to prevent useEffect race condition
+        // When signIn updates the NextAuth session, useEffect will check this flag
+        manualAuthCompletedRef.current = true;
+
         // Step 2: Create NextAuth session
         const nextAuthResult = await signIn("credentials", {
           email: data.email,
@@ -312,9 +317,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         // Step 3: Fetch full user profile
         const userProfile = await fetchUserProfile();
-
-        // Mark manual auth as completed to prevent useEffect from resetting state
-        manualAuthCompletedRef.current = true;
 
         if (userProfile) {
           setState({
