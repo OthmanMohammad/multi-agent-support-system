@@ -1,16 +1,16 @@
 "use client";
 
 import type { JSX } from "react";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import type { Bot } from "lucide-react";
 import {
-  Bot,
   Brain,
+  CheckCircle,
   Code,
   Database,
   HelpCircle,
   Network,
   Zap,
-  CheckCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -95,15 +95,18 @@ export function AgentRoutingIndicator({
 
   useEffect(() => {
     if (isRouting) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: show immediately when routing starts
       setShowIndicator(true);
-    } else {
-      // Keep showing for 2 seconds after routing completes
-      const timer = setTimeout(() => setShowIndicator(false), 2000);
-      return () => clearTimeout(timer);
+      return;
     }
+    // Keep showing for 2 seconds after routing completes
+    const timer = setTimeout(() => setShowIndicator(false), 2000);
+    return () => clearTimeout(timer);
   }, [isRouting]);
 
-  if (!showIndicator && !isRouting) return null;
+  if (!showIndicator && !isRouting) {
+    return null;
+  }
 
   const agent = AGENT_INFO[currentAgent];
   const Icon = agent.icon;
@@ -166,7 +169,9 @@ export function AgentRoutingSteps({
   steps,
   isVisible,
 }: AgentRoutingStepsProps): JSX.Element | null {
-  if (!isVisible) return null;
+  if (!isVisible) {
+    return null;
+  }
 
   return (
     <div className="mb-4 rounded-lg border border-border bg-surface p-4">
@@ -215,9 +220,7 @@ export function AgentRoutingSteps({
               <div
                 className={cn(
                   "absolute left-[11px] mt-8 h-6 w-0.5",
-                  step.status === "complete"
-                    ? "bg-green-500"
-                    : "bg-border"
+                  step.status === "complete" ? "bg-green-500" : "bg-border"
                 )}
               />
             )}
