@@ -14,6 +14,60 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 
+@router.get("/analytics/overview")
+async def get_analytics_overview(
+    period: str = Query("7d", description="Time period: 7d, 30d, 90d"),
+    service: AnalyticsService = Depends(get_analytics_service)
+):
+    """
+    Get analytics overview with high-level metrics
+
+    Returns summary statistics for the dashboard including:
+    - Total conversations
+    - Active conversations
+    - Resolution rate
+    - Average response time
+    """
+    logger.info("get_analytics_overview_endpoint_called", period=period)
+
+    # Parse period (7d, 30d, 90d) to days
+    days = int(period.rstrip('d')) if period.endswith('d') else 7
+
+    # Get conversation statistics
+    conv_result = await service.get_conversation_statistics(days=days)
+
+    if conv_result.is_failure:
+        logger.error(
+            "get_analytics_overview_failed",
+            period=period,
+            error_type=type(conv_result.error).__name__
+        )
+        raise map_error_to_http(conv_result.error)
+
+    conv_stats = conv_result.value
+
+    # Build overview response
+    overview = {
+        "total_conversations": conv_stats.get("total_conversations", 0),
+        "open_conversations": conv_stats.get("by_status", {}).get("active", 0),
+        "resolved_conversations": conv_stats.get("by_status", {}).get("resolved", 0),
+        "escalated_conversations": conv_stats.get("by_status", {}).get("escalated", 0),
+        "average_messages_per_conversation": conv_stats.get("avg_messages_per_conversation", 0),
+        "average_resolution_time_minutes": conv_stats.get("avg_resolution_time_minutes"),
+        "conversations_today": 0,  # TODO: Implement daily stats
+        "conversations_this_week": conv_stats.get("total_conversations", 0),
+        "period": period
+    }
+
+    logger.info(
+        "get_analytics_overview_success",
+        period=period,
+        total_conversations=overview["total_conversations"]
+    )
+
+    return overview
+
+
 @router.get("/analytics/conversations")
 async def get_conversation_statistics(
     days: int = Query(7, ge=1, le=90, description="Number of days to analyze"),
