@@ -1,9 +1,8 @@
 "use client";
 
 import type { JSX } from "react";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Keyboard, X } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -170,11 +169,11 @@ export function KeyboardShortcutsOverlay(): JSX.Element {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen]);
 
-  if (!isOpen) return <></>;
+  if (!isOpen) {
+    return <></>;
+  }
 
-  const categories = Array.from(
-    new Set(shortcuts.map((s) => s.category))
-  );
+  const categories = Array.from(new Set(shortcuts.map((s) => s.category)));
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -240,8 +239,15 @@ export function KeyboardShortcutsOverlay(): JSX.Element {
         {/* Footer */}
         <div className="flex items-center justify-between border-t border-border bg-surface px-6 py-4">
           <p className="text-xs text-foreground-secondary">
-            Press <kbd className="rounded border border-border bg-background px-1.5 py-0.5 font-mono text-xs">ESC</kbd> or{" "}
-            <kbd className="rounded border border-border bg-background px-1.5 py-0.5 font-mono text-xs">?</kbd> to close
+            Press{" "}
+            <kbd className="rounded border border-border bg-background px-1.5 py-0.5 font-mono text-xs">
+              ESC
+            </kbd>{" "}
+            or{" "}
+            <kbd className="rounded border border-border bg-background px-1.5 py-0.5 font-mono text-xs">
+              ?
+            </kbd>{" "}
+            to close
           </p>
           <Button variant="outline" size="sm" onClick={() => setIsOpen(false)}>
             Close
