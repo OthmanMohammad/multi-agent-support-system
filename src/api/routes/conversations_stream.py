@@ -91,7 +91,9 @@ async def stream_conversation_response(
         confidence = agent_result.get("intent_confidence", 0.0)
         sentiment = agent_result.get("sentiment", 0.0)
         agent_path = agent_result.get("agent_history", [])
-        status_result = agent_result.get("status", "active")
+        agent_suggested_status = agent_result.get("status", "active")
+        escalation_reason = agent_result.get("escalation_reason")
+        should_escalate = agent_result.get("should_escalate", False)
 
         # Stream response in chunks (simulated streaming)
         words = response_text.split()
@@ -125,13 +127,37 @@ async def stream_conversation_response(
             created_by=service.uow.current_user_id
         )
 
-        # Update conversation metadata
-        await service.uow.conversations.update(
-            conversation.id,
-            status=status_result,
-            sentiment_avg=sentiment,
-            updated_by=service.uow.current_user_id
+        # Apply business rules for status:
+        # 1. Agents CANNOT auto-resolve - user must explicitly resolve
+        # 2. Only escalate if truly needed (low confidence, negative sentiment, explicit flag)
+        # 3. Default: keep conversation active
+        final_status = "active"
+
+        should_actually_escalate = (
+            should_escalate or
+            agent_suggested_status == "escalated" or
+            (confidence < 0.4 and escalation_reason) or
+            sentiment < -0.7
         )
+
+        if should_actually_escalate:
+            final_status = "escalated"
+            await service.uow.conversations.mark_escalated(conversation.id)
+            logger.warning(
+                "stream_conversation_escalated",
+                conversation_id=str(conversation_id),
+                reason=escalation_reason or "Low confidence or negative sentiment",
+                confidence=confidence,
+                sentiment=sentiment
+            )
+        else:
+            # Keep conversation active - user resolves when satisfied
+            await service.uow.conversations.update(
+                conversation.id,
+                status="active",
+                sentiment_avg=sentiment,
+                updated_by=service.uow.current_user_id
+            )
 
         # Commit all changes
         await service.uow.commit()
@@ -146,7 +172,8 @@ async def stream_conversation_response(
                 "confidence": confidence,
                 "intent": intent,
                 "sentiment": sentiment,
-                "status": status_result
+                "status": final_status,  # Use business-rule-determined status
+                "agent_suggested_status": agent_suggested_status  # For debugging
             }
         }
         yield f"data: {json.dumps(done_event)}\n\n"

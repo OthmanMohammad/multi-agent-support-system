@@ -47,7 +47,10 @@ export function AgentPerformanceChart({
     );
   }
 
-  if (!data || data.length === 0) {
+  // Ensure data is an array before using array methods
+  const agentData = Array.isArray(data) ? data : [];
+
+  if (agentData.length === 0) {
     return (
       <div className="rounded-lg border border-border bg-surface p-6">
         <h2 className="text-lg font-semibold">Agent Performance</h2>
@@ -57,7 +60,7 @@ export function AgentPerformanceChart({
   }
 
   // Prepare chart data
-  const chartData = data.map((agent) => ({
+  const chartData = agentData.map((agent) => ({
     name: agent.agent_name.split(" ")[0], // Shorten name for chart
     interactions: agent.total_interactions,
     successRate: Math.round(agent.success_rate * 100),
@@ -97,7 +100,7 @@ export function AgentPerformanceChart({
             </tr>
           </thead>
           <tbody>
-            {data.map((agent) => (
+            {agentData.map((agent) => (
               <tr key={agent.agent_name} className="border-b border-border">
                 <td className="py-3 font-medium">{agent.agent_name}</td>
                 <td className="py-3 text-right">
