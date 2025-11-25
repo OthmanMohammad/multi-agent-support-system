@@ -165,7 +165,10 @@ class ConversationApplicationService:
             sentiment = agent_result.get("sentiment", 0.0)
             agent_path = agent_result.get("agent_history", [])
             kb_articles = agent_result.get("kb_articles_used", [])
-            status = agent_result.get("status", "active")
+            # FIX: Keep conversations active - only allow explicit resolution or escalation
+            # Agents should not auto-resolve conversations; users decide when conversation is done
+            agent_status = agent_result.get("status", "active")
+            status = "escalated" if agent_status == "escalated" else "active"
             
             self.logger.info(
                 "workflow_completed",
@@ -200,34 +203,8 @@ class ConversationApplicationService:
                 updated_by=self.uow.current_user_id
             )
             
-            # Handle resolution or escalation
-            if status == "resolved":
-                resolution_time = self.domain.calculate_resolution_time(
-                    conversation.started_at,
-                    datetime.now(timezone.utc)
-                )
-                await self.uow.conversations.mark_resolved(
-                    conversation.id,
-                    resolution_time
-                )
-                
-                self.logger.info(
-                    "conversation_resolved",
-                    conversation_id=str(conversation.id),
-                    resolution_time_seconds=resolution_time
-                )
-                
-                event = self.domain.create_conversation_resolved_event(
-                    conversation_id=conversation.id,
-                    customer_id=customer.id,
-                    resolution_time_seconds=resolution_time,
-                    primary_intent=intent,
-                    agents_involved=agent_path,
-                    sentiment_avg=sentiment
-                )
-                self.event_bus.publish(event)
-            
-            elif status == "escalated":
+            # Handle escalation (resolution is now only through explicit API call)
+            if status == "escalated":
                 await self.uow.conversations.mark_escalated(conversation.id)
                 
                 priority = self.domain.determine_escalation_priority(
@@ -359,8 +336,10 @@ class ConversationApplicationService:
             confidence = agent_result.get("intent_confidence", 0.0)
             sentiment = agent_result.get("sentiment", 0.0)
             agent_path = agent_result.get("agent_history", [])
-            status = agent_result.get("status", "active")
-            
+            # FIX: Keep conversations active - only allow explicit resolution or escalation
+            agent_status = agent_result.get("status", "active")
+            status = "escalated" if agent_status == "escalated" else "active"
+
             agent_name = agent_path[-1] if agent_path else "router"
             await self.uow.messages.create_message(
                 conversation_id=conversation.id,
