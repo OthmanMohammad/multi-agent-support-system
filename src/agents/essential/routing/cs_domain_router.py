@@ -201,6 +201,14 @@ Output ONLY valid JSON. Choose exactly ONE category."""
 
             context_str = "\n".join(context_parts) if context_parts else ""
 
+            # Get conversation history for context-aware routing
+            conversation_history = self.get_conversation_context(state)
+
+            self.logger.debug(
+                "cs_router_conversation_context",
+                history_length=len(conversation_history)
+            )
+
             # Call LLM for routing
             prompt = f"""Route this customer success query to the correct category.
 
@@ -208,11 +216,13 @@ Message: {message}
 
 {context_str if context_str else ""}
 
-Classify into: health, onboarding, adoption, retention, or expansion."""
+Classify into: health, onboarding, adoption, retention, or expansion.
+Consider any previous conversation context when making your routing decision."""
 
             response = await self.call_llm(
                 system_prompt=self._get_system_prompt(),
-                user_message=prompt
+                user_message=prompt,
+                conversation_history=conversation_history
             )
 
             # Parse response
