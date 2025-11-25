@@ -2,7 +2,7 @@
 
 import type { JSX } from "react";
 import { useState } from "react";
-import { MoreVertical, Download, Trash2 } from "lucide-react";
+import { Download, Trash2 } from "lucide-react";
 import type { Conversation } from "@/lib/types/api";
 import { Button } from "@/components/ui/button";
 import { useConversations } from "@/lib/hooks/useConversations";
@@ -41,7 +41,8 @@ export function ChatHeader({ conversation }: ChatHeaderProps): JSX.Element {
     setIsExportDialogOpen(true);
   };
 
-  const displayTitle = conversation.primary_intent ||
+  const displayTitle =
+    conversation.primary_intent ||
     `Conversation ${conversation.conversation_id.slice(0, 8)}...`;
 
   return (
@@ -67,7 +68,6 @@ export function ChatHeader({ conversation }: ChatHeaderProps): JSX.Element {
             size="icon"
             variant="ghost"
             onClick={handleDelete}
-            disabled={deleteConversation.isPending}
             title="Delete conversation"
           >
             <Trash2 className="h-4 w-4" />
