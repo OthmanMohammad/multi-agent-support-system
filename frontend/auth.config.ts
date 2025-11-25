@@ -59,7 +59,11 @@ async function loginWithBackend(email: string, password: string) {
 /**
  * Handle OAuth callback from backend
  */
-async function handleOAuthCallback(provider: string, code: string, state: string) {
+async function handleOAuthCallback(
+  provider: string,
+  code: string,
+  state: string
+) {
   try {
     const response = await fetch(
       `${API_URL}/api/oauth/${provider}/callback?code=${code}&state=${state}`,
@@ -97,8 +101,8 @@ export default {
     // GOOGLE OAUTH
     // ==========================================================================
     Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
       authorization: {
         params: {
           prompt: "consent",
@@ -112,8 +116,8 @@ export default {
     // GITHUB OAUTH
     // ==========================================================================
     GitHub({
-      clientId: process.env.GITHUB_CLIENT_ID,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      clientId: process.env.GITHUB_CLIENT_ID ?? "",
+      clientSecret: process.env.GITHUB_CLIENT_SECRET ?? "",
     }),
 
     // ==========================================================================
@@ -161,15 +165,20 @@ export default {
       // Initial sign in
       if (user) {
         token.id = user.id;
-        token.email = user.email;
-        token.name = user.name;
-        token.role = user.role;
-        token.accessToken = user.accessToken;
-        token.refreshToken = user.refreshToken;
+        token.email = user.email ?? "";
+        token.name = user.name ?? "";
+        token.role = (user as { role?: string }).role ?? "USER";
+        token.accessToken =
+          (user as { accessToken?: string }).accessToken ?? "";
+        token.refreshToken =
+          (user as { refreshToken?: string }).refreshToken ?? "";
       }
 
       // OAuth sign in
-      if (account && (account.provider === "google" || account.provider === "github")) {
+      if (
+        account &&
+        (account.provider === "google" || account.provider === "github")
+      ) {
         // Exchange OAuth code for backend tokens
         const backendUser = await handleOAuthCallback(
           account.provider,
@@ -217,10 +226,14 @@ export default {
      */
     async redirect({ url, baseUrl }) {
       // Allows relative callback URLs
-      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
 
       // Allows callback URLs on the same origin
-      if (new URL(url).origin === baseUrl) return url;
+      if (new URL(url).origin === baseUrl) {
+        return url;
+      }
 
       return baseUrl;
     },
@@ -241,21 +254,27 @@ export default {
   // EVENTS
   // ===========================================================================
   events: {
-    async signIn({ user, account, profile }) {
-      console.log("User signed in:", { userId: user.id, provider: account?.provider });
+    async signIn({ user, account }) {
+      console.log("User signed in:", {
+        userId: user.id,
+        provider: account?.provider,
+      });
     },
-    async signOut({ token }) {
+    async signOut(params) {
+      const token = "token" in params ? params.token : null;
       console.log("User signed out:", { userId: token?.id });
 
       // Call backend logout
       try {
-        await fetch(`${API_URL}/api/auth/logout`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token?.accessToken}`,
-          },
-        });
+        if (token?.accessToken) {
+          await fetch(`${API_URL}/api/auth/logout`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token.accessToken}`,
+            },
+          });
+        }
       } catch (error) {
         console.error("Backend logout error:", error);
       }
