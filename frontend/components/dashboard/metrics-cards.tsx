@@ -1,15 +1,20 @@
 "use client";
 
 import type { JSX } from "react";
-import { MessageSquare, Users, MessageCircle, Clock, Star, Bot } from "lucide-react";
-import type { components } from "@/types/api";
+import {
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  MessageCircle,
+  MessageSquare,
+  Users,
+} from "lucide-react";
+import type { AnalyticsOverview } from "@/lib/types/api";
 
 /**
  * Metrics Cards Component
  * Display key metrics in card format
  */
-
-type AnalyticsOverview = components["schemas"]["AnalyticsOverview"];
 
 interface MetricsCardsProps {
   data: AnalyticsOverview;
@@ -19,44 +24,45 @@ export function MetricsCards({ data }: MetricsCardsProps): JSX.Element {
   const metrics = [
     {
       label: "Total Conversations",
-      value: data.totalConversations.toLocaleString(),
+      value: data.total_conversations.toLocaleString(),
       icon: MessageSquare,
       color: "text-blue-500",
       bgColor: "bg-blue-500/10",
     },
     {
-      label: "Total Messages",
-      value: data.totalMessages.toLocaleString(),
+      label: "Open Conversations",
+      value: data.open_conversations.toLocaleString(),
       icon: MessageCircle,
       color: "text-green-500",
       bgColor: "bg-green-500/10",
     },
     {
-      label: "Total Customers",
-      value: data.totalCustomers.toLocaleString(),
-      icon: Users,
+      label: "Resolved",
+      value: data.resolved_conversations.toLocaleString(),
+      icon: CheckCircle,
       color: "text-purple-500",
       bgColor: "bg-purple-500/10",
     },
     {
-      label: "Avg Response Time",
-      value: `${data.avgResponseTime.toFixed(1)}s`,
-      icon: Clock,
+      label: "Escalated",
+      value: data.escalated_conversations.toLocaleString(),
+      icon: AlertTriangle,
       color: "text-orange-500",
       bgColor: "bg-orange-500/10",
     },
     {
-      label: "Satisfaction Score",
-      value: data.satisfactionScore.toFixed(1),
-      icon: Star,
+      label: "Avg Messages/Conversation",
+      value: data.average_messages_per_conversation.toFixed(1),
+      icon: Users,
       color: "text-yellow-500",
       bgColor: "bg-yellow-500/10",
-      suffix: "/5.0",
     },
     {
-      label: "Active Agents",
-      value: data.activeAgents.toString(),
-      icon: Bot,
+      label: "Avg Resolution Time",
+      value: data.average_resolution_time_minutes
+        ? `${data.average_resolution_time_minutes.toFixed(0)}m`
+        : "N/A",
+      icon: Clock,
       color: "text-cyan-500",
       bgColor: "bg-cyan-500/10",
     },
@@ -78,11 +84,6 @@ export function MetricsCards({ data }: MetricsCardsProps): JSX.Element {
                 </p>
                 <p className="mt-2 flex items-baseline gap-1 text-3xl font-bold">
                   {metric.value}
-                  {metric.suffix && (
-                    <span className="text-lg font-normal text-foreground-secondary">
-                      {metric.suffix}
-                    </span>
-                  )}
                 </p>
               </div>
               <div className={`rounded-full p-3 ${metric.bgColor}`}>
