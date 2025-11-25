@@ -1,7 +1,6 @@
 "use client";
 
 import type { JSX } from "react";
-import { useState } from "react";
 import { useChatStore } from "@/stores/chat-store";
 import { ConversationSidebar } from "@/components/chat/conversation-sidebar";
 import { ChatArea } from "@/components/chat/chat-area";
