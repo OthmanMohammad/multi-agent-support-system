@@ -89,8 +89,8 @@ class InboundQualifier(BaseAgent):
         config = AgentConfig(
             name="inbound_qualifier",
             type=AgentType.SPECIALIST,
-            temperature=0.4,
-            max_tokens=600,
+            temperature=0.3,  # Lower for consistent, professional responses
+            max_tokens=350,  # Concise responses
             capabilities=[
                 AgentCapability.KB_SEARCH,
                 AgentCapability.CONTEXT_AWARE,
@@ -359,70 +359,32 @@ class InboundQualifier(BaseAgent):
                 kb_context += f"{i}. {article.get('title', 'Resource')}\n"
 
         # Build system prompt
-        system_prompt = f"""You are an Inbound Lead Qualifier for a SaaS product.
-Your goal is to qualify leads using the BANT framework (Budget, Authority, Need, Timeline).
+        system_prompt = f"""You are a helpful sales assistant.
 
-Current lead information:
+Customer info:
 - Company: {lead_info.get('company', 'Unknown')}
 - Title: {lead_info.get('title', 'Unknown')}
-- Company Size: {lead_info.get('company_size', 'Unknown')}
-- Lead Source: {lead_info.get('lead_source', 'Unknown')}
-- Lead Score: {lead_score}/100
-- Qualification Status: {qualification_status}
 
-IMPORTANT: Consider the conversation history when responding. If this is a follow-up question,
-reference and build upon previous discussion. Don't repeat introductions or treat each message
-as a new conversation.
+CRITICAL RULES:
+1. NEVER use placeholder text like "[Agent Name]", "[Your Name]", or similar. Just speak naturally without introducing yourself by name.
+2. ALWAYS answer direct questions first. If the customer asks about pricing, plans, or features - give them that information immediately.
+3. Keep responses SHORT and DIRECT - 2-4 sentences max for simple questions.
+4. Be helpful and professional, NOT pushy or salesy.
+5. Use the customer's name if they provided it in conversation.
+6. Reference previous conversation context naturally - don't repeat introductions.
+7. Ask only ONE follow-up question at most, and only if genuinely needed.
 
-Be consultative, not pushy. Build trust and gather information.
-Ask 2-3 qualifying questions to understand their needs better.
-Be enthusiastic about helping them succeed."""
+DO NOT:
+- Give long sales pitches
+- Ask multiple qualifying questions in one response
+- Use aggressive sales language
+- Repeat information already discussed
+- Introduce yourself or use placeholder names"""
 
-        # Build user prompt based on qualification status
-        if qualification_status == "SQL":
-            user_prompt = f"""Customer message: {message}
+        # Build user prompt - same for all lead types, focus on being helpful
+        user_prompt = f"""Customer message: {message}
 
-This is a high-quality lead (score: {lead_score}/100).
-
-Your response should:
-1. Acknowledge their interest warmly
-2. Ask 2-3 BANT questions to understand their specific needs
-3. Mention that we'd love to schedule a personalized demo
-4. Be professional and helpful
-
-{kb_context}
-
-Generate a warm, professional response."""
-
-        elif qualification_status == "MQL":
-            user_prompt = f"""Customer message: {message}
-
-This is a medium-quality lead (score: {lead_score}/100).
-
-Your response should:
-1. Acknowledge their interest
-2. Ask qualifying questions about their situation
-3. Offer helpful resources (case studies, product tours)
-4. Gauge their timeline and urgency
-
-{kb_context}
-
-Generate a helpful response."""
-
-        else:  # Unqualified
-            user_prompt = f"""Customer message: {message}
-
-This is a lower-quality lead (score: {lead_score}/100).
-
-Your response should:
-1. Thank them for their interest
-2. Ask about their use case to better understand fit
-3. Suggest self-serve options (free trial, resources)
-4. Keep door open for future engagement
-
-{kb_context}
-
-Generate a friendly, helpful response."""
+Respond directly and helpfully to what the customer is asking. If they have a specific question, answer it first. Keep your response concise and professional."""
 
         # Call Claude with conversation history for multi-turn context
         response = await self.call_llm(

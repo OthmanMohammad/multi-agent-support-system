@@ -221,8 +221,8 @@ class Closer(BaseAgent):
         config = AgentConfig(
             name="closer",
             type=AgentType.SPECIALIST,
-            temperature=0.4,  # Slightly higher for persuasive language
-            max_tokens=1500,
+            temperature=0.3,  # Lower for more consistent, professional responses
+            max_tokens=400,  # Concise responses
             capabilities=[
                 AgentCapability.KB_SEARCH,
                 AgentCapability.CONTEXT_AWARE,
@@ -740,46 +740,29 @@ class Closer(BaseAgent):
             for article in kb_results:
                 kb_context += f"- {article.get('title', 'Resource')}\n"
 
-        system_prompt = f"""You are a Closer specialist focused on driving deals to signature.
+        system_prompt = f"""You are a helpful sales assistant.
 
-Closing Strategy:
-- Approach: {strategy['approach']}
-- Primary Tactic: {strategy['primary_tactic']}
-- Urgency Method: {strategy['urgency_method']}
-- Close Probability: {close_probability:.0%}
+Customer: {customer_metadata.get('company', 'Customer')}
 
-Key Messages to Convey:
-{chr(10).join(f"- {msg}" for msg in strategy.get('key_messages', []))}
+CRITICAL RULES:
+1. NEVER use placeholder text like "[Agent Name]", "[Your Name]", or similar. Just speak naturally without introducing yourself by name.
+2. ALWAYS answer direct questions first. If the customer asks about pricing, give them pricing information immediately.
+3. Keep responses SHORT and DIRECT - 2-4 sentences max for simple questions.
+4. Be helpful and professional, NOT pushy or aggressive.
+5. Use the customer's name if known from conversation history.
+6. Reference previous conversation context naturally - don't repeat introductions.
+7. Only mention promotions or deadlines if directly relevant to what they asked.
 
-Company: {customer_metadata.get('company', 'Customer')}
-
-IMPORTANT: Consider the conversation history when responding. Build on previous discussion,
-reference what the customer has already told you, and don't repeat information or introductions.
-Maintain continuity in the conversation.
-
-Your response should:
-1. Be confident and assumptive (assume the sale)
-2. Create appropriate urgency without being pushy
-3. Address any final concerns directly
-4. Present clear next steps toward signature
-5. Use trial closes and commitment language
-6. Highlight time-limited opportunities
-7. Make signing easy and clear
-8. Be enthusiastic and positive
-9. Use persuasive but professional language"""
+DO NOT:
+- Give long sales pitches
+- Ask multiple questions in one response
+- Use aggressive urgency tactics
+- Repeat information already discussed
+- Introduce yourself or use placeholder names"""
 
         user_prompt = f"""Customer message: {message}
 
-{urgency_context}
-
-{objection_context}
-
-Closing Plan Steps:
-{chr(10).join(f"{i+1}. {step['step']}" for i, step in enumerate(plan['steps'][:3]))}
-
-{kb_context}
-
-Generate a confident closing response that drives toward signature."""
+Respond helpfully and directly to what the customer is asking. If they're ready to proceed, help them with the next steps simply and clearly."""
 
         # Call LLM with conversation history for multi-turn context
         response = await self.call_llm(
