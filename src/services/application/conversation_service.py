@@ -372,7 +372,7 @@ class ConversationApplicationService:
             status = agent_result.get("status", "active")
             
             agent_name = agent_path[-1] if agent_path else "router"
-            await self.uow.messages.create_message(
+            agent_message = await self.uow.messages.create_message(
                 conversation_id=conversation.id,
                 role="assistant",
                 content=response_text,
@@ -382,30 +382,28 @@ class ConversationApplicationService:
                 confidence=confidence,
                 created_by=self.uow.current_user_id
             )
-            
+
             await self.uow.conversations.update(
                 conversation.id,
                 status=status,
                 sentiment_avg=sentiment,
                 updated_by=self.uow.current_user_id
             )
-            
+
             self.logger.info(
                 "message_added",
                 conversation_id=str(conversation.id),
                 status=status,
                 agent=agent_name
             )
-            
+
             return Result.ok({
-                "conversation_id": str(conversation.id),
-                "message": response_text,
-                "intent": intent,
+                "conversation_id": conversation.id,
+                "message_id": agent_message.id,
+                "response": response_text,
+                "agent_name": agent_name,
                 "confidence": confidence,
-                "sentiment": sentiment,
-                "agent_path": agent_path,
-                "status": status,
-                "timestamp": datetime.now(timezone.utc).isoformat()
+                "created_at": agent_message.created_at,
             })
             
         except Exception as e:
