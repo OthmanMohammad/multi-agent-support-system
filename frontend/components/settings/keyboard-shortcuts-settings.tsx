@@ -2,7 +2,10 @@
 
 import type { JSX } from "react";
 import { Keyboard } from "lucide-react";
-import { CHAT_SHORTCUTS, formatShortcut } from "@/lib/hooks/useKeyboardShortcuts";
+import {
+  CHAT_SHORTCUTS,
+  formatShortcut,
+} from "@/lib/hooks/useKeyboardShortcuts";
 
 /**
  * Keyboard Shortcuts Settings Component
@@ -25,8 +28,13 @@ export function KeyboardShortcutsSettings(): JSX.Element {
         </div>
         <div className="space-y-2">
           {Object.entries(CHAT_SHORTCUTS).map(([key, shortcut]) => (
-            <div key={key} className="flex items-center justify-between rounded-lg border border-border p-3">
-              <span className="text-sm">{shortcut.description}</span>
+            <div
+              key={key}
+              className="flex items-center justify-between rounded-lg border border-border p-3"
+            >
+              <span className="text-sm">
+                {shortcut.description ?? key.replace(/_/g, " ").toLowerCase()}
+              </span>
               <kbd className="rounded border border-border bg-background px-2 py-1 font-mono text-sm">
                 {formatShortcut(shortcut)}
               </kbd>
