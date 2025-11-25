@@ -2,10 +2,24 @@
 
 import type { JSX } from "react";
 import { useState } from "react";
-import { Download, FileText, FileJson, File, Printer, Check } from "lucide-react";
-import type { Conversation, ConversationMessage as Message } from "@/lib/types/api";
+import {
+  Check,
+  Download,
+  File,
+  FileJson,
+  FileText,
+  Printer,
+} from "lucide-react";
+import type {
+  Conversation,
+  ConversationMessage as Message,
+} from "@/lib/types/api";
 import { Button } from "@/components/ui/button";
-import { exportConversation, getExportSize, type ExportFormat } from "@/lib/utils/export-chat";
+import {
+  exportConversation,
+  type ExportFormat,
+  getExportSize,
+} from "@/lib/utils/export-chat";
 import { cn } from "@/lib/utils";
 
 interface ExportDialogProps {
@@ -59,11 +73,14 @@ export function ExportDialog({
   isOpen,
   onClose,
 }: ExportDialogProps): JSX.Element | null {
-  const [selectedFormat, setSelectedFormat] = useState<ExportFormat>("markdown");
+  const [selectedFormat, setSelectedFormat] =
+    useState<ExportFormat>("markdown");
   const [includeMetadata, setIncludeMetadata] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   const handleExport = async (): Promise<void> => {
     setIsExporting(true);
@@ -161,7 +178,10 @@ export function ExportDialog({
         <div className="mb-6 rounded-lg bg-surface p-4">
           <div className="flex items-center justify-between text-sm">
             <span className="text-foreground-secondary">Conversation:</span>
-            <span className="font-medium">{conversation.title}</span>
+            <span className="font-medium">
+              {conversation.primary_intent ||
+                `Conversation ${conversation.conversation_id.slice(0, 8)}...`}
+            </span>
           </div>
           <div className="mt-2 flex items-center justify-between text-sm">
             <span className="text-foreground-secondary">Messages:</span>
