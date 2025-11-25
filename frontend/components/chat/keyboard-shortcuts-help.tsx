@@ -5,17 +5,16 @@ import { useState } from "react";
 import { Keyboard, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  useKeyboardShortcuts,
   CHAT_SHORTCUTS,
   formatShortcut,
+  useKeyboardShortcuts,
 } from "@/lib/hooks/useKeyboardShortcuts";
-import { cn } from "@/lib/utils";
 
 interface ShortcutGroup {
   title: string;
   shortcuts: Array<{
     name: string;
-    shortcut: typeof CHAT_SHORTCUTS[keyof typeof CHAT_SHORTCUTS];
+    shortcut: (typeof CHAT_SHORTCUTS)[keyof typeof CHAT_SHORTCUTS];
   }>;
 }
 
@@ -136,7 +135,11 @@ export function KeyboardShortcutsHelp(): JSX.Element {
 
         {/* Footer */}
         <div className="mt-6 rounded-lg bg-surface p-4 text-center text-sm text-foreground-secondary">
-          Press <kbd className="rounded border border-border bg-background px-2 py-1 font-mono">?</kbd> to toggle this help
+          Press{" "}
+          <kbd className="rounded border border-border bg-background px-2 py-1 font-mono">
+            ?
+          </kbd>{" "}
+          to toggle this help
         </div>
       </div>
     </>
