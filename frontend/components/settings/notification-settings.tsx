@@ -1,9 +1,8 @@
 "use client";
 
 import type { JSX } from "react";
-import { useState, useEffect } from "react";
-import { Bell, Mail, MessageSquare, BellRing, Volume2 } from "lucide-react";
-import { Label } from "@/components/ui/label";
+import { useState } from "react";
+import { BellRing, Mail, MessageSquare, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/lib/utils/toast";
 import { cn } from "@/lib/utils";
@@ -20,7 +19,9 @@ interface NotificationSetting {
  * Configure notification preferences and alerts
  */
 export function NotificationSettings(): JSX.Element {
-  const [emailNotifications, setEmailNotifications] = useState<NotificationSetting[]>([
+  const [emailNotifications, setEmailNotifications] = useState<
+    NotificationSetting[]
+  >([
     {
       id: "new-message",
       label: "New Messages",
@@ -47,7 +48,9 @@ export function NotificationSettings(): JSX.Element {
     },
   ]);
 
-  const [pushNotifications, setPushNotifications] = useState<NotificationSetting[]>([
+  const [pushNotifications, setPushNotifications] = useState<
+    NotificationSetting[]
+  >([
     {
       id: "chat-messages",
       label: "Chat Messages",
@@ -69,14 +72,14 @@ export function NotificationSettings(): JSX.Element {
   ]);
 
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [browserNotificationsEnabled, setBrowserNotificationsEnabled] = useState(false);
-
-  useEffect(() => {
-    // Check browser notification permission
-    if ("Notification" in window) {
-      setBrowserNotificationsEnabled(Notification.permission === "granted");
-    }
-  }, []);
+  const [browserNotificationsEnabled, setBrowserNotificationsEnabled] =
+    useState(() => {
+      // Check browser notification permission on initialization
+      if (typeof window !== "undefined" && "Notification" in window) {
+        return Notification.permission === "granted";
+      }
+      return false;
+    });
 
   const toggleEmailNotification = (id: string): void => {
     setEmailNotifications((prev) =>
@@ -125,7 +128,7 @@ export function NotificationSettings(): JSX.Element {
           description: "You denied browser notifications",
         });
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to enable notifications");
     }
   };
