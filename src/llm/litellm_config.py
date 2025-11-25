@@ -11,7 +11,8 @@ from enum import Enum
 from typing import Optional, Dict, Any
 from pydantic import BaseModel, Field
 import structlog
-import os
+
+from src.core.config import get_settings
 
 logger = structlog.get_logger(__name__)
 
@@ -69,8 +70,9 @@ class LiteLLMConfig:
         self.current_backend: LLMBackend = LLMBackend.ANTHROPIC
         self.vllm_endpoint: Optional[str] = None
 
-        # Get API key from environment
-        anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
+        # Get API key from settings (loads from .env via Pydantic)
+        settings = get_settings()
+        anthropic_api_key = settings.anthropic.api_key
 
         # Model configurations for each backend
         self.models: Dict[LLMBackend, Dict[str, ModelConfig]] = {
