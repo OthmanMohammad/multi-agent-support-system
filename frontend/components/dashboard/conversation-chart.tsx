@@ -3,31 +3,39 @@
 import type { JSX } from "react";
 import { useConversationAnalytics } from "@/lib/api/hooks";
 import {
-  LineChart,
-  Line,
-  BarChart,
   Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
 } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
 
 /**
  * Conversation Chart Component
- * Displays conversation and message trends over time
+ * Displays conversation analytics overview
  */
 
 interface ConversationChartProps {
   period: "24h" | "7d" | "30d" | "90d";
 }
 
-export function ConversationChart({ period }: ConversationChartProps): JSX.Element {
-  const { data, isLoading } = useConversationAnalytics(period);
+const periodToDays = (period: string): number => {
+  const map: Record<string, number> = {
+    "24h": 1,
+    "7d": 7,
+    "30d": 30,
+    "90d": 90,
+  };
+  return map[period] || 7;
+};
+
+export function ConversationChart({
+  period,
+}: ConversationChartProps): JSX.Element {
+  const { data, isLoading } = useConversationAnalytics(periodToDays(period));
 
   if (isLoading) {
     return (
@@ -46,48 +54,75 @@ export function ConversationChart({ period }: ConversationChartProps): JSX.Eleme
     );
   }
 
-  // Combine conversation and message data
-  const chartData = data.conversationsByDay.map((conv, index) => ({
-    date: format(new Date(conv.date), "MMM dd"),
-    conversations: conv.count,
-    messages: data.messagesByDay[index]?.count || 0,
-  }));
+  // Chart data for status distribution
+  const chartData = [
+    {
+      name: "Open",
+      count: data.open_conversations,
+      fill: "hsl(217, 91%, 60%)",
+    },
+    {
+      name: "Resolved",
+      count: data.resolved_conversations,
+      fill: "hsl(142, 71%, 45%)",
+    },
+    {
+      name: "Escalated",
+      count: data.escalated_conversations,
+      fill: "hsl(0, 84%, 60%)",
+    },
+  ];
 
   return (
     <div className="rounded-lg border border-border bg-surface p-6">
       <div className="mb-6">
-        <h2 className="text-lg font-semibold">Conversation & Message Trends</h2>
+        <h2 className="text-lg font-semibold">Conversation Analytics</h2>
         <p className="mt-1 text-sm text-foreground-secondary">
-          Daily activity over the last {period}
+          Overview for the last {period}
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      {/* Stats Grid */}
+      <div className="mb-6 grid gap-4 md:grid-cols-4">
         <div className="rounded-lg border border-border p-3">
           <p className="text-sm font-medium text-foreground-secondary">
-            Avg Messages/Conversation
+            Total Conversations
           </p>
           <p className="mt-1 text-2xl font-bold">
-            {data.avgMessagesPerConversation.toFixed(1)}
+            {data.total_conversations.toLocaleString()}
+          </p>
+        </div>
+        <div className="rounded-lg border border-border p-3">
+          <p className="text-sm font-medium text-foreground-secondary">Today</p>
+          <p className="mt-1 text-2xl font-bold">
+            {data.conversations_today.toLocaleString()}
           </p>
         </div>
         <div className="rounded-lg border border-border p-3">
           <p className="text-sm font-medium text-foreground-secondary">
-            Avg Duration
+            This Week
           </p>
           <p className="mt-1 text-2xl font-bold">
-            {Math.floor(data.avgConversationDuration / 60)}m{" "}
-            {data.avgConversationDuration % 60}s
+            {data.conversations_this_week.toLocaleString()}
+          </p>
+        </div>
+        <div className="rounded-lg border border-border p-3">
+          <p className="text-sm font-medium text-foreground-secondary">
+            Avg Messages/Conv
+          </p>
+          <p className="mt-1 text-2xl font-bold">
+            {data.average_messages_per_conversation.toFixed(1)}
           </p>
         </div>
       </div>
 
-      <div className="mt-6 h-80">
+      {/* Status Distribution Chart */}
+      <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData}>
+          <BarChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
             <XAxis
-              dataKey="date"
+              dataKey="name"
               className="text-xs"
               tick={{ fill: "hsl(var(--foreground-secondary))" }}
             />
@@ -102,26 +137,25 @@ export function ConversationChart({ period }: ConversationChartProps): JSX.Eleme
                 borderRadius: "0.5rem",
               }}
             />
-            <Legend />
-            <Line
-              type="monotone"
-              dataKey="conversations"
-              stroke="hsl(var(--accent))"
-              strokeWidth={2}
+            <Bar
+              dataKey="count"
+              fill="hsl(var(--accent))"
               name="Conversations"
-              dot={{ fill: "hsl(var(--accent))" }}
             />
-            <Line
-              type="monotone"
-              dataKey="messages"
-              stroke="hsl(217, 91%, 60%)"
-              strokeWidth={2}
-              name="Messages"
-              dot={{ fill: "hsl(217, 91%, 60%)" }}
-            />
-          </LineChart>
+          </BarChart>
         </ResponsiveContainer>
       </div>
+
+      {data.average_resolution_time_minutes !== null && (
+        <div className="mt-4 rounded-lg bg-surface-secondary p-3 text-center">
+          <p className="text-sm text-foreground-secondary">
+            Average Resolution Time:{" "}
+            <span className="font-medium">
+              {data.average_resolution_time_minutes.toFixed(0)} minutes
+            </span>
+          </p>
+        </div>
+      )}
     </div>
   );
 }
