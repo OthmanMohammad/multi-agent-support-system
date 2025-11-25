@@ -1,31 +1,24 @@
 "use client";
 
 import type { JSX } from "react";
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Command } from "cmdk";
 import { useRouter } from "next/navigation";
 import {
-  Search,
-  Home,
-  MessageSquare,
   BarChart3,
-  Users,
+  Download,
+  Home,
+  Keyboard,
+  MessageSquare,
+  Moon,
+  Plus,
+  Search,
   Settings,
   Shield,
-  Moon,
   Sun,
-  Keyboard,
-  FileText,
-  Download,
-  Upload,
-  Trash2,
-  Plus,
-  Edit,
-  Copy,
-  Eye,
+  Users,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { cn } from "@/lib/utils";
 
 /**
  * Command Palette Component
@@ -62,9 +55,12 @@ export function CommandPalette(): JSX.Element {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
-  // Close on escape
+  // Reset search when closed
   useEffect(() => {
-    if (!open) setSearch("");
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: reset search input when dialog closes
+    if (!open) {
+      setSearch("");
+    }
   }, [open]);
 
   const commands: CommandItem[] = [
@@ -219,8 +215,12 @@ export function CommandPalette(): JSX.Element {
         </Command.Empty>
 
         {Object.entries(categories).map(([key, label]) => {
-          const categoryCommands = commands.filter((cmd) => cmd.category === key);
-          if (categoryCommands.length === 0) return null;
+          const categoryCommands = commands.filter(
+            (cmd) => cmd.category === key
+          );
+          if (categoryCommands.length === 0) {
+            return null;
+          }
 
           return (
             <Command.Group
