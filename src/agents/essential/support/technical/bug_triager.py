@@ -69,8 +69,8 @@ class TechnicalAgent(BaseAgent):
                 intent=intent
             )
 
-        # Generate troubleshooting response
-        response = await self.generate_response(message, intent, kb_results)
+        # Generate troubleshooting response with conversation context
+        response = await self.generate_response(message, intent, kb_results, state)
 
         state["agent_response"] = response
         state["response_confidence"] = 0.8
@@ -89,7 +89,13 @@ class TechnicalAgent(BaseAgent):
 
         return state
 
-    async def generate_response(self, message: str, intent: str, kb_results: list) -> str:
+    async def generate_response(
+        self,
+        message: str,
+        intent: str,
+        kb_results: list,
+        state: AgentState
+    ) -> str:
         """Generate technical troubleshooting response"""
         self.logger.debug(
             "technical_response_generation_started",
@@ -103,6 +109,14 @@ class TechnicalAgent(BaseAgent):
             for i, article in enumerate(kb_results, 1):
                 kb_context += f"\n{i}. {article['title']}\n{article['content']}\n"
 
+        # Get conversation history for multi-turn context
+        conversation_history = self.get_conversation_context(state)
+
+        self.logger.debug(
+            "technical_conversation_context",
+            history_length=len(conversation_history)
+        )
+
         system_prompt = """You are a technical support specialist.
 
 Guidelines:
@@ -111,6 +125,7 @@ Guidelines:
 3. Check common causes first (cache, cookies, internet)
 4. Cite KB articles when relevant
 5. If unresolved, offer to create a bug ticket
+6. IMPORTANT: Consider the conversation history to provide contextual responses. If the customer already provided details or you've already given certain steps, build on that context.
 
 Be methodical and patient."""
 
@@ -119,9 +134,15 @@ Be methodical and patient."""
 Intent: {intent}
 {kb_context}
 
-Provide troubleshooting steps."""
+Provide troubleshooting steps that take into account any previous conversation context."""
 
-        response = await self.call_llm(system_prompt, user_prompt, max_tokens=600)
+        # CRITICAL: Pass conversation history for multi-turn context
+        response = await self.call_llm(
+            system_prompt,
+            user_prompt,
+            max_tokens=600,
+            conversation_history=conversation_history
+        )
 
         self.logger.debug(
             "technical_llm_response_received",
