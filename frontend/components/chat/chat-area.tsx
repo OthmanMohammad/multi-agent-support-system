@@ -71,6 +71,14 @@ export function ChatArea({ conversationId }: ChatAreaProps): JSX.Element {
     );
   }
 
+  // Clear stale conversation ID if conversation is not found (404)
+  useEffect(() => {
+    if (!isLoading && !conversation) {
+      // Conversation doesn't exist - clear the stale ID from store
+      setCurrentConversation(null);
+    }
+  }, [isLoading, conversation, setCurrentConversation]);
+
   if (!conversation) {
     return (
       <div className="flex h-full items-center justify-center">
