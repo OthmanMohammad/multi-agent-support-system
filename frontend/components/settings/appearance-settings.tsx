@@ -1,11 +1,10 @@
 "use client";
 
 import type { JSX } from "react";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
-import { Sun, Moon, Monitor, Palette, Type, Layout, Zap } from "lucide-react";
+import { Layout, Monitor, Moon, Palette, Sun, Type, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { toast } from "@/lib/utils/toast";
 import { cn } from "@/lib/utils";
 
@@ -13,7 +12,11 @@ type ThemeOption = "light" | "dark" | "system";
 type FontSize = "sm" | "md" | "lg" | "xl";
 type Density = "comfortable" | "compact" | "spacious";
 
-const THEME_OPTIONS: Array<{ value: ThemeOption; label: string; icon: typeof Sun }> = [
+const THEME_OPTIONS: Array<{
+  value: ThemeOption;
+  label: string;
+  icon: typeof Sun;
+}> = [
   { value: "light", label: "Light", icon: Sun },
   { value: "dark", label: "Dark", icon: Moon },
   { value: "system", label: "System", icon: Monitor },
@@ -26,9 +29,21 @@ const FONT_SIZES: Array<{ value: FontSize; label: string; size: string }> = [
   { value: "xl", label: "Extra Large", size: "20px" },
 ];
 
-const DENSITY_OPTIONS: Array<{ value: Density; label: string; description: string }> = [
-  { value: "compact", label: "Compact", description: "More content, less spacing" },
-  { value: "comfortable", label: "Comfortable", description: "Balanced spacing" },
+const DENSITY_OPTIONS: Array<{
+  value: Density;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: "compact",
+    label: "Compact",
+    description: "More content, less spacing",
+  },
+  {
+    value: "comfortable",
+    label: "Comfortable",
+    description: "Balanced spacing",
+  },
   { value: "spacious", label: "Spacious", description: "More breathing room" },
 ];
 
@@ -41,6 +56,36 @@ const ACCENT_COLORS = [
   { name: "Teal", value: "#14b8a6" },
 ];
 
+// Apply functions defined outside component to avoid hoisting issues
+const applyFontSize = (size: FontSize): void => {
+  const sizeMap = { sm: "14px", md: "16px", lg: "18px", xl: "20px" };
+  document.documentElement.style.setProperty("--font-size-base", sizeMap[size]);
+};
+
+const applyDensity = (densityValue: Density): void => {
+  const densityMap = { compact: "0.75", comfortable: "1", spacious: "1.25" };
+  document.documentElement.style.setProperty(
+    "--density-scale",
+    densityMap[densityValue]
+  );
+};
+
+const applyAccentColor = (color: string): void => {
+  document.documentElement.style.setProperty("--color-accent", color);
+};
+
+const applyReducedMotion = (enabled: boolean): void => {
+  if (enabled) {
+    document.documentElement.style.setProperty("--transition-fast", "0ms");
+    document.documentElement.style.setProperty("--transition-normal", "0ms");
+    document.documentElement.style.setProperty("--transition-slow", "0ms");
+  } else {
+    document.documentElement.style.removeProperty("--transition-fast");
+    document.documentElement.style.removeProperty("--transition-normal");
+    document.documentElement.style.removeProperty("--transition-slow");
+  }
+};
+
 /**
  * Appearance Settings Component
  * Customize the look and feel of the application
@@ -49,12 +94,15 @@ export function AppearanceSettings(): JSX.Element {
   const { theme, setTheme } = useTheme();
   const [fontSize, setFontSize] = useState<FontSize>("md");
   const [density, setDensity] = useState<Density>("comfortable");
-  const [accentColor, setAccentColor] = useState(ACCENT_COLORS[0].value);
+  const [accentColor, setAccentColor] = useState(
+    ACCENT_COLORS[0]?.value ?? "#3b82f6"
+  );
   const [reducedMotion, setReducedMotion] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   // Wait for client-side mounting to prevent hydration mismatch
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: required for hydration safety
     setMounted(true);
 
     // Load preferences from localStorage
@@ -63,43 +111,23 @@ export function AppearanceSettings(): JSX.Element {
     const savedAccentColor = localStorage.getItem("accentColor");
     const savedReducedMotion = localStorage.getItem("reducedMotion") === "true";
 
-    if (savedFontSize) setFontSize(savedFontSize);
-    if (savedDensity) setDensity(savedDensity);
-    if (savedAccentColor) setAccentColor(savedAccentColor);
+    if (savedFontSize) {
+      setFontSize(savedFontSize);
+    }
+    if (savedDensity) {
+      setDensity(savedDensity);
+    }
+    if (savedAccentColor) {
+      setAccentColor(savedAccentColor);
+    }
     setReducedMotion(savedReducedMotion);
 
     // Apply settings
     applyFontSize(savedFontSize || "md");
     applyDensity(savedDensity || "comfortable");
-    applyAccentColor(savedAccentColor || ACCENT_COLORS[0].value);
+    applyAccentColor(savedAccentColor || ACCENT_COLORS[0]?.value || "#3b82f6");
     applyReducedMotion(savedReducedMotion);
   }, []);
-
-  const applyFontSize = (size: FontSize): void => {
-    const sizeMap = { sm: "14px", md: "16px", lg: "18px", xl: "20px" };
-    document.documentElement.style.setProperty("--font-size-base", sizeMap[size]);
-  };
-
-  const applyDensity = (densityValue: Density): void => {
-    const densityMap = { compact: "0.75", comfortable: "1", spacious: "1.25" };
-    document.documentElement.style.setProperty("--density-scale", densityMap[densityValue]);
-  };
-
-  const applyAccentColor = (color: string): void => {
-    document.documentElement.style.setProperty("--color-accent", color);
-  };
-
-  const applyReducedMotion = (enabled: boolean): void => {
-    if (enabled) {
-      document.documentElement.style.setProperty("--transition-fast", "0ms");
-      document.documentElement.style.setProperty("--transition-normal", "0ms");
-      document.documentElement.style.setProperty("--transition-slow", "0ms");
-    } else {
-      document.documentElement.style.removeProperty("--transition-fast");
-      document.documentElement.style.removeProperty("--transition-normal");
-      document.documentElement.style.removeProperty("--transition-slow");
-    }
-  };
 
   const handleThemeChange = (newTheme: ThemeOption): void => {
     setTheme(newTheme);
@@ -134,14 +162,16 @@ export function AppearanceSettings(): JSX.Element {
     setReducedMotion(newValue);
     localStorage.setItem("reducedMotion", String(newValue));
     applyReducedMotion(newValue);
-    toast.success(newValue ? "Reduced motion enabled" : "Reduced motion disabled");
+    toast.success(
+      newValue ? "Reduced motion enabled" : "Reduced motion disabled"
+    );
   };
 
   const handleResetToDefaults = (): void => {
     setTheme("system");
     setFontSize("md");
     setDensity("comfortable");
-    setAccentColor(ACCENT_COLORS[0].value);
+    setAccentColor(ACCENT_COLORS[0]?.value ?? "#3b82f6");
     setReducedMotion(false);
 
     localStorage.removeItem("fontSize");
@@ -151,7 +181,7 @@ export function AppearanceSettings(): JSX.Element {
 
     applyFontSize("md");
     applyDensity("comfortable");
-    applyAccentColor(ACCENT_COLORS[0].value);
+    applyAccentColor(ACCENT_COLORS[0]?.value ?? "#3b82f6");
     applyReducedMotion(false);
 
     toast.success("Reset to defaults", {
@@ -190,13 +220,16 @@ export function AppearanceSettings(): JSX.Element {
                 onClick={() => handleThemeChange(option.value)}
                 className={cn(
                   "flex flex-col items-center gap-3 rounded-lg border-2 p-4 transition-all hover:bg-surface-hover",
-                  isActive
-                    ? "border-accent bg-accent/10"
-                    : "border-border"
+                  isActive ? "border-accent bg-accent/10" : "border-border"
                 )}
               >
                 <Icon className={cn("h-6 w-6", isActive && "text-accent")} />
-                <span className={cn("text-sm font-medium", isActive && "text-accent")}>
+                <span
+                  className={cn(
+                    "text-sm font-medium",
+                    isActive && "text-accent"
+                  )}
+                >
                   {option.label}
                 </span>
               </button>
@@ -224,7 +257,10 @@ export function AppearanceSettings(): JSX.Element {
                   isActive ? "border-accent bg-accent/10" : "border-border"
                 )}
               >
-                <span className={cn("font-medium", isActive && "text-accent")} style={{ fontSize: option.size }}>
+                <span
+                  className={cn("font-medium", isActive && "text-accent")}
+                  style={{ fontSize: option.size }}
+                >
                   Aa
                 </span>
                 <span className={cn("text-xs", isActive && "text-accent")}>
@@ -263,9 +299,7 @@ export function AppearanceSettings(): JSX.Element {
                     {option.description}
                   </div>
                 </div>
-                {isActive && (
-                  <div className="h-4 w-4 rounded-full bg-accent" />
-                )}
+                {isActive && <div className="h-4 w-4 rounded-full bg-accent" />}
               </button>
             );
           })}
