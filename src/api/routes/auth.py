@@ -289,6 +289,9 @@ async def oauth_login(
             detail=f"Unsupported OAuth provider: {request.provider}"
         )
 
+    # Track if this is a new user registration
+    is_new_user = False
+
     async with get_unit_of_work() as uow:
         # Check if user exists with this OAuth provider
         user = await uow.users.get_by_oauth(request.provider, request.provider_user_id)
@@ -314,7 +317,8 @@ async def oauth_login(
                     provider=request.provider
                 )
             else:
-                # Create new user
+                # Create new user - this is a new registration!
+                is_new_user = True
                 user = await uow.users.create(
                     email=request.email,
                     password_hash=None,  # No password for OAuth users
@@ -372,7 +376,8 @@ async def oauth_login(
             refresh_token=refresh_token,
             token_type="Bearer",
             expires_in=settings.jwt.access_token_expire_minutes * 60,
-            user=user_profile
+            user=user_profile,
+            is_new_user=is_new_user
         )
 
 

@@ -121,6 +121,7 @@ class LoginResponse(BaseModel):
     token_type: str = "Bearer"
     expires_in: int = Field(..., description="Access token expiration in seconds")
     user: "UserProfile"
+    is_new_user: bool = Field(default=False, description="True if user was just created (OAuth registration)")
 
     model_config = {
         "json_schema_extra": {

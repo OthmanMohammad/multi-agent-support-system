@@ -20,6 +20,7 @@ declare module "next-auth" {
     } & DefaultSession["user"];
     accessToken: string;
     refreshToken: string;
+    isNewUser?: boolean;
   }
 
   interface User {
@@ -41,5 +42,6 @@ declare module "next-auth/jwt" {
     role: string;
     accessToken: string;
     refreshToken: string;
+    isNewUser?: boolean;
   }
 }

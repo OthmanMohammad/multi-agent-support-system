@@ -106,6 +106,7 @@ async function loginWithOAuth(
       role: data.user.role,
       accessToken: data.access_token,
       refreshToken: data.refresh_token,
+      isNewUser: data.is_new_user ?? false,
     };
   } catch (error) {
     console.error(`${provider} OAuth error:`, error);
@@ -236,6 +237,7 @@ export default {
             token.role = backendUser.role;
             token.accessToken = backendUser.accessToken;
             token.refreshToken = backendUser.refreshToken;
+            token.isNewUser = backendUser.isNewUser;
           } else {
             console.error("Failed to create/login OAuth user in backend");
           }
@@ -262,6 +264,7 @@ export default {
         // Add tokens to session (available client-side)
         session.accessToken = token.accessToken as string;
         session.refreshToken = token.refreshToken as string;
+        session.isNewUser = token.isNewUser as boolean | undefined;
       }
 
       return session;

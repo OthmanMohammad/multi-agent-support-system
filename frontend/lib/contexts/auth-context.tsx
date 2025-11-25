@@ -172,7 +172,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               isAuthenticated: true,
               isLoading: false,
               isInitialized: true,
-              isNewUser: false, // Returning user from NextAuth session
+              isNewUser: session?.isNewUser ?? false, // Check session for OAuth isNewUser flag
               error: null,
             });
             return;
