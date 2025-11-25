@@ -4,7 +4,7 @@ import type { JSX } from "react";
 import { useState } from "react";
 import { format } from "date-fns";
 import { Copy, Check, User, Bot } from "lucide-react";
-import type { Message as MessageType } from "@prisma/client";
+import type { Message as BackendMessage } from "@/lib/api/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
@@ -12,6 +12,16 @@ import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github-dark.css";
 import { CodeBlock, InlineCode } from "./code-block";
+
+// Unified message type that works with both backend and frontend
+interface MessageType {
+  id?: string;
+  role: string;
+  content: string;
+  timestamp?: string;
+  createdAt?: Date | string;
+  agent_name?: string | null;
+}
 
 interface MessageProps {
   message: MessageType;
@@ -24,7 +34,8 @@ interface MessageProps {
  */
 export function Message({ message, isStreaming = false }: MessageProps): JSX.Element {
   const [isCopied, setIsCopied] = useState(false);
-  const isUser = message.role === "USER";
+  // Handle both uppercase (Prisma) and lowercase (backend) role values
+  const isUser = message.role.toLowerCase() === "user";
 
   const handleCopy = async (): Promise<void> => {
     await navigator.clipboard.writeText(message.content);
@@ -102,7 +113,7 @@ export function Message({ message, isStreaming = false }: MessageProps): JSX.Ele
             isUser && "flex-row-reverse"
           )}
         >
-          <span>{format(new Date(message.createdAt), "HH:mm")}</span>
+          <span>{format(new Date(message.timestamp || message.createdAt || new Date()), "HH:mm")}</span>
 
           {!isUser && !isStreaming && (
             <Button

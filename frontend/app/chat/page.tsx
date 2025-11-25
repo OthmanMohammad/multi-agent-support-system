@@ -1,11 +1,9 @@
 "use client";
 
 import type { JSX } from "react";
-import { useState } from "react";
 import { useChatStore } from "@/stores/chat-store";
 import { ConversationSidebar } from "@/components/chat/conversation-sidebar";
 import { ChatArea } from "@/components/chat/chat-area";
-import { EmptyState } from "@/components/chat/empty-state";
 import { ErrorBoundaryAdvanced } from "@/components/error-boundary-advanced";
 
 /**
@@ -27,9 +25,7 @@ export default function ChatPage(): JSX.Element {
   return (
     <ErrorBoundaryAdvanced
       onError={(error, errorInfo) => {
-        // Log to monitoring service
         console.error("Chat page error:", error, errorInfo);
-        // TODO: Send to Sentry or other monitoring service
       }}
     >
       <div className="flex h-screen overflow-hidden bg-background">
@@ -42,11 +38,8 @@ export default function ChatPage(): JSX.Element {
             isSidebarOpen ? "ml-0" : "-ml-80"
           }`}
         >
-          {currentConversationId ? (
-            <ChatArea conversationId={currentConversationId} />
-          ) : (
-            <EmptyState />
-          )}
+          {/* ChatArea handles both existing conversations and new conversation flow */}
+          <ChatArea conversationId={currentConversationId} />
         </main>
       </div>
     </ErrorBoundaryAdvanced>

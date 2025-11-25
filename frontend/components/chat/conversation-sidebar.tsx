@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { ConversationItem } from "./conversation-item";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ConversationItemSkeleton } from "./conversation-skeleton";
+import { toast } from "@/lib/utils/toast";
 
 /**
  * Conversation Sidebar Component
@@ -17,28 +18,33 @@ import { ConversationItemSkeleton } from "./conversation-skeleton";
  */
 export function ConversationSidebar(): JSX.Element {
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: conversations, isLoading } = useConversations();
+  const { data: conversations, isLoading, error } = useConversations();
   const createConversation = useCreateConversation();
 
   const currentConversationId = useChatStore((state) => state.currentConversationId);
   const setCurrentConversation = useChatStore((state) => state.setCurrentConversation);
+  const clearMessages = useChatStore((state) => state.clearMessages);
   const isSidebarOpen = useChatStore((state) => state.isSidebarOpen);
   const toggleSidebar = useChatStore((state) => state.toggleSidebar);
 
   const handleNewConversation = async (): Promise<void> => {
-    try {
-      const newConversation = await createConversation.mutateAsync({
-        title: "New Conversation",
-      });
-      setCurrentConversation(newConversation.id);
-    } catch (error) {
-      console.error("Failed to create conversation:", error);
-    }
+    // Clear current conversation and messages to show empty state
+    setCurrentConversation(null);
+    clearMessages();
+    // The actual conversation will be created when user sends their first message
   };
 
-  const filteredConversations = conversations?.filter((conv) =>
-    conv.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter conversations by search query (using primary_intent or title)
+  const filteredConversations = conversations?.filter((conv) => {
+    const searchTerm = searchQuery.toLowerCase();
+    const title = conv.title || conv.primary_intent || "";
+    return title.toLowerCase().includes(searchTerm);
+  });
+
+  // Show error state if API fails
+  if (error) {
+    console.error("Failed to load conversations:", error);
+  }
 
   return (
     <>
@@ -66,7 +72,7 @@ export function ConversationSidebar(): JSX.Element {
               size="icon"
               variant="ghost"
               onClick={handleNewConversation}
-              disabled={createConversation.isPending}
+              title="New conversation"
             >
               <Plus className="h-5 w-5" />
             </Button>
@@ -93,18 +99,29 @@ export function ConversationSidebar(): JSX.Element {
                   <ConversationItemSkeleton key={i} />
                 ))}
               </div>
+            ) : error ? (
+              <div className="p-4 text-center text-sm text-error">
+                Failed to load conversations.
+                <Button
+                  variant="link"
+                  className="block mx-auto mt-2"
+                  onClick={() => window.location.reload()}
+                >
+                  Retry
+                </Button>
+              </div>
             ) : filteredConversations?.length === 0 ? (
               <div className="p-4 text-center text-sm text-foreground-secondary">
-                {searchQuery ? "No conversations found" : "No conversations yet"}
+                {searchQuery ? "No conversations found" : "No conversations yet. Start a new one!"}
               </div>
             ) : (
               <div className="space-y-1 p-2">
                 {filteredConversations?.map((conversation) => (
                   <ConversationItem
-                    key={conversation.id}
+                    key={conversation.conversation_id}
                     conversation={conversation}
-                    isActive={currentConversationId === conversation.id}
-                    onClick={() => setCurrentConversation(conversation.id)}
+                    isActive={currentConversationId === conversation.conversation_id}
+                    onClick={() => setCurrentConversation(conversation.conversation_id)}
                   />
                 ))}
               </div>

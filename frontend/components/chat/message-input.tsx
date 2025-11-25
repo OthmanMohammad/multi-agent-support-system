@@ -2,17 +2,16 @@
 
 import type { JSX } from "react";
 import { useState, useRef, useEffect, KeyboardEvent, ChangeEvent } from "react";
-import { Send, Paperclip, X, File, Image as ImageIcon } from "lucide-react";
+import { Send, Paperclip, X, File, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSendMessage } from "@/lib/api/hooks/useMessages";
-import { useStreamResponse } from "@/lib/api/hooks/useStreamResponse";
+import { useCreateConversation } from "@/lib/api/hooks/useConversations";
 import { useChatStore } from "@/stores/chat-store";
 import { cn } from "@/lib/utils";
-import { nanoid } from "nanoid";
 import { toast, fileToast } from "@/lib/utils/toast";
 
 interface MessageInputProps {
-  conversationId: string;
+  conversationId: string | null;
 }
 
 interface Attachment {
@@ -34,31 +33,23 @@ const ALLOWED_FILE_TYPES = [
 /**
  * Message Input Component
  * Textarea with file upload, auto-resize, and keyboard shortcuts
+ * Handles both creating new conversations and adding messages to existing ones
  */
 export function MessageInput({ conversationId }: MessageInputProps): JSX.Element {
   const [message, setMessage] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [isSending, setIsSending] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sendMessage = useSendMessage();
+  const createConversation = useCreateConversation();
   const isStreaming = useChatStore((state) => state.isStreaming);
   const addMessage = useChatStore((state) => state.addMessage);
+  const setCurrentConversation = useChatStore((state) => state.setCurrentConversation);
   const setIsStreaming = useChatStore((state) => state.setIsStreaming);
-
-  // Streaming hook
-  const { startStream } = useStreamResponse({
-    conversationId,
-    onComplete: (message) => {
-      console.log("Stream completed:", message);
-    },
-    onError: (error) => {
-      console.error("Stream error:", error);
-      setIsStreaming(false);
-    },
-  });
 
   // Auto-resize textarea
   useEffect(() => {
@@ -69,14 +60,14 @@ export function MessageInput({ conversationId }: MessageInputProps): JSX.Element
     textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
   }, [message]);
 
-  // Focus textarea on mount
+  // Focus textarea on mount and when conversationId changes
   useEffect(() => {
     textareaRef.current?.focus();
-  }, []);
+  }, [conversationId]);
 
   const handleSend = async (): Promise<void> => {
     if (!message.trim() && attachments.length === 0) return;
-    if (isStreaming) return;
+    if (isStreaming || isSending) return;
 
     const content = message.trim();
     const messageAttachments = attachments;
@@ -84,11 +75,13 @@ export function MessageInput({ conversationId }: MessageInputProps): JSX.Element
     // Clear input immediately for better UX
     setMessage("");
     setAttachments([]);
+    setIsSending(true);
+    setIsStreaming(true);
 
-    // Optimistic UI update
-    const optimisticMessage = {
-      id: `temp-${Date.now()}`,
-      conversationId,
+    // Add optimistic user message to UI
+    const optimisticUserMessage = {
+      id: `temp-user-${Date.now()}`,
+      conversationId: conversationId || "new",
       userId: "current-user",
       role: "USER" as const,
       content,
@@ -98,41 +91,68 @@ export function MessageInput({ conversationId }: MessageInputProps): JSX.Element
       createdAt: new Date(),
     };
 
-    addMessage(optimisticMessage);
+    addMessage(optimisticUserMessage);
 
     try {
-      // Send message to API
-      const sentMessage = await sendMessage.mutateAsync({
-        conversationId,
-        content,
-        role: "USER",
-        metadata: messageAttachments.length > 0
-          ? { attachments: messageAttachments.map((a) => a.file.name) }
-          : undefined,
-      });
+      if (!conversationId) {
+        // Create a new conversation with the first message
+        const response = await createConversation.mutateAsync({
+          message: content,
+        });
 
-      // TODO: Implement file upload if attachments exist
-      // For now, metadata contains filenames
+        // Set the new conversation as current
+        setCurrentConversation(response.conversation_id);
 
-      // Start streaming AI response
-      const responseMessageId = nanoid();
-      startStream(responseMessageId);
+        // Add AI response to UI
+        const aiMessage = {
+          id: `response-${Date.now()}`,
+          conversationId: response.conversation_id,
+          userId: "assistant",
+          role: "ASSISTANT" as const,
+          content: response.message,
+          metadata: response.agent_name ? { agent: response.agent_name } : null,
+          createdAt: new Date(),
+        };
+        addMessage(aiMessage);
+
+        toast.success("Conversation started");
+      } else {
+        // Add message to existing conversation
+        const response = await sendMessage.mutateAsync({
+          conversationId,
+          content,
+        });
+
+        // Add AI response to UI
+        const aiMessage = {
+          id: `response-${Date.now()}`,
+          conversationId,
+          userId: "assistant",
+          role: "ASSISTANT" as const,
+          content: response.message,
+          metadata: response.agent_name ? { agent: response.agent_name } : null,
+          createdAt: new Date(),
+        };
+        addMessage(aiMessage);
+      }
     } catch (error) {
       console.error("Failed to send message:", error);
-      setIsStreaming(false);
 
       // Show error toast
+      const errorMessage = error instanceof Error ? error.message : "Please try again.";
       toast.error("Failed to send message", {
-        description: error instanceof Error ? error.message : "Please try again.",
+        description: errorMessage,
         action: {
           label: "Retry",
           onClick: () => {
-            // Restore the message
             setMessage(content);
             setAttachments(messageAttachments);
           },
         },
       });
+    } finally {
+      setIsSending(false);
+      setIsStreaming(false);
     }
   };
 
@@ -165,13 +185,11 @@ export function MessageInput({ conversationId }: MessageInputProps): JSX.Element
     const newAttachments: Attachment[] = [];
 
     files.forEach((file) => {
-      // Validate file size
       if (file.size > MAX_FILE_SIZE) {
         fileToast.sizeLimit("10MB");
         return;
       }
 
-      // Determine file type
       const isImage = ALLOWED_IMAGE_TYPES.includes(file.type);
       const isAllowedFile = ALLOWED_FILE_TYPES.includes(file.type);
 
@@ -180,13 +198,11 @@ export function MessageInput({ conversationId }: MessageInputProps): JSX.Element
         return;
       }
 
-      // Create attachment
       const attachment: Attachment = {
         file,
         type: isImage ? "image" : "file",
       };
 
-      // Create preview for images
       if (isImage) {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -203,7 +219,6 @@ export function MessageInput({ conversationId }: MessageInputProps): JSX.Element
       setAttachments((prev) => [...prev, ...newAttachments]);
     }
 
-    // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -234,14 +249,12 @@ export function MessageInput({ conversationId }: MessageInputProps): JSX.Element
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-
-    const files = Array.from(e.dataTransfer.files);
-    processFiles(files);
+    processFiles(Array.from(e.dataTransfer.files));
   };
 
   const characterCount = message.length;
   const isOverLimit = characterCount > MAX_MESSAGE_LENGTH;
-  const canSend = (message.trim() || attachments.length > 0) && !isStreaming && !isOverLimit;
+  const canSend = (message.trim() || attachments.length > 0) && !isStreaming && !isSending && !isOverLimit;
 
   return (
     <div className="border-t border-border p-4">
@@ -268,9 +281,7 @@ export function MessageInput({ conversationId }: MessageInputProps): JSX.Element
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="truncate text-sm font-medium">
-                    {attachment.file.name}
-                  </p>
+                  <p className="truncate text-sm font-medium">{attachment.file.name}</p>
                   <p className="text-xs text-foreground-secondary">
                     {(attachment.file.size / 1024).toFixed(1)} KB
                   </p>
@@ -306,11 +317,13 @@ export function MessageInput({ conversationId }: MessageInputProps): JSX.Element
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={
-              isStreaming
-                ? "AI is typing..."
-                : "Type a message... (Enter to send, Shift+Enter for new line)"
+              isSending
+                ? "AI is thinking..."
+                : conversationId
+                ? "Type a message... (Enter to send)"
+                : "Start a new conversation... (Enter to send)"
             }
-            disabled={isStreaming}
+            disabled={isSending || isStreaming}
             className={cn(
               "w-full resize-none rounded-lg bg-transparent px-4 py-3 pr-24 text-sm outline-none placeholder:text-foreground-secondary disabled:cursor-not-allowed disabled:opacity-50",
               "min-h-[52px] max-h-[200px]"
@@ -334,7 +347,7 @@ export function MessageInput({ conversationId }: MessageInputProps): JSX.Element
               variant="ghost"
               className="h-8 w-8"
               onClick={() => fileInputRef.current?.click()}
-              disabled={isStreaming}
+              disabled={isSending || isStreaming}
               title="Attach file"
             >
               <Paperclip className="h-4 w-4" />
@@ -345,9 +358,13 @@ export function MessageInput({ conversationId }: MessageInputProps): JSX.Element
               className="h-8 w-8"
               onClick={handleSend}
               disabled={!canSend}
-              title="Send message (Enter or Cmd+Enter)"
+              title="Send message (Enter)"
             >
-              <Send className="h-4 w-4" />
+              {isSending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
             </Button>
           </div>
 
