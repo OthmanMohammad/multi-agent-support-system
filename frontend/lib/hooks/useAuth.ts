@@ -7,12 +7,25 @@
 
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, signOut } from "next-auth/react";
 import useSWR from "swr";
 import { authAPI, type RegisterRequest, type UserProfile } from "../api";
 import { toast } from "sonner";
+
+// =============================================================================
+// TOKEN CHECK HELPER
+// =============================================================================
+
+/**
+ * Check if access token exists in localStorage
+ * Used to conditionally fetch user profile
+ */
+const hasAccessToken = (): boolean => {
+  if (typeof window === "undefined") return false;
+  return !!localStorage.getItem("access_token");
+};
 
 // =============================================================================
 // USE AUTH HOOK
@@ -21,15 +34,22 @@ import { toast } from "sonner";
 export function useAuth() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [hasToken, setHasToken] = useState(false);
 
-  // Fetch current user profile
+  // Check for token on mount and after auth actions
+  useEffect(() => {
+    setHasToken(hasAccessToken());
+  }, []);
+
+  // Fetch current user profile - only when token exists
+  // Using null key to skip fetch when no token
   const {
     data: user,
     error,
     mutate,
     isLoading: isLoadingUser,
   } = useSWR<UserProfile>(
-    "auth/me",
+    hasToken ? "auth/me" : null,
     async () => {
       const result = await authAPI.me();
       if (result.success) {
@@ -68,6 +88,9 @@ export function useAuth() {
           toast.error("Session creation failed");
           return { success: false };
         }
+
+        // Update token state to trigger SWR fetch
+        setHasToken(true);
 
         // Refresh user data
         await mutate(result.data.user);
@@ -112,6 +135,9 @@ export function useAuth() {
           return { success: false };
         }
 
+        // Update token state to trigger SWR fetch
+        setHasToken(true);
+
         // Refresh user data - revalidate to fetch complete profile
         await mutate();
 
@@ -139,6 +165,9 @@ export function useAuth() {
 
       // Sign out from NextAuth
       await signOut({ redirect: false });
+
+      // Clear token state FIRST to stop SWR polling
+      setHasToken(false);
 
       // Clear user data
       await mutate(undefined);
