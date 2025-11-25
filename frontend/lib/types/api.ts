@@ -5,7 +5,7 @@
  * Matches backend FastAPI response schemas exactly.
  */
 
-import { z } from 'zod';
+import { z } from "zod";
 
 // =============================================================================
 // RESULT PATTERN (Railway-Oriented Programming)
@@ -16,14 +16,22 @@ export type Result<T, E = Error> =
   | { success: false; error: E };
 
 export const success = <T>(data: T): Result<T> => ({ success: true, data });
-export const failure = <E = Error>(error: E): Result<never, E> => ({ success: false, error });
+export const failure = <E = Error>(error: E): Result<never, E> => ({
+  success: false,
+  error,
+});
 
 // =============================================================================
 // USER & AUTH TYPES
 // =============================================================================
 
-export const UserRoleSchema = z.enum(['USER', 'ADMIN', 'MODERATOR']);
-export const UserStatusSchema = z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'PENDING_VERIFICATION']);
+export const UserRoleSchema = z.enum(["USER", "ADMIN", "MODERATOR"]);
+export const UserStatusSchema = z.enum([
+  "ACTIVE",
+  "INACTIVE",
+  "SUSPENDED",
+  "PENDING_VERIFICATION",
+]);
 
 export const UserProfileSchema = z.object({
   id: z.string().uuid(),
@@ -42,7 +50,7 @@ export const UserProfileSchema = z.object({
 export const LoginResponseSchema = z.object({
   access_token: z.string(),
   refresh_token: z.string(),
-  token_type: z.literal('Bearer'),
+  token_type: z.literal("Bearer"),
   expires_in: z.number(),
   user: UserProfileSchema,
 });
@@ -55,7 +63,7 @@ export const RegisterResponseSchema = z.object({
   status: z.string(),
   access_token: z.string(),
   refresh_token: z.string(),
-  token_type: z.literal('Bearer'),
+  token_type: z.literal("Bearer"),
   expires_in: z.number(),
 });
 
@@ -77,7 +85,7 @@ export type UserStatus = z.infer<typeof UserStatusSchema>;
 // CONVERSATION TYPES
 // =============================================================================
 
-export const MessageRoleSchema = z.enum(['user', 'assistant', 'system']);
+export const MessageRoleSchema = z.enum(["user", "assistant", "system"]);
 
 export const MessageSchema = z.object({
   role: MessageRoleSchema,
@@ -89,7 +97,7 @@ export const MessageSchema = z.object({
 export const ConversationSchema = z.object({
   conversation_id: z.string().uuid(),
   customer_id: z.string().uuid(),
-  status: z.enum(['active', 'resolved', 'escalated']),
+  status: z.enum(["active", "resolved", "escalated"]),
   started_at: z.string().datetime(),
   last_updated: z.string().datetime(),
   messages: z.array(MessageSchema),
@@ -107,6 +115,7 @@ export const ChatResponseSchema = z.object({
 });
 
 export type Message = z.infer<typeof MessageSchema>;
+export type ConversationMessage = Message;
 export type Conversation = z.infer<typeof ConversationSchema>;
 export type ChatResponse = z.infer<typeof ChatResponseSchema>;
 export type MessageRole = z.infer<typeof MessageRoleSchema>;
@@ -145,7 +154,7 @@ export const CustomerSchema = z.object({
   customer_id: z.string().uuid(),
   email: z.string().email(),
   name: z.string().nullable(),
-  plan: z.enum(['free', 'basic', 'premium', 'enterprise']),
+  plan: z.enum(["free", "basic", "premium", "enterprise"]),
   created_at: z.string().datetime(),
 });
 
@@ -156,7 +165,7 @@ export type Customer = z.infer<typeof CustomerSchema>;
 // =============================================================================
 
 export interface StreamEvent {
-  type: 'content' | 'done' | 'error' | 'agent_switch';
+  type: "content" | "done" | "error" | "agent_switch";
   chunk?: string;
   messageId?: string;
   timestamp?: string;
@@ -185,6 +194,6 @@ export class APIClientError extends Error {
     public details?: Record<string, unknown>
   ) {
     super(message);
-    this.name = 'APIClientError';
+    this.name = "APIClientError";
   }
 }
