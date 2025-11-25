@@ -193,6 +193,13 @@ export const conversationsAPI = {
   },
 
   /**
+   * Reopen a resolved or escalated conversation
+   */
+  async reopen(conversationId: string): Promise<Result<void>> {
+    return apiClient.post(`/api/conversations/${conversationId}/reopen`);
+  },
+
+  /**
    * Escalate conversation
    */
   async escalate(

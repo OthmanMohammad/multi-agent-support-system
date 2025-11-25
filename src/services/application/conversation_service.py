@@ -535,6 +535,60 @@ class ConversationApplicationService:
                 component="ConversationApplicationService"
             ))
     
+    async def reopen_conversation(
+        self,
+        conversation_id: UUID
+    ) -> Result[None]:
+        """Reopen a resolved or escalated conversation"""
+        try:
+            self.logger.info(
+                "reopen_conversation_started",
+                conversation_id=str(conversation_id)
+            )
+
+            conversation = await self.uow.conversations.get_by_id(conversation_id)
+
+            if not conversation:
+                return Result.fail(NotFoundError(
+                    resource="Conversation",
+                    identifier=str(conversation_id)
+                ))
+
+            if conversation.status == "active":
+                return Result.fail(BusinessRuleError(
+                    message="Conversation is already active",
+                    rule="conversation_not_closed",
+                    entity="Conversation"
+                ))
+
+            # Update status to active
+            await self.uow.conversations.update(
+                conversation.id,
+                status="active",
+                updated_by=self.uow.current_user_id
+            )
+
+            self.logger.info(
+                "conversation_reopened",
+                conversation_id=str(conversation_id),
+                previous_status=conversation.status
+            )
+
+            return Result.ok(None)
+
+        except Exception as e:
+            self.logger.error(
+                "reopen_conversation_failed",
+                conversation_id=str(conversation_id),
+                error=str(e),
+                exc_info=True
+            )
+            return Result.fail(InternalError(
+                message=f"Failed to reopen conversation: {str(e)}",
+                operation="reopen_conversation",
+                component="ConversationApplicationService"
+            ))
+
     async def escalate_conversation(
         self,
         conversation_id: UUID,

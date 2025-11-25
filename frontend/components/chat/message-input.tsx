@@ -12,6 +12,7 @@ import { fileToast, toast } from "@/lib/utils/toast";
 
 interface MessageInputProps {
   conversationId: string;
+  disabled?: boolean;
 }
 
 interface Attachment {
@@ -41,6 +42,7 @@ const ALLOWED_FILE_TYPES = [
  */
 export function MessageInput({
   conversationId,
+  disabled = false,
 }: MessageInputProps): JSX.Element {
   const [message, setMessage] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -243,7 +245,8 @@ export function MessageInput({
     (message.trim() || attachments.length > 0) &&
     !isStreaming &&
     !isSending &&
-    !isOverLimit;
+    !isOverLimit &&
+    !disabled;
 
   return (
     <div className="border-t border-border p-4">
@@ -308,11 +311,13 @@ export function MessageInput({
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={
-              isStreaming
-                ? "AI is typing..."
-                : "Type a message... (Enter to send, Shift+Enter for new line)"
+              disabled
+                ? "Reopen conversation to send messages"
+                : isStreaming
+                  ? "AI is typing..."
+                  : "Type a message... (Enter to send, Shift+Enter for new line)"
             }
-            disabled={isStreaming}
+            disabled={isStreaming || disabled}
             className={cn(
               "w-full resize-none rounded-lg bg-transparent px-4 py-3 pr-24 text-sm outline-none placeholder:text-foreground-secondary disabled:cursor-not-allowed disabled:opacity-50",
               "min-h-[52px] max-h-[200px]"
@@ -336,7 +341,7 @@ export function MessageInput({
               variant="ghost"
               className="h-8 w-8"
               onClick={() => fileInputRef.current?.click()}
-              disabled={isStreaming}
+              disabled={isStreaming || disabled}
               title="Attach file"
             >
               <Paperclip className="h-4 w-4" />

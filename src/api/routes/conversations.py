@@ -160,6 +160,35 @@ async def resolve_conversation(
     return {"status": "resolved", "conversation_id": str(conversation_id)}
 
 
+@router.post("/conversations/{conversation_id}/reopen", status_code=200)
+async def reopen_conversation(
+    conversation_id: UUID,
+    service: ConversationApplicationService = Depends(get_conversation_application_service)
+):
+    """Reopen a resolved or escalated conversation"""
+    logger.info(
+        "reopen_conversation_endpoint_called",
+        conversation_id=str(conversation_id)
+    )
+
+    result = await service.reopen_conversation(conversation_id)
+
+    if result.is_failure:
+        logger.warning(
+            "reopen_conversation_failed",
+            conversation_id=str(conversation_id),
+            error_type=type(result.error).__name__
+        )
+        raise map_error_to_http(result.error)
+
+    logger.info(
+        "reopen_conversation_success",
+        conversation_id=str(conversation_id)
+    )
+
+    return {"status": "active", "conversation_id": str(conversation_id)}
+
+
 @router.post("/conversations/{conversation_id}/escalate", status_code=200)
 async def escalate_conversation(
     conversation_id: UUID,

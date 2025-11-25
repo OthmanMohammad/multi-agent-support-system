@@ -229,6 +229,29 @@ export function useConversation(conversationId: string | null) {
     [conversationId, mutate]
   );
 
+  // Reopen conversation
+  const reopen = useCallback(async () => {
+    if (!conversationId) {
+      return { success: false };
+    }
+
+    try {
+      const result = await conversationsAPI.reopen(conversationId);
+
+      if (!result.success) {
+        toast.error(result.error.message || "Failed to reopen conversation");
+        return { success: false };
+      }
+
+      await mutate();
+      toast.success("Conversation reopened");
+      return { success: true };
+    } catch (_error) {
+      toast.error("An unexpected error occurred");
+      return { success: false };
+    }
+  }, [conversationId, mutate]);
+
   return {
     // Data
     conversation,
@@ -239,6 +262,7 @@ export function useConversation(conversationId: string | null) {
     sendMessage,
     resolve,
     escalate,
+    reopen,
     refresh: mutate,
 
     // State
