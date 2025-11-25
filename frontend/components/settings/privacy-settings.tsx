@@ -2,7 +2,6 @@
 
 import type { JSX } from "react";
 import { Shield } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 /**
  * Privacy Settings Component
