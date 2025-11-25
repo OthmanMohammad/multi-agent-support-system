@@ -85,8 +85,8 @@ class APIAgent(BaseAgent):
                 language=requested_lang
             )
 
-        # Generate technical response with code examples
-        response = await self.generate_response(message, intent, kb_results, requested_lang)
+        # Generate technical response with code examples and conversation context
+        response = await self.generate_response(message, intent, kb_results, requested_lang, state)
 
         state["agent_response"] = response
         state["response_confidence"] = 0.85
@@ -109,7 +109,8 @@ class APIAgent(BaseAgent):
         message: str,
         intent: str,
         kb_results: list,
-        language: str = None
+        language: str = None,
+        state: AgentState = None
     ) -> str:
         """Generate API documentation response with code examples"""
         self.logger.debug(
@@ -129,6 +130,15 @@ class APIAgent(BaseAgent):
         if language:
             lang_instruction = f"\nProvide code examples in {language}."
 
+        # Get conversation history for multi-turn context
+        conversation_history = []
+        if state:
+            conversation_history = self.get_conversation_context(state)
+            self.logger.debug(
+                "api_conversation_context",
+                history_length=len(conversation_history)
+            )
+
         system_prompt = f"""You are an API integration specialist.
 
 Our API Base URL: https://api.example.com/v1
@@ -140,7 +150,8 @@ Guidelines:
 3. Show authentication headers
 4. Explain rate limits (100 req/min)
 5. Include error handling examples
-6. Cite API documentation when relevant{lang_instruction}
+6. Cite API documentation when relevant
+7. IMPORTANT: Consider the conversation history to provide contextual responses. If the developer has already asked related questions, build on previous explanations.{lang_instruction}
 
 Be technical but clear."""
 
@@ -149,9 +160,15 @@ Be technical but clear."""
 Intent: {intent}
 {kb_context}
 
-Provide API guidance with examples."""
+Provide API guidance with examples that takes into account any previous conversation context."""
 
-        response = await self.call_llm(system_prompt, user_prompt, max_tokens=700)
+        # CRITICAL: Pass conversation history for multi-turn context
+        response = await self.call_llm(
+            system_prompt,
+            user_prompt,
+            max_tokens=700,
+            conversation_history=conversation_history
+        )
 
         self.logger.debug(
             "api_llm_response_received",
