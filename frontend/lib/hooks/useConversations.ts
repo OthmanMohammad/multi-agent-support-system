@@ -4,12 +4,12 @@
  * Provides conversation data and actions with real-time updates.
  */
 
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import useSWR from 'swr';
-import { conversationsAPI, type Conversation, type ChatResponse } from '../api';
-import { toast } from 'sonner';
+import { useCallback, useState } from "react";
+import useSWR from "swr";
+import { type ChatResponse, type Conversation, conversationsAPI } from "../api";
+import { toast } from "sonner";
 
 // =============================================================================
 // USE CONVERSATIONS HOOK
@@ -17,7 +17,7 @@ import { toast } from 'sonner';
 
 export function useConversations(params?: {
   customer_email?: string;
-  status?: 'active' | 'resolved' | 'escalated';
+  status?: "active" | "resolved" | "escalated";
   limit?: number;
 }) {
   const [isCreating, setIsCreating] = useState(false);
@@ -29,7 +29,7 @@ export function useConversations(params?: {
     mutate,
     isLoading,
   } = useSWR<Conversation[]>(
-    ['conversations', params],
+    ["conversations", params],
     async () => {
       const result = await conversationsAPI.list(params);
       if (result.success) {
@@ -45,14 +45,17 @@ export function useConversations(params?: {
 
   // Create conversation
   const createConversation = useCallback(
-    async (message: string, customerEmail?: string): Promise<ChatResponse | null> => {
+    async (
+      message: string,
+      customerEmail?: string
+    ): Promise<ChatResponse | null> => {
       setIsCreating(true);
 
       try {
         const result = await conversationsAPI.create(message, customerEmail);
 
         if (!result.success) {
-          toast.error(result.error.message || 'Failed to create conversation');
+          toast.error(result.error.message || "Failed to create conversation");
           return null;
         }
 
@@ -60,8 +63,8 @@ export function useConversations(params?: {
         await mutate();
 
         return result.data;
-      } catch (error) {
-        toast.error('An unexpected error occurred');
+      } catch (_error) {
+        toast.error("An unexpected error occurred");
         return null;
       } finally {
         setIsCreating(false);
@@ -77,7 +80,7 @@ export function useConversations(params?: {
         const result = await conversationsAPI.delete(conversationId);
 
         if (!result.success) {
-          toast.error(result.error.message || 'Failed to delete conversation');
+          toast.error(result.error.message || "Failed to delete conversation");
           return { success: false };
         }
 
@@ -87,10 +90,10 @@ export function useConversations(params?: {
           false
         );
 
-        toast.success('Conversation deleted');
+        toast.success("Conversation deleted");
         return { success: true };
-      } catch (error) {
-        toast.error('An unexpected error occurred');
+      } catch (_error) {
+        toast.error("An unexpected error occurred");
         return { success: false };
       }
     },
@@ -127,11 +130,9 @@ export function useConversation(conversationId: string | null) {
     mutate,
     isLoading,
   } = useSWR<Conversation>(
-    conversationId ? ['conversation', conversationId] : null,
-    async () => {
-      if (!conversationId) return null;
-
-      const result = await conversationsAPI.get(conversationId);
+    conversationId ? ["conversation", conversationId] : null,
+    async ([, id]: [string, string]) => {
+      const result = await conversationsAPI.get(id);
       if (result.success) {
         return result.data;
       }
@@ -146,15 +147,20 @@ export function useConversation(conversationId: string | null) {
   // Send message
   const sendMessage = useCallback(
     async (message: string): Promise<ChatResponse | null> => {
-      if (!conversationId) return null;
+      if (!conversationId) {
+        return null;
+      }
 
       setIsSending(true);
 
       try {
-        const result = await conversationsAPI.addMessage(conversationId, message);
+        const result = await conversationsAPI.addMessage(
+          conversationId,
+          message
+        );
 
         if (!result.success) {
-          toast.error(result.error.message || 'Failed to send message');
+          toast.error(result.error.message || "Failed to send message");
           return null;
         }
 
@@ -162,8 +168,8 @@ export function useConversation(conversationId: string | null) {
         await mutate();
 
         return result.data;
-      } catch (error) {
-        toast.error('An unexpected error occurred');
+      } catch (_error) {
+        toast.error("An unexpected error occurred");
         return null;
       } finally {
         setIsSending(false);
@@ -174,21 +180,23 @@ export function useConversation(conversationId: string | null) {
 
   // Resolve conversation
   const resolve = useCallback(async () => {
-    if (!conversationId) return { success: false };
+    if (!conversationId) {
+      return { success: false };
+    }
 
     try {
       const result = await conversationsAPI.resolve(conversationId);
 
       if (!result.success) {
-        toast.error(result.error.message || 'Failed to resolve conversation');
+        toast.error(result.error.message || "Failed to resolve conversation");
         return { success: false };
       }
 
       await mutate();
-      toast.success('Conversation resolved');
+      toast.success("Conversation resolved");
       return { success: true };
-    } catch (error) {
-      toast.error('An unexpected error occurred');
+    } catch (_error) {
+      toast.error("An unexpected error occurred");
       return { success: false };
     }
   }, [conversationId, mutate]);
@@ -196,21 +204,25 @@ export function useConversation(conversationId: string | null) {
   // Escalate conversation
   const escalate = useCallback(
     async (reason: string) => {
-      if (!conversationId) return { success: false };
+      if (!conversationId) {
+        return { success: false };
+      }
 
       try {
         const result = await conversationsAPI.escalate(conversationId, reason);
 
         if (!result.success) {
-          toast.error(result.error.message || 'Failed to escalate conversation');
+          toast.error(
+            result.error.message || "Failed to escalate conversation"
+          );
           return { success: false };
         }
 
         await mutate();
-        toast.success('Conversation escalated');
+        toast.success("Conversation escalated");
         return { success: true };
-      } catch (error) {
-        toast.error('An unexpected error occurred');
+      } catch (_error) {
+        toast.error("An unexpected error occurred");
         return { success: false };
       }
     },
