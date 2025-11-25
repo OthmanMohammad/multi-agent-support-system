@@ -2,7 +2,14 @@
 
 import type { JSX } from "react";
 import { useCustomer, useCustomerInteractions } from "@/lib/api/hooks";
-import { ArrowLeft, Mail, Building, Phone, Clock, Star, MessageSquare } from "lucide-react";
+import {
+  Activity,
+  ArrowLeft,
+  DollarSign,
+  Mail,
+  MessageSquare,
+  Star,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
@@ -63,7 +70,13 @@ export default function CustomerDetailPage({
               Back to Customers
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold">{customer.name}</h1>
+          <h1 className="text-3xl font-bold">
+            {customer.name || customer.email}
+          </h1>
+          <p className="mt-1 text-foreground-secondary">
+            Plan:{" "}
+            <span className="font-medium capitalize">{customer.plan}</span>
+          </p>
         </div>
 
         {/* Customer Info Card */}
@@ -78,81 +91,67 @@ export default function CustomerDetailPage({
               </div>
             </div>
 
-            {customer.company && (
-              <div className="flex items-center gap-3">
-                <Building className="h-5 w-5 text-foreground-secondary" />
-                <div>
-                  <p className="text-xs text-foreground-secondary">Company</p>
-                  <p className="font-medium">{customer.company}</p>
-                </div>
-              </div>
-            )}
-
-            {customer.phone && (
-              <div className="flex items-center gap-3">
-                <Phone className="h-5 w-5 text-foreground-secondary" />
-                <div>
-                  <p className="text-xs text-foreground-secondary">Phone</p>
-                  <p className="font-medium">{customer.phone}</p>
-                </div>
-              </div>
-            )}
-
             <div className="flex items-center gap-3">
               <MessageSquare className="h-5 w-5 text-foreground-secondary" />
               <div>
                 <p className="text-xs text-foreground-secondary">
-                  Total Interactions
+                  Total Conversations
                 </p>
-                <p className="font-medium">{customer.totalInteractions}</p>
+                <p className="font-medium">{customer.total_conversations}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Activity className="h-5 w-5 text-foreground-secondary" />
+              <div>
+                <p className="text-xs text-foreground-secondary">
+                  Active Conversations
+                </p>
+                <p className="font-medium">{customer.active_conversations}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <DollarSign className="h-5 w-5 text-foreground-secondary" />
+              <div>
+                <p className="text-xs text-foreground-secondary">
+                  Lifetime Value
+                </p>
+                <p className="font-medium">
+                  ${customer.lifetime_value.toFixed(2)}
+                </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Interaction Stats */}
-        {interactionsLoading ? (
-          <Skeleton className="h-32 w-full" />
-        ) : interactions ? (
-          <div className="grid gap-6 md:grid-cols-3">
-            <div className="rounded-lg border border-border bg-surface p-6">
-              <div className="flex items-center gap-2 text-foreground-secondary">
-                <MessageSquare className="h-5 w-5" />
-                <p className="text-sm font-medium">Total Interactions</p>
-              </div>
-              <p className="mt-2 text-3xl font-bold">
-                {interactions.totalInteractions}
-              </p>
+        {/* Health Score */}
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="rounded-lg border border-border bg-surface p-6">
+            <div className="flex items-center gap-2 text-foreground-secondary">
+              <Star className="h-5 w-5" />
+              <p className="text-sm font-medium">Health Score</p>
             </div>
-
-            <div className="rounded-lg border border-border bg-surface p-6">
-              <div className="flex items-center gap-2 text-foreground-secondary">
-                <Clock className="h-5 w-5" />
-                <p className="text-sm font-medium">Avg Response Time</p>
-              </div>
-              <p className="mt-2 text-3xl font-bold">
-                {interactions.avgResponseTime.toFixed(1)}s
-              </p>
-            </div>
-
-            {interactions.satisfactionScore && (
-              <div className="rounded-lg border border-border bg-surface p-6">
-                <div className="flex items-center gap-2 text-foreground-secondary">
-                  <Star className="h-5 w-5" />
-                  <p className="text-sm font-medium">Satisfaction Score</p>
-                </div>
-                <p className="mt-2 flex items-baseline gap-1 text-3xl font-bold">
-                  {interactions.satisfactionScore.toFixed(1)}
-                  <span className="text-lg font-normal text-foreground-secondary">
-                    /5.0
-                  </span>
-                </p>
-              </div>
-            )}
+            <p className="mt-2 flex items-baseline gap-1 text-3xl font-bold">
+              {customer.health_score}
+              <span className="text-lg font-normal text-foreground-secondary">
+                /100
+              </span>
+            </p>
           </div>
-        ) : null}
 
-        {/* Conversation History */}
+          <div className="rounded-lg border border-border bg-surface p-6">
+            <div className="flex items-center gap-2 text-foreground-secondary">
+              <MessageSquare className="h-5 w-5" />
+              <p className="text-sm font-medium">Member Since</p>
+            </div>
+            <p className="mt-2 text-xl font-bold">
+              {format(new Date(customer.created_at), "MMMM dd, yyyy")}
+            </p>
+          </div>
+        </div>
+
+        {/* Conversation History Placeholder */}
         <div className="rounded-lg border border-border bg-surface p-6">
           <h2 className="mb-4 text-lg font-semibold">Conversation History</h2>
 
@@ -162,32 +161,19 @@ export default function CustomerDetailPage({
                 <Skeleton key={i} className="h-20 w-full" />
               ))}
             </div>
-          ) : interactions && interactions.conversations.length > 0 ? (
+          ) : interactions &&
+            Array.isArray(interactions) &&
+            interactions.length > 0 ? (
             <div className="space-y-3">
-              {interactions.conversations.map((conversation) => (
-                <Link
-                  key={conversation.id}
-                  href={`/chat?id=${conversation.id}`}
-                  className="block rounded-lg border border-border p-4 transition-colors hover:bg-surface-hover"
+              {interactions.map((_, index) => (
+                <div
+                  key={index}
+                  className="rounded-lg border border-border p-4"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-medium hover:text-accent">
-                        {conversation.title}
-                      </h3>
-                      <p className="mt-1 text-sm text-foreground-secondary">
-                        Created{" "}
-                        {format(
-                          new Date(conversation.createdAt),
-                          "MMM dd, yyyy 'at' HH:mm"
-                        )}
-                      </p>
-                    </div>
-                    <Button variant="ghost" size="sm">
-                      View
-                    </Button>
-                  </div>
-                </Link>
+                  <p className="text-sm text-foreground-secondary">
+                    Interaction data placeholder
+                  </p>
+                </div>
               ))}
             </div>
           ) : (
