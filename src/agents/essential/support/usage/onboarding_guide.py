@@ -70,8 +70,8 @@ class UsageAgent(BaseAgent):
                 intent=intent
             )
 
-        # Generate tutorial-style response
-        response = await self.generate_response(message, intent, kb_results)
+        # Generate tutorial-style response with conversation context
+        response = await self.generate_response(message, intent, kb_results, state)
 
         state["agent_response"] = response
         state["response_confidence"] = 0.9
@@ -88,7 +88,13 @@ class UsageAgent(BaseAgent):
 
         return state
 
-    async def generate_response(self, message: str, intent: str, kb_results: list) -> str:
+    async def generate_response(
+        self,
+        message: str,
+        intent: str,
+        kb_results: list,
+        state: AgentState
+    ) -> str:
         """Generate step-by-step tutorial response"""
         self.logger.debug(
             "usage_response_generation_started",
@@ -102,6 +108,14 @@ class UsageAgent(BaseAgent):
             for i, article in enumerate(kb_results, 1):
                 kb_context += f"\n{i}. {article['title']}\n{article['content']}\n"
 
+        # Get conversation history for multi-turn context
+        conversation_history = self.get_conversation_context(state)
+
+        self.logger.debug(
+            "usage_conversation_context",
+            history_length=len(conversation_history)
+        )
+
         system_prompt = """You are a feature usage specialist.
 
 Guidelines:
@@ -110,6 +124,7 @@ Guidelines:
 3. Include helpful tips and best practices
 4. Mention related features they might find useful
 5. Cite KB articles when relevant
+6. IMPORTANT: Consider the conversation history to provide contextual responses. If the customer has already asked related questions, build on previous explanations.
 
 Be encouraging and educational."""
 
@@ -118,9 +133,15 @@ Be encouraging and educational."""
 Intent: {intent}
 {kb_context}
 
-Provide a helpful how-to guide."""
+Provide a helpful how-to guide that takes into account any previous conversation context."""
 
-        response = await self.call_llm(system_prompt, user_prompt, max_tokens=500)
+        # CRITICAL: Pass conversation history for multi-turn context
+        response = await self.call_llm(
+            system_prompt,
+            user_prompt,
+            max_tokens=500,
+            conversation_history=conversation_history
+        )
 
         self.logger.debug(
             "usage_llm_response_received",
