@@ -8,6 +8,7 @@ import { ToastProvider } from "@/components/providers/toast-provider";
 import { CommandPalette } from "@/components/command-palette";
 import { KeyboardShortcutsOverlay } from "@/components/keyboard-shortcuts-overlay";
 import { PerformanceMonitor } from "@/components/performance-monitor";
+import { Header } from "@/components/layout/header";
 import { siteConfig } from "@/config/site";
 
 import "./globals.css";
@@ -60,7 +61,10 @@ export default function RootLayout({
         <SessionProvider>
           <QueryProvider>
             <ThemeProvider>
-              {children}
+              <div className="relative flex min-h-screen flex-col">
+                <Header />
+                <main className="flex-1">{children}</main>
+              </div>
               <ToastProvider />
               <CommandPalette />
               <KeyboardShortcutsOverlay />
