@@ -3,14 +3,14 @@
 import type { JSX } from "react";
 import { useAgentPerformance } from "@/lib/api/hooks";
 import {
-  BarChart,
   Bar,
-  XAxis,
-  YAxis,
+  BarChart,
   CartesianGrid,
-  Tooltip,
   Legend,
   ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -23,10 +23,20 @@ interface AgentPerformanceChartProps {
   period: "24h" | "7d" | "30d" | "90d";
 }
 
+const periodToDays = (period: string): number => {
+  const map: Record<string, number> = {
+    "24h": 1,
+    "7d": 7,
+    "30d": 30,
+    "90d": 90,
+  };
+  return map[period] || 7;
+};
+
 export function AgentPerformanceChart({
   period,
 }: AgentPerformanceChartProps): JSX.Element {
-  const { data, isLoading } = useAgentPerformance(period);
+  const { data, isLoading } = useAgentPerformance(periodToDays(period));
 
   if (isLoading) {
     return (
@@ -37,7 +47,7 @@ export function AgentPerformanceChart({
     );
   }
 
-  if (!data || !data.agents || data.agents.length === 0) {
+  if (!data || data.length === 0) {
     return (
       <div className="rounded-lg border border-border bg-surface p-6">
         <h2 className="text-lg font-semibold">Agent Performance</h2>
@@ -47,13 +57,12 @@ export function AgentPerformanceChart({
   }
 
   // Prepare chart data
-  const chartData = data.agents.map((agent) => ({
-    name: agent.agentName.split(" ")[0], // Shorten name for chart
-    conversations: agent.totalConversations,
-    messages: agent.totalMessages,
-    responseTime: agent.avgResponseTime,
-    satisfaction: agent.satisfactionScore,
-    cost: agent.costUsd,
+  const chartData = data.map((agent) => ({
+    name: agent.agent_name.split(" ")[0], // Shorten name for chart
+    interactions: agent.total_interactions,
+    successRate: Math.round(agent.success_rate * 100),
+    confidence: Math.round(agent.average_confidence * 100),
+    responseTime: agent.average_response_time_seconds,
   }));
 
   return (
@@ -74,43 +83,34 @@ export function AgentPerformanceChart({
                 Agent
               </th>
               <th className="pb-2 text-right font-medium text-foreground-secondary">
-                Convs
+                Interactions
               </th>
               <th className="pb-2 text-right font-medium text-foreground-secondary">
-                Msgs
+                Success Rate
+              </th>
+              <th className="pb-2 text-right font-medium text-foreground-secondary">
+                Confidence
               </th>
               <th className="pb-2 text-right font-medium text-foreground-secondary">
                 Resp Time
               </th>
-              <th className="pb-2 text-right font-medium text-foreground-secondary">
-                Satisfaction
-              </th>
-              <th className="pb-2 text-right font-medium text-foreground-secondary">
-                Cost
-              </th>
             </tr>
           </thead>
           <tbody>
-            {data.agents.map((agent) => (
-              <tr key={agent.agentId} className="border-b border-border">
-                <td className="py-3 font-medium">{agent.agentName}</td>
+            {data.map((agent) => (
+              <tr key={agent.agent_name} className="border-b border-border">
+                <td className="py-3 font-medium">{agent.agent_name}</td>
                 <td className="py-3 text-right">
-                  {agent.totalConversations.toLocaleString()}
+                  {agent.total_interactions.toLocaleString()}
                 </td>
                 <td className="py-3 text-right">
-                  {agent.totalMessages.toLocaleString()}
+                  {(agent.success_rate * 100).toFixed(1)}%
                 </td>
                 <td className="py-3 text-right">
-                  {agent.avgResponseTime.toFixed(1)}s
+                  {(agent.average_confidence * 100).toFixed(1)}%
                 </td>
                 <td className="py-3 text-right">
-                  <span className="inline-flex items-center gap-1">
-                    {agent.satisfactionScore.toFixed(1)}
-                    <span className="text-foreground-secondary">/5.0</span>
-                  </span>
-                </td>
-                <td className="py-3 text-right font-mono">
-                  ${agent.costUsd.toFixed(2)}
+                  {agent.average_response_time_seconds.toFixed(2)}s
                 </td>
               </tr>
             ))}
@@ -141,11 +141,15 @@ export function AgentPerformanceChart({
             />
             <Legend />
             <Bar
-              dataKey="conversations"
+              dataKey="interactions"
               fill="hsl(var(--accent))"
-              name="Conversations"
+              name="Interactions"
             />
-            <Bar dataKey="messages" fill="hsl(217, 91%, 60%)" name="Messages" />
+            <Bar
+              dataKey="successRate"
+              fill="hsl(142, 71%, 45%)"
+              name="Success %"
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>
