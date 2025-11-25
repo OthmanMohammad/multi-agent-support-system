@@ -40,6 +40,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   isInitialized: boolean;
+  isNewUser: boolean; // True when user just registered (first-time user)
   error: Error | null;
 }
 
@@ -50,6 +51,7 @@ interface AuthContextValue extends AuthState {
   loginWithGoogle: () => void;
   loginWithGitHub: () => void;
   refreshUser: () => Promise<void>;
+  clearNewUserFlag: () => void; // Clear the isNewUser flag after onboarding
 }
 
 // =============================================================================
@@ -61,6 +63,7 @@ const initialState: AuthState = {
   isAuthenticated: false,
   isLoading: true,
   isInitialized: false,
+  isNewUser: false,
   error: null,
 };
 
@@ -144,6 +147,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               isAuthenticated: true,
               isLoading: false,
               isInitialized: true,
+              isNewUser: false, // Returning user from stored token
               error: null,
             });
             return;
@@ -168,6 +172,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               isAuthenticated: true,
               isLoading: false,
               isInitialized: true,
+              isNewUser: false, // Returning user from NextAuth session
               error: null,
             });
             return;
@@ -180,6 +185,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           isAuthenticated: false,
           isLoading: false,
           isInitialized: true,
+          isNewUser: false,
           error: null,
         });
       } catch (error) {
@@ -189,6 +195,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           isAuthenticated: false,
           isLoading: false,
           isInitialized: true,
+          isNewUser: false,
           error: error instanceof Error ? error : new Error("Auth initialization failed"),
         });
       }
@@ -245,6 +252,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           isAuthenticated: true,
           isLoading: false,
           isInitialized: true,
+          isNewUser: false, // Existing user logging in
           error: null,
         });
 
@@ -314,6 +322,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             isAuthenticated: true,
             isLoading: false,
             isInitialized: true,
+            isNewUser: true, // New user just registered
             error: null,
           });
         } else {
@@ -335,6 +344,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             isAuthenticated: true,
             isLoading: false,
             isInitialized: true,
+            isNewUser: true, // New user just registered
             error: null,
           });
         }
@@ -374,6 +384,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         isAuthenticated: false,
         isLoading: true,
         isInitialized: true,
+        isNewUser: false,
         error: null,
       });
 
@@ -391,6 +402,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         isAuthenticated: false,
         isLoading: false,
         isInitialized: true,
+        isNewUser: false,
         error: null,
       });
 
@@ -405,6 +417,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         isAuthenticated: false,
         isLoading: false,
         isInitialized: true,
+        isNewUser: false,
         error: null,
       });
       toast.success("Logged out successfully");
@@ -440,6 +453,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [fetchUserProfile]);
 
   // ---------------------------------------------------------------------------
+  // CLEAR NEW USER FLAG
+  // ---------------------------------------------------------------------------
+
+  const clearNewUserFlag = useCallback(() => {
+    setState((prev) => ({
+      ...prev,
+      isNewUser: false,
+    }));
+  }, []);
+
+  // ---------------------------------------------------------------------------
   // CONTEXT VALUE
   // ---------------------------------------------------------------------------
 
@@ -452,8 +476,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       loginWithGoogle,
       loginWithGitHub,
       refreshUser,
+      clearNewUserFlag,
     }),
-    [state, login, register, logout, loginWithGoogle, loginWithGitHub, refreshUser]
+    [state, login, register, logout, loginWithGoogle, loginWithGitHub, refreshUser, clearNewUserFlag]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
