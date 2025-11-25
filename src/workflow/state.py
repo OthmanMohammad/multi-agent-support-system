@@ -104,66 +104,88 @@ def create_initial_state(
 ) -> AgentState:
     """
     Create initial state for a new conversation or turn
-    
+
     Args:
         message: User's message
         conversation_id: Optional conversation ID (generated if not provided)
         customer_id: Customer identifier
-        context: Optional additional context (customer metadata, history, etc.)
-        
+        context: Optional additional context including:
+            - customer_metadata: Customer info (plan, etc.)
+            - conversation_history: List of previous messages for multi-turn context
+
     Returns:
         Initial AgentState ready for workflow execution
     """
     from uuid import uuid4
-    
+
     if conversation_id is None:
         conversation_id = str(uuid4())
-    
+
     # Extract context if provided
     customer_metadata = {}
+    conversation_history = []
     if context:
         customer_metadata = context.get("customer_metadata", {})
-    
+        conversation_history = context.get("conversation_history", [])
+
     # Set defaults for customer metadata
     if "plan" not in customer_metadata:
         customer_metadata["plan"] = "free"
     if "account_age_days" not in customer_metadata:
         customer_metadata["account_age_days"] = 0
-    
+
+    # Build messages list with conversation history + current message
+    # This is CRITICAL for multi-turn conversation context
+    messages: List[Message] = []
+
+    # Add previous conversation messages (if any)
+    for hist_msg in conversation_history:
+        messages.append(
+            Message(
+                role=hist_msg.get("role", "user"),
+                content=hist_msg.get("content", ""),
+                timestamp=hist_msg.get("timestamp", datetime.now().isoformat()),
+                agent_name=hist_msg.get("agent_name")
+            )
+        )
+
+    # Add current message as the latest in the conversation
+    messages.append(
+        Message(
+            role="user",
+            content=message,
+            timestamp=datetime.now().isoformat(),
+            agent_name=None
+        )
+    )
+
     return AgentState(
         # Conversation
         conversation_id=conversation_id,
         customer_id=customer_id,
-        messages=[
-            Message(
-                role="user",
-                content=message,
-                timestamp=datetime.now().isoformat(),
-                agent_name=None
-            )
-        ],
+        messages=messages,  # Now includes full conversation history
         current_message=message,
-        
+
         # Routing
         current_agent="router",  # Always start with router
         agent_history=[],
         next_agent=None,
-        
+
         # Classification (will be filled by router)
         primary_intent=None,
         intent_confidence=0.0,
         entities={},
         sentiment=0.0,
-        
+
         # Context
         customer_metadata=customer_metadata,
         kb_results=[],
-        
+
         # Response
         agent_response=None,
         tools_used=[],
         response_confidence=0.0,
-        
+
         # Control
         should_escalate=False,
         escalation_reason=None,
