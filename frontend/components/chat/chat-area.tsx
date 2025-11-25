@@ -54,6 +54,15 @@ export function ChatArea({ conversationId }: ChatAreaProps): JSX.Element {
     }
   }, [conversationId, setCurrentConversation]);
 
+  // Clear stale conversation ID if conversation is not found (404)
+  // This must be before any conditional returns (React hooks rules)
+  useEffect(() => {
+    if (!isLoading && !conversation) {
+      // Conversation doesn't exist - clear the stale ID from store
+      setCurrentConversation(null);
+    }
+  }, [isLoading, conversation, setCurrentConversation]);
+
   const handleReopen = async (): Promise<void> => {
     setIsReopening(true);
     try {
@@ -70,14 +79,6 @@ export function ChatArea({ conversationId }: ChatAreaProps): JSX.Element {
       </div>
     );
   }
-
-  // Clear stale conversation ID if conversation is not found (404)
-  useEffect(() => {
-    if (!isLoading && !conversation) {
-      // Conversation doesn't exist - clear the stale ID from store
-      setCurrentConversation(null);
-    }
-  }, [isLoading, conversation, setCurrentConversation]);
 
   if (!conversation) {
     return (
