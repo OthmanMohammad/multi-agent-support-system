@@ -2,7 +2,7 @@
 
 import type { JSX } from "react";
 import { useState } from "react";
-import { MoreVertical, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { Conversation } from "@/lib/types/api";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,8 @@ export function ConversationItem({
   onClick,
 }: ConversationItemProps): JSX.Element {
   // Generate title from primary_intent or use fallback
-  const displayTitle = conversation.primary_intent ||
+  const displayTitle =
+    conversation.primary_intent ||
     `Conversation ${conversation.conversation_id.slice(0, 8)}...`;
 
   const [showActions, setShowActions] = useState(false);
@@ -64,7 +65,10 @@ export function ConversationItem({
 
       {/* Actions */}
       {showActions && (
-        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="flex items-center gap-1"
+          onClick={(e) => e.stopPropagation()}
+        >
           <Button
             size="icon"
             variant="ghost"
