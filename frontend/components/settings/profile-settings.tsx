@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Camera, Save, Loader2 } from "lucide-react";
+import { Camera, Loader2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,7 +49,7 @@ export function ProfileSettings(): JSX.Element {
     },
   });
 
-  const onSubmit = async (data: ProfileFormData): Promise<void> => {
+  const onSubmit = async (_data: ProfileFormData): Promise<void> => {
     try {
       // TODO: Implement profile update API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -57,16 +57,21 @@ export function ProfileSettings(): JSX.Element {
       toast.success("Profile updated", {
         description: "Your profile has been updated successfully.",
       });
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to update profile", {
-        description: error instanceof Error ? error.message : "Please try again.",
+        description:
+          _error instanceof Error ? _error.message : "Please try again.",
       });
     }
   };
 
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+  const handleAvatarChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ): Promise<void> => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
@@ -100,7 +105,7 @@ export function ProfileSettings(): JSX.Element {
       toast.success("Avatar uploaded", {
         description: "Your profile picture has been updated.",
       });
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to upload avatar", {
         description: "Please try again.",
       });
@@ -182,7 +187,9 @@ export function ProfileSettings(): JSX.Element {
                 className={cn(errors.name && "border-destructive")}
               />
               {errors.name && (
-                <p className="mt-1 text-xs text-destructive">{errors.name.message}</p>
+                <p className="mt-1 text-xs text-destructive">
+                  {errors.name.message}
+                </p>
               )}
             </div>
 
@@ -196,7 +203,9 @@ export function ProfileSettings(): JSX.Element {
                 className={cn(errors.email && "border-destructive")}
               />
               {errors.email && (
-                <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>
+                <p className="mt-1 text-xs text-destructive">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 
@@ -214,14 +223,20 @@ export function ProfileSettings(): JSX.Element {
                 placeholder="Tell us about yourself..."
               />
               {errors.bio && (
-                <p className="mt-1 text-xs text-destructive">{errors.bio.message}</p>
+                <p className="mt-1 text-xs text-destructive">
+                  {errors.bio.message}
+                </p>
               )}
             </div>
 
             {/* Company */}
             <div>
               <Label htmlFor="company">Company</Label>
-              <Input id="company" {...register("company")} placeholder="Acme Inc." />
+              <Input
+                id="company"
+                {...register("company")}
+                placeholder="Acme Inc."
+              />
             </div>
 
             {/* Location */}
@@ -245,7 +260,9 @@ export function ProfileSettings(): JSX.Element {
                 className={cn(errors.website && "border-destructive")}
               />
               {errors.website && (
-                <p className="mt-1 text-xs text-destructive">{errors.website.message}</p>
+                <p className="mt-1 text-xs text-destructive">
+                  {errors.website.message}
+                </p>
               )}
             </div>
           </div>
