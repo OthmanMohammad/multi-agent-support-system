@@ -1,10 +1,9 @@
 "use client";
 
 import type { JSX } from "react";
-import { useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Github } from "lucide-react";
@@ -21,63 +20,89 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { signInSchema, type SignInFormData } from "@/lib/validations/auth";
+import { useAuth } from "@/lib/contexts/auth-context";
 
+/**
+ * Sign In Page
+ *
+ * Enterprise-grade authentication page with:
+ * - Email/password login via useAuth context
+ * - OAuth support (Google, GitHub)
+ * - Form validation with Zod
+ * - Redirect handling for callback URLs
+ * - Auto-redirect if already authenticated
+ */
 export default function SignInPage(): JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const registered = searchParams.get("registered") === "true";
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Use the auth context for login
+  const {
+    login,
+    loginWithGoogle,
+    loginWithGitHub,
+    isLoading,
+    isAuthenticated,
+    isInitialized,
+  } = useAuth();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    setError,
   } = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
   });
 
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isInitialized && isAuthenticated) {
+      router.replace(callbackUrl);
+    }
+  }, [isInitialized, isAuthenticated, router, callbackUrl]);
+
+  // Handle form submission
   const onSubmit = async (data: SignInFormData): Promise<void> => {
-    setIsLoading(true);
-    setError(null);
+    const result = await login(data.email, data.password);
 
-    try {
-      const result = await signIn("credentials", {
-        email: data.email,
-        password: data.password,
-        redirect: false,
+    if (!result.success) {
+      setError("root", {
+        type: "manual",
+        message: "Invalid email or password",
       });
+    }
+    // Success case: login() handles redirect to dashboard
+  };
 
-      if (result?.error) {
-        setError("Invalid email or password");
-        return;
-      }
-
-      router.push(callbackUrl);
-      router.refresh();
-    } catch (err) {
-      setError("An error occurred. Please try again.");
-      console.error("Sign in error:", err);
-    } finally {
-      setIsLoading(false);
+  // Handle OAuth sign in
+  const handleOAuthSignIn = (provider: "google" | "github"): void => {
+    if (provider === "google") {
+      loginWithGoogle();
+    } else {
+      loginWithGitHub();
     }
   };
 
-  const handleOAuthSignIn = async (
-    provider: "google" | "github"
-  ): Promise<void> => {
-    setIsLoading(true);
-    setError(null);
+  // Show loading while checking auth state
+  if (!isInitialized) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
-    try {
-      await signIn(provider, { callbackUrl });
-    } catch (err) {
-      setError("An error occurred. Please try again.");
-      console.error("OAuth sign in error:", err);
-      setIsLoading(false);
-    }
-  };
+  // Already authenticated - show loading while redirecting
+  if (isAuthenticated) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
@@ -89,9 +114,17 @@ export default function SignInPage(): JSX.Element {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {error && (
+          {/* Success message from registration */}
+          {registered && (
+            <div className="rounded-md bg-success/10 p-3 text-sm text-success">
+              Account created successfully! Please sign in.
+            </div>
+          )}
+
+          {/* Error message */}
+          {errors.root && (
             <div className="rounded-md bg-error/10 p-3 text-sm text-error">
-              {error}
+              {errors.root.message}
             </div>
           )}
 
@@ -103,6 +136,7 @@ export default function SignInPage(): JSX.Element {
                 type="email"
                 placeholder="name@example.com"
                 disabled={isLoading}
+                autoComplete="email"
                 {...register("email")}
               />
               {errors.email && (
@@ -123,8 +157,9 @@ export default function SignInPage(): JSX.Element {
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder="Enter your password"
                 disabled={isLoading}
+                autoComplete="current-password"
                 {...register("password")}
               />
               {errors.password && (
@@ -150,6 +185,7 @@ export default function SignInPage(): JSX.Element {
 
           <div className="grid grid-cols-2 gap-4">
             <Button
+              type="button"
               variant="outline"
               onClick={() => handleOAuthSignIn("google")}
               disabled={isLoading}
@@ -175,6 +211,7 @@ export default function SignInPage(): JSX.Element {
               Google
             </Button>
             <Button
+              type="button"
               variant="outline"
               onClick={() => handleOAuthSignIn("github")}
               disabled={isLoading}

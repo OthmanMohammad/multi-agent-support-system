@@ -1,6 +1,7 @@
 """
 Customer routes - HTTP endpoints for customer management
 
+All endpoints require authentication via JWT token or API key.
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
 from uuid import UUID
@@ -8,6 +9,8 @@ from typing import Optional, List
 from pydantic import BaseModel
 
 from src.api.dependencies import get_customer_application_service
+from src.api.dependencies.auth_dependencies import get_current_user_or_api_key
+from src.database.models.user import User
 from src.api.error_handlers import map_error_to_http
 from src.services.application.customer_service import CustomerApplicationService
 from src.utils.logging.setup import get_logger
@@ -31,13 +34,18 @@ class PlanChangeRequest(BaseModel):
 @router.post("/customers", status_code=201)
 async def create_customer(
     request: CustomerCreateRequest,
+    current_user: User = Depends(get_current_user_or_api_key),
     service: CustomerApplicationService = Depends(get_customer_application_service)
 ):
-    """Create new customer"""
+    """Create new customer
+
+    Requires authentication via JWT token or API key.
+    """
     logger.info(
         "create_customer_endpoint_called",
         email=request.email,
-        plan=request.plan
+        plan=request.plan,
+        user_id=str(current_user.id)
     )
     
     result = await service.create_customer(
@@ -67,9 +75,13 @@ async def create_customer(
 @router.get("/customers/{customer_id}")
 async def get_customer_profile(
     customer_id: UUID,
+    current_user: User = Depends(get_current_user_or_api_key),
     service: CustomerApplicationService = Depends(get_customer_application_service)
 ):
-    """Get customer profile with statistics"""
+    """Get customer profile with statistics
+
+    Requires authentication via JWT token or API key.
+    """
     logger.debug(
         "get_customer_profile_endpoint_called",
         customer_id=str(customer_id)
@@ -97,9 +109,13 @@ async def get_customer_profile(
 async def list_customers(
     plan: Optional[str] = Query(None, description="Filter by plan"),
     limit: int = Query(50, ge=1, le=100, description="Max results"),
+    current_user: User = Depends(get_current_user_or_api_key),
     service: CustomerApplicationService = Depends(get_customer_application_service)
 ):
-    """List all customers with optional filters"""
+    """List all customers with optional filters
+
+    Requires authentication via JWT token or API key.
+    """
     logger.debug(
         "list_customers_endpoint_called",
         plan=plan,
@@ -128,9 +144,13 @@ async def list_customers(
 @router.delete("/customers/{customer_id}", status_code=200)
 async def delete_customer(
     customer_id: UUID,
+    current_user: User = Depends(get_current_user_or_api_key),
     service: CustomerApplicationService = Depends(get_customer_application_service)
 ):
-    """Delete a customer"""
+    """Delete a customer
+
+    Requires authentication via JWT token or API key.
+    """
     logger.warning(
         "delete_customer_endpoint_called",
         customer_id=str(customer_id)
@@ -158,9 +178,13 @@ async def delete_customer(
 async def upgrade_customer_plan(
     customer_id: UUID,
     request: PlanChangeRequest,
+    current_user: User = Depends(get_current_user_or_api_key),
     service: CustomerApplicationService = Depends(get_customer_application_service)
 ):
-    """Upgrade customer plan"""
+    """Upgrade customer plan
+
+    Requires authentication via JWT token or API key.
+    """
     logger.info(
         "upgrade_customer_plan_endpoint_called",
         customer_id=str(customer_id),
@@ -195,9 +219,13 @@ async def upgrade_customer_plan(
 async def downgrade_customer_plan(
     customer_id: UUID,
     request: PlanChangeRequest,
+    current_user: User = Depends(get_current_user_or_api_key),
     service: CustomerApplicationService = Depends(get_customer_application_service)
 ):
-    """Downgrade customer plan"""
+    """Downgrade customer plan
+
+    Requires authentication via JWT token or API key.
+    """
     logger.info(
         "downgrade_customer_plan_endpoint_called",
         customer_id=str(customer_id),

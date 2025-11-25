@@ -9,12 +9,28 @@ import { ConversationChart } from "@/components/dashboard/conversation-chart";
 import { AgentPerformanceChart } from "@/components/dashboard/agent-performance-chart";
 import { RecentConversations } from "@/components/dashboard/recent-conversations";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AuthGuard } from "@/components/auth/auth-guard";
 
 /**
  * Dashboard Page
- * Analytics overview, metrics, and charts for multi-agent support system
+ *
+ * Protected route requiring authentication.
+ * Shows analytics overview, metrics, and charts for the multi-agent support system.
  */
 export default function DashboardPage(): JSX.Element {
+  return (
+    <AuthGuard>
+      <DashboardContent />
+    </AuthGuard>
+  );
+}
+
+/**
+ * Dashboard Content Component
+ *
+ * Contains the actual dashboard UI, rendered only when authenticated.
+ */
+function DashboardContent(): JSX.Element {
   const [period, setPeriod] = useState<"24h" | "7d" | "30d" | "90d">("7d");
   const { data: overview, isLoading } = useAnalyticsOverview(period);
 

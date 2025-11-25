@@ -2,6 +2,7 @@
 Conversation Streaming Routes - Server-Sent Events (SSE)
 
 Real-time AI response streaming for chat conversations.
+All endpoints require authentication via JWT token or API key.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -13,6 +14,8 @@ import json
 import asyncio
 
 from src.api.dependencies import get_conversation_application_service
+from src.api.dependencies.auth_dependencies import get_current_user_or_api_key
+from src.database.models.user import User
 from src.api.error_handlers import map_error_to_http
 from src.services.application.conversation_service import ConversationApplicationService
 from src.utils.logging.setup import get_logger
@@ -205,10 +208,13 @@ async def stream_conversation_response(
 async def stream_message_response(
     conversation_id: UUID,
     request: StreamMessageRequest,
+    current_user: User = Depends(get_current_user_or_api_key),
     service: ConversationApplicationService = Depends(get_conversation_application_service)
 ):
     """
     Stream AI response for a message in real-time
+
+    Requires authentication via JWT token or API key.
 
     Returns Server-Sent Events (SSE) stream with:
     - Real-time AI response chunks
@@ -227,6 +233,7 @@ async def stream_message_response(
     logger.info(
         "stream_message_endpoint_called",
         conversation_id=str(conversation_id),
+        user_id=str(current_user.id),
         message_length=len(request.message)
     )
 

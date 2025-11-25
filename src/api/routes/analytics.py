@@ -1,11 +1,14 @@
 """
 Analytics routes - HTTP endpoints for analytics and metrics
 
+All endpoints require authentication via JWT token or API key.
 """
 from fastapi import APIRouter, Depends, Query
 from typing import Optional
 
 from src.api.dependencies import get_analytics_service
+from src.api.dependencies.auth_dependencies import get_current_user_or_api_key
+from src.database.models.user import User
 from src.api.error_handlers import map_error_to_http
 from src.services.infrastructure.analytics_service import AnalyticsService
 from src.utils.logging.setup import get_logger
@@ -17,10 +20,13 @@ logger = get_logger(__name__)
 @router.get("/analytics/overview")
 async def get_analytics_overview(
     period: str = Query("7d", description="Time period: 7d, 30d, 90d"),
+    current_user: User = Depends(get_current_user_or_api_key),
     service: AnalyticsService = Depends(get_analytics_service)
 ):
     """
     Get analytics overview with high-level metrics
+
+    Requires authentication via JWT token or API key.
 
     Returns summary statistics for the dashboard including:
     - Total conversations
@@ -71,9 +77,13 @@ async def get_analytics_overview(
 @router.get("/analytics/conversations")
 async def get_conversation_statistics(
     days: int = Query(7, ge=1, le=90, description="Number of days to analyze"),
+    current_user: User = Depends(get_current_user_or_api_key),
     service: AnalyticsService = Depends(get_analytics_service)
 ):
-    """Get conversation statistics for period"""
+    """Get conversation statistics for period
+
+    Requires authentication via JWT token or API key.
+    """
     logger.info(
         "get_conversation_statistics_endpoint_called",
         days=days
@@ -102,9 +112,13 @@ async def get_conversation_statistics(
 async def get_agent_performance(
     agent_name: str,
     days: int = Query(7, ge=1, le=90, description="Number of days to analyze"),
+    current_user: User = Depends(get_current_user_or_api_key),
     service: AnalyticsService = Depends(get_analytics_service)
 ):
-    """Get performance metrics for specific agent"""
+    """Get performance metrics for specific agent
+
+    Requires authentication via JWT token or API key.
+    """
     logger.info(
         "get_agent_performance_endpoint_called",
         agent_name=agent_name,
@@ -138,9 +152,13 @@ async def get_agent_performance(
 @router.get("/analytics/agents")
 async def get_all_agents_comparison(
     days: int = Query(7, ge=1, le=90, description="Number of days to analyze"),
+    current_user: User = Depends(get_current_user_or_api_key),
     service: AnalyticsService = Depends(get_analytics_service)
 ):
-    """Compare performance across all agents"""
+    """Compare performance across all agents
+
+    Requires authentication via JWT token or API key.
+    """
     logger.info(
         "get_all_agents_comparison_endpoint_called",
         days=days
@@ -168,9 +186,13 @@ async def get_all_agents_comparison(
 @router.get("/analytics/csat")
 async def get_customer_satisfaction(
     days: int = Query(30, ge=1, le=90, description="Number of days to analyze"),
+    current_user: User = Depends(get_current_user_or_api_key),
     service: AnalyticsService = Depends(get_analytics_service)
 ):
-    """Get customer satisfaction metrics based on sentiment"""
+    """Get customer satisfaction metrics based on sentiment
+
+    Requires authentication via JWT token or API key.
+    """
     logger.info(
         "get_customer_satisfaction_endpoint_called",
         days=days
@@ -198,9 +220,13 @@ async def get_customer_satisfaction(
 @router.get("/analytics/intents")
 async def get_intent_distribution(
     days: int = Query(7, ge=1, le=90, description="Number of days to analyze"),
+    current_user: User = Depends(get_current_user_or_api_key),
     service: AnalyticsService = Depends(get_analytics_service)
 ):
-    """Get distribution of intents"""
+    """Get distribution of intents
+
+    Requires authentication via JWT token or API key.
+    """
     logger.info(
         "get_intent_distribution_endpoint_called",
         days=days
@@ -228,9 +254,13 @@ async def get_intent_distribution(
 @router.get("/analytics/resolution-time")
 async def get_resolution_time_trends(
     days: int = Query(7, ge=1, le=90, description="Number of days to analyze"),
+    current_user: User = Depends(get_current_user_or_api_key),
     service: AnalyticsService = Depends(get_analytics_service)
 ):
-    """Get resolution time trends"""
+    """Get resolution time trends
+
+    Requires authentication via JWT token or API key.
+    """
     logger.info(
         "get_resolution_time_trends_endpoint_called",
         days=days
@@ -258,9 +288,13 @@ async def get_resolution_time_trends(
 @router.get("/analytics/escalation-rate")
 async def get_escalation_rate(
     days: int = Query(7, ge=1, le=90, description="Number of days to analyze"),
+    current_user: User = Depends(get_current_user_or_api_key),
     service: AnalyticsService = Depends(get_analytics_service)
 ):
-    """Get escalation rate"""
+    """Get escalation rate
+
+    Requires authentication via JWT token or API key.
+    """
     logger.info(
         "get_escalation_rate_endpoint_called",
         days=days
@@ -288,9 +322,13 @@ async def get_escalation_rate(
 @router.get("/analytics/kb-effectiveness")
 async def get_kb_effectiveness(
     days: int = Query(7, ge=1, le=90, description="Number of days to analyze"),
+    current_user: User = Depends(get_current_user_or_api_key),
     service: AnalyticsService = Depends(get_analytics_service)
 ):
-    """Get knowledge base effectiveness metrics"""
+    """Get knowledge base effectiveness metrics
+
+    Requires authentication via JWT token or API key.
+    """
     logger.info(
         "get_kb_effectiveness_endpoint_called",
         days=days

@@ -6,9 +6,12 @@ import { ConversationSidebar } from "@/components/chat/conversation-sidebar";
 import { ChatArea } from "@/components/chat/chat-area";
 import { EmptyState } from "@/components/chat/empty-state";
 import { ErrorBoundaryAdvanced } from "@/components/error-boundary-advanced";
+import { AuthGuard } from "@/components/auth/auth-guard";
 
 /**
  * Chat Page - Main chat interface
+ *
+ * Protected route requiring authentication.
  * Features:
  * - Conversation sidebar with search and filters
  * - Real-time message streaming
@@ -18,6 +21,19 @@ import { ErrorBoundaryAdvanced } from "@/components/error-boundary-advanced";
  * - Agent routing visualization
  */
 export default function ChatPage(): JSX.Element {
+  return (
+    <AuthGuard>
+      <ChatContent />
+    </AuthGuard>
+  );
+}
+
+/**
+ * Chat Content Component
+ *
+ * Contains the actual chat UI, rendered only when authenticated.
+ */
+function ChatContent(): JSX.Element {
   const currentConversationId = useChatStore(
     (state) => state.currentConversationId
   );

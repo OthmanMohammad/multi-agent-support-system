@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { navConfig, siteConfig } from "@/config/site";
-import { useAuth } from "@/lib/hooks/useAuth";
+import { useAuth } from "@/lib/contexts/auth-context";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
@@ -32,7 +32,10 @@ import { Skeleton } from "@/components/ui/skeleton";
  */
 export const Header = (): JSX.Element => {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const { user, isAuthenticated, isLoading, isInitialized, logout } = useAuth();
+
+  // Show loading state only during initial auth check
+  const showLoading = !isInitialized || isLoading;
 
   /**
    * Get user initials for avatar fallback
@@ -102,8 +105,8 @@ export const Header = (): JSX.Element => {
           <ThemeToggle />
 
           {/* Auth Section */}
-          {isLoading ? (
-            // Loading skeleton
+          {showLoading ? (
+            // Loading skeleton during auth initialization
             <div className="flex items-center gap-2">
               <Skeleton className="h-8 w-8 rounded-full" />
             </div>
