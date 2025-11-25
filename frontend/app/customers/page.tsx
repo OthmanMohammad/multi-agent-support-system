@@ -1,10 +1,9 @@
 "use client";
 
 import type { JSX } from "react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useCustomers } from "@/lib/api/hooks";
-import { Search, Mail, Building, Phone, Calendar } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Mail, Search, Users } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -15,14 +14,25 @@ import { format } from "date-fns";
  */
 export default function CustomersPage(): JSX.Element {
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(0);
-  const limit = 20;
 
-  const { data, isLoading } = useCustomers({
-    limit,
-    offset: page * limit,
-    search: search || undefined,
-  });
+  const { customers, isLoading } = useCustomers();
+
+  // Filter customers by search term
+  const filteredCustomers = useMemo(() => {
+    if (!customers) {
+      return [];
+    }
+    if (!search) {
+      return customers;
+    }
+
+    const searchLower = search.toLowerCase();
+    return customers.filter(
+      (c) =>
+        c.email.toLowerCase().includes(searchLower) ||
+        (c.name && c.name.toLowerCase().includes(searchLower))
+    );
+  }, [customers, search]);
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -32,7 +42,7 @@ export default function CustomersPage(): JSX.Element {
           <div>
             <h1 className="text-3xl font-bold">Customers</h1>
             <p className="mt-1 text-foreground-secondary">
-              {data?.total || 0} total customers
+              {customers?.length || 0} total customers
             </p>
           </div>
           <div className="relative">
@@ -51,99 +61,63 @@ export default function CustomersPage(): JSX.Element {
         {isLoading ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-64 rounded-lg" />
+              <Skeleton key={i} className="h-48 rounded-lg" />
             ))}
           </div>
-        ) : data && data.customers && data.customers.length > 0 ? (
-          <>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {data.customers.map((customer) => (
-                <Link
-                  key={customer.id}
-                  href={`/customers/${customer.id}`}
-                  className="group rounded-lg border border-border bg-surface p-6 transition-all hover:shadow-lg"
-                >
-                  <div className="mb-4 flex items-start justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold group-hover:text-accent">
-                        {customer.name}
-                      </h3>
-                      <p className="mt-1 flex items-center gap-1.5 text-sm text-foreground-secondary">
-                        <Mail className="h-3.5 w-3.5" />
-                        {customer.email}
-                      </p>
-                    </div>
-                  </div>
-
-                  {customer.company && (
-                    <p className="mb-2 flex items-center gap-1.5 text-sm text-foreground-secondary">
-                      <Building className="h-3.5 w-3.5" />
-                      {customer.company}
+        ) : filteredCustomers.length > 0 ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filteredCustomers.map((customer) => (
+              <Link
+                key={customer.customer_id}
+                href={`/customers/${customer.customer_id}`}
+                className="group rounded-lg border border-border bg-surface p-6 transition-all hover:shadow-lg"
+              >
+                <div className="mb-4 flex items-start justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold group-hover:text-accent">
+                      {customer.name || "Unnamed Customer"}
+                    </h3>
+                    <p className="mt-1 flex items-center gap-1.5 text-sm text-foreground-secondary">
+                      <Mail className="h-3.5 w-3.5" />
+                      {customer.email}
                     </p>
-                  )}
-
-                  {customer.phone && (
-                    <p className="mb-2 flex items-center gap-1.5 text-sm text-foreground-secondary">
-                      <Phone className="h-3.5 w-3.5" />
-                      {customer.phone}
-                    </p>
-                  )}
-
-                  <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
-                    <div>
-                      <p className="text-xs text-foreground-secondary">
-                        Interactions
-                      </p>
-                      <p className="text-lg font-semibold">
-                        {customer.totalInteractions}
-                      </p>
-                    </div>
-                    {customer.lastInteraction && (
-                      <div className="text-right">
-                        <p className="text-xs text-foreground-secondary">
-                          Last Activity
-                        </p>
-                        <p className="text-sm font-medium">
-                          {format(
-                            new Date(customer.lastInteraction),
-                            "MMM dd, yyyy"
-                          )}
-                        </p>
-                      </div>
-                    )}
                   </div>
-                </Link>
-              ))}
-            </div>
+                  <span
+                    className={`rounded-full px-2 py-1 text-xs font-medium capitalize ${
+                      customer.plan === "enterprise"
+                        ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
+                        : customer.plan === "premium"
+                          ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
+                          : customer.plan === "basic"
+                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                            : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                    }`}
+                  >
+                    {customer.plan}
+                  </span>
+                </div>
 
-            {/* Pagination */}
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-foreground-secondary">
-                Showing {page * limit + 1} to{" "}
-                {Math.min((page + 1) * limit, data.total)} of {data.total}{" "}
-                customers
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setPage(Math.max(0, page - 1))}
-                  disabled={page === 0}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setPage(page + 1)}
-                  disabled={(page + 1) * limit >= data.total}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          </>
+                <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
+                  <div>
+                    <p className="text-xs text-foreground-secondary">Plan</p>
+                    <p className="text-sm font-medium capitalize">
+                      {customer.plan}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-foreground-secondary">Joined</p>
+                    <p className="text-sm font-medium">
+                      {format(new Date(customer.created_at), "MMM dd, yyyy")}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
         ) : (
           <div className="rounded-lg border border-border bg-surface p-12 text-center">
-            <p className="text-lg font-medium">No customers found</p>
+            <Users className="mx-auto h-12 w-12 text-foreground-secondary" />
+            <p className="mt-4 text-lg font-medium">No customers found</p>
             <p className="mt-2 text-foreground-secondary">
               {search
                 ? "Try adjusting your search"
