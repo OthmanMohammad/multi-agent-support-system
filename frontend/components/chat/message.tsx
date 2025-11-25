@@ -3,7 +3,7 @@
 import type { JSX } from "react";
 import { useState } from "react";
 import { format } from "date-fns";
-import { Copy, Check, User, Bot } from "lucide-react";
+import { Bot, Check, Copy, User } from "lucide-react";
 import type { ConversationMessage as MessageType } from "@/lib/types/api";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -22,9 +22,12 @@ interface MessageProps {
  * Message Component
  * Individual message with markdown rendering and actions
  */
-export function Message({ message, isStreaming = false }: MessageProps): JSX.Element {
+export function Message({
+  message,
+  isStreaming = false,
+}: MessageProps): JSX.Element {
   const [isCopied, setIsCopied] = useState(false);
-  const isUser = message.role === "USER";
+  const isUser = message.role === "user";
 
   const handleCopy = async (): Promise<void> => {
     await navigator.clipboard.writeText(message.content);
@@ -34,10 +37,7 @@ export function Message({ message, isStreaming = false }: MessageProps): JSX.Ele
 
   return (
     <div
-      className={cn(
-        "group relative flex gap-4",
-        isUser && "flex-row-reverse"
-      )}
+      className={cn("group relative flex gap-4", isUser && "flex-row-reverse")}
     >
       {/* Avatar */}
       <div
@@ -54,13 +54,13 @@ export function Message({ message, isStreaming = false }: MessageProps): JSX.Ele
       </div>
 
       {/* Message Content */}
-      <div className={cn("flex-1 space-y-2", isUser && "flex flex-col items-end")}>
+      <div
+        className={cn("flex-1 space-y-2", isUser && "flex flex-col items-end")}
+      >
         <div
           className={cn(
             "rounded-lg px-4 py-3",
-            isUser
-              ? "bg-accent text-accent-foreground"
-              : "bg-surface",
+            isUser ? "bg-accent text-accent-foreground" : "bg-surface",
             isStreaming && "animate-pulse"
           )}
         >
@@ -73,18 +73,25 @@ export function Message({ message, isStreaming = false }: MessageProps): JSX.Ele
                 rehypePlugins={[rehypeHighlight]}
                 components={{
                   // Custom link component for security
-                  a: ({ node, ...props }) => (
+                  a: ({ node: _node, ...props }) => (
                     <a {...props} target="_blank" rel="noopener noreferrer" />
                   ),
                   // Custom code block with copy button
-                  code: ({ node, inline, className, children, ...props }) => {
+                  code: ({ className, children }) => {
                     const codeString = String(children).replace(/\n$/, "");
-                    return inline ? (
-                      <InlineCode>{codeString}</InlineCode>
-                    ) : (
-                      <CodeBlock className={className} language={className?.replace("language-", "")}>
+                    // Code blocks have a language-* className, inline code doesn't
+                    const isCodeBlock =
+                      className?.startsWith("language-") ||
+                      codeString.includes("\n");
+                    return isCodeBlock ? (
+                      <CodeBlock
+                        className={className || ""}
+                        language={className?.replace("language-", "") || "text"}
+                      >
                         {codeString}
                       </CodeBlock>
+                    ) : (
+                      <InlineCode>{codeString}</InlineCode>
                     );
                   },
                 }}
@@ -102,7 +109,7 @@ export function Message({ message, isStreaming = false }: MessageProps): JSX.Ele
             isUser && "flex-row-reverse"
           )}
         >
-          <span>{format(new Date(message.createdAt), "HH:mm")}</span>
+          <span>{format(new Date(message.timestamp), "HH:mm")}</span>
 
           {!isUser && !isStreaming && (
             <Button
