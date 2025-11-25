@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "@/lib/utils/toast";
 
 /**
@@ -34,23 +34,48 @@ interface SpeechOptions {
   voice?: SpeechSynthesisVoice;
 }
 
+// Declare types for Web Speech API (not in standard DOM types)
+/* eslint-disable @typescript-eslint/no-explicit-any */
+type SpeechRecognitionType = new () => any;
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+function getSpeechRecognition(): SpeechRecognitionType | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  return (
+    (
+      window as Window & {
+        SpeechRecognition?: SpeechRecognitionType;
+        webkitSpeechRecognition?: SpeechRecognitionType;
+      }
+    ).SpeechRecognition ||
+    (window as Window & { webkitSpeechRecognition?: SpeechRecognitionType })
+      .webkitSpeechRecognition ||
+    null
+  );
+}
+
+function checkSpeechSupport(): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  return !!getSpeechRecognition() && "speechSynthesis" in window;
+}
+
 export function useVoice(): UseVoiceReturn {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isSupported, setIsSupported] = useState(false);
+  const [isSupported] = useState(checkSpeechSupport);
 
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  // SpeechRecognition type is not in standard DOM types
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const recognitionRef = useRef<any>(null);
 
-  // Check browser support
+  // Setup speech recognition
   useEffect(() => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition;
-
-    const speechSynthesisSupported = "speechSynthesis" in window;
-
-    setIsSupported(!!SpeechRecognition && speechSynthesisSupported);
+    const SpeechRecognition = getSpeechRecognition();
 
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
@@ -58,25 +83,23 @@ export function useVoice(): UseVoiceReturn {
       recognition.interimResults = true;
       recognition.lang = "en-US";
 
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
+      recognition.onresult = (event: any) => {
         let finalTranscript = "";
         let interimTranscript = "";
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const transcriptPiece = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
-            finalTranscript += transcriptPiece + " ";
+            finalTranscript += `${transcriptPiece} `;
           } else {
             interimTranscript += transcriptPiece;
           }
         }
 
-        setTranscript(
-          (prev) => prev + finalTranscript + interimTranscript
-        );
+        setTranscript((prev) => prev + finalTranscript + interimTranscript);
       };
 
-      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      recognition.onerror = (event: any) => {
         console.error("Speech recognition error:", event.error);
         setIsListening(false);
 
