@@ -9,7 +9,7 @@ from typing import Optional, List
 
 from src.api.models import ChatRequest, ChatResponse, EscalateRequest
 from src.database.schemas.conversation import ConversationWithMessages, ConversationInDB
-from src.database.models.user import User
+from src.database.models.user import User, UserRole
 from src.api.dependencies import get_conversation_application_service
 from src.api.dependencies.auth_dependencies import get_current_user_or_api_key
 from src.api.error_handlers import map_error_to_http
@@ -18,6 +18,48 @@ from src.utils.logging.setup import get_logger
 
 router = APIRouter()
 logger = get_logger(__name__)
+
+
+async def verify_conversation_access(
+    conversation_id: UUID,
+    current_user: User,
+    service: ConversationApplicationService
+) -> None:
+    """
+    Verify that the current user has access to the specified conversation.
+
+    Access control:
+    - Admin/Super Admin: Can access any conversation
+    - Regular users: Can only access their own conversations
+
+    Raises:
+        HTTPException(403): If user doesn't have permission to access the conversation
+        HTTPException(404): If conversation not found
+    """
+    is_admin = current_user.role in (UserRole.SUPER_ADMIN, UserRole.ADMIN)
+
+    if is_admin:
+        return  # Admins can access all conversations
+
+    # Get conversation with customer relationship
+    conversation = await service.uow.conversations.get_by_id(conversation_id)
+
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    if conversation.customer:
+        customer_email = conversation.customer.email
+        if customer_email != current_user.email:
+            logger.warning(
+                "conversation_access_denied",
+                conversation_id=str(conversation_id),
+                user_email=current_user.email,
+                customer_email=customer_email
+            )
+            raise HTTPException(
+                status_code=403,
+                detail="You don't have permission to access this conversation"
+            )
 
 
 @router.post("/conversations", response_model=ChatResponse, status_code=201)
@@ -79,6 +121,11 @@ async def get_conversation(
     """Get conversation details with messages
 
     Requires authentication via JWT token or API key.
+
+    Access control:
+    - Admin/Super Admin: Can access any conversation
+    - Regular users: Can only access their own conversations
+
     Returns conversation with full message history. FastAPI automatically
     converts UUID and datetime objects to JSON-serializable strings.
     """
@@ -87,6 +134,9 @@ async def get_conversation(
         conversation_id=str(conversation_id),
         user_id=str(current_user.id)
     )
+
+    # Authorization check
+    await verify_conversation_access(conversation_id, current_user, service)
 
     result = await service.get_conversation(conversation_id)
 
@@ -129,6 +179,9 @@ async def add_message(
         message_length=len(request.message)
     )
 
+    # Authorization check
+    await verify_conversation_access(conversation_id, current_user, service)
+
     result = await service.add_message(
         conversation_id=conversation_id,
         message=request.message
@@ -169,6 +222,9 @@ async def resolve_conversation(
         user_id=str(current_user.id)
     )
 
+    # Authorization check
+    await verify_conversation_access(conversation_id, current_user, service)
+
     result = await service.resolve_conversation(conversation_id)
 
     if result.is_failure:
@@ -204,6 +260,9 @@ async def reopen_conversation(
         conversation_id=str(conversation_id),
         user_id=str(current_user.id)
     )
+
+    # Authorization check
+    await verify_conversation_access(conversation_id, current_user, service)
 
     result = await service.reopen_conversation(conversation_id)
 
@@ -243,6 +302,9 @@ async def escalate_conversation(
         reason=request.reason
     )
 
+    # Authorization check
+    await verify_conversation_access(conversation_id, current_user, service)
+
     result = await service.escalate_conversation(conversation_id, request.reason)
 
     if result.is_failure:
@@ -281,20 +343,42 @@ async def list_conversations(
     """List conversations with optional filters
 
     Requires authentication via JWT token or API key.
+
+    Access control:
+    - Admin/Super Admin: Can see all conversations, optionally filtered by customer_email
+    - Regular users: Can only see their own conversations (customer_email = user email)
+
     Returns list of conversations without messages. Use GET /conversations/{id}
     for full conversation with messages. FastAPI automatically converts UUID
     and datetime objects to JSON-serializable strings.
     """
+    # Determine the effective customer_email filter based on user role
+    # Admins can see all or filter; regular users can only see their own
+    from src.database.models.user import UserRole
+
+    is_admin = current_user.role in (UserRole.SUPER_ADMIN, UserRole.ADMIN)
+
+    if is_admin:
+        # Admins can filter by any customer_email or see all
+        effective_customer_email = customer_email
+    else:
+        # Regular users can ONLY see their own conversations
+        # Override any provided customer_email filter for security
+        effective_customer_email = current_user.email
+
     logger.debug(
         "list_conversations_endpoint_called",
-        customer_email=customer_email,
+        customer_email=effective_customer_email,
+        original_filter=customer_email,
         status=status,
         limit=limit,
-        user_id=str(current_user.id)
+        user_id=str(current_user.id),
+        user_role=current_user.role.value if hasattr(current_user.role, 'value') else str(current_user.role),
+        is_admin=is_admin
     )
 
     result = await service.list_conversations(
-        customer_email=customer_email,
+        customer_email=effective_customer_email,
         status=status,
         limit=limit
     )
@@ -336,6 +420,9 @@ async def delete_conversation(
         conversation_id=str(conversation_id),
         user_id=str(current_user.id)
     )
+
+    # Authorization check
+    await verify_conversation_access(conversation_id, current_user, service)
 
     result = await service.delete_conversation(conversation_id)
 

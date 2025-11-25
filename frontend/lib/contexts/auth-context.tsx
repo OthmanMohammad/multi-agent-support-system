@@ -18,6 +18,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useRef,
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
@@ -82,6 +83,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const { data: session, status: sessionStatus } = useSession();
   const [state, setState] = useState<AuthState>(initialState);
 
+  // Track if we've manually authenticated (login/register) to skip re-initialization
+  // This prevents the useEffect from resetting state when NextAuth session updates
+  const manualAuthCompletedRef = useRef(false);
+
   // ---------------------------------------------------------------------------
   // FETCH USER PROFILE
   // ---------------------------------------------------------------------------
@@ -112,6 +117,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const initializeAuth = async () => {
       // Wait for NextAuth session to load
       if (sessionStatus === "loading") {
+        return;
+      }
+
+      // Skip re-initialization if we've manually authenticated via login/register
+      // This prevents state reset when NextAuth session updates after login
+      if (manualAuthCompletedRef.current && state.isAuthenticated && state.user) {
         return;
       }
 
@@ -180,7 +191,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
 
     initializeAuth();
-  }, [sessionStatus, session?.accessToken, session?.refreshToken, fetchUserProfile]);
+  }, [sessionStatus, session?.accessToken, session?.refreshToken, fetchUserProfile, state.isAuthenticated, state.user]);
 
   // ---------------------------------------------------------------------------
   // LOGIN
@@ -221,6 +232,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         // Step 3: Update state with user data
         const user = result.data.user;
+
+        // Mark manual auth as completed to prevent useEffect from resetting state
+        manualAuthCompletedRef.current = true;
+
         setState({
           user,
           isAuthenticated: true,
@@ -286,6 +301,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Step 3: Fetch full user profile
         const userProfile = await fetchUserProfile();
 
+        // Mark manual auth as completed to prevent useEffect from resetting state
+        manualAuthCompletedRef.current = true;
+
         if (userProfile) {
           setState({
             user: userProfile,
@@ -341,6 +359,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = useCallback(async () => {
     setState((prev) => ({ ...prev, isLoading: true }));
+
+    // Reset manual auth flag so next login can initialize properly
+    manualAuthCompletedRef.current = false;
 
     try {
       // Step 1: Clear state immediately for instant UI update

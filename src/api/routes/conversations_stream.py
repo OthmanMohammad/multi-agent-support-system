@@ -15,13 +15,55 @@ import asyncio
 
 from src.api.dependencies import get_conversation_application_service
 from src.api.dependencies.auth_dependencies import get_current_user_or_api_key
-from src.database.models.user import User
+from src.database.models.user import User, UserRole
 from src.api.error_handlers import map_error_to_http
 from src.services.application.conversation_service import ConversationApplicationService
 from src.utils.logging.setup import get_logger
 
 router = APIRouter()
 logger = get_logger(__name__)
+
+
+async def verify_conversation_access(
+    conversation_id: UUID,
+    current_user: User,
+    service: ConversationApplicationService
+) -> None:
+    """
+    Verify that the current user has access to the specified conversation.
+
+    Access control:
+    - Admin/Super Admin: Can access any conversation
+    - Regular users: Can only access their own conversations
+
+    Raises:
+        HTTPException(403): If user doesn't have permission to access the conversation
+        HTTPException(404): If conversation not found
+    """
+    is_admin = current_user.role in (UserRole.SUPER_ADMIN, UserRole.ADMIN)
+
+    if is_admin:
+        return  # Admins can access all conversations
+
+    # Get conversation with customer relationship
+    conversation = await service.uow.conversations.get_by_id(conversation_id)
+
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    if conversation.customer:
+        customer_email = conversation.customer.email
+        if customer_email != current_user.email:
+            logger.warning(
+                "stream_conversation_access_denied",
+                conversation_id=str(conversation_id),
+                user_email=current_user.email,
+                customer_email=customer_email
+            )
+            raise HTTPException(
+                status_code=403,
+                detail="You don't have permission to access this conversation"
+            )
 
 
 class StreamMessageRequest(BaseModel):
@@ -236,6 +278,9 @@ async def stream_message_response(
         user_id=str(current_user.id),
         message_length=len(request.message)
     )
+
+    # Authorization check
+    await verify_conversation_access(conversation_id, current_user, service)
 
     return StreamingResponse(
         stream_conversation_response(
