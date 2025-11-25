@@ -1,8 +1,7 @@
 "use client";
 
-import type { JSX } from "react";
 import React, { Component, type ErrorInfo, type ReactNode } from "react";
-import { AlertTriangle, RefreshCw, Home, Bug } from "lucide-react";
+import { AlertTriangle, Bug, Home, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ErrorBoundaryProps {
@@ -51,7 +50,7 @@ export class ErrorBoundaryAdvanced extends Component<
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     // Log error to console
     console.error("Error Boundary caught an error:", error, errorInfo);
 
@@ -114,7 +113,8 @@ export class ErrorBoundaryAdvanced extends Component<
     };
 
     // TODO: Send to error reporting service
-    console.log("Error Report:", report);
+
+    console.error("Error Report:", report);
 
     // For now, copy to clipboard
     if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -123,9 +123,13 @@ export class ErrorBoundaryAdvanced extends Component<
     }
   };
 
-  render(): ReactNode {
+  override render(): ReactNode {
     const { hasError, error, errorInfo, errorCount } = this.state;
-    const { children, fallback, showDetails = process.env.NODE_ENV === "development" } = this.props;
+    const {
+      children,
+      fallback,
+      showDetails = process.env.NODE_ENV === "development",
+    } = this.props;
 
     if (hasError && error) {
       // Use custom fallback if provided
@@ -153,8 +157,8 @@ export class ErrorBoundaryAdvanced extends Component<
 
               {/* Description */}
               <p className="mb-6 text-center text-foreground-secondary">
-                We apologize for the inconvenience. The application encountered an
-                unexpected error.
+                We apologize for the inconvenience. The application encountered
+                an unexpected error.
               </p>
 
               {/* Error Message */}
@@ -170,7 +174,8 @@ export class ErrorBoundaryAdvanced extends Component<
                     </p>
                     {errorCount > 1 && (
                       <p className="text-xs text-foreground-secondary">
-                        This error has occurred {errorCount} time{errorCount > 1 ? "s" : ""}.
+                        This error has occurred {errorCount} time
+                        {errorCount > 1 ? "s" : ""}.
                       </p>
                     )}
                   </div>
