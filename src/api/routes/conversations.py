@@ -41,8 +41,9 @@ async def verify_conversation_access(
     if is_admin:
         return  # Admins can access all conversations
 
-    # Get conversation with customer relationship
-    conversation = await service.uow.conversations.get_by_id(conversation_id)
+    # Get conversation with customer relationship eagerly loaded
+    # Using get_with_customer to avoid async lazy-loading issues
+    conversation = await service.uow.conversations.get_with_customer(conversation_id)
 
     if not conversation:
         raise HTTPException(status_code=404, detail="Conversation not found")

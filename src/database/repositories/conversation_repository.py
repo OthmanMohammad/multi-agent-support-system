@@ -73,10 +73,10 @@ class ConversationRepository(BaseRepository[Conversation]):
     async def get_with_messages(self, conversation_id: UUID) -> Optional[Conversation]:
         """
         Get conversation with all messages (eager loading)
-        
+
         Args:
             conversation_id: Conversation UUID
-            
+
         Returns:
             Conversation with messages or None
         """
@@ -84,6 +84,24 @@ class ConversationRepository(BaseRepository[Conversation]):
             select(Conversation)
             .where(Conversation.id == conversation_id)
             .options(selectinload(Conversation.messages))
+        )
+        return result.scalar_one_or_none()
+
+    async def get_with_customer(self, conversation_id: UUID) -> Optional[Conversation]:
+        """
+        Get conversation with customer relationship (eager loading)
+
+        Args:
+            conversation_id: Conversation UUID
+
+        Returns:
+            Conversation with customer loaded or None
+        """
+        from src.database.models import Customer
+        result = await self.session.execute(
+            select(Conversation)
+            .where(Conversation.id == conversation_id)
+            .options(selectinload(Conversation.customer))
         )
         return result.scalar_one_or_none()
     

@@ -1,3 +1,5 @@
+"use client";
+
 import type { JSX } from "react";
 import Link from "next/link";
 import {
@@ -10,8 +12,10 @@ import {
   ArrowRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/contexts/auth-context";
 
 export default function Home(): JSX.Element {
+  const { isAuthenticated, isInitialized } = useAuth();
   return (
     <div className="flex min-h-screen flex-col">
       {/* Hero Section */}
@@ -135,21 +139,42 @@ export default function Home(): JSX.Element {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* CTA Section - Show different content based on auth state */}
       <section className="border-t border-border px-4 py-20 text-center">
         <div className="mx-auto max-w-2xl space-y-6">
-          <h2 className="text-3xl font-bold">Ready to get started?</h2>
-          <p className="text-lg text-foreground-secondary">
-            Create an account or sign in to access all features
-          </p>
-          <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
-            <Button asChild size="lg">
-              <Link href="/auth/signup">Create Account</Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link href="/auth/signin">Sign In</Link>
-            </Button>
-          </div>
+          {isInitialized && isAuthenticated ? (
+            // Authenticated: Show go to chat/dashboard CTAs
+            <>
+              <h2 className="text-3xl font-bold">Welcome back!</h2>
+              <p className="text-lg text-foreground-secondary">
+                Continue where you left off
+              </p>
+              <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
+                <Button asChild size="lg">
+                  <Link href="/chat">Go to Chat</Link>
+                </Button>
+                <Button asChild variant="outline" size="lg">
+                  <Link href="/dashboard">View Dashboard</Link>
+                </Button>
+              </div>
+            </>
+          ) : (
+            // Not authenticated: Show sign up/sign in CTAs
+            <>
+              <h2 className="text-3xl font-bold">Ready to get started?</h2>
+              <p className="text-lg text-foreground-secondary">
+                Create an account or sign in to access all features
+              </p>
+              <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
+                <Button asChild size="lg">
+                  <Link href="/auth/signup">Create Account</Link>
+                </Button>
+                <Button asChild variant="outline" size="lg">
+                  <Link href="/auth/signin">Sign In</Link>
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </section>
     </div>
