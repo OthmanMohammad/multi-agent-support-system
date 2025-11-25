@@ -6,6 +6,7 @@ Provides application service instances for route handlers.
 
 from typing import AsyncGenerator
 from fastapi import Depends
+from functools import lru_cache
 
 from src.database.connection import get_db_session
 from src.database.unit_of_work import UnitOfWork
@@ -16,6 +17,18 @@ from src.services.domain.customer.domain_service import CustomerDomainService
 from src.services.infrastructure.customer_service import CustomerInfrastructureService
 from src.services.infrastructure.analytics_service import AnalyticsService
 from src.workflow.engine import AgentWorkflowEngine
+
+
+# Cached workflow engine - created once and reused across requests
+@lru_cache()
+def get_cached_workflow_engine() -> AgentWorkflowEngine:
+    """
+    Returns a cached workflow engine instance.
+
+    This is expensive to create (17+ agents), so we cache it
+    and reuse the same instance across all requests.
+    """
+    return AgentWorkflowEngine()
 
 
 async def get_conversation_application_service() -> AsyncGenerator[ConversationApplicationService, None]:
@@ -34,7 +47,7 @@ async def get_conversation_application_service() -> AsyncGenerator[ConversationA
         uow = UnitOfWork(session)
         domain_service = ConversationDomainService()
         customer_service = CustomerInfrastructureService(uow)
-        workflow_engine = AgentWorkflowEngine()
+        workflow_engine = get_cached_workflow_engine()  # ✨ Use cached engine
         analytics_service = AnalyticsService(uow)
 
         # Create and yield the service

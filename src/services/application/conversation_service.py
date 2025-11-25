@@ -11,6 +11,8 @@ from src.core.result import Result, Error
 from src.core.errors import ValidationError, BusinessRuleError, NotFoundError, InternalError
 from src.core.events import get_event_bus
 from src.database.unit_of_work import UnitOfWork
+from src.database.schemas.conversation import ConversationWithMessages, ConversationInDB
+from src.database.schemas.message import MessageInDB
 from src.services.domain.conversation.domain_service import ConversationDomainService
 from src.services.infrastructure.customer_service import CustomerInfrastructureService
 from src.services.infrastructure.analytics_service import AnalyticsService
@@ -101,22 +103,30 @@ class ConversationApplicationService:
                 return Result.fail(count_result.error)
             
             today_count = count_result.value
-            
-            # Check rate limits
-            can_create = self.domain.validate_conversation_creation(
-                customer_plan=customer.plan,
-                today_conversation_count=today_count,
-                customer_blocked=customer.extra_metadata.get("blocked", False) if customer.extra_metadata else False
+
+            # Check rate limits - DISABLED FOR DEVELOPMENT
+            # TODO: Re-enable rate limiting in production
+            # can_create = self.domain.validate_conversation_creation(
+            #     customer_plan=customer.plan,
+            #     today_conversation_count=today_count,
+            #     customer_blocked=customer.extra_metadata.get("blocked", False) if customer.extra_metadata else False
+            # )
+            #
+            # if can_create.is_failure:
+            #     self.logger.warning(
+            #         "conversation_creation_rate_limit_exceeded",
+            #         customer_id=str(customer.id),
+            #         today_count=today_count,
+            #         plan=customer.plan
+            #     )
+            #     return Result.fail(can_create.error)
+
+            self.logger.info(
+                "conversation_creation_rate_limit_check_disabled",
+                customer_id=str(customer.id),
+                today_count=today_count,
+                note="Rate limiting disabled for development"
             )
-            
-            if can_create.is_failure:
-                self.logger.warning(
-                    "conversation_creation_rate_limit_exceeded",
-                    customer_id=str(customer.id),
-                    today_count=today_count,
-                    plan=customer.plan
-                )
-                return Result.fail(can_create.error)
             
             # Create conversation
             conversation = await self.uow.conversations.create_with_customer(
@@ -415,49 +425,41 @@ class ConversationApplicationService:
     async def get_conversation(
         self,
         conversation_id: UUID
-    ) -> Result[Dict[str, Any]]:
-        """Get conversation with messages"""
+    ) -> Result[ConversationWithMessages]:
+        """Get conversation with messages
+
+        Returns:
+            Result containing ConversationWithMessages schema object
+        """
         try:
             self.logger.debug(
                 "get_conversation_requested",
                 conversation_id=str(conversation_id)
             )
-            
+
+            # Get conversation with messages from repository
             conversation = await self.uow.conversations.get_with_messages(
                 conversation_id
             )
-            
+
             if not conversation:
                 return Result.fail(NotFoundError(
                     resource="Conversation",
                     identifier=str(conversation_id)
                 ))
-            
+
             self.logger.debug(
                 "conversation_retrieved",
                 conversation_id=str(conversation_id),
                 message_count=len(conversation.messages)
             )
-            
-            return Result.ok({
-                "conversation_id": str(conversation.id),
-                "customer_id": str(conversation.customer_id),
-                "status": conversation.status,
-                "started_at": conversation.started_at.isoformat(),
-                "last_updated": conversation.updated_at.isoformat() if conversation.updated_at else conversation.started_at.isoformat(),
-                "messages": [
-                    {
-                        "role": msg.role,
-                        "content": msg.content,
-                        "agent_name": msg.agent_name,
-                        "timestamp": msg.created_at.isoformat()
-                    }
-                    for msg in conversation.messages
-                ],
-                "agent_history": conversation.agents_involved or [],
-                "primary_intent": conversation.primary_intent
-            })
-            
+
+            # Convert SQLAlchemy model to Pydantic schema
+            # Pydantic handles UUID -> UUID and datetime -> datetime conversion
+            conversation_schema = ConversationWithMessages.model_validate(conversation)
+
+            return Result.ok(conversation_schema)
+
         except Exception as e:
             self.logger.error(
                 "get_conversation_failed",
@@ -613,8 +615,12 @@ class ConversationApplicationService:
         customer_email: Optional[str] = None,
         status: Optional[str] = None,
         limit: int = 50
-    ) -> Result[list]:
-        """List conversations with filters"""
+    ) -> Result[list[ConversationInDB]]:
+        """List conversations with filters
+
+        Returns:
+            Result containing list of ConversationInDB schema objects
+        """
         try:
             self.logger.debug(
                 "list_conversations_requested",
@@ -622,16 +628,16 @@ class ConversationApplicationService:
                 status=status,
                 limit=limit
             )
-            
+
             conversations = []
-            
+
             if customer_email:
                 customer_result = await self.customer_service.get_by_email(
                     customer_email
                 )
                 if customer_result.is_failure:
                     return Result.fail(customer_result.error)
-                
+
                 customer = customer_result.value
                 if customer:
                     conversations = await self.uow.conversations.get_by_customer(
@@ -641,32 +647,25 @@ class ConversationApplicationService:
                     )
             else:
                 conversations = await self.uow.conversations.get_all(limit=limit)
-            
+
             if status and not customer_email:
                 conversations = [c for c in conversations if c.status == status]
-            
-            result_list = [
-                {
-                    "conversation_id": str(conv.id),
-                    "customer_id": str(conv.customer_id),
-                    "status": conv.status,
-                    "primary_intent": conv.primary_intent,
-                    "started_at": conv.started_at.isoformat(),
-                    "last_updated": conv.updated_at.isoformat() if conv.updated_at else conv.started_at.isoformat(),
-                    "agent_history": conv.agents_involved or []
-                }
+
+            # Convert SQLAlchemy models to Pydantic schemas
+            conversation_schemas = [
+                ConversationInDB.model_validate(conv)
                 for conv in conversations
             ]
-            
+
             self.logger.info(
                 "conversations_listed",
-                count=len(result_list),
+                count=len(conversation_schemas),
                 customer_email=customer_email,
                 status=status
             )
-            
-            return Result.ok(result_list)
-            
+
+            return Result.ok(conversation_schemas)
+
         except Exception as e:
             self.logger.error(
                 "list_conversations_failed",

@@ -4,9 +4,10 @@ Conversation routes - HTTP endpoints for conversations
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
 from uuid import UUID
-from typing import Optional
+from typing import Optional, List
 
-from src.api.models import ChatRequest, ChatResponse, ConversationResponse
+from src.api.models import ChatRequest, ChatResponse
+from src.database.schemas.conversation import ConversationWithMessages, ConversationInDB
 from src.api.dependencies import get_conversation_application_service
 from src.api.error_handlers import map_error_to_http
 from src.services.application.conversation_service import ConversationApplicationService
@@ -54,19 +55,28 @@ async def create_conversation(
     return ChatResponse(**result.value)
 
 
-@router.get("/conversations/{conversation_id}", response_model=ConversationResponse)
+@router.get(
+    "/conversations/{conversation_id}",
+    response_model=ConversationWithMessages,
+    summary="Get conversation details",
+    description="Retrieve a conversation with all its messages and metadata"
+)
 async def get_conversation(
     conversation_id: UUID,
     service: ConversationApplicationService = Depends(get_conversation_application_service)
-):
-    """Get conversation details with messages"""
+) -> ConversationWithMessages:
+    """Get conversation details with messages
+
+    Returns conversation with full message history. FastAPI automatically
+    converts UUID and datetime objects to JSON-serializable strings.
+    """
     logger.debug(
         "get_conversation_endpoint_called",
         conversation_id=str(conversation_id)
     )
-    
+
     result = await service.get_conversation(conversation_id)
-    
+
     if result.is_failure:
         logger.warning(
             "get_conversation_failed",
@@ -74,14 +84,16 @@ async def get_conversation(
             error_type=type(result.error).__name__
         )
         raise map_error_to_http(result.error)
-    
+
     logger.debug(
         "get_conversation_success",
         conversation_id=str(conversation_id),
-        message_count=len(result.value.get("messages", []))
+        message_count=len(result.value.messages)
     )
-    
-    return ConversationResponse(**result.value)
+
+    # Service returns ConversationWithMessages schema object
+    # FastAPI handles JSON serialization automatically
+    return result.value
 
 
 @router.post("/conversations/{conversation_id}/messages", response_model=ChatResponse)
@@ -181,27 +193,37 @@ async def escalate_conversation(
     return {"status": "escalated", "conversation_id": str(conversation_id)}
 
 
-@router.get("/conversations")
+@router.get(
+    "/conversations",
+    response_model=List[ConversationInDB],
+    summary="List conversations",
+    description="Retrieve a list of conversations with optional filtering"
+)
 async def list_conversations(
     customer_email: Optional[str] = Query(None, description="Filter by customer email"),
     status: Optional[str] = Query(None, description="Filter by status"),
     limit: int = Query(50, ge=1, le=100, description="Max results"),
     service: ConversationApplicationService = Depends(get_conversation_application_service)
-):
-    """List conversations with optional filters"""
+) -> List[ConversationInDB]:
+    """List conversations with optional filters
+
+    Returns list of conversations without messages. Use GET /conversations/{id}
+    for full conversation with messages. FastAPI automatically converts UUID
+    and datetime objects to JSON-serializable strings.
+    """
     logger.debug(
         "list_conversations_endpoint_called",
         customer_email=customer_email,
         status=status,
         limit=limit
     )
-    
+
     result = await service.list_conversations(
         customer_email=customer_email,
         status=status,
         limit=limit
     )
-    
+
     if result.is_failure:
         logger.warning(
             "list_conversations_failed",
@@ -209,13 +231,14 @@ async def list_conversations(
             error_type=type(result.error).__name__
         )
         raise map_error_to_http(result.error)
-    
+
     logger.info(
         "list_conversations_success",
         count=len(result.value),
         customer_email=customer_email,
         status=status
     )
-    
-    # Return the list directly (it's already formatted as dicts)
+
+    # Service returns list of ConversationInDB schema objects
+    # FastAPI handles JSON serialization automatically
     return result.value
