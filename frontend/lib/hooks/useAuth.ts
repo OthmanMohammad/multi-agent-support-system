@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, signOut } from "next-auth/react";
 import useSWR from "swr";
@@ -20,11 +20,10 @@ import { toast } from "sonner";
 
 /**
  * Check if access token exists in localStorage
- * Used to conditionally fetch user profile
  */
-const hasAccessToken = (): boolean => {
-  if (typeof window === "undefined") return false;
-  return !!localStorage.getItem("access_token");
+const getAccessToken = (): string | null => {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("access_token");
 };
 
 // =============================================================================
@@ -34,32 +33,34 @@ const hasAccessToken = (): boolean => {
 export function useAuth() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [hasToken, setHasToken] = useState(false);
 
-  // Check for token on mount and after auth actions
-  useEffect(() => {
-    setHasToken(hasAccessToken());
-  }, []);
-
-  // Fetch current user profile - only when token exists
-  // Using null key to skip fetch when no token
+  // Fetch current user profile
+  // Key is always "auth/me" - the fetcher handles token check
   const {
     data: user,
     error,
     mutate,
     isLoading: isLoadingUser,
-  } = useSWR<UserProfile>(
-    hasToken ? "auth/me" : null,
+  } = useSWR<UserProfile | undefined>(
+    "auth/me",
     async () => {
+      // Check for token first - skip API call if no token
+      const token = getAccessToken();
+      if (!token) {
+        return undefined;
+      }
+
       const result = await authAPI.me();
       if (result.success) {
         return result.data;
       }
-      throw result.error;
+      // On auth error (401, expired token, etc.), return undefined
+      return undefined;
     },
     {
       revalidateOnFocus: false,
       shouldRetryOnError: false,
+      dedupingInterval: 5000, // Prevent duplicate requests within 5s
     }
   );
 
@@ -89,11 +90,8 @@ export function useAuth() {
           return { success: false };
         }
 
-        // Update token state to trigger SWR fetch
-        setHasToken(true);
-
-        // Refresh user data
-        await mutate(result.data.user);
+        // Revalidate SWR - will now find the token and fetch user
+        await mutate();
 
         toast.success("Logged in successfully!");
         router.push("/dashboard");
@@ -135,10 +133,7 @@ export function useAuth() {
           return { success: false };
         }
 
-        // Update token state to trigger SWR fetch
-        setHasToken(true);
-
-        // Refresh user data - revalidate to fetch complete profile
+        // Revalidate SWR - will now find the token and fetch user
         await mutate();
 
         toast.success("Account created successfully!");
@@ -166,11 +161,8 @@ export function useAuth() {
       // Sign out from NextAuth
       await signOut({ redirect: false });
 
-      // Clear token state FIRST to stop SWR polling
-      setHasToken(false);
-
-      // Clear user data
-      await mutate(undefined);
+      // Revalidate SWR - fetcher will find no token and return undefined
+      await mutate(undefined, { revalidate: true });
 
       toast.success("Logged out successfully");
       router.push("/");
