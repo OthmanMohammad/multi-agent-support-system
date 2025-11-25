@@ -17,8 +17,7 @@ interface ChatAreaProps {
  * Main chat interface with header, messages, and input
  */
 export function ChatArea({ conversationId }: ChatAreaProps): JSX.Element {
-  const { data: conversation, isLoading } = useConversation(conversationId);
-  const setMessages = useChatStore((state) => state.setMessages);
+  const { conversation, isLoading } = useConversation(conversationId);
   const clearMessages = useChatStore((state) => state.clearMessages);
 
   // Load messages when conversation changes
