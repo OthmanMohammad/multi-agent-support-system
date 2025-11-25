@@ -4,7 +4,7 @@ import type { JSX } from "react";
 import { useState } from "react";
 import { useConversations } from "@/lib/api/hooks";
 import { format } from "date-fns";
-import { Search, Filter } from "lucide-react";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
@@ -14,10 +14,14 @@ import Link from "next/link";
  * Display recent conversations with search and filtering
  */
 
+type StatusFilter = "active" | "resolved" | "escalated" | undefined;
+
 export function RecentConversations(): JSX.Element {
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<"active" | "archived" | "all">("all");
-  const { data, isLoading } = useConversations({ limit: 10, status });
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(undefined);
+  const { conversations, isLoading } = useConversations(
+    statusFilter ? { limit: 10, status: statusFilter } : { limit: 10 }
+  );
 
   if (isLoading) {
     return (
@@ -32,7 +36,7 @@ export function RecentConversations(): JSX.Element {
     );
   }
 
-  if (!data || !data.conversations) {
+  if (!conversations || conversations.length === 0) {
     return (
       <div className="rounded-lg border border-border bg-surface p-6">
         <h2 className="text-lg font-semibold">Recent Conversations</h2>
@@ -43,10 +47,12 @@ export function RecentConversations(): JSX.Element {
 
   // Filter conversations by search
   const filteredConversations = search
-    ? data.conversations.filter((conv) =>
-        conv.title.toLowerCase().includes(search.toLowerCase())
+    ? conversations.filter((conv) =>
+        (conv.primary_intent || conv.conversation_id)
+          .toLowerCase()
+          .includes(search.toLowerCase())
       )
-    : data.conversations;
+    : conversations;
 
   return (
     <div className="rounded-lg border border-border bg-surface p-6">
@@ -54,7 +60,7 @@ export function RecentConversations(): JSX.Element {
         <div>
           <h2 className="text-lg font-semibold">Recent Conversations</h2>
           <p className="mt-1 text-sm text-foreground-secondary">
-            {data.total} total conversations
+            {conversations.length} conversations
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -72,21 +78,23 @@ export function RecentConversations(): JSX.Element {
 
           {/* Status Filter */}
           <div className="flex items-center gap-2 rounded-lg border border-border bg-background p-1">
-            {(["all", "active", "archived"] as const).map((s) => (
-              <Button
-                key={s}
-                variant="ghost"
-                size="sm"
-                onClick={() => setStatus(s)}
-                className={
-                  status === s
-                    ? "bg-accent text-accent-foreground"
-                    : "text-foreground-secondary"
-                }
-              >
-                {s.charAt(0).toUpperCase() + s.slice(1)}
-              </Button>
-            ))}
+            {([undefined, "active", "resolved", "escalated"] as const).map(
+              (s) => (
+                <Button
+                  key={s || "all"}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setStatusFilter(s)}
+                  className={
+                    statusFilter === s
+                      ? "bg-accent text-accent-foreground"
+                      : "text-foreground-secondary"
+                  }
+                >
+                  {s ? s.charAt(0).toUpperCase() + s.slice(1) : "All"}
+                </Button>
+              )
+            )}
           </div>
         </div>
       </div>
@@ -100,7 +108,7 @@ export function RecentConversations(): JSX.Element {
                 Title
               </th>
               <th className="pb-3 font-medium text-foreground-secondary">
-                Created
+                Status
               </th>
               <th className="pb-3 font-medium text-foreground-secondary">
                 Last Updated
@@ -113,25 +121,39 @@ export function RecentConversations(): JSX.Element {
           <tbody>
             {filteredConversations.map((conversation) => (
               <tr
-                key={conversation.id}
+                key={conversation.conversation_id}
                 className="border-b border-border transition-colors hover:bg-surface-hover"
               >
                 <td className="py-4">
                   <Link
-                    href={`/chat?id=${conversation.id}`}
+                    href={`/chat?id=${conversation.conversation_id}`}
                     className="font-medium hover:text-accent"
                   >
-                    {conversation.title}
+                    {conversation.primary_intent ||
+                      `Conversation ${conversation.conversation_id.slice(0, 8)}...`}
                   </Link>
                 </td>
-                <td className="py-4 text-sm text-foreground-secondary">
-                  {format(new Date(conversation.createdAt), "MMM dd, yyyy HH:mm")}
+                <td className="py-4">
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                      conversation.status === "active"
+                        ? "bg-blue-500/10 text-blue-500"
+                        : conversation.status === "resolved"
+                          ? "bg-green-500/10 text-green-500"
+                          : "bg-red-500/10 text-red-500"
+                    }`}
+                  >
+                    {conversation.status}
+                  </span>
                 </td>
                 <td className="py-4 text-sm text-foreground-secondary">
-                  {format(new Date(conversation.updatedAt), "MMM dd, yyyy HH:mm")}
+                  {format(
+                    new Date(conversation.last_updated),
+                    "MMM dd, yyyy HH:mm"
+                  )}
                 </td>
                 <td className="py-4 text-right">
-                  <Link href={`/chat?id=${conversation.id}`}>
+                  <Link href={`/chat?id=${conversation.conversation_id}`}>
                     <Button variant="ghost" size="sm">
                       View
                     </Button>
