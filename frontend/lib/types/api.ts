@@ -25,12 +25,13 @@ export const failure = <E = Error>(error: E): Result<never, E> => ({
 // USER & AUTH TYPES
 // =============================================================================
 
-export const UserRoleSchema = z.enum(["USER", "ADMIN", "MODERATOR"]);
+// Backend returns lowercase values for role and status
+export const UserRoleSchema = z.enum(["user", "admin", "moderator"]);
 export const UserStatusSchema = z.enum([
-  "ACTIVE",
-  "INACTIVE",
-  "SUSPENDED",
-  "PENDING_VERIFICATION",
+  "active",
+  "inactive",
+  "suspended",
+  "pending_verification",
 ]);
 
 export const UserProfileSchema = z.object({
