@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import bundleAnalyzer from "@next/bundle-analyzer";
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -9,7 +10,6 @@ const nextConfig: NextConfig = {
 
   // Production optimizations
   reactStrictMode: true,
-  swcMinify: true,
 
   // Image optimization
   images: {
@@ -20,7 +20,7 @@ const nextConfig: NextConfig = {
 };
 
 // Bundle analyzer - only enabled when ANALYZE=true
-const withBundleAnalyzer = require("@next/bundle-analyzer")({
+const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === "true",
 });
 
