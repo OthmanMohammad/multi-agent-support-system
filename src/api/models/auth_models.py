@@ -91,6 +91,28 @@ class LoginRequest(BaseModel):
     }
 
 
+class OAuthLoginRequest(BaseModel):
+    """OAuth login request - for NextAuth integration"""
+
+    email: EmailStr = Field(..., description="User email from OAuth provider")
+    full_name: str = Field(..., min_length=1, max_length=255, description="Full name from OAuth provider")
+    provider: str = Field(..., description="OAuth provider name (google, github)")
+    provider_user_id: str = Field(..., description="User ID from OAuth provider")
+    avatar_url: Optional[str] = Field(None, description="Avatar URL from OAuth provider")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [{
+                "email": "user@gmail.com",
+                "full_name": "John Doe",
+                "provider": "google",
+                "provider_user_id": "123456789",
+                "avatar_url": "https://lh3.googleusercontent.com/..."
+            }]
+        }
+    }
+
+
 class LoginResponse(BaseModel):
     """User login response"""
 

@@ -31,6 +31,7 @@ from src.api.models.auth_models import (
     UserRegisterResponse,
     LoginRequest,
     LoginResponse,
+    OAuthLoginRequest,
     RefreshTokenRequest,
     RefreshTokenResponse,
     LogoutResponse,
@@ -215,6 +216,121 @@ async def login(
         await uow.commit()
 
         logger.info("user_logged_in", user_id=str(user.id), email=user.email)
+
+        # Generate JWT tokens
+        scopes = user.get_scopes()
+        access_token = JWTManager.create_access_token(
+            user_id=user.id,
+            email=user.email,
+            role=user.role.value,
+            scopes=scopes
+        )
+
+        refresh_token = JWTManager.create_refresh_token(user_id=user.id)
+
+        # Build user profile
+        user_profile = UserProfile(
+            id=user.id,
+            email=user.email,
+            full_name=user.full_name,
+            organization=user.organization,
+            role=user.role.value,
+            status=user.status.value,
+            is_active=user.is_active,
+            is_verified=user.is_verified,
+            scopes=scopes,
+            created_at=user.created_at,
+            last_login_at=user.last_login_at
+        )
+
+        return LoginResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="Bearer",
+            expires_in=settings.jwt.access_token_expire_minutes * 60,
+            user=user_profile
+        )
+
+
+# =============================================================================
+# OAUTH LOGIN (NextAuth Integration)
+# =============================================================================
+
+@router.post("/oauth-login", response_model=LoginResponse)
+async def oauth_login(
+    request: OAuthLoginRequest
+):
+    """
+    Login or register user via OAuth provider (NextAuth integration).
+
+    This endpoint is called by NextAuth after successful OAuth authentication
+    with Google/GitHub. It creates a new user if one doesn't exist, or logs in
+    an existing user.
+
+    - **email**: User email from OAuth provider
+    - **full_name**: Full name from OAuth provider
+    - **provider**: OAuth provider name (google, github)
+    - **provider_user_id**: User ID from OAuth provider
+    - **avatar_url**: Optional avatar URL
+    """
+    logger.info(
+        "oauth_login_attempt",
+        email=request.email,
+        provider=request.provider,
+        provider_user_id=request.provider_user_id
+    )
+
+    async with get_unit_of_work() as uow:
+        # Check if user exists with this OAuth provider
+        user = await uow.users.get_by_oauth(request.provider, request.provider_user_id)
+
+        if user:
+            # Existing OAuth user - just update last login
+            await uow.users.update_last_login(user.id)
+            await uow.commit()
+            logger.info("oauth_user_logged_in", user_id=str(user.id), provider=request.provider)
+        else:
+            # Check if user exists with this email
+            user = await uow.users.get_by_email(request.email)
+
+            if user:
+                # Link OAuth provider to existing user
+                user.oauth_provider = request.provider
+                user.oauth_provider_user_id = request.provider_user_id
+                await uow.users.update_last_login(user.id)
+                await uow.commit()
+                logger.info(
+                    "oauth_linked_to_existing_user",
+                    user_id=str(user.id),
+                    provider=request.provider
+                )
+            else:
+                # Create new user
+                user = await uow.users.create(
+                    email=request.email,
+                    password_hash=None,  # No password for OAuth users
+                    full_name=request.full_name,
+                    organization=None,
+                    role=UserRole.USER,
+                    status=UserStatus.ACTIVE,  # OAuth users are pre-verified
+                    is_active=True,
+                    is_verified=True,  # OAuth users are pre-verified
+                    oauth_provider=request.provider,
+                    oauth_provider_user_id=request.provider_user_id,
+                )
+
+                # Get role scopes
+                scopes = get_role_scopes(user.role)
+                user.set_scopes(scopes)
+
+                await uow.commit()
+
+                logger.info(
+                    "oauth_user_created",
+                    user_id=str(user.id),
+                    email=user.email,
+                    provider=request.provider
+                )
 
         # Generate JWT tokens
         scopes = user.get_scopes()

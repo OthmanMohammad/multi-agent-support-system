@@ -68,25 +68,32 @@ async function loginWithBackend(email: string, password: string) {
 }
 
 /**
- * Handle OAuth callback from backend
+ * Login or register user via OAuth provider
+ * Calls the backend /api/auth/oauth-login endpoint
  */
-async function handleOAuthCallback(
+async function loginWithOAuth(
+  email: string,
+  name: string,
   provider: string,
-  code: string,
-  state: string
+  providerAccountId: string
 ) {
   try {
-    const response = await fetch(
-      `${API_URL}/api/oauth/${provider}/callback?code=${code}&state=${state}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const response = await fetch(`${API_URL}/api/auth/oauth-login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        full_name: name || email.split("@")[0], // Fallback to email prefix if no name
+        provider,
+        provider_user_id: providerAccountId,
+      }),
+    });
 
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error("OAuth login failed:", response.status, errorData);
       return null;
     }
 
@@ -202,25 +209,36 @@ export default {
           (user as { refreshToken?: string }).refreshToken ?? "";
       }
 
-      // OAuth sign in
+      // OAuth sign in - get user info and call backend to create/login user
       if (
         account &&
-        (account.provider === "google" || account.provider === "github")
+        (account.provider === "google" || account.provider === "github") &&
+        user
       ) {
-        // Exchange OAuth code for backend tokens
-        const backendUser = await handleOAuthCallback(
-          account.provider,
-          account.access_token || "",
-          "" // State will be validated by backend
-        );
+        // Extract user info from OAuth profile
+        const email = user.email || token.email as string;
+        const name = user.name || token.name as string;
+        const providerAccountId = account.providerAccountId;
 
-        if (backendUser) {
-          token.id = backendUser.id;
-          token.email = backendUser.email;
-          token.name = backendUser.name;
-          token.role = backendUser.role;
-          token.accessToken = backendUser.accessToken;
-          token.refreshToken = backendUser.refreshToken;
+        if (email && providerAccountId) {
+          // Call backend to create/login OAuth user
+          const backendUser = await loginWithOAuth(
+            email,
+            name,
+            account.provider,
+            providerAccountId
+          );
+
+          if (backendUser) {
+            token.id = backendUser.id;
+            token.email = backendUser.email;
+            token.name = backendUser.name;
+            token.role = backendUser.role;
+            token.accessToken = backendUser.accessToken;
+            token.refreshToken = backendUser.refreshToken;
+          } else {
+            console.error("Failed to create/login OAuth user in backend");
+          }
         }
       }
 
