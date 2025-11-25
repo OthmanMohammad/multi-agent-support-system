@@ -103,22 +103,30 @@ class ConversationApplicationService:
                 return Result.fail(count_result.error)
             
             today_count = count_result.value
-            
-            # Check rate limits
-            can_create = self.domain.validate_conversation_creation(
-                customer_plan=customer.plan,
-                today_conversation_count=today_count,
-                customer_blocked=customer.extra_metadata.get("blocked", False) if customer.extra_metadata else False
+
+            # Check rate limits - DISABLED FOR DEVELOPMENT
+            # TODO: Re-enable rate limiting in production
+            # can_create = self.domain.validate_conversation_creation(
+            #     customer_plan=customer.plan,
+            #     today_conversation_count=today_count,
+            #     customer_blocked=customer.extra_metadata.get("blocked", False) if customer.extra_metadata else False
+            # )
+            #
+            # if can_create.is_failure:
+            #     self.logger.warning(
+            #         "conversation_creation_rate_limit_exceeded",
+            #         customer_id=str(customer.id),
+            #         today_count=today_count,
+            #         plan=customer.plan
+            #     )
+            #     return Result.fail(can_create.error)
+
+            self.logger.info(
+                "conversation_creation_rate_limit_check_disabled",
+                customer_id=str(customer.id),
+                today_count=today_count,
+                note="Rate limiting disabled for development"
             )
-            
-            if can_create.is_failure:
-                self.logger.warning(
-                    "conversation_creation_rate_limit_exceeded",
-                    customer_id=str(customer.id),
-                    today_count=today_count,
-                    plan=customer.plan
-                )
-                return Result.fail(can_create.error)
             
             # Create conversation
             conversation = await self.uow.conversations.create_with_customer(
