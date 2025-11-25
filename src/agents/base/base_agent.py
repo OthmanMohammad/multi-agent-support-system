@@ -137,7 +137,8 @@ class BaseAgent(ABC):
         system_prompt: str,
         user_message: str,
         temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None
+        max_tokens: Optional[int] = None,
+        conversation_history: Optional[List[Dict[str, Any]]] = None
     ) -> str:
         """
         Call LLM via unified client with error handling and logging.
@@ -149,9 +150,11 @@ class BaseAgent(ABC):
 
         Args:
             system_prompt: System instructions
-            user_message: User message
+            user_message: User message (current message)
             temperature: Override default temperature
             max_tokens: Override default max tokens
+            conversation_history: Optional list of previous messages for multi-turn context.
+                                 Each message should have 'role' and 'content' keys.
 
         Returns:
             LLM response text
@@ -163,9 +166,22 @@ class BaseAgent(ABC):
             # Get model tier from config model name
             model_tier = self._model_tier_map.get(self.config.model, "haiku")
 
-            # Convert to LiteLLM message format (system prompt as system message)
+            # Build messages list with proper multi-turn format
+            messages = []
+
+            # Add system prompt as the first message context
+            system_context = system_prompt
+
+            # If conversation history is provided, format it for context
+            if conversation_history and len(conversation_history) > 0:
+                # Build conversation context string for the system prompt
+                history_text = self._format_conversation_history(conversation_history)
+                system_context = f"{system_prompt}\n\n## Previous Conversation History:\n{history_text}"
+
+            # Format as single user message with system context
+            # (LiteLLM/Anthropic work best with this format)
             messages = [
-                {"role": "user", "content": f"{system_prompt}\n\n{user_message}"}
+                {"role": "user", "content": f"{system_context}\n\n## Current Message:\n{user_message}"}
             ]
 
             # Call unified LLM client (automatically uses current backend)
@@ -192,6 +208,75 @@ class BaseAgent(ABC):
                 agent_name=self.config.name,
                 details={"error_type": type(e).__name__}
             ) from e
+
+    def _format_conversation_history(
+        self,
+        history: List[Dict[str, Any]],
+        max_messages: int = 10
+    ) -> str:
+        """
+        Format conversation history for inclusion in LLM prompt.
+
+        Args:
+            history: List of message dictionaries with 'role' and 'content'
+            max_messages: Maximum number of recent messages to include (prevents token overflow)
+
+        Returns:
+            Formatted string representation of conversation history
+        """
+        if not history:
+            return ""
+
+        # Take only the most recent messages to prevent token overflow
+        recent_history = history[-max_messages:] if len(history) > max_messages else history
+
+        formatted_parts = []
+        for msg in recent_history:
+            role = msg.get("role", "unknown")
+            content = msg.get("content", "")
+            agent_name = msg.get("agent_name")
+
+            # Format role label
+            if role == "user":
+                role_label = "Customer"
+            elif role == "assistant":
+                role_label = f"Agent ({agent_name})" if agent_name else "Agent"
+            else:
+                role_label = role.capitalize()
+
+            # Truncate very long messages to prevent token overflow
+            if len(content) > 500:
+                content = content[:500] + "..."
+
+            formatted_parts.append(f"{role_label}: {content}")
+
+        return "\n\n".join(formatted_parts)
+
+    def get_conversation_context(self, state: AgentState) -> List[Dict[str, Any]]:
+        """
+        Extract conversation history from agent state for LLM context.
+
+        This method should be called by agents to get properly formatted
+        conversation history for multi-turn context.
+
+        Args:
+            state: Current agent state containing messages
+
+        Returns:
+            List of message dictionaries ready for LLM context
+        """
+        messages = state.get("messages", [])
+
+        # Convert Message TypedDicts to plain dicts
+        history = []
+        for msg in messages[:-1]:  # Exclude current message (it's handled separately)
+            history.append({
+                "role": msg.get("role", "user"),
+                "content": msg.get("content", ""),
+                "agent_name": msg.get("agent_name")
+            })
+
+        return history
 
     async def search_knowledge_base(
         self,
