@@ -38,7 +38,7 @@ interface ChatState {
 export const useChatStore = create<ChatState>()(
   devtools(
     persist(
-      (set, get) => ({
+      (set, _get) => ({
         // Current conversation
         currentConversationId: null,
         setCurrentConversation: (id) => set({ currentConversationId: id }),
