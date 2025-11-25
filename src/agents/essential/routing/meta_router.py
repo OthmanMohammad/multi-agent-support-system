@@ -152,10 +152,19 @@ Be concise. Output ONLY valid JSON, no markdown or extra text."""
                 self.logger.warning("meta_router_empty_message")
                 return self._handle_empty_message(state)
 
-            # Call LLM for classification
+            # Get conversation history for context-aware routing
+            conversation_history = self.get_conversation_context(state)
+
+            self.logger.debug(
+                "meta_router_conversation_context",
+                history_length=len(conversation_history)
+            )
+
+            # Call LLM for classification with conversation history
             response = await self.call_llm(
                 system_prompt=system_prompt,
-                user_message=f"Classify this message:\n\n{message}"
+                user_message=f"Classify this message:\n\n{message}",
+                conversation_history=conversation_history
             )
 
             # Parse response
