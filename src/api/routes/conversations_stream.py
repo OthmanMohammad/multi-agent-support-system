@@ -93,8 +93,8 @@ async def stream_conversation_response(
             message_length=len(message)
         )
 
-        # Validate conversation exists
-        conversation = await service.uow.conversations.get_by_id(conversation_id)
+        # CRITICAL FIX: Fetch conversation WITH messages for context continuity
+        conversation = await service.uow.conversations.get_with_messages(conversation_id)
         if not conversation:
             error_event = {
                 "type": "error",
@@ -111,6 +111,22 @@ async def stream_conversation_response(
             yield f"data: {json.dumps(error_event)}\n\n"
             return
 
+        # Build conversation history from existing messages for multi-turn context
+        conversation_history = []
+        if conversation.messages:
+            for msg in conversation.messages:
+                conversation_history.append({
+                    "role": msg.role,
+                    "content": msg.content,
+                    "timestamp": msg.created_at.isoformat() if msg.created_at else None,
+                    "agent_name": getattr(msg, 'agent_name', None)
+                })
+            logger.debug(
+                "stream_conversation_history_built",
+                conversation_id=str(conversation_id),
+                history_count=len(conversation_history)
+            )
+
         # Save user message
         await service.uow.messages.create_message(
             conversation_id=conversation.id,
@@ -119,15 +135,24 @@ async def stream_conversation_response(
             created_by=service.uow.current_user_id
         )
 
+        # Add the current message to history for complete context
+        conversation_history.append({
+            "role": "user",
+            "content": message,
+            "timestamp": None,
+            "agent_name": None
+        })
+
         # Execute workflow with streaming
         # Note: For now, we'll simulate streaming by chunking the response
-        # TODO: Modify AgentWorkflowEngine to support true streaming
+        # CRITICAL: Pass conversation_history for multi-turn context
 
         agent_result = await service.workflow_engine.execute(
             message=message,
             context={
                 "conversation_id": str(conversation.id),
-                "customer_id": str(conversation.customer_id)
+                "customer_id": str(conversation.customer_id),
+                "conversation_history": conversation_history
             }
         )
 
