@@ -91,13 +91,21 @@ Examples:
 
 **Customer Context**: {customer_context}
 
+**CRITICAL - Conversation Continuity Rules**:
+1. If conversation history shows an ONGOING sales discussion (upgrade, pricing, plans), KEEP routing to sales
+2. If conversation history shows an ONGOING support issue, KEEP routing to support
+3. Follow-up messages like "did you get that?", "my name is X", "yes", "no", "what about..." should stay in the SAME domain as the previous messages
+4. Only change domains if there is a CLEAR shift in topic (e.g., from sales to a technical bug report)
+5. When in doubt about follow-up messages, check conversation history and maintain the existing domain
+
 **Classification Rules**:
 1. If customer has a PROBLEM → support
 2. If customer wants to BUY or UPGRADE (and is on FREE plan) → sales
 3. If PAYING customer questions VALUE or is at-risk → customer_success
 4. If PAYING customer wants to upgrade → support (billing)
-5. If ambiguous → default to support
-6. Use customer context (plan, health_score, churn_risk) to inform decision
+5. If ambiguous AND no conversation history → default to support
+6. If ambiguous AND conversation history exists → maintain current domain
+7. Use customer context (plan, health_score, churn_risk) to inform decision
 
 **Output Format** (JSON only, no extra text):
 {{
