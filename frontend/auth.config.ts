@@ -4,11 +4,12 @@
  * Enterprise authentication with Backend API integration.
  * Supports:
  * - Credentials (email/password) via FastAPI backend
- * - Google OAuth via FastAPI backend
- * - GitHub OAuth via FastAPI backend
+ * - Google OAuth via FastAPI backend (when configured)
+ * - GitHub OAuth via FastAPI backend (when configured)
  */
 
 import type { NextAuthConfig } from "next-auth";
+import type { Provider } from "next-auth/providers";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
@@ -21,6 +22,16 @@ const loginSchema = z.object({
 
 // Backend API URL
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+// OAuth Provider Configuration Detection
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
+const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
+
+// Check if OAuth providers are properly configured
+export const isGoogleConfigured = !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET);
+export const isGitHubConfigured = !!(GITHUB_CLIENT_ID && GITHUB_CLIENT_SECRET);
 
 /**
  * Call backend login endpoint
@@ -95,34 +106,45 @@ async function handleOAuthCallback(
   }
 }
 
-export default {
-  providers: [
-    // ==========================================================================
-    // GOOGLE OAUTH
-    // ==========================================================================
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
-      authorization: {
-        params: {
-          prompt: "consent",
-          access_type: "offline",
-          response_type: "code",
+// Build providers array dynamically based on configuration
+const buildProviders = (): Provider[] => {
+  const providers: Provider[] = [];
+
+  // ==========================================================================
+  // GOOGLE OAUTH (only if configured)
+  // ==========================================================================
+  if (isGoogleConfigured) {
+    providers.push(
+      Google({
+        clientId: GOOGLE_CLIENT_ID!,
+        clientSecret: GOOGLE_CLIENT_SECRET!,
+        authorization: {
+          params: {
+            prompt: "consent",
+            access_type: "offline",
+            response_type: "code",
+          },
         },
-      },
-    }),
+      })
+    );
+  }
 
-    // ==========================================================================
-    // GITHUB OAUTH
-    // ==========================================================================
-    GitHub({
-      clientId: process.env.GITHUB_CLIENT_ID ?? "",
-      clientSecret: process.env.GITHUB_CLIENT_SECRET ?? "",
-    }),
+  // ==========================================================================
+  // GITHUB OAUTH (only if configured)
+  // ==========================================================================
+  if (isGitHubConfigured) {
+    providers.push(
+      GitHub({
+        clientId: GITHUB_CLIENT_ID!,
+        clientSecret: GITHUB_CLIENT_SECRET!,
+      })
+    );
+  }
 
-    // ==========================================================================
-    // CREDENTIALS (Email/Password)
-    // ==========================================================================
+  // ==========================================================================
+  // CREDENTIALS (Email/Password) - Always available
+  // ==========================================================================
+  providers.push(
     Credentials({
       name: "credentials",
       credentials: {
@@ -150,8 +172,14 @@ export default {
         // Note: This runs on server, so we'll pass tokens via session
         return user;
       },
-    }),
-  ],
+    })
+  );
+
+  return providers;
+};
+
+export default {
+  providers: buildProviders(),
 
   // ===========================================================================
   // CALLBACKS
