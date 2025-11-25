@@ -165,6 +165,20 @@ class ConversationDetailResponse(BaseModel):
 # CONVERSATION MUTATIONS
 # =============================================================================
 
+class EscalateRequest(BaseModel):
+    """Request to escalate conversation to human"""
+
+    reason: str = Field(..., min_length=1, description="Reason for escalation")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [{
+                "reason": "Customer requested human agent"
+            }]
+        }
+    }
+
+
 class ConversationUpdateRequest(BaseModel):
     """Update conversation details"""
 

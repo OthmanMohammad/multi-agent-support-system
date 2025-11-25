@@ -360,6 +360,16 @@ async def logout(current_user: User = Depends(get_current_user)):
 # PASSWORD RESET
 # =============================================================================
 
+@router.post("/request-password-reset", response_model=PasswordResetResponse)
+async def request_password_reset_alias(
+    request: PasswordResetRequest
+):
+    """
+    Alias for request_password_reset (frontend compatibility).
+    """
+    return await request_password_reset(request)
+
+
 @router.post("/reset-password", response_model=PasswordResetResponse)
 async def request_password_reset(
     request: PasswordResetRequest

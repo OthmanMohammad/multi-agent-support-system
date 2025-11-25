@@ -31,6 +31,7 @@ from src.api.models.conversation_models import (
     ConversationResponse,
     ConversationDetailResponse,
     MessageResponse,
+    EscalateRequest,
 )
 
 # Customer models
@@ -70,6 +71,7 @@ __all__ = [
     "ConversationResponse",
     "ConversationDetailResponse",
     "MessageResponse",
+    "EscalateRequest",
     # Customer models
     "CustomerCreateRequest",
     "CustomerUpdateRequest",

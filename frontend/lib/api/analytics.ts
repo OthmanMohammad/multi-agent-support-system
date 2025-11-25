@@ -20,7 +20,8 @@ export const analyticsAPI = {
    * Get analytics overview
    */
   async getOverview(days = 7): Promise<Result<AnalyticsOverview>> {
-    return apiClient.get<AnalyticsOverview>(`/api/analytics/conversations?days=${days}`);
+    // Backend expects period in format "7d", "30d", "90d"
+    return apiClient.get<AnalyticsOverview>(`/api/analytics/overview?period=${days}d`);
   },
 
   /**

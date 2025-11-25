@@ -92,13 +92,15 @@ class BillingAgent(BaseAgent):
         state["response_confidence"] = 0.85
         state["primary_intent"] = intent  # Track primary intent
         state["intent_confidence"] = 0.9  # Track confidence in intent classification
-        state["next_agent"] = None  # End conversation
-        state["status"] = "resolved"
+        state["next_agent"] = None  # End routing (but keep conversation active)
+        # Keep status "active" to allow multi-turn conversations
+        # Only resolve when user explicitly ends or issue is confirmed resolved
+        state["status"] = "active"
 
         self.logger.info(
             "billing_response_generated",
             response_length=len(response),
-            status="resolved"
+            status="active"
         )
 
         return state

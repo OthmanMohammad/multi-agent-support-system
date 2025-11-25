@@ -157,7 +157,8 @@ export const authAPI = {
     token: string,
     newPassword: string
   ): Promise<Result<{ message: string }>> {
-    return apiClient.post('/api/auth/reset-password', {
+    // Backend expects the confirm endpoint for actual password reset
+    return apiClient.post('/api/auth/reset-password/confirm', {
       token,
       new_password: newPassword,
     });

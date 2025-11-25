@@ -91,13 +91,15 @@ class APIAgent(BaseAgent):
         state["agent_response"] = response
         state["response_confidence"] = 0.85
         state["next_agent"] = None
-        state["status"] = "resolved"
+        # Keep status "active" to allow multi-turn conversations
+        # Only resolve when user explicitly ends or issue is confirmed resolved
+        state["status"] = "active"
 
         self.logger.info(
             "api_response_generated",
             response_length=len(response),
             language=requested_lang,
-            status="resolved"
+            status="active"
         )
 
         return state

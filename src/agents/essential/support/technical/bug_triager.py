@@ -77,12 +77,14 @@ class TechnicalAgent(BaseAgent):
         state["primary_intent"] = intent  # Track primary intent
         state["intent_confidence"] = 0.85  # Track confidence in intent classification
         state["next_agent"] = None
-        state["status"] = "resolved"
+        # Keep status "active" to allow multi-turn conversations
+        # Only resolve when user explicitly ends or issue is confirmed resolved
+        state["status"] = "active"
 
         self.logger.info(
             "technical_response_generated",
             response_length=len(response),
-            status="resolved"
+            status="active"
         )
 
         return state

@@ -341,3 +341,103 @@ class CustomerApplicationService:
                 operation="get_customer_profile",
                 component="CustomerApplicationService"
             ))
+
+    async def list_customers(
+        self,
+        plan: Optional[str] = None,
+        limit: int = 50
+    ) -> Result[list]:
+        """List customers with optional filtering"""
+        try:
+            self.logger.debug(
+                "list_customers_started",
+                plan=plan,
+                limit=limit
+            )
+
+            # Get customers from repository
+            customers = await self.uow.customers.get_all(limit=limit)
+
+            # Filter by plan if specified
+            if plan:
+                customers = [c for c in customers if c.plan == plan]
+
+            # Convert to dict format matching frontend expectations
+            result = []
+            for customer in customers:
+                result.append({
+                    "customer_id": str(customer.id),
+                    "email": customer.email,
+                    "name": customer.name,
+                    "plan": customer.plan,
+                    "created_at": customer.created_at.isoformat() if customer.created_at else None
+                })
+
+            self.logger.info(
+                "customers_listed",
+                count=len(result),
+                plan=plan
+            )
+
+            return Result.ok(result)
+
+        except Exception as e:
+            self.logger.error(
+                "list_customers_failed",
+                error=str(e),
+                exc_info=True
+            )
+            return Result.fail(InternalError(
+                message=f"Failed to list customers: {str(e)}",
+                operation="list_customers",
+                component="CustomerApplicationService"
+            ))
+
+    async def delete_customer(
+        self,
+        customer_id: UUID
+    ) -> Result[None]:
+        """Delete a customer"""
+        try:
+            self.logger.info(
+                "delete_customer_started",
+                customer_id=str(customer_id)
+            )
+
+            # Check if customer exists
+            customer = await self.uow.customers.get_by_id(customer_id)
+            if not customer:
+                return Result.fail(NotFoundError(
+                    resource="Customer",
+                    identifier=str(customer_id)
+                ))
+
+            # Delete the customer
+            deleted = await self.uow.customers.delete(customer_id)
+
+            if not deleted:
+                return Result.fail(InternalError(
+                    message="Failed to delete customer",
+                    operation="delete_customer",
+                    component="CustomerApplicationService"
+                ))
+
+            self.logger.info(
+                "customer_deleted",
+                customer_id=str(customer_id)
+            )
+
+            return Result.ok(None)
+
+        except Exception as e:
+            self.logger.error(
+                "delete_customer_failed",
+                customer_id=str(customer_id),
+                error=str(e),
+                exc_info=True
+            )
+            return Result.fail(InternalError(
+                message=f"Failed to delete customer: {str(e)}",
+                operation="delete_customer",
+                component="CustomerApplicationService"
+            ))

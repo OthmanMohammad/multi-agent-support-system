@@ -15,7 +15,8 @@ class ConversationBase(BaseModel):
     """Base conversation schema"""
     status: str = Field(default="active", pattern="^(active|resolved|escalated)$")
     primary_intent: Optional[str] = None
-    agents_involved: list[str] = Field(default_factory=list)
+    # Alias for frontend compatibility (frontend expects agent_history)
+    agents_involved: list[str] = Field(default_factory=list, serialization_alias="agent_history")
     sentiment_avg: Optional[float] = Field(None, ge=-1, le=1)
     kb_articles_used: list[str] = Field(default_factory=list)
 

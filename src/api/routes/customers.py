@@ -2,8 +2,9 @@
 Customer routes - HTTP endpoints for customer management
 
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from uuid import UUID
+from typing import Optional, List
 from pydantic import BaseModel
 
 from src.api.dependencies import get_customer_application_service
@@ -90,6 +91,67 @@ async def get_customer_profile(
     )
     
     return result.value
+
+
+@router.get("/customers")
+async def list_customers(
+    plan: Optional[str] = Query(None, description="Filter by plan"),
+    limit: int = Query(50, ge=1, le=100, description="Max results"),
+    service: CustomerApplicationService = Depends(get_customer_application_service)
+):
+    """List all customers with optional filters"""
+    logger.debug(
+        "list_customers_endpoint_called",
+        plan=plan,
+        limit=limit
+    )
+
+    result = await service.list_customers(plan=plan, limit=limit)
+
+    if result.is_failure:
+        logger.warning(
+            "list_customers_failed",
+            plan=plan,
+            error_type=type(result.error).__name__
+        )
+        raise map_error_to_http(result.error)
+
+    logger.info(
+        "list_customers_success",
+        count=len(result.value),
+        plan=plan
+    )
+
+    return result.value
+
+
+@router.delete("/customers/{customer_id}", status_code=200)
+async def delete_customer(
+    customer_id: UUID,
+    service: CustomerApplicationService = Depends(get_customer_application_service)
+):
+    """Delete a customer"""
+    logger.warning(
+        "delete_customer_endpoint_called",
+        customer_id=str(customer_id)
+    )
+
+    result = await service.delete_customer(customer_id)
+
+    if result.is_failure:
+        logger.error(
+            "delete_customer_failed",
+            customer_id=str(customer_id),
+            error_type=type(result.error).__name__
+        )
+        raise map_error_to_http(result.error)
+
+    logger.info(
+        "delete_customer_success",
+        customer_id=str(customer_id)
+    )
+
+    return {"status": "deleted", "customer_id": str(customer_id)}
 
 
 @router.post("/customers/{customer_id}/upgrade")

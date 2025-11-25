@@ -678,3 +678,52 @@ class ConversationApplicationService:
                 operation="list_conversations",
                 component="ConversationApplicationService"
             ))
+
+    async def delete_conversation(
+        self,
+        conversation_id: UUID
+    ) -> Result[None]:
+        """Delete a conversation and its messages"""
+        try:
+            self.logger.info(
+                "delete_conversation_started",
+                conversation_id=str(conversation_id)
+            )
+
+            # Check if conversation exists
+            conversation = await self.uow.conversations.get_by_id(conversation_id)
+            if not conversation:
+                return Result.fail(NotFoundError(
+                    resource="Conversation",
+                    identifier=str(conversation_id)
+                ))
+
+            # Delete the conversation (cascade will delete messages)
+            deleted = await self.uow.conversations.delete(conversation_id)
+
+            if not deleted:
+                return Result.fail(InternalError(
+                    message="Failed to delete conversation",
+                    operation="delete_conversation",
+                    component="ConversationApplicationService"
+                ))
+
+            self.logger.info(
+                "conversation_deleted",
+                conversation_id=str(conversation_id)
+            )
+
+            return Result.ok(None)
+
+        except Exception as e:
+            self.logger.error(
+                "delete_conversation_failed",
+                conversation_id=str(conversation_id),
+                error=str(e),
+                exc_info=True
+            )
+            return Result.fail(InternalError(
+                message=f"Failed to delete conversation: {str(e)}",
+                operation="delete_conversation",
+                component="ConversationApplicationService"
+            ))

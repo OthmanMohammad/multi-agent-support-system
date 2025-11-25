@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from uuid import UUID
 from typing import Optional, List
 
-from src.api.models import ChatRequest, ChatResponse
+from src.api.models import ChatRequest, ChatResponse, EscalateRequest
 from src.database.schemas.conversation import ConversationWithMessages, ConversationInDB
 from src.api.dependencies import get_conversation_application_service
 from src.api.error_handlers import map_error_to_http
@@ -163,33 +163,33 @@ async def resolve_conversation(
 @router.post("/conversations/{conversation_id}/escalate", status_code=200)
 async def escalate_conversation(
     conversation_id: UUID,
-    reason: str = Query(..., description="Reason for escalation"),
+    request: EscalateRequest,
     service: ConversationApplicationService = Depends(get_conversation_application_service)
 ):
     """Escalate conversation to human"""
     logger.warning(
         "escalate_conversation_endpoint_called",
         conversation_id=str(conversation_id),
-        reason=reason
+        reason=request.reason
     )
-    
-    result = await service.escalate_conversation(conversation_id, reason)
-    
+
+    result = await service.escalate_conversation(conversation_id, request.reason)
+
     if result.is_failure:
         logger.error(
             "escalate_conversation_failed",
             conversation_id=str(conversation_id),
-            reason=reason,
+            reason=request.reason,
             error_type=type(result.error).__name__
         )
         raise map_error_to_http(result.error)
-    
+
     logger.warning(
         "escalate_conversation_success",
         conversation_id=str(conversation_id),
-        reason=reason
+        reason=request.reason
     )
-    
+
     return {"status": "escalated", "conversation_id": str(conversation_id)}
 
 
@@ -242,3 +242,32 @@ async def list_conversations(
     # Service returns list of ConversationInDB schema objects
     # FastAPI handles JSON serialization automatically
     return result.value
+
+
+@router.delete("/conversations/{conversation_id}", status_code=200)
+async def delete_conversation(
+    conversation_id: UUID,
+    service: ConversationApplicationService = Depends(get_conversation_application_service)
+):
+    """Delete a conversation and all its messages"""
+    logger.warning(
+        "delete_conversation_endpoint_called",
+        conversation_id=str(conversation_id)
+    )
+
+    result = await service.delete_conversation(conversation_id)
+
+    if result.is_failure:
+        logger.error(
+            "delete_conversation_failed",
+            conversation_id=str(conversation_id),
+            error_type=type(result.error).__name__
+        )
+        raise map_error_to_http(result.error)
+
+    logger.info(
+        "delete_conversation_success",
+        conversation_id=str(conversation_id)
+    )
+
+    return {"status": "deleted", "conversation_id": str(conversation_id)}
