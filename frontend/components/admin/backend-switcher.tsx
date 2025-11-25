@@ -8,13 +8,15 @@ import { toast } from "@/lib/utils/toast";
 
 export function BackendSwitcher(): JSX.Element {
   const [provider, setProvider] = useState<"openai" | "anthropic">("openai");
-  const { mutate: switchBackend, isPending } = useSwitchBackend();
+  const { switchBackend, isPending } = useSwitchBackend();
 
-  const handleSwitch = () => {
-    switchBackend({ provider }, {
-      onSuccess: () => toast.success(`Switched to ${provider}`),
-      onError: () => toast.error("Failed to switch backend"),
-    });
+  const handleSwitch = async () => {
+    const result = await switchBackend(provider);
+    if (result.success) {
+      toast.success(`Switched to ${provider}`);
+    } else {
+      toast.error("Failed to switch backend");
+    }
   };
 
   return (
