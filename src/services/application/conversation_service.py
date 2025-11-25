@@ -313,12 +313,13 @@ class ConversationApplicationService:
                 conversation_id=str(conversation_id),
                 message_length=len(message)
             )
-            
+
             validation_result = self.domain.validate_message(message)
             if validation_result.is_failure:
                 return Result.fail(validation_result.error)
-            
-            conversation = await self.uow.conversations.get_by_id(conversation_id)
+
+            # CRITICAL FIX: Fetch conversation WITH messages for context continuity
+            conversation = await self.uow.conversations.get_with_messages(conversation_id)
             if not conversation:
                 self.logger.warning(
                     "conversation_not_found",
@@ -328,7 +329,7 @@ class ConversationApplicationService:
                     resource="Conversation",
                     identifier=str(conversation_id)
                 ))
-            
+
             if conversation.status != "active":
                 self.logger.warning(
                     "add_message_conversation_not_active",
@@ -340,19 +341,50 @@ class ConversationApplicationService:
                     rule="conversation_must_be_active",
                     entity="Conversation"
                 ))
-            
+
+            # Build conversation history from existing messages BEFORE adding the new one
+            # This provides context to the agents about what has been discussed
+            conversation_history = []
+            for msg in conversation.messages:
+                conversation_history.append({
+                    "role": msg.role,
+                    "content": msg.content,
+                    "timestamp": msg.created_at.isoformat() if msg.created_at else None,
+                    "agent_name": getattr(msg, 'agent_name', None)
+                })
+
+            self.logger.debug(
+                "conversation_history_loaded",
+                conversation_id=str(conversation_id),
+                message_count=len(conversation_history)
+            )
+
             await self.uow.messages.create_message(
                 conversation_id=conversation.id,
                 role="user",
                 content=message,
                 created_by=self.uow.current_user_id
             )
-            
+
+            # Get customer metadata for context enrichment
+            customer_metadata = {}
+            customer_result = await self.customer_service.get_by_id(conversation.customer_id)
+            if customer_result.is_success and customer_result.value:
+                customer = customer_result.value
+                customer_metadata = {
+                    "plan": customer.plan,
+                    "email": customer.email,
+                    "account_age_days": (datetime.now(timezone.utc) - customer.created_at).days if customer.created_at else 0
+                }
+
+            # CRITICAL FIX: Pass conversation_history in context for agent continuity
             agent_result = await self.workflow_engine.execute(
                 message=message,
                 context={
                     "conversation_id": str(conversation.id),
-                    "customer_id": str(conversation.customer_id)
+                    "customer_id": str(conversation.customer_id),
+                    "customer_metadata": customer_metadata,
+                    "conversation_history": conversation_history
                 }
             )
             
