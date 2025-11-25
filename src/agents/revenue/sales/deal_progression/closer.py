@@ -320,7 +320,7 @@ class Closer(BaseAgent):
         )
         state["kb_results"] = kb_results
 
-        # Generate response
+        # Generate response with conversation context
         response = await self._generate_closing_response(
             message,
             closing_strategy,
@@ -329,7 +329,8 @@ class Closer(BaseAgent):
             close_probability,
             final_objections,
             kb_results,
-            customer_metadata
+            customer_metadata,
+            state
         )
 
         # Update state
@@ -710,9 +711,13 @@ class Closer(BaseAgent):
         close_probability: float,
         objections: List[Dict],
         kb_results: List[Dict],
-        customer_metadata: Dict
+        customer_metadata: Dict,
+        state: AgentState
     ) -> str:
         """Generate closing response"""
+
+        # Get conversation history for multi-turn context
+        conversation_history = self.get_conversation_context(state)
 
         # Build urgency context
         urgency_context = ""
@@ -748,6 +753,10 @@ Key Messages to Convey:
 
 Company: {customer_metadata.get('company', 'Customer')}
 
+IMPORTANT: Consider the conversation history when responding. Build on previous discussion,
+reference what the customer has already told you, and don't repeat information or introductions.
+Maintain continuity in the conversation.
+
 Your response should:
 1. Be confident and assumptive (assume the sale)
 2. Create appropriate urgency without being pushy
@@ -772,7 +781,12 @@ Closing Plan Steps:
 
 Generate a confident closing response that drives toward signature."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        # Call LLM with conversation history for multi-turn context
+        response = await self.call_llm(
+            system_prompt,
+            user_prompt,
+            conversation_history=conversation_history
+        )
         return response
 
 

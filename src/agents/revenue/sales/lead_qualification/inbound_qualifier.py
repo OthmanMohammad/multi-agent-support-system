@@ -145,13 +145,14 @@ class InboundQualifier(BaseAgent):
         )
         state["kb_results"] = kb_results
 
-        # Generate appropriate response
+        # Generate appropriate response with conversation context
         response = await self._generate_qualification_response(
             message,
             lead_info,
             lead_score,
             qualification_status,
-            kb_results
+            kb_results,
+            state
         )
 
         # Determine next action
@@ -342,9 +343,13 @@ class InboundQualifier(BaseAgent):
         lead_info: Dict[str, Any],
         lead_score: int,
         qualification_status: str,
-        kb_results: List[Dict]
+        kb_results: List[Dict],
+        state: AgentState
     ) -> str:
         """Generate personalized qualification response using Claude"""
+
+        # Get conversation history for multi-turn context
+        conversation_history = self.get_conversation_context(state)
 
         # Build knowledge base context
         kb_context = ""
@@ -364,6 +369,10 @@ Current lead information:
 - Lead Source: {lead_info.get('lead_source', 'Unknown')}
 - Lead Score: {lead_score}/100
 - Qualification Status: {qualification_status}
+
+IMPORTANT: Consider the conversation history when responding. If this is a follow-up question,
+reference and build upon previous discussion. Don't repeat introductions or treat each message
+as a new conversation.
 
 Be consultative, not pushy. Build trust and gather information.
 Ask 2-3 qualifying questions to understand their needs better.
@@ -415,8 +424,12 @@ Your response should:
 
 Generate a friendly, helpful response."""
 
-        # Call Claude
-        response = await self.call_llm(system_prompt, user_prompt)
+        # Call Claude with conversation history for multi-turn context
+        response = await self.call_llm(
+            system_prompt,
+            user_prompt,
+            conversation_history=conversation_history
+        )
 
         return response
 
