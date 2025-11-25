@@ -10,41 +10,50 @@
  * - Type-safe responses with Zod validation
  */
 
-import axios, {
+import axios from "axios";
+import type {
+  AxiosError,
   AxiosInstance,
   AxiosRequestConfig,
-  AxiosError,
-  InternalAxiosRequestConfig
-} from 'axios';
-import { config } from './config';
-import { APIClientError, type Result, success, failure } from './types/api';
+  InternalAxiosRequestConfig,
+} from "axios";
+import { config } from "./config";
+import { APIClientError, failure, type Result, success } from "./types/api";
 
 // =============================================================================
 // TOKEN MANAGEMENT
 // =============================================================================
 
 class TokenManager {
-  private static readonly ACCESS_TOKEN_KEY = 'access_token';
-  private static readonly REFRESH_TOKEN_KEY = 'refresh_token';
+  private static readonly ACCESS_TOKEN_KEY = "access_token";
+  private static readonly REFRESH_TOKEN_KEY = "refresh_token";
 
   static getAccessToken(): string | null {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === "undefined") {
+      return null;
+    }
     return localStorage.getItem(this.ACCESS_TOKEN_KEY);
   }
 
   static getRefreshToken(): string | null {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === "undefined") {
+      return null;
+    }
     return localStorage.getItem(this.REFRESH_TOKEN_KEY);
   }
 
   static setTokens(accessToken: string, refreshToken: string): void {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") {
+      return;
+    }
     localStorage.setItem(this.ACCESS_TOKEN_KEY, accessToken);
     localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
   }
 
   static clearTokens(): void {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") {
+      return;
+    }
     localStorage.removeItem(this.ACCESS_TOKEN_KEY);
     localStorage.removeItem(this.REFRESH_TOKEN_KEY);
   }
@@ -64,7 +73,7 @@ class APIClient {
       baseURL: config.api.baseURL,
       timeout: config.api.timeout,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
 
@@ -94,7 +103,9 @@ class APIClient {
     this.client.interceptors.response.use(
       (response) => response,
       async (error: AxiosError) => {
-        const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+        const originalRequest = error.config as InternalAxiosRequestConfig & {
+          _retry?: boolean;
+        };
 
         // Handle 401 Unauthorized - Refresh token
         if (error.response?.status === 401 && !originalRequest._retry) {
@@ -128,8 +139,8 @@ class APIClient {
             TokenManager.clearTokens();
 
             // Redirect to login
-            if (typeof window !== 'undefined') {
-              window.location.href = '/auth/signin';
+            if (typeof window !== "undefined") {
+              window.location.href = "/auth/signin";
             }
 
             return Promise.reject(refreshError);
@@ -150,7 +161,7 @@ class APIClient {
     const refreshToken = TokenManager.getRefreshToken();
 
     if (!refreshToken) {
-      throw new Error('No refresh token available');
+      throw new Error("No refresh token available");
     }
 
     try {
@@ -187,7 +198,7 @@ class APIClient {
     if (error.response) {
       // Server responded with error
       const data = error.response.data as { detail?: string; message?: string };
-      const message = data?.detail || data?.message || 'An error occurred';
+      const message = data?.detail || data?.message || "An error occurred";
 
       return new APIClientError(
         message,
@@ -198,18 +209,17 @@ class APIClient {
     } else if (error.request) {
       // Request made but no response
       return new APIClientError(
-        'No response from server. Please check your connection.',
+        "No response from server. Please check your connection.",
         0,
-        'NETWORK_ERROR'
-      );
-    } else {
-      // Error in request setup
-      return new APIClientError(
-        error.message || 'An unexpected error occurred',
-        0,
-        'REQUEST_ERROR'
+        "NETWORK_ERROR"
       );
     }
+    // Error in request setup
+    return new APIClientError(
+      error.message || "An unexpected error occurred",
+      0,
+      "REQUEST_ERROR"
+    );
   }
 
   // ===========================================================================
@@ -225,7 +235,11 @@ class APIClient {
     }
   }
 
-  async post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<Result<T>> {
+  async post<T>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig
+  ): Promise<Result<T>> {
     try {
       const response = await this.client.post<T>(url, data, config);
       return success(response.data);
@@ -234,7 +248,11 @@ class APIClient {
     }
   }
 
-  async put<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<Result<T>> {
+  async put<T>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig
+  ): Promise<Result<T>> {
     try {
       const response = await this.client.put<T>(url, data, config);
       return success(response.data);
@@ -243,7 +261,11 @@ class APIClient {
     }
   }
 
-  async patch<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<Result<T>> {
+  async patch<T>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig
+  ): Promise<Result<T>> {
     try {
       const response = await this.client.patch<T>(url, data, config);
       return success(response.data);
@@ -252,7 +274,10 @@ class APIClient {
     }
   }
 
-  async delete<T>(url: string, config?: AxiosRequestConfig): Promise<Result<T>> {
+  async delete<T>(
+    url: string,
+    config?: AxiosRequestConfig
+  ): Promise<Result<T>> {
     try {
       const response = await this.client.delete<T>(url, config);
       return success(response.data);
