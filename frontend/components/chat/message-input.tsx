@@ -4,7 +4,7 @@ import type { JSX } from "react";
 import { useState, useRef, useEffect, KeyboardEvent, ChangeEvent } from "react";
 import { Send, Paperclip, X, File, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useSendMessage } from "@/lib/api/hooks/useMessages";
+import { useConversation } from "@/lib/hooks/useConversations";
 import { useStreamResponse } from "@/lib/api/hooks/useStreamResponse";
 import { useChatStore } from "@/stores/chat-store";
 import { cn } from "@/lib/utils";
@@ -43,7 +43,7 @@ export function MessageInput({ conversationId }: MessageInputProps): JSX.Element
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const sendMessage = useSendMessage();
+  const { sendMessage, isSending } = useConversation(conversationId);
   const isStreaming = useChatStore((state) => state.isStreaming);
   const addMessage = useChatStore((state) => state.addMessage);
   const setIsStreaming = useChatStore((state) => state.setIsStreaming);
@@ -101,15 +101,12 @@ export function MessageInput({ conversationId }: MessageInputProps): JSX.Element
     addMessage(optimisticMessage);
 
     try {
-      // Send message to API
-      const sentMessage = await sendMessage.mutateAsync({
-        conversationId,
-        content,
-        role: "USER",
-        metadata: messageAttachments.length > 0
-          ? { attachments: messageAttachments.map((a) => a.file.name) }
-          : undefined,
-      });
+      // Send message to API (just the text content)
+      const response = await sendMessage(content);
+
+      if (!response) {
+        throw new Error("Failed to send message");
+      }
 
       // TODO: Implement file upload if attachments exist
       // For now, metadata contains filenames
@@ -241,7 +238,7 @@ export function MessageInput({ conversationId }: MessageInputProps): JSX.Element
 
   const characterCount = message.length;
   const isOverLimit = characterCount > MAX_MESSAGE_LENGTH;
-  const canSend = (message.trim() || attachments.length > 0) && !isStreaming && !isOverLimit;
+  const canSend = (message.trim() || attachments.length > 0) && !isStreaming && !isSending && !isOverLimit;
 
   return (
     <div className="border-t border-border p-4">

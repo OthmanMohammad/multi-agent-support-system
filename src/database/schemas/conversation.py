@@ -39,15 +39,26 @@ class ConversationUpdate(BaseModel):
 
 
 class ConversationInDB(ConversationBase):
-    """Conversation as stored in database"""
-    id: UUID
+    """Conversation as stored in database
+
+    Note: Uses field aliases for API compatibility with frontend:
+    - id → conversation_id
+    - updated_at → last_updated
+    """
+    id: UUID = Field(serialization_alias="conversation_id")
     customer_id: UUID
     extra_metadata: dict
     started_at: datetime
     ended_at: Optional[datetime] = None
     resolution_time_seconds: Optional[int] = None
-    
-    model_config = ConfigDict(from_attributes=True)
+    # Timestamp fields from BaseModel (TimestampMixin)
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = Field(None, serialization_alias="last_updated")
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True  # Allow both field names
+    )
 
 
 class ConversationResponse(ConversationInDB):

@@ -1,7 +1,7 @@
 import type { JSX } from "react";
 import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useCreateConversation } from "@/lib/api/hooks/useConversations";
+import { useConversations } from "@/lib/hooks/useConversations";
 import { useChatStore } from "@/stores/chat-store";
 
 /**
@@ -9,17 +9,17 @@ import { useChatStore } from "@/stores/chat-store";
  * Shown when no conversation is selected
  */
 export function EmptyState(): JSX.Element {
-  const createConversation = useCreateConversation();
+  const { createConversation, isCreating } = useConversations();
   const setCurrentConversation = useChatStore(
     (state) => state.setCurrentConversation
   );
 
   const handleNewConversation = async (): Promise<void> => {
     try {
-      const newConversation = await createConversation.mutateAsync({
-        title: "New Conversation",
-      });
-      setCurrentConversation(newConversation.id);
+      const response = await createConversation("Hello, I need help");
+      if (response) {
+        setCurrentConversation(response.conversation_id);
+      }
     } catch (error) {
       console.error("Failed to create conversation:", error);
     }
@@ -37,7 +37,7 @@ export function EmptyState(): JSX.Element {
       </p>
       <Button
         onClick={handleNewConversation}
-        disabled={createConversation.isPending}
+        disabled={isCreating}
         className="mt-6"
       >
         <MessageSquare className="mr-2 h-4 w-4" />

@@ -3,7 +3,7 @@
 import type { JSX } from "react";
 import { useState } from "react";
 import { Plus, Search, X, Menu } from "lucide-react";
-import { useConversations, useCreateConversation } from "@/lib/api/hooks/useConversations";
+import { useConversations } from "@/lib/hooks/useConversations";
 import { useChatStore } from "@/stores/chat-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,8 +17,7 @@ import { ConversationItemSkeleton } from "./conversation-skeleton";
  */
 export function ConversationSidebar(): JSX.Element {
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: conversations, isLoading } = useConversations();
-  const createConversation = useCreateConversation();
+  const { conversations, isLoading, createConversation } = useConversations();
 
   const currentConversationId = useChatStore((state) => state.currentConversationId);
   const setCurrentConversation = useChatStore((state) => state.setCurrentConversation);
@@ -27,18 +26,19 @@ export function ConversationSidebar(): JSX.Element {
 
   const handleNewConversation = async (): Promise<void> => {
     try {
-      const newConversation = await createConversation.mutateAsync({
-        title: "New Conversation",
-      });
-      setCurrentConversation(newConversation.id);
+      const response = await createConversation("Hello, I need help");
+      if (response) {
+        setCurrentConversation(response.conversation_id);
+      }
     } catch (error) {
       console.error("Failed to create conversation:", error);
     }
   };
 
-  const filteredConversations = conversations?.filter((conv) =>
-    conv.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredConversations = conversations?.filter((conv) => {
+    const title = conv.primary_intent || `Conversation ${conv.conversation_id.slice(0, 8)}`;
+    return title.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   return (
     <>
@@ -101,10 +101,10 @@ export function ConversationSidebar(): JSX.Element {
               <div className="space-y-1 p-2">
                 {filteredConversations?.map((conversation) => (
                   <ConversationItem
-                    key={conversation.id}
+                    key={conversation.conversation_id}
                     conversation={conversation}
-                    isActive={currentConversationId === conversation.id}
-                    onClick={() => setCurrentConversation(conversation.id)}
+                    isActive={currentConversationId === conversation.conversation_id}
+                    onClick={() => setCurrentConversation(conversation.conversation_id)}
                   />
                 ))}
               </div>
