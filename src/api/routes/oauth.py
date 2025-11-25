@@ -20,7 +20,7 @@ from datetime import datetime, UTC
 from src.api.models.auth_models import LoginResponse, UserProfile
 from src.api.auth.jwt import JWTManager
 from src.database.repositories.user_repository import UserRepository
-from src.database.models.user import User, UserRole, UserStatus
+from src.database.models.user import User, UserRole, UserStatus, OAuthProvider
 from src.database.connection import get_db_session
 from src.database.unit_of_work import UnitOfWork
 from src.core.config import get_settings
@@ -110,10 +110,13 @@ async def get_or_create_oauth_user(
     # Check if user exists with this email
     user = await uow.users.get_by_email(email)
 
+    # Convert provider string to OAuthProvider enum
+    oauth_provider_enum = OAuthProvider(provider.lower())
+
     if user:
         # Link OAuth provider to existing user
-        user.oauth_provider = provider
-        user.oauth_provider_user_id = provider_user_id
+        user.oauth_provider = oauth_provider_enum
+        user.oauth_id = provider_user_id
         await uow.users.update_last_login(user.id)
         await uow.commit()
         return user
@@ -122,8 +125,8 @@ async def get_or_create_oauth_user(
     user = User(
         email=email,
         full_name=full_name,
-        oauth_provider=provider,
-        oauth_provider_user_id=provider_user_id,
+        oauth_provider=oauth_provider_enum,
+        oauth_id=provider_user_id,
         role=UserRole.USER,
         status=UserStatus.ACTIVE,
         is_verified=True,  # OAuth users are pre-verified

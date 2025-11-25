@@ -23,7 +23,7 @@ from uuid import UUID
 from datetime import datetime, timedelta, UTC
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from src.database.models.user import User, UserRole, UserStatus
+from src.database.models.user import User, UserRole, UserStatus, OAuthProvider
 from src.database.models.api_key import APIKey
 from src.database.unit_of_work import get_unit_of_work
 from src.api.models.auth_models import (
@@ -280,6 +280,15 @@ async def oauth_login(
         provider_user_id=request.provider_user_id
     )
 
+    # Convert provider string to OAuthProvider enum
+    try:
+        oauth_provider_enum = OAuthProvider(request.provider.lower())
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported OAuth provider: {request.provider}"
+        )
+
     async with get_unit_of_work() as uow:
         # Check if user exists with this OAuth provider
         user = await uow.users.get_by_oauth(request.provider, request.provider_user_id)
@@ -295,8 +304,8 @@ async def oauth_login(
 
             if user:
                 # Link OAuth provider to existing user
-                user.oauth_provider = request.provider
-                user.oauth_provider_user_id = request.provider_user_id
+                user.oauth_provider = oauth_provider_enum
+                user.oauth_id = request.provider_user_id
                 await uow.users.update_last_login(user.id)
                 await uow.commit()
                 logger.info(
@@ -315,8 +324,8 @@ async def oauth_login(
                     status=UserStatus.ACTIVE,  # OAuth users are pre-verified
                     is_active=True,
                     is_verified=True,  # OAuth users are pre-verified
-                    oauth_provider=request.provider,
-                    oauth_provider_user_id=request.provider_user_id,
+                    oauth_provider=oauth_provider_enum,
+                    oauth_id=request.provider_user_id,
                 )
 
                 # Get role scopes
