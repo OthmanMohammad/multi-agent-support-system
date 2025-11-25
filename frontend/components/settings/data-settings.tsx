@@ -2,7 +2,7 @@
 
 import type { JSX } from "react";
 import { useState } from "react";
-import { Download, Upload, Trash2, Database, FileJson } from "lucide-react";
+import { Download, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/lib/utils/toast";
 
@@ -41,7 +41,7 @@ export function DataSettings(): JSX.Element {
       toast.success("Data exported", {
         description: "Your data has been downloaded",
       });
-    } catch (error) {
+    } catch (_error) {
       toast.error("Export failed", {
         description: "Failed to export your data",
       });
@@ -50,15 +50,20 @@ export function DataSettings(): JSX.Element {
     }
   };
 
-  const handleImportData = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+  const handleImportData = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ): Promise<void> => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     setIsImporting(true);
 
     try {
       const text = await file.text();
-      const data = JSON.parse(text);
+      // Validate JSON by parsing
+      JSON.parse(text);
 
       // TODO: Validate and import data
       await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -66,7 +71,7 @@ export function DataSettings(): JSX.Element {
       toast.success("Data imported", {
         description: "Your data has been restored",
       });
-    } catch (error) {
+    } catch (_error) {
       toast.error("Import failed", {
         description: "Invalid data file",
       });
