@@ -175,17 +175,19 @@ class ConversationApplicationService:
             sentiment = agent_result.get("sentiment", 0.0)
             agent_path = agent_result.get("agent_history", [])
             kb_articles = agent_result.get("kb_articles_used", [])
-            status = agent_result.get("status", "active")
-            
+            agent_suggested_status = agent_result.get("status", "active")
+            escalation_reason = agent_result.get("escalation_reason")
+            should_escalate = agent_result.get("should_escalate", False)
+
             self.logger.info(
                 "workflow_completed",
                 conversation_id=str(conversation.id),
-                status=status,
+                agent_suggested_status=agent_suggested_status,
                 intent=intent,
                 confidence=round(confidence, 2),
                 agent_path=agent_path
             )
-            
+
             # Save agent response
             agent_name = agent_path[-1] if agent_path else "router"
             agent_message = await self.uow.messages.create_message(
@@ -198,87 +200,77 @@ class ConversationApplicationService:
                 confidence=confidence,
                 created_by=self.uow.current_user_id
             )
-            
-            # Update conversation metadata
-            await self.uow.conversations.update(
-                conversation.id,
-                primary_intent=intent,
-                agents_involved=agent_path,
-                sentiment_avg=sentiment,
-                kb_articles_used=kb_articles,
-                status=status,
-                updated_by=self.uow.current_user_id
+
+            # Determine actual status using business rules:
+            # 1. Agents CANNOT auto-resolve conversations - user must explicitly resolve
+            # 2. Agents CAN escalate if they flag should_escalate or have low confidence
+            # 3. Default is to keep conversation active for user to continue
+            final_status = "active"  # Default: keep conversation active
+
+            # Check for legitimate escalation conditions
+            should_actually_escalate = (
+                should_escalate or
+                agent_suggested_status == "escalated" or
+                (confidence < 0.4 and escalation_reason) or  # Low confidence with reason
+                sentiment < -0.7  # Very negative sentiment
             )
-            
-            # Handle resolution or escalation
-            if status == "resolved":
-                resolution_time = self.domain.calculate_resolution_time(
-                    conversation.started_at,
-                    datetime.now(timezone.utc)
-                )
-                await self.uow.conversations.mark_resolved(
-                    conversation.id,
-                    resolution_time
-                )
-                
-                self.logger.info(
-                    "conversation_resolved",
-                    conversation_id=str(conversation.id),
-                    resolution_time_seconds=resolution_time
-                )
-                
-                event = self.domain.create_conversation_resolved_event(
-                    conversation_id=conversation.id,
-                    customer_id=customer.id,
-                    resolution_time_seconds=resolution_time,
-                    primary_intent=intent,
-                    agents_involved=agent_path,
-                    sentiment_avg=sentiment
-                )
-                self.event_bus.publish(event)
-            
-            elif status == "escalated":
+
+            if should_actually_escalate:
+                final_status = "escalated"
                 await self.uow.conversations.mark_escalated(conversation.id)
-                
+
                 priority = self.domain.determine_escalation_priority(
                     customer_plan=customer.plan,
                     urgency="high",
                     sentiment_avg=sentiment,
                     annual_value=customer.extra_metadata.get("annual_value", 0) if customer.extra_metadata else 0
                 )
-                
+
                 self.logger.warning(
                     "conversation_escalated",
                     conversation_id=str(conversation.id),
                     priority=priority,
-                    reason=agent_result.get("escalation_reason", "Low confidence")
+                    reason=escalation_reason or "Low confidence or negative sentiment"
                 )
-                
+
                 event = self.domain.create_conversation_escalated_event(
                     conversation_id=conversation.id,
                     customer_id=customer.id,
                     priority=priority,
-                    reason=agent_result.get("escalation_reason", "Low confidence"),
+                    reason=escalation_reason or "Low confidence or negative sentiment",
                     agents_involved=agent_path
                 )
                 self.event_bus.publish(event)
+            else:
+                # Keep conversation active - update with metadata only
+                await self.uow.conversations.update(
+                    conversation.id,
+                    primary_intent=intent,
+                    agents_involved=agent_path,
+                    sentiment_avg=sentiment,
+                    kb_articles_used=kb_articles,
+                    status="active",  # Always keep active - user resolves when satisfied
+                    updated_by=self.uow.current_user_id
+                )
             
             # Track analytics
             if self.analytics_service and agent_name:
                 await self.analytics_service.track_agent_interaction(
                     agent_name=agent_name,
-                    success=(status == "resolved"),
+                    success=(final_status == "active"),  # Success if not escalated
                     confidence=confidence
                 )
-            
+
             self.logger.info(
                 "conversation_created",
                 conversation_id=str(conversation.id),
                 customer_id=str(customer.id),
-                status=status,
-                intent=intent
+                status=final_status,
+                agent_suggested_status=agent_suggested_status,
+                intent=intent,
+                note="Agent status ignored; conversation kept active unless escalation triggered"
             )
-            
+
             return Result.ok({
                 "conversation_id": conversation.id,
                 "message_id": agent_message.id,
@@ -292,7 +284,7 @@ class ConversationApplicationService:
                 "sentiment": sentiment,
                 "agent_path": agent_path,
                 "kb_articles_used": kb_articles,
-                "status": status
+                "status": final_status
             })
             
         except Exception as e:
@@ -369,8 +361,10 @@ class ConversationApplicationService:
             confidence = agent_result.get("intent_confidence", 0.0)
             sentiment = agent_result.get("sentiment", 0.0)
             agent_path = agent_result.get("agent_history", [])
-            status = agent_result.get("status", "active")
-            
+            agent_suggested_status = agent_result.get("status", "active")
+            escalation_reason = agent_result.get("escalation_reason")
+            should_escalate = agent_result.get("should_escalate", False)
+
             agent_name = agent_path[-1] if agent_path else "router"
             agent_message = await self.uow.messages.create_message(
                 conversation_id=conversation.id,
@@ -383,18 +377,70 @@ class ConversationApplicationService:
                 created_by=self.uow.current_user_id
             )
 
-            await self.uow.conversations.update(
-                conversation.id,
-                status=status,
-                sentiment_avg=sentiment,
-                updated_by=self.uow.current_user_id
+            # Determine actual status using business rules:
+            # 1. Agents CANNOT auto-resolve conversations - user must explicitly resolve
+            # 2. Agents CAN escalate if they flag should_escalate or have low confidence
+            # 3. Default is to keep conversation active for user to continue
+            final_status = "active"  # Default: keep conversation active
+
+            # Check for legitimate escalation conditions
+            should_actually_escalate = (
+                should_escalate or
+                agent_suggested_status == "escalated" or
+                (confidence < 0.4 and escalation_reason) or  # Low confidence with reason
+                sentiment < -0.7  # Very negative sentiment
             )
+
+            if should_actually_escalate:
+                final_status = "escalated"
+                await self.uow.conversations.mark_escalated(conversation.id)
+
+                # Get customer for priority calculation
+                customer_result = await self.customer_service.get_by_id(
+                    conversation.customer_id
+                )
+                if customer_result.is_success:
+                    customer = customer_result.value
+                    priority = self.domain.determine_escalation_priority(
+                        customer_plan=customer.plan,
+                        urgency="high",
+                        sentiment_avg=sentiment,
+                        annual_value=customer.extra_metadata.get("annual_value", 0) if customer.extra_metadata else 0
+                    )
+
+                    self.logger.warning(
+                        "conversation_escalated_in_add_message",
+                        conversation_id=str(conversation.id),
+                        priority=priority,
+                        reason=escalation_reason or "Low confidence or negative sentiment",
+                        confidence=confidence,
+                        sentiment=sentiment
+                    )
+
+                    event = self.domain.create_conversation_escalated_event(
+                        conversation_id=conversation.id,
+                        customer_id=conversation.customer_id,
+                        priority=priority,
+                        reason=escalation_reason or "Low confidence or negative sentiment",
+                        agents_involved=agent_path
+                    )
+                    self.event_bus.publish(event)
+            else:
+                # Keep conversation active - user can resolve when satisfied
+                await self.uow.conversations.update(
+                    conversation.id,
+                    status="active",
+                    sentiment_avg=sentiment,
+                    updated_by=self.uow.current_user_id
+                )
 
             self.logger.info(
                 "message_added",
                 conversation_id=str(conversation.id),
-                status=status,
-                agent=agent_name
+                status=final_status,
+                agent_suggested_status=agent_suggested_status,
+                agent=agent_name,
+                note="Agent status ignored; conversation kept active unless escalation triggered"
             )
 
             return Result.ok({

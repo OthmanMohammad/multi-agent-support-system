@@ -1,11 +1,12 @@
 "use client";
 
 import type { JSX } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import type { ChangeEvent, KeyboardEvent } from "react";
-import { File, Paperclip, Send, X } from "lucide-react";
+import { File, Paperclip, Send, X, StopCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useConversation } from "@/lib/hooks/useConversations";
+import { useStreamResponse } from "@/lib/api/hooks/useStreamResponse";
 import { useChatStore } from "@/stores/chat-store";
 import { cn } from "@/lib/utils";
 import { fileToast, toast } from "@/lib/utils/toast";
@@ -38,7 +39,14 @@ const ALLOWED_FILE_TYPES = [
 
 /**
  * Message Input Component
- * Textarea with file upload, auto-resize, and keyboard shortcuts
+ *
+ * Enterprise-grade message input with:
+ * - Real-time streaming responses via SSE
+ * - Optimistic UI updates
+ * - File attachments with drag-and-drop
+ * - Character limit validation
+ * - Keyboard shortcuts (Enter to send, Shift+Enter for newline)
+ * - Cancel streaming capability
  */
 export function MessageInput({
   conversationId,
@@ -51,10 +59,48 @@ export function MessageInput({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { sendMessage, isSending } = useConversation(conversationId);
-  const isStreaming = useChatStore((state) => state.isStreaming);
+  // Hooks
+  const { refresh, isSending } = useConversation(conversationId);
+  const {
+    streamMessage,
+    cancelStream,
+    isStreaming: isStreamingResponse,
+    content: streamingContent,
+    error: streamError,
+  } = useStreamResponse();
+
+  // Zustand store
   const addMessage = useChatStore((state) => state.addMessage);
   const setIsStreaming = useChatStore((state) => state.setIsStreaming);
+  const appendToStreamingMessage = useChatStore(
+    (state) => state.appendToStreamingMessage
+  );
+  const clearStreamingMessage = useChatStore(
+    (state) => state.clearStreamingMessage
+  );
+
+  // Sync streaming state with store
+  useEffect(() => {
+    setIsStreaming(isStreamingResponse);
+  }, [isStreamingResponse, setIsStreaming]);
+
+  // Sync streaming content with store for live display
+  useEffect(() => {
+    if (streamingContent) {
+      clearStreamingMessage();
+      // The store's streamingMessage is replaced entirely since useStreamResponse tracks full content
+      useChatStore.setState({ streamingMessage: streamingContent });
+    }
+  }, [streamingContent, clearStreamingMessage]);
+
+  // Handle streaming errors
+  useEffect(() => {
+    if (streamError) {
+      toast.error("Streaming error", {
+        description: streamError.message || "Failed to receive response",
+      });
+    }
+  }, [streamError]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -72,11 +118,11 @@ export function MessageInput({
     textareaRef.current?.focus();
   }, []);
 
-  const handleSend = async (): Promise<void> => {
+  const handleSend = useCallback(async (): Promise<void> => {
     if (!message.trim() && attachments.length === 0) {
       return;
     }
-    if (isStreaming) {
+    if (isStreamingResponse || isSending) {
       return;
     }
 
@@ -86,55 +132,80 @@ export function MessageInput({
     // Clear input immediately for better UX
     setMessage("");
     setAttachments([]);
+    clearStreamingMessage();
 
-    // Optimistic UI update - add user message
-    const optimisticMessage = {
+    // Add optimistic user message for immediate feedback
+    const optimisticUserMessage = {
       role: "user" as const,
       content,
       agent_name: null,
       timestamp: new Date().toISOString(),
     };
-
-    addMessage(optimisticMessage);
+    addMessage(optimisticUserMessage);
 
     try {
-      setIsStreaming(true);
+      // Use streaming API for real-time response
+      await streamMessage(
+        conversationId,
+        content,
+        // onChunk - called with accumulated content
+        undefined,
+        // onDone - called when streaming completes
+        async (fullContent: string) => {
+          // Clear the streaming message state
+          clearStreamingMessage();
 
-      // Send message to API (just the text content)
-      const response = await sendMessage(content);
+          // Add the complete AI response to messages
+          const aiMessage = {
+            role: "assistant" as const,
+            content: fullContent,
+            agent_name: null, // Will be updated from API
+            timestamp: new Date().toISOString(),
+          };
+          addMessage(aiMessage);
 
-      if (!response) {
-        throw new Error("Failed to send message");
-      }
-
-      // Add AI response to the chat
-      const aiMessage = {
-        role: "assistant" as const,
-        content: response.response,
-        agent_name: response.agent_name,
-        timestamp: response.created_at,
-      };
-      addMessage(aiMessage);
+          // Refresh conversation to sync with backend (gets proper message IDs, agent names, etc.)
+          await refresh();
+        },
+        // onAgentSwitch - log agent transitions
+        (fromAgent: string, toAgent: string) => {
+          console.log(`Agent switch: ${fromAgent} → ${toAgent}`);
+        }
+      );
     } catch (error) {
       console.error("Failed to send message:", error);
 
-      // Show error toast
+      // Show error toast with retry option
       toast.error("Failed to send message", {
         description:
           error instanceof Error ? error.message : "Please try again.",
         action: {
           label: "Retry",
           onClick: () => {
-            // Restore the message
+            // Restore the message for retry
             setMessage(content);
             setAttachments(messageAttachments);
           },
         },
       });
-    } finally {
-      setIsStreaming(false);
     }
-  };
+  }, [
+    message,
+    attachments,
+    isStreamingResponse,
+    isSending,
+    conversationId,
+    addMessage,
+    clearStreamingMessage,
+    streamMessage,
+    refresh,
+  ]);
+
+  const handleCancel = useCallback(() => {
+    cancelStream();
+    clearStreamingMessage();
+    toast.info("Response cancelled");
+  }, [cancelStream, clearStreamingMessage]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>): void => {
     // Send on Cmd/Ctrl + Enter
@@ -243,7 +314,7 @@ export function MessageInput({
   const isOverLimit = characterCount > MAX_MESSAGE_LENGTH;
   const canSend =
     (message.trim() || attachments.length > 0) &&
-    !isStreaming &&
+    !isStreamingResponse &&
     !isSending &&
     !isOverLimit &&
     !disabled;
@@ -272,7 +343,7 @@ export function MessageInput({
                     <File className="h-6 w-6 text-foreground-secondary" />
                   </div>
                 )}
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">
                     {attachment.file.name}
                   </p>
@@ -313,11 +384,11 @@ export function MessageInput({
             placeholder={
               disabled
                 ? "Reopen conversation to send messages"
-                : isStreaming
-                  ? "AI is typing..."
+                : isStreamingResponse
+                  ? "AI is responding..."
                   : "Type a message... (Enter to send, Shift+Enter for new line)"
             }
-            disabled={isStreaming || disabled}
+            disabled={isStreamingResponse || disabled}
             className={cn(
               "w-full resize-none rounded-lg bg-transparent px-4 py-3 pr-24 text-sm outline-none placeholder:text-foreground-secondary disabled:cursor-not-allowed disabled:opacity-50",
               "min-h-[52px] max-h-[200px]"
@@ -341,21 +412,33 @@ export function MessageInput({
               variant="ghost"
               className="h-8 w-8"
               onClick={() => fileInputRef.current?.click()}
-              disabled={isStreaming || disabled}
+              disabled={isStreamingResponse || disabled}
               title="Attach file"
             >
               <Paperclip className="h-4 w-4" />
             </Button>
 
-            <Button
-              size="icon"
-              className="h-8 w-8"
-              onClick={handleSend}
-              disabled={!canSend}
-              title="Send message (Enter or Cmd+Enter)"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
+            {isStreamingResponse ? (
+              <Button
+                size="icon"
+                variant="destructive"
+                className="h-8 w-8"
+                onClick={handleCancel}
+                title="Cancel response"
+              >
+                <StopCircle className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleSend}
+                disabled={!canSend}
+                title="Send message (Enter or Cmd+Enter)"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            )}
           </div>
 
           {/* Drag Overlay */}

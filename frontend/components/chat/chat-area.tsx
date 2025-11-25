@@ -1,7 +1,7 @@
 "use client";
 
 import type { JSX } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useConversation } from "@/lib/api/hooks/useConversations";
 import { useChatStore } from "@/stores/chat-store";
 import { ChatHeader } from "./chat-header";
@@ -17,20 +17,42 @@ interface ChatAreaProps {
 /**
  * Chat Area Component
  * Main chat interface with header, messages, and input
+ *
+ * Architecture:
+ * - Messages are sourced from API (conversation.messages)
+ * - Zustand store is synchronized with API data
+ * - Optimistic updates happen in message-input, then sync on API refresh
  */
 export function ChatArea({ conversationId }: ChatAreaProps): JSX.Element {
   const { conversation, isLoading, reopen } = useConversation(conversationId);
-  const clearMessages = useChatStore((state) => state.clearMessages);
+  const setMessages = useChatStore((state) => state.setMessages);
+  const setCurrentConversation = useChatStore((state) => state.setCurrentConversation);
   const [isReopening, setIsReopening] = useState(false);
 
-  // Load messages when conversation changes
+  // Track previous conversation ID to detect actual conversation changes
+  const prevConversationIdRef = useRef<string | null>(null);
+
+  // Sync messages from API to store when conversation data changes
   useEffect(() => {
-    if (conversation) {
-      // In a real app, fetch messages from API
-      // For now, use store
-      clearMessages();
+    if (conversation?.messages) {
+      // Convert API messages to store format and sync
+      const formattedMessages = conversation.messages.map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+        agent_name: msg.agent_name,
+        timestamp: msg.timestamp,
+      }));
+      setMessages(formattedMessages);
     }
-  }, [conversation, clearMessages]);
+  }, [conversation?.messages, setMessages]);
+
+  // Track current conversation ID in store
+  useEffect(() => {
+    if (conversationId !== prevConversationIdRef.current) {
+      setCurrentConversation(conversationId);
+      prevConversationIdRef.current = conversationId;
+    }
+  }, [conversationId, setCurrentConversation]);
 
   const handleReopen = async (): Promise<void> => {
     setIsReopening(true);
