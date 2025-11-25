@@ -2,7 +2,7 @@
 
 import type { JSX } from "react";
 import { useState } from "react";
-import { Plus, Search, X, Menu } from "lucide-react";
+import { Menu, Plus, Search, X } from "lucide-react";
 import { useConversations } from "@/lib/hooks/useConversations";
 import { useChatStore } from "@/stores/chat-store";
 import { Button } from "@/components/ui/button";
@@ -17,10 +17,15 @@ import { ConversationItemSkeleton } from "./conversation-skeleton";
  */
 export function ConversationSidebar(): JSX.Element {
   const [searchQuery, setSearchQuery] = useState("");
-  const { conversations, isLoading, createConversation } = useConversations();
+  const { conversations, isLoading, createConversation, isCreating } =
+    useConversations();
 
-  const currentConversationId = useChatStore((state) => state.currentConversationId);
-  const setCurrentConversation = useChatStore((state) => state.setCurrentConversation);
+  const currentConversationId = useChatStore(
+    (state) => state.currentConversationId
+  );
+  const setCurrentConversation = useChatStore(
+    (state) => state.setCurrentConversation
+  );
   const isSidebarOpen = useChatStore((state) => state.isSidebarOpen);
   const toggleSidebar = useChatStore((state) => state.toggleSidebar);
 
@@ -36,7 +41,8 @@ export function ConversationSidebar(): JSX.Element {
   };
 
   const filteredConversations = conversations?.filter((conv) => {
-    const title = conv.primary_intent || `Conversation ${conv.conversation_id.slice(0, 8)}`;
+    const title =
+      conv.primary_intent || `Conversation ${conv.conversation_id.slice(0, 8)}`;
     return title.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
@@ -49,7 +55,11 @@ export function ConversationSidebar(): JSX.Element {
         className="fixed left-4 top-4 z-50 md:hidden"
         onClick={toggleSidebar}
       >
-        {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        {isSidebarOpen ? (
+          <X className="h-5 w-5" />
+        ) : (
+          <Menu className="h-5 w-5" />
+        )}
       </Button>
 
       {/* Sidebar */}
@@ -66,7 +76,7 @@ export function ConversationSidebar(): JSX.Element {
               size="icon"
               variant="ghost"
               onClick={handleNewConversation}
-              disabled={createConversation.isPending}
+              disabled={isCreating}
             >
               <Plus className="h-5 w-5" />
             </Button>
@@ -95,7 +105,9 @@ export function ConversationSidebar(): JSX.Element {
               </div>
             ) : filteredConversations?.length === 0 ? (
               <div className="p-4 text-center text-sm text-foreground-secondary">
-                {searchQuery ? "No conversations found" : "No conversations yet"}
+                {searchQuery
+                  ? "No conversations found"
+                  : "No conversations yet"}
               </div>
             ) : (
               <div className="space-y-1 p-2">
@@ -103,8 +115,12 @@ export function ConversationSidebar(): JSX.Element {
                   <ConversationItem
                     key={conversation.conversation_id}
                     conversation={conversation}
-                    isActive={currentConversationId === conversation.conversation_id}
-                    onClick={() => setCurrentConversation(conversation.conversation_id)}
+                    isActive={
+                      currentConversationId === conversation.conversation_id
+                    }
+                    onClick={() =>
+                      setCurrentConversation(conversation.conversation_id)
+                    }
                   />
                 ))}
               </div>
