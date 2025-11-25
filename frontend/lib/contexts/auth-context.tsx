@@ -122,7 +122,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Skip re-initialization if we've manually authenticated via login/register
       // This prevents state reset when NextAuth session updates after login
-      if (manualAuthCompletedRef.current && state.isAuthenticated && state.user) {
+      if (manualAuthCompletedRef.current) {
         return;
       }
 
@@ -137,6 +137,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           const user = await fetchUserProfile();
 
           if (user) {
+            // Mark as completed to prevent future re-runs
+            manualAuthCompletedRef.current = true;
             setState({
               user,
               isAuthenticated: true,
@@ -159,6 +161,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           const user = await fetchUserProfile();
 
           if (user) {
+            // Mark as completed to prevent future re-runs
+            manualAuthCompletedRef.current = true;
             setState({
               user,
               isAuthenticated: true,
@@ -191,7 +195,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
 
     initializeAuth();
-  }, [sessionStatus, session?.accessToken, session?.refreshToken, fetchUserProfile, state.isAuthenticated, state.user]);
+  }, [sessionStatus, session?.accessToken, session?.refreshToken, fetchUserProfile]);
 
   // ---------------------------------------------------------------------------
   // LOGIN
