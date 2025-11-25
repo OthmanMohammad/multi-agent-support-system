@@ -1,15 +1,14 @@
 "use client";
 
 import type { JSX } from "react";
-import { useState, useRef, useEffect, KeyboardEvent, ChangeEvent } from "react";
-import { Send, Paperclip, X, File, Image as ImageIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import type { ChangeEvent, KeyboardEvent } from "react";
+import { File, Paperclip, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useConversation } from "@/lib/hooks/useConversations";
-import { useStreamResponse } from "@/lib/api/hooks/useStreamResponse";
 import { useChatStore } from "@/stores/chat-store";
 import { cn } from "@/lib/utils";
-import { nanoid } from "nanoid";
-import { toast, fileToast } from "@/lib/utils/toast";
+import { fileToast, toast } from "@/lib/utils/toast";
 
 interface MessageInputProps {
   conversationId: string;
@@ -23,7 +22,12 @@ interface Attachment {
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_MESSAGE_LENGTH = 4000;
-const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+];
 const ALLOWED_FILE_TYPES = [
   "application/pdf",
   "text/plain",
@@ -35,7 +39,9 @@ const ALLOWED_FILE_TYPES = [
  * Message Input Component
  * Textarea with file upload, auto-resize, and keyboard shortcuts
  */
-export function MessageInput({ conversationId }: MessageInputProps): JSX.Element {
+export function MessageInput({
+  conversationId,
+}: MessageInputProps): JSX.Element {
   const [message, setMessage] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -48,22 +54,12 @@ export function MessageInput({ conversationId }: MessageInputProps): JSX.Element
   const addMessage = useChatStore((state) => state.addMessage);
   const setIsStreaming = useChatStore((state) => state.setIsStreaming);
 
-  // Streaming hook
-  const { startStream } = useStreamResponse({
-    conversationId,
-    onComplete: (message) => {
-      console.log("Stream completed:", message);
-    },
-    onError: (error) => {
-      console.error("Stream error:", error);
-      setIsStreaming(false);
-    },
-  });
-
   // Auto-resize textarea
   useEffect(() => {
     const textarea = textareaRef.current;
-    if (!textarea) return;
+    if (!textarea) {
+      return;
+    }
 
     textarea.style.height = "auto";
     textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
@@ -75,8 +71,12 @@ export function MessageInput({ conversationId }: MessageInputProps): JSX.Element
   }, []);
 
   const handleSend = async (): Promise<void> => {
-    if (!message.trim() && attachments.length === 0) return;
-    if (isStreaming) return;
+    if (!message.trim() && attachments.length === 0) {
+      return;
+    }
+    if (isStreaming) {
+      return;
+    }
 
     const content = message.trim();
     const messageAttachments = attachments;
@@ -85,22 +85,19 @@ export function MessageInput({ conversationId }: MessageInputProps): JSX.Element
     setMessage("");
     setAttachments([]);
 
-    // Optimistic UI update
+    // Optimistic UI update - add user message
     const optimisticMessage = {
-      id: `temp-${Date.now()}`,
-      conversationId,
-      userId: "current-user",
-      role: "USER" as const,
+      role: "user" as const,
       content,
-      metadata: messageAttachments.length > 0
-        ? { attachments: messageAttachments.map((a) => a.file.name) }
-        : null,
-      createdAt: new Date(),
+      agent_name: null,
+      timestamp: new Date().toISOString(),
     };
 
     addMessage(optimisticMessage);
 
     try {
+      setIsStreaming(true);
+
       // Send message to API (just the text content)
       const response = await sendMessage(content);
 
@@ -108,19 +105,21 @@ export function MessageInput({ conversationId }: MessageInputProps): JSX.Element
         throw new Error("Failed to send message");
       }
 
-      // TODO: Implement file upload if attachments exist
-      // For now, metadata contains filenames
-
-      // Start streaming AI response
-      const responseMessageId = nanoid();
-      startStream(responseMessageId);
+      // Add AI response to the chat
+      const aiMessage = {
+        role: "assistant" as const,
+        content: response.response,
+        agent_name: response.agent_name,
+        timestamp: response.created_at,
+      };
+      addMessage(aiMessage);
     } catch (error) {
       console.error("Failed to send message:", error);
-      setIsStreaming(false);
 
       // Show error toast
       toast.error("Failed to send message", {
-        description: error instanceof Error ? error.message : "Please try again.",
+        description:
+          error instanceof Error ? error.message : "Please try again.",
         action: {
           label: "Retry",
           onClick: () => {
@@ -130,6 +129,8 @@ export function MessageInput({ conversationId }: MessageInputProps): JSX.Element
           },
         },
       });
+    } finally {
+      setIsStreaming(false);
     }
   };
 
@@ -238,7 +239,11 @@ export function MessageInput({ conversationId }: MessageInputProps): JSX.Element
 
   const characterCount = message.length;
   const isOverLimit = characterCount > MAX_MESSAGE_LENGTH;
-  const canSend = (message.trim() || attachments.length > 0) && !isStreaming && !isSending && !isOverLimit;
+  const canSend =
+    (message.trim() || attachments.length > 0) &&
+    !isStreaming &&
+    !isSending &&
+    !isOverLimit;
 
   return (
     <div className="border-t border-border p-4">
@@ -363,8 +368,13 @@ export function MessageInput({ conversationId }: MessageInputProps): JSX.Element
         <div className="mt-2 flex items-center justify-between px-1 text-xs text-foreground-secondary">
           <div className="flex items-center gap-4">
             <span>
-              Press <kbd className="rounded border border-border px-1">Enter</kbd> to send,{" "}
-              <kbd className="rounded border border-border px-1">Shift+Enter</kbd> for new line
+              Press{" "}
+              <kbd className="rounded border border-border px-1">Enter</kbd> to
+              send,{" "}
+              <kbd className="rounded border border-border px-1">
+                Shift+Enter
+              </kbd>{" "}
+              for new line
             </span>
           </div>
           <span
