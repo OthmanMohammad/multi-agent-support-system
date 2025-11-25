@@ -54,6 +54,9 @@ export function VirtualList<T>({
       >
         {virtualItems.map((virtualRow) => {
           const item = items[virtualRow.index];
+          if (item === undefined) {
+            return null;
+          }
           return (
             <div
               key={virtualRow.key}
@@ -154,9 +157,7 @@ export function VirtualGrid<T>({
               >
                 {rowItems.map((item, colIndex) => {
                   const index = virtualRow.index * columns + colIndex;
-                  return (
-                    <div key={index}>{renderItem(item, index)}</div>
-                  );
+                  return <div key={index}>{renderItem(item, index)}</div>;
                 })}
               </div>
             </div>
