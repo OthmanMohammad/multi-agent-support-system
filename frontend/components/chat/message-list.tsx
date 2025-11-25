@@ -15,7 +15,7 @@ interface MessageListProps {
  * Message List Component
  * Displays list of messages with auto-scroll
  */
-export function MessageList({ conversationId }: MessageListProps): JSX.Element {
+export function MessageList(_props: MessageListProps): JSX.Element {
   const messages = useChatStore((state) => state.messages);
   const isStreaming = useChatStore((state) => state.isStreaming);
   const streamingMessage = useChatStore((state) => state.streamingMessage);
@@ -45,21 +45,21 @@ export function MessageList({ conversationId }: MessageListProps): JSX.Element {
           </div>
         ) : (
           <>
-            {messages.map((message) => (
-              <Message key={message.id} message={message} />
+            {messages.map((message, index) => (
+              <Message
+                key={`${message.timestamp}-${index}`}
+                message={message}
+              />
             ))}
 
             {/* Streaming message */}
             {isStreaming && streamingMessage && (
               <Message
                 message={{
-                  id: "streaming",
-                  conversationId,
-                  userId: "system",
-                  role: "ASSISTANT",
+                  role: "assistant",
                   content: streamingMessage,
-                  metadata: null,
-                  createdAt: new Date(),
+                  agent_name: null,
+                  timestamp: new Date().toISOString(),
                 }}
                 isStreaming
               />
