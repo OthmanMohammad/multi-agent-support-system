@@ -2,17 +2,44 @@
 
 import type { JSX } from "react";
 import { useHealthCheck } from "@/lib/api/hooks";
-import { CheckCircle2, XCircle, AlertCircle, Database, Brain } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, XCircle, Zap } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+
+// ServiceStatus component moved outside to avoid recreating during render
+function ServiceStatus({
+  name,
+  isHealthy,
+}: {
+  name: string;
+  isHealthy: boolean;
+}): JSX.Element {
+  return (
+    <div className="flex items-center justify-between rounded-lg border border-border p-4">
+      <span className="font-medium">{name}</span>
+      <div className="flex items-center gap-2">
+        {isHealthy ? (
+          <>
+            <CheckCircle2 className="h-4 w-4 text-green-500" />
+            <span className="text-sm text-green-500">Healthy</span>
+          </>
+        ) : (
+          <>
+            <XCircle className="h-4 w-4 text-red-500" />
+            <span className="text-sm text-red-500">Unhealthy</span>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 
 /**
  * Health Status Component
  * Display backend system health metrics
  */
 export function HealthStatus(): JSX.Element {
-  const { data, isLoading, isError } = useHealthCheck();
+  const { data, isLoading, error } = useHealthCheck();
 
   if (isLoading) {
     return (
@@ -23,7 +50,7 @@ export function HealthStatus(): JSX.Element {
     );
   }
 
-  if (isError || !data) {
+  if (error || !data) {
     return (
       <div className="rounded-lg border border-destructive bg-destructive/5 p-6">
         <div className="flex items-center gap-2">
@@ -57,6 +84,19 @@ export function HealthStatus(): JSX.Element {
     unhealthy: XCircle,
   }[data.status];
 
+  const formatUptime = (seconds: number) => {
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    if (days > 0) {
+      return `${days}d ${hours}h ${minutes}m`;
+    }
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  };
+
   return (
     <div className="space-y-6">
       {/* Overall Status */}
@@ -66,86 +106,38 @@ export function HealthStatus(): JSX.Element {
           <div>
             <h2 className="text-2xl font-bold capitalize">{data.status}</h2>
             <p className="text-sm text-foreground-secondary">
-              System status as of{" "}
-              {format(new Date(data.timestamp), "MMM dd, yyyy HH:mm:ss")}
+              Version {data.version}
             </p>
           </div>
         </div>
 
-        <div className="mt-4 flex items-center gap-4 text-sm">
-          <div>
-            <span className="text-foreground-secondary">Version:</span>{" "}
-            <span className="font-mono font-medium">{data.version}</span>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-foreground-secondary" />
+            <span className="text-sm text-foreground-secondary">Uptime:</span>
+            <span className="text-sm font-medium">
+              {formatUptime(data.uptime_seconds)}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Zap className="h-4 w-4 text-foreground-secondary" />
+            <span className="text-sm text-foreground-secondary">
+              API Latency:
+            </span>
+            <span className="text-sm font-medium">{data.api_latency_ms}ms</span>
           </div>
         </div>
       </div>
 
-      {/* Database Status */}
-      {data.database && (
-        <div className="rounded-lg border border-border bg-surface p-6">
-          <div className="mb-4 flex items-center gap-2">
-            <Database className="h-5 w-5" />
-            <h3 className="font-semibold">Database</h3>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <p className="text-sm text-foreground-secondary">Status</p>
-              <p className="mt-1 font-medium capitalize">{data.database.status}</p>
-            </div>
-            <div>
-              <p className="text-sm text-foreground-secondary">Latency</p>
-              <p className="mt-1 font-medium">{data.database.latency}ms</p>
-            </div>
-          </div>
+      {/* Services Status */}
+      <div className="rounded-lg border border-border bg-surface p-6">
+        <h3 className="mb-4 font-semibold">Services</h3>
+        <div className="space-y-3">
+          <ServiceStatus name="Database" isHealthy={data.database} />
+          <ServiceStatus name="Redis" isHealthy={data.redis} />
+          <ServiceStatus name="Agents" isHealthy={data.agents} />
         </div>
-      )}
-
-      {/* AI Providers Status */}
-      {data.aiProviders && (
-        <div className="rounded-lg border border-border bg-surface p-6">
-          <div className="mb-4 flex items-center gap-2">
-            <Brain className="h-5 w-5" />
-            <h3 className="font-semibold">AI Providers</h3>
-          </div>
-          <div className="space-y-4">
-            {/* OpenAI */}
-            {data.aiProviders.openai && (
-              <div className="rounded-lg border border-border p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-medium">OpenAI</h4>
-                    <p className="text-sm capitalize text-foreground-secondary">
-                      {data.aiProviders.openai.status}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-foreground-secondary">Latency</p>
-                    <p className="font-medium">{data.aiProviders.openai.latency}ms</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Anthropic */}
-            {data.aiProviders.anthropic && (
-              <div className="rounded-lg border border-border p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-medium">Anthropic</h4>
-                    <p className="text-sm capitalize text-foreground-secondary">
-                      {data.aiProviders.anthropic.status}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-foreground-secondary">Latency</p>
-                    <p className="font-medium">{data.aiProviders.anthropic.latency}ms</p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
