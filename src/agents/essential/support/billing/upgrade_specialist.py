@@ -140,6 +140,15 @@ class BillingAgent(BaseAgent):
         # Get customer info
         customer_plan = state.get("customer_metadata", {}).get("plan", "free")
 
+        # Get conversation history for multi-turn context
+        conversation_history = self.get_conversation_context(state)
+
+        self.logger.debug(
+            "billing_conversation_context",
+            history_length=len(conversation_history),
+            customer_plan=customer_plan
+        )
+
         system_prompt = f"""You are a billing specialist for a SaaS project management tool.
 
 Current customer plan: {customer_plan}
@@ -156,6 +165,7 @@ Guidelines:
 4. For refunds: Explain our 30-day money-back guarantee
 5. For invoices: Explain how to access in Settings > Billing
 6. Cite KB articles when relevant
+7. IMPORTANT: Consider the conversation history to provide contextual responses. If the customer has already discussed something, don't repeat information unnecessarily.
 
 Be concise but complete."""
 
@@ -164,9 +174,15 @@ Be concise but complete."""
 Intent: {intent}
 {kb_context}
 
-Provide a helpful response."""
+Provide a helpful response that takes into account any previous conversation context."""
 
-        response = await self.call_llm(system_prompt, user_prompt, max_tokens=500)
+        # CRITICAL: Pass conversation history for multi-turn context
+        response = await self.call_llm(
+            system_prompt,
+            user_prompt,
+            max_tokens=500,
+            conversation_history=conversation_history
+        )
 
         self.logger.debug(
             "billing_llm_response_received",
