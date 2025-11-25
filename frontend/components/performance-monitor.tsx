@@ -1,8 +1,8 @@
 "use client";
 
 import type { JSX } from "react";
-import { useState, useEffect, useCallback } from "react";
-import { Activity, Zap, Clock, TrendingUp } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Activity, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -79,6 +79,7 @@ export function PerformanceMonitor({
   useEffect(() => {
     const measureMemory = () => {
       if ("memory" in performance) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mem = (performance as any).memory;
         setMetrics((prev) => ({
           ...prev,
@@ -102,7 +103,8 @@ export function PerformanceMonitor({
   // Measure navigation timing
   useEffect(() => {
     const timing = performance.timing;
-    const domContentLoaded = timing.domContentLoadedEventEnd - timing.navigationStart;
+    const domContentLoaded =
+      timing.domContentLoadedEventEnd - timing.navigationStart;
     const loadComplete = timing.loadEventEnd - timing.navigationStart;
 
     setMetrics((prev) => ({
@@ -118,6 +120,7 @@ export function PerformanceMonitor({
       // LCP
       const lcpObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const lastEntry = entries[entries.length - 1] as any;
         setMetrics((prev) => ({
           ...prev,
@@ -129,10 +132,14 @@ export function PerformanceMonitor({
       // FID
       const fidObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const firstEntry = entries[0] as any;
         setMetrics((prev) => ({
           ...prev,
-          vitals: { ...prev.vitals, fid: Math.round(firstEntry.processingStart - firstEntry.startTime) },
+          vitals: {
+            ...prev.vitals,
+            fid: Math.round(firstEntry.processingStart - firstEntry.startTime),
+          },
         }));
       });
       fidObserver.observe({ type: "first-input", buffered: true });
@@ -142,6 +149,7 @@ export function PerformanceMonitor({
         fidObserver.disconnect();
       };
     }
+    return;
   }, []);
 
   // Keyboard shortcut to toggle (Shift+Alt+P)
@@ -156,17 +164,27 @@ export function PerformanceMonitor({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  if (!showDebugPanel && !isVisible) return null;
+  if (!showDebugPanel && !isVisible) {
+    return null;
+  }
 
   const getFPSColor = (fps: number) => {
-    if (fps >= 55) return "text-green-500";
-    if (fps >= 30) return "text-yellow-500";
+    if (fps >= 55) {
+      return "text-green-500";
+    }
+    if (fps >= 30) {
+      return "text-yellow-500";
+    }
     return "text-red-500";
   };
 
   const getMemoryColor = (percentage: number) => {
-    if (percentage < 60) return "text-green-500";
-    if (percentage < 80) return "text-yellow-500";
+    if (percentage < 60) {
+      return "text-green-500";
+    }
+    if (percentage < 80) {
+      return "text-yellow-500";
+    }
     return "text-red-500";
   };
 
@@ -223,7 +241,10 @@ export function PerformanceMonitor({
               <div
                 className={cn(
                   "h-full transition-all",
-                  getMemoryColor(metrics.memory.percentage).replace("text-", "bg-")
+                  getMemoryColor(metrics.memory.percentage).replace(
+                    "text-",
+                    "bg-"
+                  )
                 )}
                 style={{ width: `${metrics.memory.percentage}%` }}
               />
