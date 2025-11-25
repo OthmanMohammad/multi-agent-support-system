@@ -2,13 +2,12 @@
 
 import type { JSX } from "react";
 import { useState } from "react";
-import { useHealthCheck, useCostTracking, useSwitchBackend } from "@/lib/api/hooks";
 import { HealthStatus } from "@/components/admin/health-status";
 import { CostTracking } from "@/components/admin/cost-tracking";
 import { BackendSwitcher } from "@/components/admin/backend-switcher";
 import { AgentManagement } from "@/components/admin/agent-management";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, DollarSign, Bot, Activity } from "lucide-react";
+import { Activity, Bot, DollarSign, Shield } from "lucide-react";
 
 /**
  * Admin Panel Page
@@ -34,7 +33,11 @@ export default function AdminPage(): JSX.Element {
         </div>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-6"
+        >
           <TabsList className="grid w-full grid-cols-4 lg:w-auto">
             <TabsTrigger value="health" className="flex items-center gap-2">
               <Activity className="h-4 w-4" />
