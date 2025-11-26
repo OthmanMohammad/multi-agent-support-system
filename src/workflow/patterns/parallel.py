@@ -16,18 +16,16 @@ Part of: EPIC-006 Advanced Workflow Patterns
 """
 
 import asyncio
-from typing import List, Dict, Any, Optional, Callable, Literal
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from enum import Enum
+from typing import Any
+
 import structlog
 
+from src.workflow.exceptions import AgentTimeoutError, WorkflowException
 from src.workflow.state import AgentState
-from src.workflow.exceptions import (
-    WorkflowException,
-    AgentExecutionError,
-    AgentTimeoutError
-)
 
 # Alias for backward compatibility
 WorkflowExecutionError = WorkflowException
@@ -38,6 +36,7 @@ logger = structlog.get_logger(__name__)
 
 class AggregationStrategy(str, Enum):
     """Strategy for aggregating parallel agent results."""
+
     MERGE = "merge"  # Merge all results into single state
     VOTE = "vote"  # Use majority voting for decisions
     BEST = "best"  # Select best result based on confidence
@@ -47,6 +46,7 @@ class AggregationStrategy(str, Enum):
 
 class CompletionStrategy(str, Enum):
     """Strategy for when to complete parallel execution."""
+
     ALL = "all"  # Wait for all agents to complete
     ANY = "any"  # Complete when any agent finishes
     MAJORITY = "majority"  # Complete when majority finish
@@ -65,11 +65,12 @@ class ParallelAgent:
         weight: Weight for voting/aggregation (0.0-1.0)
         metadata: Additional metadata for this agent
     """
+
     agent_name: str
     timeout: int = 30
     required: bool = False
     weight: float = 1.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -86,13 +87,14 @@ class ParallelResult:
         execution_time: Total execution time in seconds
         error: Error message if workflow failed
     """
+
     success: bool
-    agents_completed: List[str]
-    agents_failed: List[str]
-    aggregated_state: Optional[AgentState]
-    individual_results: Dict[str, Any]
+    agents_completed: list[str]
+    agents_failed: list[str]
+    aggregated_state: AgentState | None
+    individual_results: dict[str, Any]
     execution_time: float
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class ParallelWorkflow:
@@ -121,12 +123,12 @@ class ParallelWorkflow:
     def __init__(
         self,
         name: str,
-        agents: List[ParallelAgent],
+        agents: list[ParallelAgent],
         aggregation_strategy: AggregationStrategy = AggregationStrategy.MERGE,
         completion_strategy: CompletionStrategy = CompletionStrategy.ALL,
         threshold: float = 0.7,
-        overall_timeout: Optional[int] = None,
-        fail_fast: bool = False
+        overall_timeout: int | None = None,
+        fail_fast: bool = False,
     ):
         """
         Initialize parallel workflow.
@@ -161,7 +163,7 @@ class ParallelWorkflow:
             self.logger.warning(
                 "many_parallel_agents",
                 count=len(self.agents),
-                message="Large number of parallel agents may impact performance"
+                message="Large number of parallel agents may impact performance",
             )
 
         if not 0.0 <= self.threshold <= 1.0:
@@ -173,9 +175,7 @@ class ParallelWorkflow:
                 raise ValueError(f"Agent weight must be between 0.0 and 1.0: {agent.agent_name}")
 
     async def execute(
-        self,
-        initial_state: AgentState,
-        agent_executor: Callable[[str, AgentState], Any]
+        self, initial_state: AgentState, agent_executor: Callable[[str, AgentState], Any]
     ) -> ParallelResult:
         """
         Execute the parallel workflow.
@@ -188,15 +188,15 @@ class ParallelWorkflow:
             ParallelResult with execution details
         """
         start_time = datetime.now(UTC)
-        individual_results: Dict[str, Any] = {}
-        completed: List[str] = []
-        failed: List[str] = []
+        individual_results: dict[str, Any] = {}
+        completed: list[str] = []
+        failed: list[str] = []
 
         self.logger.info(
             "workflow_started",
             agent_count=len(self.agents),
             strategy=self.aggregation_strategy.value,
-            timeout=self.overall_timeout
+            timeout=self.overall_timeout,
         )
 
         try:
@@ -204,9 +204,7 @@ class ParallelWorkflow:
             tasks = {
                 agent.agent_name: asyncio.create_task(
                     self._execute_agent(
-                        agent=agent,
-                        state=initial_state.copy(),
-                        agent_executor=agent_executor
+                        agent=agent, state=initial_state.copy(), agent_executor=agent_executor
                     )
                 )
                 for agent in self.agents
@@ -234,23 +232,16 @@ class ParallelWorkflow:
                     completed.append(agent_name)
                     individual_results[agent_name] = result
                     self.logger.info(
-                        "agent_completed",
-                        agent=agent_name,
-                        execution_time=result["execution_time"]
+                        "agent_completed", agent=agent_name, execution_time=result["execution_time"]
                     )
                 else:
                     failed.append(agent_name)
                     individual_results[agent_name] = result
-                    self.logger.warning(
-                        "agent_failed",
-                        agent=agent_name,
-                        error=result.get("error")
-                    )
+                    self.logger.warning("agent_failed", agent=agent_name, error=result.get("error"))
 
                     # Check if this is a required agent
                     agent_config = next(
-                        (a for a in self.agents if a.agent_name == agent_name),
-                        None
+                        (a for a in self.agents if a.agent_name == agent_name), None
                     )
                     if agent_config and agent_config.required:
                         if self.fail_fast:
@@ -259,7 +250,9 @@ class ParallelWorkflow:
                                 if not task.done():
                                     task.cancel()
 
-                            error_msg = f"Required agent '{agent_name}' failed: {result.get('error')}"
+                            error_msg = (
+                                f"Required agent '{agent_name}' failed: {result.get('error')}"
+                            )
                             return ParallelResult(
                                 success=False,
                                 agents_completed=completed,
@@ -267,7 +260,7 @@ class ParallelWorkflow:
                                 aggregated_state=None,
                                 individual_results=individual_results,
                                 execution_time=(datetime.now(UTC) - start_time).total_seconds(),
-                                error=error_msg
+                                error=error_msg,
                             )
 
             # Check if any required agents failed
@@ -283,14 +276,11 @@ class ParallelWorkflow:
                     aggregated_state=None,
                     individual_results=individual_results,
                     execution_time=(datetime.now(UTC) - start_time).total_seconds(),
-                    error=error_msg
+                    error=error_msg,
                 )
 
             # Aggregate results
-            aggregated_state = self._aggregate_results(
-                individual_results,
-                initial_state
-            )
+            aggregated_state = self._aggregate_results(individual_results, initial_state)
 
             execution_time = (datetime.now(UTC) - start_time).total_seconds()
 
@@ -298,7 +288,7 @@ class ParallelWorkflow:
                 "workflow_completed",
                 completed=len(completed),
                 failed=len(failed),
-                execution_time=execution_time
+                execution_time=execution_time,
             )
 
             return ParallelResult(
@@ -307,10 +297,10 @@ class ParallelWorkflow:
                 agents_failed=failed,
                 aggregated_state=aggregated_state,
                 individual_results=individual_results,
-                execution_time=execution_time
+                execution_time=execution_time,
             )
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             # Cancel all pending tasks
             for task in tasks.values():
                 if not task.done():
@@ -326,7 +316,7 @@ class ParallelWorkflow:
                 aggregated_state=None,
                 individual_results=individual_results,
                 execution_time=(datetime.now(UTC) - start_time).total_seconds(),
-                error=error_msg
+                error=error_msg,
             )
 
         except Exception as e:
@@ -339,15 +329,12 @@ class ParallelWorkflow:
                 aggregated_state=None,
                 individual_results=individual_results,
                 execution_time=(datetime.now(UTC) - start_time).total_seconds(),
-                error=f"Workflow error: {str(e)}"
+                error=f"Workflow error: {e!s}",
             )
 
     async def _execute_agent(
-        self,
-        agent: ParallelAgent,
-        state: AgentState,
-        agent_executor: Callable
-    ) -> Dict[str, Any]:
+        self, agent: ParallelAgent, state: AgentState, agent_executor: Callable
+    ) -> dict[str, Any]:
         """Execute a single agent with timeout."""
         agent_start = datetime.now(UTC)
 
@@ -355,8 +342,7 @@ class ParallelWorkflow:
             self.logger.debug("agent_executing", agent=agent.agent_name)
 
             result = await asyncio.wait_for(
-                agent_executor(agent.agent_name, state),
-                timeout=agent.timeout
+                agent_executor(agent.agent_name, state), timeout=agent.timeout
             )
 
             execution_time = (datetime.now(UTC) - agent_start).total_seconds()
@@ -366,17 +352,17 @@ class ParallelWorkflow:
                 "state": result,
                 "execution_time": execution_time,
                 "weight": agent.weight,
-                "metadata": agent.metadata
+                "metadata": agent.metadata,
             }
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             error = f"Agent timed out after {agent.timeout}s"
             self.logger.warning("agent_timeout", agent=agent.agent_name, timeout=agent.timeout)
             return {
                 "success": False,
                 "error": error,
                 "execution_time": agent.timeout,
-                "weight": agent.weight
+                "weight": agent.weight,
             }
 
         except Exception as e:
@@ -385,23 +371,22 @@ class ParallelWorkflow:
                 "success": False,
                 "error": str(e),
                 "execution_time": (datetime.now(UTC) - agent_start).total_seconds(),
-                "weight": agent.weight
+                "weight": agent.weight,
             }
 
-    async def _wait_for_all(self, tasks: Dict[str, asyncio.Task]) -> Dict[str, Any]:
+    async def _wait_for_all(self, tasks: dict[str, asyncio.Task]) -> dict[str, Any]:
         """Wait for all agents to complete."""
         timeout_task = None
         if self.overall_timeout:
             timeout_task = asyncio.create_task(asyncio.sleep(self.overall_timeout))
             done, pending = await asyncio.wait(
-                [*tasks.values(), timeout_task],
-                return_when=asyncio.FIRST_COMPLETED
+                [*tasks.values(), timeout_task], return_when=asyncio.FIRST_COMPLETED
             )
 
             if timeout_task in done:
-                raise asyncio.TimeoutError()
+                raise TimeoutError()
         else:
-            done, pending = await asyncio.wait(tasks.values())
+            done, _pending = await asyncio.wait(tasks.values())
 
         results = {}
         for agent_name, task in tasks.items():
@@ -413,12 +398,10 @@ class ParallelWorkflow:
 
         return results
 
-    async def _wait_for_any(self, tasks: Dict[str, asyncio.Task]) -> Dict[str, Any]:
+    async def _wait_for_any(self, tasks: dict[str, asyncio.Task]) -> dict[str, Any]:
         """Wait for any agent to complete."""
         done, pending = await asyncio.wait(
-            tasks.values(),
-            return_when=asyncio.FIRST_COMPLETED,
-            timeout=self.overall_timeout
+            tasks.values(), return_when=asyncio.FIRST_COMPLETED, timeout=self.overall_timeout
         )
 
         # Cancel pending tasks
@@ -435,16 +418,13 @@ class ParallelWorkflow:
 
         return results
 
-    async def _wait_for_majority(self, tasks: Dict[str, asyncio.Task]) -> Dict[str, Any]:
+    async def _wait_for_majority(self, tasks: dict[str, asyncio.Task]) -> dict[str, Any]:
         """Wait for majority of agents to complete."""
         majority_count = len(tasks) // 2 + 1
         completed = 0
         results = {}
 
-        done, pending = await asyncio.wait(
-            tasks.values(),
-            timeout=self.overall_timeout
-        )
+        _done, pending = await asyncio.wait(tasks.values(), timeout=self.overall_timeout)
 
         for agent_name, task in tasks.items():
             if task.done() and not task.cancelled():
@@ -463,18 +443,13 @@ class ParallelWorkflow:
         return results
 
     async def _wait_for_threshold(
-        self,
-        tasks: Dict[str, asyncio.Task],
-        threshold: float
-    ) -> Dict[str, Any]:
+        self, tasks: dict[str, asyncio.Task], threshold: float
+    ) -> dict[str, Any]:
         """Wait until threshold of agents complete."""
         threshold_count = int(len(tasks) * threshold)
         results = {}
 
-        done, pending = await asyncio.wait(
-            tasks.values(),
-            timeout=self.overall_timeout
-        )
+        _done, pending = await asyncio.wait(tasks.values(), timeout=self.overall_timeout)
 
         completed = 0
         for agent_name, task in tasks.items():
@@ -493,11 +468,7 @@ class ParallelWorkflow:
 
         return results
 
-    def _aggregate_results(
-        self,
-        results: Dict[str, Any],
-        initial_state: AgentState
-    ) -> AgentState:
+    def _aggregate_results(self, results: dict[str, Any], initial_state: AgentState) -> AgentState:
         """Aggregate results based on aggregation strategy."""
         if self.aggregation_strategy == AggregationStrategy.MERGE:
             return self._merge_results(results, initial_state)
@@ -515,7 +486,7 @@ class ParallelWorkflow:
         else:
             return initial_state
 
-    def _merge_results(self, results: Dict[str, Any], initial_state: AgentState) -> AgentState:
+    def _merge_results(self, results: dict[str, Any], initial_state: AgentState) -> AgentState:
         """Merge all successful results into a single state."""
         merged_state = initial_state.copy()
         responses = []
@@ -526,7 +497,9 @@ class ParallelWorkflow:
             if result.get("success"):
                 agent_state = result["state"]
                 responses.append(f"**{agent_name}**: {agent_state.get('agent_response', '')}")
-                total_confidence += agent_state.get("response_confidence", 0.0) * result.get("weight", 1.0)
+                total_confidence += agent_state.get("response_confidence", 0.0) * result.get(
+                    "weight", 1.0
+                )
                 count += result.get("weight", 1.0)
 
         if responses:
@@ -535,13 +508,13 @@ class ParallelWorkflow:
 
         return merged_state
 
-    def _vote_results(self, results: Dict[str, Any], initial_state: AgentState) -> AgentState:
+    def _vote_results(self, results: dict[str, Any], initial_state: AgentState) -> AgentState:
         """Select result based on weighted voting."""
-        votes: Dict[str, float] = {}
+        votes: dict[str, float] = {}
 
         for agent_name, result in results.items():
             if result.get("success"):
-                response = result["state"].get("agent_response", "")
+                result["state"].get("agent_response", "")
                 weight = result.get("weight", 1.0)
                 votes[agent_name] = votes.get(agent_name, 0.0) + weight
 
@@ -551,12 +524,12 @@ class ParallelWorkflow:
 
         return initial_state
 
-    def _select_best_result(self, results: Dict[str, Any], initial_state: AgentState) -> AgentState:
+    def _select_best_result(self, results: dict[str, Any], initial_state: AgentState) -> AgentState:
         """Select the best result based on confidence score."""
         best_result = None
         best_score = -1.0
 
-        for agent_name, result in results.items():
+        for _agent_name, result in results.items():
             if result.get("success"):
                 state = result["state"]
                 confidence = state.get("response_confidence", 0.0)
@@ -569,11 +542,11 @@ class ParallelWorkflow:
 
         return best_result if best_result else initial_state
 
-    def _consensus_results(self, results: Dict[str, Any], initial_state: AgentState) -> AgentState:
+    def _consensus_results(self, results: dict[str, Any], initial_state: AgentState) -> AgentState:
         """Require consensus among agents - all must agree."""
         responses = set()
 
-        for agent_name, result in results.items():
+        for _agent_name, result in results.items():
             if result.get("success"):
                 response = result["state"].get("agent_response", "")
                 responses.add(response.strip())
@@ -581,7 +554,7 @@ class ParallelWorkflow:
         # If all agents agree, return that response
         if len(responses) == 1:
             state = initial_state.copy()
-            state["agent_response"] = list(responses)[0]
+            state["agent_response"] = next(iter(responses))
             state["response_confidence"] = 0.95  # High confidence for consensus
             return state
 
@@ -592,10 +565,10 @@ class ParallelWorkflow:
 # Convenience function for quick parallel execution
 async def execute_parallel(
     workflow_name: str,
-    agent_names: List[str],
+    agent_names: list[str],
     initial_state: AgentState,
     agent_executor: Callable,
-    **kwargs
+    **kwargs,
 ) -> ParallelResult:
     """
     Quick helper to execute agents in parallel.
