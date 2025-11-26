@@ -1,32 +1,35 @@
 """
 Security and compliance Pydantic schemas - Data Transfer Objects
 """
-from pydantic import BaseModel, Field, ConfigDict
-from typing import Optional
+
 from datetime import datetime
 from uuid import UUID
 
+from pydantic import BaseModel, ConfigDict, Field
 
 # ============================================================================
 # AuditLog Schemas
 # ============================================================================
 
+
 class AuditLogBase(BaseModel):
     """Base schema for audit logs"""
+
     entity_type: str = Field(..., max_length=50)
-    entity_id: Optional[UUID] = None
+    entity_id: UUID | None = None
     action: str = Field(..., pattern="^(create|read|update|delete|login|logout|export)$")
     actor_type: str = Field(..., pattern="^(user|agent|system|api)$")
-    actor_id: Optional[UUID] = None
-    changes: Optional[dict] = None
-    ip_address: Optional[str] = Field(None, max_length=45)
-    user_agent: Optional[str] = None
+    actor_id: UUID | None = None
+    changes: dict | None = None
+    ip_address: str | None = Field(None, max_length=45)
+    user_agent: str | None = None
     timestamp: datetime
     extra_metadata: dict = Field(default_factory=dict)
 
 
 class AuditLogCreate(AuditLogBase):
     """Schema for creating an audit log"""
+
     pass
 
 
@@ -37,7 +40,8 @@ class AuditLogUpdate(BaseModel):
     Note: Audit logs should generally be immutable. This schema exists for
     consistency but should rarely be used in practice.
     """
-    extra_metadata: Optional[dict] = None
+
+    extra_metadata: dict | None = None
 
 
 class AuditLogInDB(AuditLogBase):
@@ -48,6 +52,7 @@ class AuditLogInDB(AuditLogBase):
     soft delete fields (deleted_at, deleted_by) and update tracking.
     Audit logs are immutable and should never be deleted.
     """
+
     id: UUID
 
     model_config = ConfigDict(from_attributes=True)
@@ -55,4 +60,5 @@ class AuditLogInDB(AuditLogBase):
 
 class AuditLogResponse(AuditLogInDB):
     """Schema for audit log API response"""
+
     pass
