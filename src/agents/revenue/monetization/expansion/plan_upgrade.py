@@ -524,5 +524,9 @@ New Features in {self.PLAN_TIERS[target_plan]['name']}:
 
 Generate an exciting plan upgrade recommendation."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # Upgrade context built from plan usage data
+        )
         return response
