@@ -5,7 +5,7 @@ This package provides the foundation for all service classes in the application.
 
 Usage:
     from src.services.base import BaseService, handle_exceptions
-    
+
     class CustomerService(BaseService):
         @handle_exceptions("create_customer")
         async def create_customer(self, email: str) -> Result[Customer]:
