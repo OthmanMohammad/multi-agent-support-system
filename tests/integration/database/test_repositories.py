@@ -271,7 +271,7 @@ async def test_agent_performance_repository():
 
 
 # Pytest fixtures
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="function", autouse=True)
 async def setup_database():
     """Setup database before tests"""
     await init_db()

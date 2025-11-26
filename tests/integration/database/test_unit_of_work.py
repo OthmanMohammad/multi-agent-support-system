@@ -281,7 +281,7 @@ async def test_soft_delete_with_uow():
 
 
 # Pytest fixtures
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="function", autouse=True)
 async def setup_database():
     """Setup database before tests"""
     await init_db()

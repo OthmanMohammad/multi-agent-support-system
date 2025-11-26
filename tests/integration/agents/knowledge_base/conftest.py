@@ -3,7 +3,6 @@ Pytest fixtures for KB integration tests.
 """
 
 import pytest
-import asyncio
 from datetime import datetime, timedelta
 from typing import AsyncGenerator, Dict, List
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -12,15 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from src.database.models import Base, Conversation, Message, KBArticle, Customer
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """Create an event loop for the test session"""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 async def test_db_engine():
     """Create a test database engine"""
     # Use in-memory SQLite for integration tests
