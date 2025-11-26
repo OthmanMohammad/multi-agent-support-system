@@ -1,33 +1,49 @@
 """Kb Article Writer Agent"""
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
+
 
 @AgentRegistry.register("kb_article_writer", tier="advanced", category="content")
 class KbArticleWriterAgent(BaseAgent):
     """Kb Article Writer."""
-    
+
     def __init__(self):
-        config = AgentConfig(name="kb_article_writer", type=AgentType.COORDINATOR, temperature=0.5, max_tokens=4000, capabilities=[AgentCapability.KB_SEARCH, AgentCapability.DATABASE_WRITE], tier="advanced")
+        config = AgentConfig(
+            name="kb_article_writer",
+            type=AgentType.COORDINATOR,
+            temperature=0.5,
+            max_tokens=4000,
+            capabilities=[AgentCapability.KB_SEARCH, AgentCapability.DATABASE_WRITE],
+            tier="advanced",
+        )
         super().__init__(config)
         self.logger = get_logger(__name__)
-    
+
     async def process(self, state: AgentState) -> AgentState:
         self.logger.info("kb_article_writer_started")
         state = self.update_state(state)
         topic = state.get("entities", {}).get("topic", "Product Overview")
-        
+
         system_prompt = "You are an expert content writer. Create high-quality, engaging content."
         user_message = f"Write content about: {topic}"
-        
+
         try:
             content = await self.call_llm(
                 system_prompt=system_prompt,
                 user_message=user_message,
-                conversation_history=[]  # Content generation is standalone
+                conversation_history=[],  # Content generation is standalone
             )
-        except:
+        except Exception:
             content = f"**Kb Article Writer**: Content generated for {topic}"
-        
-        return self.update_state(state, agent_response=content, generated_content=content, status="resolved", response_confidence=0.88, next_agent=None)
+
+        return self.update_state(
+            state,
+            agent_response=content,
+            generated_content=content,
+            status="resolved",
+            response_confidence=0.88,
+            next_agent=None,
+        )
