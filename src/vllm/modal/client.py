@@ -24,7 +24,7 @@ Usage:
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import aiohttp
 
@@ -63,7 +63,7 @@ class ModalVLLMClient:
 
         logger.info(f"Initialized Modal vLLM client: {self.modal_web_url}")
 
-    async def health_check(self, timeout: Optional[int] = None) -> Dict[str, Any]:
+    async def health_check(self, timeout: int | None = None) -> dict[str, Any]:
         """
         Check if Modal vLLM server is healthy.
 
@@ -86,44 +86,45 @@ class ModalVLLMClient:
 
         for attempt in range(1, self.max_retries + 1):
             try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(
+                async with (
+                    aiohttp.ClientSession() as session,
+                    session.get(
                         f"{self.modal_web_url}/health",
                         timeout=aiohttp.ClientTimeout(total=timeout),
-                    ) as resp:
-                        status_code = resp.status
-                        response_time = (asyncio.get_event_loop().time() - start_time) * 1000
+                    ) as resp,
+                ):
+                    status_code = resp.status
+                    response_time = (asyncio.get_event_loop().time() - start_time) * 1000
 
-                        if status_code == 200:
-                            logger.info(
-                                f"Modal vLLM health check: OK (status={status_code}, "
-                                f"response_time={response_time:.0f}ms)"
-                            )
-                            return {
-                                "healthy": True,
-                                "status_code": status_code,
-                                "response_time_ms": response_time,
-                            }
-                        else:
-                            logger.warning(
-                                f"Modal vLLM health check failed: status={status_code}, "
-                                f"attempt={attempt}/{self.max_retries}"
-                            )
+                    if status_code == 200:
+                        logger.info(
+                            f"Modal vLLM health check: OK (status={status_code}, "
+                            f"response_time={response_time:.0f}ms)"
+                        )
+                        return {
+                            "healthy": True,
+                            "status_code": status_code,
+                            "response_time_ms": response_time,
+                        }
+                    else:
+                        logger.warning(
+                            f"Modal vLLM health check failed: status={status_code}, "
+                            f"attempt={attempt}/{self.max_retries}"
+                        )
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.warning(
                     f"Modal vLLM health check timeout after {timeout}s "
                     f"(attempt {attempt}/{self.max_retries})"
                 )
             except aiohttp.ClientError as e:
                 logger.warning(
-                    f"Modal vLLM health check error: {e} "
-                    f"(attempt {attempt}/{self.max_retries})"
+                    f"Modal vLLM health check error: {e} (attempt {attempt}/{self.max_retries})"
                 )
 
             # Retry with exponential backoff
             if attempt < self.max_retries:
-                backoff = 2 ** attempt  # 2s, 4s, 8s
+                backoff = 2**attempt  # 2s, 4s, 8s
                 logger.info(f"Retrying in {backoff}s...")
                 await asyncio.sleep(backoff)
 
@@ -137,13 +138,13 @@ class ModalVLLMClient:
 
     async def chat_completion(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         model: str = "Qwen/Qwen2.5-7B-Instruct",
         temperature: float = 0.7,
         max_tokens: int = 2048,
         stream: bool = False,
-        timeout: Optional[int] = None,
-    ) -> Dict[str, Any]:
+        timeout: int | None = None,
+    ) -> dict[str, Any]:
         """
         Make chat completion request to Modal vLLM endpoint.
 
@@ -189,37 +190,38 @@ class ModalVLLMClient:
 
         for attempt in range(1, self.max_retries + 1):
             try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.post(
+                async with (
+                    aiohttp.ClientSession() as session,
+                    session.post(
                         f"{self.modal_web_url}/v1/chat/completions",
                         json=payload,
                         headers=headers,
                         timeout=aiohttp.ClientTimeout(total=timeout),
-                    ) as resp:
-                        resp.raise_for_status()
-                        data = await resp.json()
+                    ) as resp,
+                ):
+                    resp.raise_for_status()
+                    data = await resp.json()
 
-                        # Validate response
-                        if "choices" not in data:
-                            raise ValueError(f"Invalid response: missing 'choices' field")
+                    # Validate response
+                    if "choices" not in data:
+                        raise ValueError("Invalid response: missing 'choices' field")
 
-                        logger.info(
-                            f"Modal vLLM chat completion: "
-                            f"model={model}, "
-                            f"tokens={data.get('usage', {}).get('total_tokens', 'N/A')}"
-                        )
+                    logger.info(
+                        f"Modal vLLM chat completion: "
+                        f"model={model}, "
+                        f"tokens={data.get('usage', {}).get('total_tokens', 'N/A')}"
+                    )
 
-                        return data
+                    return data
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.warning(
                     f"Modal vLLM chat completion timeout after {timeout}s "
                     f"(attempt {attempt}/{self.max_retries})"
                 )
             except aiohttp.ClientError as e:
                 logger.warning(
-                    f"Modal vLLM chat completion error: {e} "
-                    f"(attempt {attempt}/{self.max_retries})"
+                    f"Modal vLLM chat completion error: {e} (attempt {attempt}/{self.max_retries})"
                 )
             except ValueError as e:
                 logger.error(f"Modal vLLM invalid response: {e}")
@@ -227,7 +229,7 @@ class ModalVLLMClient:
 
             # Retry with exponential backoff
             if attempt < self.max_retries:
-                backoff = 2 ** attempt
+                backoff = 2**attempt
                 logger.info(f"Retrying in {backoff}s...")
                 await asyncio.sleep(backoff)
 
@@ -236,7 +238,7 @@ class ModalVLLMClient:
             f"Modal vLLM chat completion failed after {self.max_retries} attempts"
         )
 
-    async def get_models(self, timeout: Optional[int] = None) -> Dict[str, Any]:
+    async def get_models(self, timeout: int | None = None) -> dict[str, Any]:
         """
         Get list of available models from Modal endpoint.
 
@@ -255,22 +257,21 @@ class ModalVLLMClient:
             timeout = self.timeout
 
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
+            async with (
+                aiohttp.ClientSession() as session,
+                session.get(
                     f"{self.modal_web_url}/v1/models",
                     timeout=aiohttp.ClientTimeout(total=timeout),
-                ) as resp:
-                    resp.raise_for_status()
-                    data = await resp.json()
+                ) as resp,
+            ):
+                resp.raise_for_status()
+                data = await resp.json()
 
-                    logger.info(
-                        f"Modal vLLM models: "
-                        f"{len(data.get('data', []))} model(s) available"
-                    )
+                logger.info(f"Modal vLLM models: {len(data.get('data', []))} model(s) available")
 
-                    return data
+                return data
 
-        except (asyncio.TimeoutError, aiohttp.ClientError) as e:
+        except (TimeoutError, aiohttp.ClientError) as e:
             logger.error(f"Failed to get models from Modal: {e}")
             raise
 
@@ -295,6 +296,7 @@ class ModalVLLMClient:
 # HELPER FUNCTIONS
 # =============================================================================
 
+
 async def create_modal_client(modal_web_url: str) -> ModalVLLMClient:
     """
     Create and validate Modal vLLM client.
@@ -313,9 +315,7 @@ async def create_modal_client(modal_web_url: str) -> ModalVLLMClient:
     # Validate connection
     health = await client.health_check()
     if not health["healthy"]:
-        raise RuntimeError(
-            f"Modal vLLM endpoint is not healthy: {modal_web_url}"
-        )
+        raise RuntimeError(f"Modal vLLM endpoint is not healthy: {modal_web_url}")
 
     return client
 
@@ -323,6 +323,7 @@ async def create_modal_client(modal_web_url: str) -> ModalVLLMClient:
 # =============================================================================
 # TESTING
 # =============================================================================
+
 
 async def _test_client():
     """Test Modal client (requires deployed Modal endpoint)."""
@@ -347,7 +348,7 @@ async def _test_client():
     if health["healthy"]:
         print(f"✅ Health check passed ({health['response_time_ms']:.0f}ms)\n")
     else:
-        print(f"❌ Health check failed\n")
+        print("❌ Health check failed\n")
         return
 
     # Test 2: Get models
@@ -371,9 +372,9 @@ async def _test_client():
     except Exception as e:
         print(f"❌ Chat completion failed: {e}\n")
 
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
     print("✅ All tests passed!")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
 
 if __name__ == "__main__":
