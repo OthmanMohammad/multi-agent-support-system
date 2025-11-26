@@ -9,20 +9,20 @@ Recommended: Use Modal.com for production deployments.
 """
 
 from src.vllm.modal import (
-    ModalVLLMClient,
     ModalOrchestrator,
-    modal_orchestrator,
-    init_modal_orchestrator,
+    ModalVLLMClient,
     get_modal_orchestrator,
+    init_modal_orchestrator,
     is_modal_configured,
+    modal_orchestrator,
 )
 
 __all__ = [
+    "ModalOrchestrator",
     # Modal.com (ACTIVE - RECOMMENDED)
     "ModalVLLMClient",
-    "ModalOrchestrator",
-    "modal_orchestrator",
-    "init_modal_orchestrator",
     "get_modal_orchestrator",
+    "init_modal_orchestrator",
     "is_modal_configured",
+    "modal_orchestrator",
 ]
