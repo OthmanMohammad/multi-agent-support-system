@@ -5,18 +5,26 @@ This module defines the User model for authentication and user management.
 Supports JWT authentication, API keys, and role-based access control (RBAC).
 """
 
-from typing import List, Optional
-from datetime import datetime
-from uuid import UUID, uuid4
-from sqlalchemy import String, Boolean, DateTime, Enum as SQLEnum
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from __future__ import annotations
+
 import enum
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Boolean, DateTime, String
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.database.models.base import BaseModel
+
+if TYPE_CHECKING:
+    from datetime import datetime
+
+    from src.database.models.api_key import APIKey
 
 
 class UserRole(str, enum.Enum):
     """User roles for RBAC"""
+
     SUPER_ADMIN = "super_admin"
     ADMIN = "admin"
     USER = "user"
@@ -26,6 +34,7 @@ class UserRole(str, enum.Enum):
 
 class UserStatus(str, enum.Enum):
     """User account status"""
+
     ACTIVE = "active"
     INACTIVE = "inactive"
     SUSPENDED = "suspended"
@@ -34,6 +43,7 @@ class UserStatus(str, enum.Enum):
 
 class OAuthProvider(str, enum.Enum):
     """OAuth providers"""
+
     GOOGLE = "google"
     GITHUB = "github"
     MICROSOFT = "microsoft"
@@ -70,30 +80,20 @@ class User(BaseModel):
 
     # Primary authentication
     email: Mapped[str] = mapped_column(
-        String(255),
-        unique=True,
-        nullable=False,
-        index=True,
-        comment="User email (used for login)"
+        String(255), unique=True, nullable=False, index=True, comment="User email (used for login)"
     )
 
-    password_hash: Mapped[Optional[str]] = mapped_column(
+    password_hash: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True,  # Nullable for OAuth-only users
-        comment="Bcrypt password hash"
+        comment="Bcrypt password hash",
     )
 
     # Profile information
-    full_name: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False,
-        comment="User full name"
-    )
+    full_name: Mapped[str] = mapped_column(String(255), nullable=False, comment="User full name")
 
-    organization: Mapped[Optional[str]] = mapped_column(
-        String(255),
-        nullable=True,
-        comment="Organization name"
+    organization: Mapped[str | None] = mapped_column(
+        String(255), nullable=True, comment="Organization name"
     )
 
     # Role and permissions
@@ -102,13 +102,11 @@ class User(BaseModel):
         nullable=False,
         default=UserRole.USER,
         index=True,
-        comment="User role for RBAC"
+        comment="User role for RBAC",
     )
 
-    scopes: Mapped[Optional[str]] = mapped_column(
-        String(1000),
-        nullable=True,
-        comment="Comma-separated permission scopes"
+    scopes: Mapped[str | None] = mapped_column(
+        String(1000), nullable=True, comment="Comma-separated permission scopes"
     )
 
     # Account status
@@ -117,83 +115,58 @@ class User(BaseModel):
         nullable=False,
         default=UserStatus.PENDING_VERIFICATION,
         index=True,
-        comment="Account status"
+        comment="Account status",
     )
 
     is_active: Mapped[bool] = mapped_column(
-        Boolean,
-        nullable=False,
-        default=True,
-        index=True,
-        comment="Whether user can log in"
+        Boolean, nullable=False, default=True, index=True, comment="Whether user can log in"
     )
 
     is_verified: Mapped[bool] = mapped_column(
-        Boolean,
-        nullable=False,
-        default=False,
-        comment="Whether email is verified"
+        Boolean, nullable=False, default=False, comment="Whether email is verified"
     )
 
     # OAuth information
-    oauth_provider: Mapped[Optional[OAuthProvider]] = mapped_column(
+    oauth_provider: Mapped[OAuthProvider | None] = mapped_column(
         SQLEnum(OAuthProvider, native_enum=False, length=50),
         nullable=True,
-        comment="OAuth provider (if OAuth user)"
+        comment="OAuth provider (if OAuth user)",
     )
 
-    oauth_id: Mapped[Optional[str]] = mapped_column(
-        String(255),
-        nullable=True,
-        index=True,
-        comment="OAuth provider user ID"
+    oauth_id: Mapped[str | None] = mapped_column(
+        String(255), nullable=True, index=True, comment="OAuth provider user ID"
     )
 
     # Email verification
-    email_verification_token: Mapped[Optional[str]] = mapped_column(
-        String(255),
-        nullable=True,
-        comment="Email verification token"
+    email_verification_token: Mapped[str | None] = mapped_column(
+        String(255), nullable=True, comment="Email verification token"
     )
 
-    email_verified_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-        comment="Timestamp when email was verified"
+    email_verified_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, comment="Timestamp when email was verified"
     )
 
     # Password reset
-    password_reset_token: Mapped[Optional[str]] = mapped_column(
-        String(255),
-        nullable=True,
-        comment="Password reset token"
+    password_reset_token: Mapped[str | None] = mapped_column(
+        String(255), nullable=True, comment="Password reset token"
     )
 
-    password_reset_expires_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-        comment="Password reset token expiration"
+    password_reset_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, comment="Password reset token expiration"
     )
 
     # Session tracking
-    last_login_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-        comment="Last successful login timestamp"
+    last_login_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, comment="Last successful login timestamp"
     )
 
-    last_login_ip: Mapped[Optional[str]] = mapped_column(
-        String(50),
-        nullable=True,
-        comment="Last login IP address"
+    last_login_ip: Mapped[str | None] = mapped_column(
+        String(50), nullable=True, comment="Last login IP address"
     )
 
     # Relationships
-    api_keys: Mapped[List["APIKey"]] = relationship(
-        "APIKey",
-        back_populates="user",
-        cascade="all, delete-orphan",
-        lazy="select"
+    api_keys: Mapped[list[APIKey]] = relationship(
+        "APIKey", back_populates="user", cascade="all, delete-orphan", lazy="select"
     )
 
     def __repr__(self) -> str:
@@ -219,7 +192,7 @@ class User(BaseModel):
                 "password_hash",
                 "email_verification_token",
                 "password_reset_token",
-                "password_reset_expires_at"
+                "password_reset_expires_at",
             ]
             for field in sensitive_fields:
                 data.pop(field, None)
@@ -233,14 +206,14 @@ class User(BaseModel):
             data["oauth_provider"] = data["oauth_provider"].value
 
         # Parse scopes from comma-separated string
-        if "scopes" in data and data["scopes"]:
+        if data.get("scopes"):
             data["scopes"] = [s.strip() for s in data["scopes"].split(",")]
         else:
             data["scopes"] = []
 
         return data
 
-    def get_scopes(self) -> List[str]:
+    def get_scopes(self) -> list[str]:
         """
         Get user scopes as list.
 
@@ -251,7 +224,7 @@ class User(BaseModel):
             return []
         return [s.strip() for s in self.scopes.split(",")]
 
-    def set_scopes(self, scopes: List[str]) -> None:
+    def set_scopes(self, scopes: list[str]) -> None:
         """
         Set user scopes from list.
 
@@ -282,7 +255,7 @@ class User(BaseModel):
 
         return scope in user_scopes
 
-    def can_access_resource(self, required_scopes: List[str]) -> bool:
+    def can_access_resource(self, required_scopes: list[str]) -> bool:
         """
         Check if user can access a resource requiring specific scopes.
 
