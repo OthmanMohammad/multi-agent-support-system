@@ -5,13 +5,12 @@ Negotiates contract terms, approves within limits, escalates beyond limits,
 and tracks concessions to optimize deal closure while protecting margins.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("contract_negotiator", tier="revenue", category="sales")
@@ -34,29 +33,29 @@ class ContractNegotiator(BaseAgent):
             "max_deal_value": 50000,
             "payment_terms": ["net_30", "quarterly"],
             "contract_length": [1],
-            "can_modify_terms": False
+            "can_modify_terms": False,
         },
         "sales_manager": {
             "max_discount": 0.20,  # 20% max discount
             "max_deal_value": 250000,
             "payment_terms": ["net_30", "net_60", "quarterly", "annual"],
             "contract_length": [1, 2],
-            "can_modify_terms": True
+            "can_modify_terms": True,
         },
         "sales_director": {
             "max_discount": 0.30,  # 30% max discount
             "max_deal_value": 1000000,
             "payment_terms": ["net_30", "net_60", "net_90", "quarterly", "annual"],
             "contract_length": [1, 2, 3],
-            "can_modify_terms": True
+            "can_modify_terms": True,
         },
         "vp_sales": {
             "max_discount": 0.40,  # 40% max discount
-            "max_deal_value": float('inf'),
+            "max_deal_value": float("inf"),
             "payment_terms": ["any"],
             "contract_length": [1, 2, 3, 4, 5],
-            "can_modify_terms": True
-        }
+            "can_modify_terms": True,
+        },
     }
 
     # Common negotiation requests
@@ -64,33 +63,33 @@ class ContractNegotiator(BaseAgent):
         "pricing_discount": {
             "common_requests": ["lower price", "discount", "budget constraint"],
             "negotiable": True,
-            "requires_tradeoff": True
+            "requires_tradeoff": True,
         },
         "payment_terms": {
             "common_requests": ["extended payment", "installments", "net 60", "net 90"],
             "negotiable": True,
-            "requires_tradeoff": False
+            "requires_tradeoff": False,
         },
         "contract_length": {
             "common_requests": ["shorter commitment", "month to month", "flexible term"],
             "negotiable": True,
-            "requires_tradeoff": True
+            "requires_tradeoff": True,
         },
         "additional_features": {
             "common_requests": ["extra features", "more users", "premium support"],
             "negotiable": True,
-            "requires_tradeoff": True
+            "requires_tradeoff": True,
         },
         "early_termination": {
             "common_requests": ["cancellation clause", "exit clause", "out clause"],
             "negotiable": True,
-            "requires_tradeoff": True
+            "requires_tradeoff": True,
         },
         "custom_terms": {
             "common_requests": ["custom clause", "special provision", "specific requirement"],
             "negotiable": True,
-            "requires_tradeoff": True
-        }
+            "requires_tradeoff": True,
+        },
     }
 
     # Concession strategies (give-and-take)
@@ -99,38 +98,38 @@ class ContractNegotiator(BaseAgent):
             "give": "pricing_discount",
             "get": "longer_contract",
             "ratio": "5% discount for each year of commitment",
-            "max_discount": 0.15
+            "max_discount": 0.15,
         },
         "discount_for_annual": {
             "give": "pricing_discount",
             "get": "annual_payment",
             "ratio": "10% discount for annual prepayment",
-            "max_discount": 0.10
+            "max_discount": 0.10,
         },
         "discount_for_case_study": {
             "give": "pricing_discount",
             "get": "case_study_rights",
             "ratio": "5% discount for public case study",
-            "max_discount": 0.05
+            "max_discount": 0.05,
         },
         "discount_for_reference": {
             "give": "pricing_discount",
             "get": "reference_customer",
             "ratio": "3% discount for reference calls",
-            "max_discount": 0.03
+            "max_discount": 0.03,
         },
         "features_for_volume": {
             "give": "additional_features",
             "get": "more_users",
             "ratio": "Upgrade tier for 50+ additional users",
-            "max_discount": 0.0
+            "max_discount": 0.0,
         },
         "terms_for_auto_renewal": {
             "give": "flexible_terms",
             "get": "auto_renewal",
             "ratio": "Extended payment terms for auto-renewal",
-            "max_discount": 0.0
-        }
+            "max_discount": 0.0,
+        },
     }
 
     # Non-negotiable items
@@ -139,7 +138,7 @@ class ContractNegotiator(BaseAgent):
         "compliance_requirements",
         "intellectual_property",
         "liability_caps",
-        "governing_law"
+        "governing_law",
     ]
 
     # Concession tracking limits
@@ -153,7 +152,7 @@ class ContractNegotiator(BaseAgent):
         "reference_value": 1.15,  # Good reference customer
         "market_entry": 1.25,  # New market entry
         "competitive_win": 1.2,  # Win from competitor
-        "standard_deal": 1.0  # Baseline
+        "standard_deal": 1.0,  # Baseline
     }
 
     # Escalation triggers
@@ -163,7 +162,7 @@ class ContractNegotiator(BaseAgent):
         "custom_legal_terms": "Custom legal terms require legal review",
         "below_margin_threshold": "Deal would fall below minimum margin",
         "high_risk_customer": "Customer presents credit or compliance risk",
-        "strategic_importance": "Strategic deal requiring executive approval"
+        "strategic_importance": "Strategic deal requiring executive approval",
     }
 
     def __init__(self):
@@ -175,10 +174,10 @@ class ContractNegotiator(BaseAgent):
             capabilities=[
                 AgentCapability.KB_SEARCH,
                 AgentCapability.CONTEXT_AWARE,
-                AgentCapability.ENTITY_EXTRACTION
+                AgentCapability.ENTITY_EXTRACTION,
             ],
             kb_category="sales",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -205,7 +204,7 @@ class ContractNegotiator(BaseAgent):
         self.logger.debug(
             "negotiation_details",
             deal_value=deal_details.get("deal_value", 0),
-            current_discount=current_proposal.get("discount", 0)
+            current_discount=current_proposal.get("discount", 0),
         )
 
         # Identify negotiation request type
@@ -216,61 +215,42 @@ class ContractNegotiator(BaseAgent):
 
         # Extract requested concessions
         requested_concessions = self._extract_requested_concessions(
-            message,
-            negotiation_request,
-            current_proposal
+            message, negotiation_request, current_proposal
         )
 
         # Check if within approval limits
         approval_check = self._check_approval_authority(
-            requested_concessions,
-            authority_level,
-            deal_details
+            requested_concessions, authority_level, deal_details
         )
 
         # Identify counter-offer opportunities
         counter_offers = self._identify_counter_offers(
-            requested_concessions,
-            deal_details,
-            current_proposal
+            requested_concessions, deal_details, current_proposal
         )
 
         # Calculate deal impact
         deal_impact = self._calculate_deal_impact(
-            requested_concessions,
-            counter_offers,
-            deal_details,
-            current_proposal
+            requested_concessions, counter_offers, deal_details, current_proposal
         )
 
         # Track concessions
         concession_tracking = self._track_concessions(
-            requested_concessions,
-            counter_offers,
-            deal_details
+            requested_concessions, counter_offers, deal_details
         )
 
         # Make negotiation decision
         negotiation_decision = self._make_negotiation_decision(
-            approval_check,
-            deal_impact,
-            concession_tracking,
-            deal_details
+            approval_check, deal_impact, concession_tracking, deal_details
         )
 
         # Generate negotiation strategy
         strategy = self._generate_negotiation_strategy(
-            negotiation_request,
-            negotiation_decision,
-            counter_offers,
-            deal_details
+            negotiation_request, negotiation_decision, counter_offers, deal_details
         )
 
         # Search KB for negotiation best practices
         kb_results = await self.search_knowledge_base(
-            f"contract negotiation {negotiation_request['type']}",
-            category="sales",
-            limit=3
+            f"contract negotiation {negotiation_request['type']}", category="sales", limit=3
         )
         state["kb_results"] = kb_results
 
@@ -283,7 +263,7 @@ class ContractNegotiator(BaseAgent):
             concession_tracking,
             kb_results,
             customer_metadata,
-            state
+            state,
         )
 
         # Update state
@@ -305,12 +285,12 @@ class ContractNegotiator(BaseAgent):
             "contract_negotiator_completed",
             decision=negotiation_decision["action"],
             escalated=negotiation_decision["requires_escalation"],
-            concession_value=concession_tracking["total_concession_value"]
+            concession_value=concession_tracking["total_concession_value"],
         )
 
         return state
 
-    def _identify_negotiation_request(self, message: str) -> Dict[str, Any]:
+    def _identify_negotiation_request(self, message: str) -> dict[str, Any]:
         """Identify the type of negotiation request"""
         message_lower = message.lower()
 
@@ -319,16 +299,12 @@ class ContractNegotiator(BaseAgent):
                 return {
                     "type": neg_type,
                     "negotiable": details["negotiable"],
-                    "requires_tradeoff": details["requires_tradeoff"]
+                    "requires_tradeoff": details["requires_tradeoff"],
                 }
 
-        return {
-            "type": "general",
-            "negotiable": True,
-            "requires_tradeoff": False
-        }
+        return {"type": "general", "negotiable": True, "requires_tradeoff": False}
 
-    def _determine_authority_level(self, deal_details: Dict) -> str:
+    def _determine_authority_level(self, deal_details: dict) -> str:
         """Determine appropriate authority level based on deal size"""
         deal_value = deal_details.get("deal_value", 0)
 
@@ -342,11 +318,8 @@ class ContractNegotiator(BaseAgent):
             return "vp_sales"
 
     def _extract_requested_concessions(
-        self,
-        message: str,
-        negotiation_request: Dict,
-        current_proposal: Dict
-    ) -> Dict[str, Any]:
+        self, message: str, negotiation_request: dict, current_proposal: dict
+    ) -> dict[str, Any]:
         """Extract specific concessions being requested"""
         message_lower = message.lower()
         concessions = {}
@@ -354,7 +327,8 @@ class ContractNegotiator(BaseAgent):
         # Extract discount request
         if "discount" in message_lower or "%" in message:
             import re
-            percentages = re.findall(r'(\d+)%', message)
+
+            percentages = re.findall(r"(\d+)%", message)
             if percentages:
                 concessions["discount"] = float(percentages[0]) / 100
             else:
@@ -381,11 +355,8 @@ class ContractNegotiator(BaseAgent):
         return concessions
 
     def _check_approval_authority(
-        self,
-        concessions: Dict,
-        authority_level: str,
-        deal_details: Dict
-    ) -> Dict[str, Any]:
+        self, concessions: dict, authority_level: str, deal_details: dict
+    ) -> dict[str, Any]:
         """Check if concessions are within approval authority"""
         limits = self.APPROVAL_LIMITS[authority_level]
         within_authority = True
@@ -395,17 +366,25 @@ class ContractNegotiator(BaseAgent):
         requested_discount = concessions.get("discount", 0)
         if requested_discount > limits["max_discount"]:
             within_authority = False
-            blockers.append(f"Discount {requested_discount:.0%} exceeds {limits['max_discount']:.0%} limit")
+            blockers.append(
+                f"Discount {requested_discount:.0%} exceeds {limits['max_discount']:.0%} limit"
+            )
 
         # Check deal value
         deal_value = deal_details.get("deal_value", 0)
         if deal_value > limits["max_deal_value"]:
             within_authority = False
-            blockers.append(f"Deal value ${deal_value:,} exceeds ${limits['max_deal_value']:,} limit")
+            blockers.append(
+                f"Deal value ${deal_value:,} exceeds ${limits['max_deal_value']:,} limit"
+            )
 
         # Check payment terms
         payment_terms = concessions.get("payment_terms")
-        if payment_terms and payment_terms not in limits["payment_terms"] and "any" not in limits["payment_terms"]:
+        if (
+            payment_terms
+            and payment_terms not in limits["payment_terms"]
+            and "any" not in limits["payment_terms"]
+        ):
             within_authority = False
             blockers.append(f"Payment terms {payment_terms} not approved for this level")
 
@@ -413,67 +392,73 @@ class ContractNegotiator(BaseAgent):
             "within_authority": within_authority,
             "authority_level": authority_level,
             "blockers": blockers,
-            "limits": limits
+            "limits": limits,
         }
 
     def _identify_counter_offers(
-        self,
-        concessions: Dict,
-        deal_details: Dict,
-        current_proposal: Dict
-    ) -> List[Dict[str, Any]]:
+        self, concessions: dict, deal_details: dict, current_proposal: dict
+    ) -> list[dict[str, Any]]:
         """Identify potential counter-offers (give-and-take)"""
         counter_offers = []
 
         # If they want discount, offer strategies
         if concessions.get("discount", 0) > 0:
             # Discount for longer commitment
-            counter_offers.append({
-                "strategy": "discount_for_commitment",
-                "offer": "Provide requested discount for 3-year commitment",
-                "give": f"{concessions['discount']:.0%} discount",
-                "get": "3-year contract",
-                "value_impact": concessions["discount"] * 0.5  # Net 50% of discount due to longer term
-            })
+            counter_offers.append(
+                {
+                    "strategy": "discount_for_commitment",
+                    "offer": "Provide requested discount for 3-year commitment",
+                    "give": f"{concessions['discount']:.0%} discount",
+                    "get": "3-year contract",
+                    "value_impact": concessions["discount"]
+                    * 0.5,  # Net 50% of discount due to longer term
+                }
+            )
 
             # Discount for annual payment
-            counter_offers.append({
-                "strategy": "discount_for_annual",
-                "offer": "Provide discount for annual prepayment",
-                "give": "10% discount",
-                "get": "Annual payment upfront",
-                "value_impact": 0.05  # Net 5% cost due to time value
-            })
+            counter_offers.append(
+                {
+                    "strategy": "discount_for_annual",
+                    "offer": "Provide discount for annual prepayment",
+                    "give": "10% discount",
+                    "get": "Annual payment upfront",
+                    "value_impact": 0.05,  # Net 5% cost due to time value
+                }
+            )
 
             # Discount for case study
             if deal_details.get("company_profile", {}).get("public_company", False):
-                counter_offers.append({
-                    "strategy": "discount_for_case_study",
-                    "offer": "Provide 5% discount for public case study rights",
-                    "give": "5% discount",
-                    "get": "Case study and marketing rights",
-                    "value_impact": 0.03  # Marketing value offsets
-                })
+                counter_offers.append(
+                    {
+                        "strategy": "discount_for_case_study",
+                        "offer": "Provide 5% discount for public case study rights",
+                        "give": "5% discount",
+                        "get": "Case study and marketing rights",
+                        "value_impact": 0.03,  # Marketing value offsets
+                    }
+                )
 
         # If they want more users, upgrade tier
         if concessions.get("additional_users"):
-            counter_offers.append({
-                "strategy": "features_for_volume",
-                "offer": "Upgrade to next tier for additional users",
-                "give": "Premium features",
-                "get": "50+ additional users",
-                "value_impact": 0.0  # Revenue positive
-            })
+            counter_offers.append(
+                {
+                    "strategy": "features_for_volume",
+                    "offer": "Upgrade to next tier for additional users",
+                    "give": "Premium features",
+                    "get": "50+ additional users",
+                    "value_impact": 0.0,  # Revenue positive
+                }
+            )
 
         return counter_offers
 
     def _calculate_deal_impact(
         self,
-        concessions: Dict,
-        counter_offers: List[Dict],
-        deal_details: Dict,
-        current_proposal: Dict
-    ) -> Dict[str, Any]:
+        concessions: dict,
+        counter_offers: list[dict],
+        deal_details: dict,
+        current_proposal: dict,
+    ) -> dict[str, Any]:
         """Calculate financial impact of negotiation"""
         deal_value = deal_details.get("deal_value", 100000)
         current_margin = deal_details.get("margin", 0.70)
@@ -489,7 +474,9 @@ class ContractNegotiator(BaseAgent):
 
         # Calculate new margin
         new_margin_straight = current_margin - discount
-        new_margin_counter = current_margin - (best_counter_impact / deal_value if deal_value > 0 else 0)
+        new_margin_counter = current_margin - (
+            best_counter_impact / deal_value if deal_value > 0 else 0
+        )
 
         return {
             "deal_value": deal_value,
@@ -497,18 +484,17 @@ class ContractNegotiator(BaseAgent):
             "direct_impact": direct_impact,
             "direct_impact_percentage": discount,
             "counter_offer_impact": best_counter_impact,
-            "counter_offer_impact_percentage": best_counter_impact / deal_value if deal_value > 0 else 0,
+            "counter_offer_impact_percentage": best_counter_impact / deal_value
+            if deal_value > 0
+            else 0,
             "new_margin_straight": new_margin_straight,
             "new_margin_counter": new_margin_counter,
-            "margin_erosion": current_margin - new_margin_counter
+            "margin_erosion": current_margin - new_margin_counter,
         }
 
     def _track_concessions(
-        self,
-        concessions: Dict,
-        counter_offers: List[Dict],
-        deal_details: Dict
-    ) -> Dict[str, Any]:
+        self, concessions: dict, counter_offers: list[dict], deal_details: dict
+    ) -> dict[str, Any]:
         """Track all concessions made in negotiation"""
         total_concession_pct = 0
         concession_list = []
@@ -516,11 +502,13 @@ class ContractNegotiator(BaseAgent):
         # Track requested concessions
         if "discount" in concessions:
             total_concession_pct += concessions["discount"]
-            concession_list.append({
-                "type": "discount",
-                "value_percentage": concessions["discount"],
-                "status": "requested"
-            })
+            concession_list.append(
+                {
+                    "type": "discount",
+                    "value_percentage": concessions["discount"],
+                    "status": "requested",
+                }
+            )
 
         # Calculate if within limits
         within_limits = total_concession_pct <= self.MAX_TOTAL_CONCESSIONS
@@ -536,16 +524,12 @@ class ContractNegotiator(BaseAgent):
             "total_concession_value": deal_details.get("deal_value", 0) * total_concession_pct,
             "within_limits": within_limits,
             "margin_acceptable": margin_acceptable,
-            "new_margin": new_margin
+            "new_margin": new_margin,
         }
 
     def _make_negotiation_decision(
-        self,
-        approval_check: Dict,
-        deal_impact: Dict,
-        concession_tracking: Dict,
-        deal_details: Dict
-    ) -> Dict[str, Any]:
+        self, approval_check: dict, deal_impact: dict, concession_tracking: dict, deal_details: dict
+    ) -> dict[str, Any]:
         """Make final negotiation decision"""
         # Check all approval criteria
         within_authority = approval_check["within_authority"]
@@ -575,26 +559,26 @@ class ContractNegotiator(BaseAgent):
             "requires_escalation": requires_escalation,
             "rationale": rationale,
             "escalation_reasons": approval_check.get("blockers", []),
-            "recommendation": self._generate_recommendation(action, deal_impact)
+            "recommendation": self._generate_recommendation(action, deal_impact),
         }
 
-    def _generate_recommendation(self, action: str, deal_impact: Dict) -> str:
+    def _generate_recommendation(self, action: str, deal_impact: dict) -> str:
         """Generate recommendation based on decision"""
         recommendations = {
             "approve": "Approve concessions and move forward with modified terms",
             "reject": "Decline request - deal economics not viable",
             "escalate": "Escalate to higher authority for approval",
-            "counter_offer": "Present counter-offer with trade-offs"
+            "counter_offer": "Present counter-offer with trade-offs",
         }
         return recommendations.get(action, "Review with management")
 
     def _generate_negotiation_strategy(
         self,
-        negotiation_request: Dict,
-        decision: Dict,
-        counter_offers: List[Dict],
-        deal_details: Dict
-    ) -> Dict[str, Any]:
+        negotiation_request: dict,
+        decision: dict,
+        counter_offers: list[dict],
+        deal_details: dict,
+    ) -> dict[str, Any]:
         """Generate comprehensive negotiation strategy"""
         return {
             "approach": decision["action"],
@@ -603,27 +587,28 @@ class ContractNegotiator(BaseAgent):
             "anchoring_points": [
                 "Emphasize value delivered",
                 "Reference similar customer success",
-                "Highlight competitive advantages"
+                "Highlight competitive advantages",
             ],
             "negotiation_sequence": [
                 "Acknowledge their request",
                 "Reaffirm value proposition",
                 "Present counter-offer if applicable",
-                "Seek commitment on modified terms"
+                "Seek commitment on modified terms",
             ],
-            "walk_away_threshold": deal_details.get("margin", 0.70) * 0.5  # Don't go below 50% of target margin
+            "walk_away_threshold": deal_details.get("margin", 0.70)
+            * 0.5,  # Don't go below 50% of target margin
         }
 
     async def _generate_negotiation_response(
         self,
         message: str,
-        decision: Dict,
-        counter_offers: List[Dict],
-        strategy: Dict,
-        concession_tracking: Dict,
-        kb_results: List[Dict],
-        customer_metadata: Dict,
-        state: AgentState
+        decision: dict,
+        counter_offers: list[dict],
+        strategy: dict,
+        concession_tracking: dict,
+        kb_results: list[dict],
+        customer_metadata: dict,
+        state: AgentState,
     ) -> str:
         """Generate negotiation response"""
 
@@ -646,44 +631,42 @@ class ContractNegotiator(BaseAgent):
 
         system_prompt = f"""You are a Contract Negotiator specialist handling deal negotiations.
 
-Negotiation Decision: {decision['action'].upper()}
-Rationale: {decision['rationale']}
-Escalation Required: {decision['requires_escalation']}
+Negotiation Decision: {decision["action"].upper()}
+Rationale: {decision["rationale"]}
+Escalation Required: {decision["requires_escalation"]}
 
 Concession Status:
-- Total Requested: {concession_tracking['total_concession_percentage']:.0%}
-- New Margin: {concession_tracking['new_margin']:.0%}
-- Within Limits: {concession_tracking['within_limits']}
+- Total Requested: {concession_tracking["total_concession_percentage"]:.0%}
+- New Margin: {concession_tracking["new_margin"]:.0%}
+- Within Limits: {concession_tracking["within_limits"]}
 
-Company: {customer_metadata.get('company', 'Customer')}
+Company: {customer_metadata.get("company", "Customer")}
 
 Your response should:
 1. Acknowledge their negotiation request professionally
-2. {'Present counter-offer options with clear trade-offs' if decision['action'] == 'counter_offer' else 'Explain the decision clearly'}
+2. {"Present counter-offer options with clear trade-offs" if decision["action"] == "counter_offer" else "Explain the decision clearly"}
 3. Emphasize mutual value and win-win outcomes
 4. Be firm but collaborative
 5. Keep the deal momentum going
-6. {'Mention escalation timeline' if decision['requires_escalation'] else 'Move toward next steps'}
+6. {"Mention escalation timeline" if decision["requires_escalation"] else "Move toward next steps"}
 7. Maintain positive relationship
 8. Use confident business language"""
 
         user_prompt = f"""Customer message: {message}
 
-Strategy: {strategy['approach']}
+Strategy: {strategy["approach"]}
 
 {counter_offers_text}
 
 Negotiation Sequence:
-{chr(10).join(f"{i+1}. {step}" for i, step in enumerate(strategy['negotiation_sequence']))}
+{chr(10).join(f"{i + 1}. {step}" for i, step in enumerate(strategy["negotiation_sequence"]))}
 
 {kb_context}
 
 Generate a professional negotiation response."""
 
         response = await self.call_llm(
-            system_prompt,
-            user_prompt,
-            conversation_history=conversation_history
+            system_prompt, user_prompt, conversation_history=conversation_history
         )
         return response
 
@@ -707,23 +690,17 @@ if __name__ == "__main__":
                     "company": "GoodFit Corp",
                     "title": "VP Operations",
                     "company_size": 200,
-                    "industry": "technology"
+                    "industry": "technology",
                 },
-                "deal_details": {
-                    "deal_value": 120000,
-                    "margin": 0.70
-                },
-                "current_proposal": {
-                    "discount": 0.0,
-                    "term": 1
-                }
-            }
+                "deal_details": {"deal_value": 120000, "margin": 0.70},
+                "current_proposal": {"discount": 0.0, "term": 1},
+            },
         )
 
         agent = ContractNegotiator()
         result1 = await agent.process(state1)
 
-        print(f"\nTest 1 - Reasonable Discount Request")
+        print("\nTest 1 - Reasonable Discount Request")
         print(f"Negotiation Type: {result1['negotiation_request']['type']}")
         print(f"Authority Level: {result1['authority_level']}")
         print(f"Decision: {result1['negotiation_decision']['action']}")
@@ -740,22 +717,16 @@ if __name__ == "__main__":
                     "company": "BigDeal Inc",
                     "title": "CFO",
                     "company_size": 1000,
-                    "industry": "finance"
+                    "industry": "finance",
                 },
-                "deal_details": {
-                    "deal_value": 500000,
-                    "margin": 0.70
-                },
-                "current_proposal": {
-                    "discount": 0.0,
-                    "payment_terms": "net_30"
-                }
-            }
+                "deal_details": {"deal_value": 500000, "margin": 0.70},
+                "current_proposal": {"discount": 0.0, "payment_terms": "net_30"},
+            },
         )
 
         result2 = await agent.process(state2)
 
-        print(f"\nTest 2 - Request Exceeding Authority")
+        print("\nTest 2 - Request Exceeding Authority")
         print(f"Decision: {result2['negotiation_decision']['action']}")
         print(f"Requires Escalation: {result2['negotiation_decision']['requires_escalation']}")
         print(f"Escalation Reasons: {len(result2['approval_check']['blockers'])}")
@@ -770,22 +741,20 @@ if __name__ == "__main__":
                     "company": "Perfect Customer",
                     "title": "Director",
                     "company_size": 150,
-                    "industry": "retail"
+                    "industry": "retail",
                 },
                 "deal_details": {
                     "deal_value": 80000,
                     "margin": 0.70,
-                    "company_profile": {"public_company": True}
+                    "company_profile": {"public_company": True},
                 },
-                "current_proposal": {
-                    "discount": 0.0
-                }
-            }
+                "current_proposal": {"discount": 0.0},
+            },
         )
 
         result3 = await agent.process(state3)
 
-        print(f"\nTest 3 - Trade-off Negotiation")
+        print("\nTest 3 - Trade-off Negotiation")
         print(f"Decision: {result3['negotiation_decision']['action']}")
         print(f"Counter Offers Available: {len(result3['counter_offers'])}")
         print(f"Deal Impact: ${result3['deal_impact']['direct_impact']:,.2f}")
