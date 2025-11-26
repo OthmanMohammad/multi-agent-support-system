@@ -1,10 +1,12 @@
 """
 Analytics and metrics models
 """
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.orm import relationship
+
 import uuid
+
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import relationship
 
 from src.database.models.base import BaseModel
 
@@ -53,7 +55,7 @@ class FeatureUsage(BaseModel):
         UUID(as_uuid=True),
         ForeignKey("customers.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
     feature_name = Column(String(100), nullable=False, index=True)
     usage_count = Column(Integer, nullable=False, server_default="0")
@@ -77,14 +79,10 @@ class ABTest(BaseModel):
     test_name = Column(String(100), nullable=False, index=True)
     variant = Column(String(50), nullable=False, index=True)
     customer_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("customers.id", ondelete="CASCADE"),
-        nullable=True
+        UUID(as_uuid=True), ForeignKey("customers.id", ondelete="CASCADE"), nullable=True
     )
     conversation_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("conversations.id", ondelete="CASCADE"),
-        nullable=True
+        UUID(as_uuid=True), ForeignKey("conversations.id", ondelete="CASCADE"), nullable=True
     )
     outcome = Column(String(50), nullable=True)
     metric_value = Column(Float, nullable=True)
