@@ -2,11 +2,10 @@
 Permission Manager Agent - Manages roles, permissions, and access control.
 """
 
-from typing import Dict, Any
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("permission_manager", tier="essential", category="account")
@@ -17,7 +16,7 @@ class PermissionManager(BaseAgent):
         "owner": {"level": 4, "description": "Full control, only 1 per account"},
         "admin": {"level": 3, "description": "Full control except billing"},
         "member": {"level": 2, "description": "Create and edit content"},
-        "viewer": {"level": 1, "description": "Read-only access"}
+        "viewer": {"level": 1, "description": "Read-only access"},
     }
 
     PERMISSIONS = {
@@ -26,7 +25,7 @@ class PermissionManager(BaseAgent):
         "delete": "Delete content",
         "manage_team": "Invite/remove team members",
         "manage_billing": "Access billing info",
-        "manage_sso": "Configure SSO (owner only)"
+        "manage_sso": "Configure SSO (owner only)",
     }
 
     def __init__(self):
@@ -36,7 +35,7 @@ class PermissionManager(BaseAgent):
             temperature=0.3,
             capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="account",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -44,21 +43,21 @@ class PermissionManager(BaseAgent):
     async def process(self, state: AgentState) -> AgentState:
         self.logger.info("permission_manager_processing_started")
         state = self.update_state(state)
-        
+
         message = state["current_message"]
         action = self._detect_permission_action(message)
-        
+
         kb_results = await self.search_knowledge_base(message, category="account", limit=2)
         state["kb_results"] = kb_results
-        
+
         response = self._generate_permission_guide(action)
-        
+
         state["agent_response"] = response
         state["permission_action"] = action
         state["response_confidence"] = 0.85
         state["next_agent"] = None
         state["status"] = "resolved"
-        
+
         self.logger.info("permission_processing_completed", action=action)
         return state
 
@@ -224,8 +223,10 @@ Some permissions can be overridden per project
 **View All Permissions:**
 Settings > Team > Permissions Matrix"""
 
+
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
