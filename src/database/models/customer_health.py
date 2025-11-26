@@ -1,10 +1,12 @@
 """
 Customer health tracking models
 """
-from sqlalchemy import Column, String, Integer, DECIMAL, Text, ForeignKey, CheckConstraint, DateTime
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.orm import relationship
+
 import uuid
+
+from sqlalchemy import DECIMAL, CheckConstraint, Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import relationship
 
 from src.database.models.base import BaseModel
 
@@ -19,7 +21,7 @@ class CustomerHealthEvent(BaseModel):
         UUID(as_uuid=True),
         ForeignKey("customers.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
     event_type = Column(String(50), nullable=False)
     old_value = Column(DECIMAL(precision=5, scale=2), nullable=True)
@@ -35,11 +37,10 @@ class CustomerHealthEvent(BaseModel):
     __table_args__ = (
         CheckConstraint(
             "event_type IN ('health_score_change', 'churn_risk_change', 'engagement_drop', 'usage_spike')",
-            name="check_health_event_type"
+            name="check_health_event_type",
         ),
         CheckConstraint(
-            "severity IN ('low', 'medium', 'high', 'critical')",
-            name="check_health_event_severity"
+            "severity IN ('low', 'medium', 'high', 'critical')", name="check_health_event_severity"
         ),
     )
 
@@ -57,7 +58,7 @@ class CustomerSegment(BaseModel):
         UUID(as_uuid=True),
         ForeignKey("customers.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
     segment_name = Column(String(100), nullable=False, index=True)
     segment_type = Column(String(50), nullable=False)
@@ -72,7 +73,7 @@ class CustomerSegment(BaseModel):
     __table_args__ = (
         CheckConstraint(
             "segment_type IN ('industry', 'lifecycle', 'value', 'behavior', 'risk')",
-            name="check_segment_type"
+            name="check_segment_type",
         ),
     )
 
@@ -90,7 +91,7 @@ class CustomerNote(BaseModel):
         UUID(as_uuid=True),
         ForeignKey("customers.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
     note_type = Column(String(50), nullable=False)
     content = Column(Text, nullable=False)
@@ -105,16 +106,17 @@ class CustomerNote(BaseModel):
     __table_args__ = (
         CheckConstraint(
             "note_type IN ('general', 'support', 'sales', 'success', 'technical')",
-            name="check_note_type"
+            name="check_note_type",
         ),
         CheckConstraint(
-            "visibility IN ('private', 'team', 'company')",
-            name="check_note_visibility"
+            "visibility IN ('private', 'team', 'company')", name="check_note_visibility"
         ),
     )
 
     def __repr__(self) -> str:
-        return f"<CustomerNote(id={self.id}, customer_id={self.customer_id}, type={self.note_type})>"
+        return (
+            f"<CustomerNote(id={self.id}, customer_id={self.customer_id}, type={self.note_type})>"
+        )
 
 
 class CustomerContact(BaseModel):
@@ -127,7 +129,7 @@ class CustomerContact(BaseModel):
         UUID(as_uuid=True),
         ForeignKey("customers.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
     email = Column(String(255), nullable=False, index=True)
     name = Column(String(255), nullable=True)
@@ -143,12 +145,14 @@ class CustomerContact(BaseModel):
     __table_args__ = (
         CheckConstraint(
             "role IN ('admin', 'billing', 'technical', 'business', 'user')",
-            name="check_contact_role"
+            name="check_contact_role",
         ),
     )
 
     def __repr__(self) -> str:
-        return f"<CustomerContact(id={self.id}, email={self.email}, customer_id={self.customer_id})>"
+        return (
+            f"<CustomerContact(id={self.id}, email={self.email}, customer_id={self.customer_id})>"
+        )
 
 
 class CustomerIntegration(BaseModel):
@@ -161,7 +165,7 @@ class CustomerIntegration(BaseModel):
         UUID(as_uuid=True),
         ForeignKey("customers.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
     integration_type = Column(String(50), nullable=False, index=True)
     status = Column(String(20), nullable=False, server_default="active")
@@ -177,7 +181,7 @@ class CustomerIntegration(BaseModel):
     __table_args__ = (
         CheckConstraint(
             "status IN ('active', 'paused', 'error', 'disconnected')",
-            name="check_integration_status"
+            name="check_integration_status",
         ),
     )
 
