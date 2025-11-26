@@ -5,13 +5,12 @@ Auto-schedules and executes data cleanup tasks including archiving old records,
 purging expired data, and maintaining database health.
 """
 
-from typing import Dict, Any, List
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("cleanup_scheduler", tier="operational", category="automation")
@@ -23,7 +22,7 @@ class CleanupSchedulerAgent(BaseAgent):
         "expired_sessions": {"retention_days": 30, "action": "delete"},
         "old_logs": {"retention_days": 90, "action": "compress"},
         "temp_files": {"retention_days": 7, "action": "delete"},
-        "completed_workflows": {"retention_days": 180, "action": "archive"}
+        "completed_workflows": {"retention_days": 180, "action": "archive"},
     }
 
     def __init__(self):
@@ -33,7 +32,7 @@ class CleanupSchedulerAgent(BaseAgent):
             temperature=0.1,
             max_tokens=700,
             capabilities=[AgentCapability.DATABASE_WRITE],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -50,8 +49,8 @@ class CleanupSchedulerAgent(BaseAgent):
             cleanup_results.append(result)
 
         # Calculate totals
-        total_records = sum(r['records_processed'] for r in cleanup_results)
-        total_space = sum(r['space_freed_mb'] for r in cleanup_results)
+        total_records = sum(r["records_processed"] for r in cleanup_results)
+        total_space = sum(r["space_freed_mb"] for r in cleanup_results)
 
         response = f"""**Cleanup Completed**
 
@@ -73,22 +72,23 @@ Total Space Freed: {total_space:,} MB
         self.logger.info("cleanup_completed", total_records=total_records)
         return state
 
-    async def _execute_cleanup(self, data_type: str, policy: Dict) -> Dict:
+    async def _execute_cleanup(self, data_type: str, policy: dict) -> dict:
         """Execute cleanup for a specific data type."""
-        cutoff_date = datetime.now(UTC) - timedelta(days=policy['retention_days'])
+        cutoff_date = datetime.now(UTC) - timedelta(days=policy["retention_days"])
 
         # Mock cleanup execution
         import random
+
         records_processed = random.randint(100, 5000)
         space_freed = random.randint(10, 500)
 
         return {
             "data_type": data_type,
-            "action": policy['action'],
-            "retention_days": policy['retention_days'],
+            "action": policy["action"],
+            "retention_days": policy["retention_days"],
             "cutoff_date": cutoff_date.isoformat(),
             "records_processed": records_processed,
             "space_freed_mb": space_freed,
             "status": "success",
-            "executed_at": datetime.now(UTC).isoformat()
+            "executed_at": datetime.now(UTC).isoformat(),
         }
