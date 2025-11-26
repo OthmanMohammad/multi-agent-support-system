@@ -5,13 +5,12 @@ Automates agent-to-agent handoffs with context preservation,
 intelligent routing, and seamless customer experience.
 """
 
-from typing import Dict, Any
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("handoff_automator", tier="operational", category="automation")
@@ -23,7 +22,7 @@ class HandoffAutomatorAgent(BaseAgent):
         "technical": "technical_support",
         "sales": "sales_team",
         "onboarding": "onboarding_specialist",
-        "escalation": "senior_support"
+        "escalation": "senior_support",
     }
 
     def __init__(self):
@@ -33,7 +32,7 @@ class HandoffAutomatorAgent(BaseAgent):
             temperature=0.1,
             max_tokens=600,
             capabilities=[AgentCapability.DATABASE_WRITE],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -51,7 +50,7 @@ class HandoffAutomatorAgent(BaseAgent):
             "conversation_history": state.get("messages", [])[-5:],
             "customer_metadata": state.get("customer_metadata", {}),
             "current_issue": state.get("current_message", ""),
-            "handoff_reason": handoff_type
+            "handoff_reason": handoff_type,
         }
 
         # Execute handoff
@@ -59,7 +58,7 @@ class HandoffAutomatorAgent(BaseAgent):
 
         response = f"""**Handoff Completed**
 
-Transferred to: {target_agent.replace('_', ' ').title()}
+Transferred to: {target_agent.replace("_", " ").title()}
 Reason: {handoff_type.title()}
 Context Preserved: Yes
 
@@ -74,10 +73,10 @@ The specialist will continue assisting you shortly."""
         self.logger.info("handoff_completed", target=target_agent)
         return state
 
-    async def _execute_handoff(self, target: str, context: Dict) -> Dict:
+    async def _execute_handoff(self, target: str, context: dict) -> dict:
         """Execute handoff with context."""
         return {
             "target_agent": target,
             "context_transferred": True,
-            "handoff_at": datetime.now(UTC).isoformat()
+            "handoff_at": datetime.now(UTC).isoformat(),
         }
