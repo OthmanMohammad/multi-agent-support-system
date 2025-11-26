@@ -1,6 +1,5 @@
 // Learn more: https://github.com/testing-library/jest-dom
 import "@testing-library/jest-dom";
-import { server } from "@/lib/mocks/server";
 
 // Polyfill for Next.js environment variables in tests
 process.env.NEXT_PUBLIC_API_URL =
@@ -8,12 +7,14 @@ process.env.NEXT_PUBLIC_API_URL =
 process.env.NEXT_PUBLIC_APP_URL =
   process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 process.env.NEXTAUTH_SECRET =
-  process.env.NEXTAUTH_SECRET || "test-secret-for-testing-only";
+  process.env.NEXTAUTH_SECRET || "test-secret-for-testing-only-32chars!";
 
-// Setup MSW for API mocking in tests
-beforeAll(() => server.listen({ onUnhandledRequest: "warn" }));
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+// Note: MSW server setup disabled due to ESM compatibility issues with Jest
+// TODO: Re-enable when Jest/MSW 2.x compatibility is resolved
+// import { server } from "@/lib/mocks/server";
+// beforeAll(() => server.listen({ onUnhandledRequest: "warn" }));
+// afterEach(() => server.resetHandlers());
+// afterAll(() => server.close());
 
 // Mock IntersectionObserver (not available in JSDOM)
 global.IntersectionObserver = class IntersectionObserver {
