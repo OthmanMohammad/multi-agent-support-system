@@ -34,7 +34,20 @@ def load_seed_data(file_path: str) -> List[Dict]:
     """Load seed articles from JSON file"""
     with open(file_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
-    return data['articles']
+
+    # Support multiple formats: {"articles": [...]}, {"records": [...]}, or [...]
+    if isinstance(data, list):
+        return data
+    elif 'articles' in data:
+        return data['articles']
+    elif 'records' in data:
+        return data['records']
+    else:
+        # Try first key that contains a list
+        for key, value in data.items():
+            if isinstance(value, list):
+                return value
+        raise ValueError("Could not find articles array in JSON file")
 
 
 async def init_knowledge_base(reset: bool = False):
