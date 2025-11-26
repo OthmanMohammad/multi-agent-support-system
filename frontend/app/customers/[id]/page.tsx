@@ -155,6 +155,7 @@ export default function CustomerDetailPage({
         <div className="rounded-lg border border-border bg-surface p-6">
           <h2 className="mb-4 text-lg font-semibold">Conversation History</h2>
 
+          {/* eslint-disable-next-line no-nested-ternary -- Loading/data/empty conditional */}
           {interactionsLoading ? (
             <div className="space-y-3">
               {Array.from({ length: 3 }).map((_, i) => (
