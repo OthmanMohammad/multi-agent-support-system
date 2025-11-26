@@ -2,10 +2,10 @@
 Knowledge Base - Search and retrieve articles
 vector search.. Falls back to keyword search if needed.
 """
-import json
-from typing import List, Dict, Optional
-from src.vector_store import VectorStore
 
+import json
+
+from src.vector_store import VectorStore
 
 # Global vector store instance (initialized on first use)
 _vector_store = None
@@ -23,12 +23,12 @@ def get_vector_store() -> VectorStore:
     return _vector_store
 
 
-def load_articles() -> List[Dict]:
+def load_articles() -> list[dict]:
     """Load articles from JSON file (for keyword search fallback)"""
     try:
-        with open('data/articles.json', 'r', encoding='utf-8') as f:
+        with open("data/articles.json", encoding="utf-8") as f:
             data = json.load(f)
-            return data['articles']
+            return data["articles"]
     except FileNotFoundError:
         print("Warning: articles.json not found")
         return []
@@ -37,139 +37,122 @@ def load_articles() -> List[Dict]:
         return []
 
 
-def search_articles_vector(
-    query: str,
-    category: Optional[str] = None,
-    limit: int = 3
-) -> List[Dict]:
+def search_articles_vector(query: str, category: str | None = None, limit: int = 3) -> list[dict]:
     """
     Search articles using vector similarity (semantic search)
-    
+
     Args:
         query: Search query (user's question)
         category: Filter by category (billing, technical, usage)
         limit: Maximum number of results
-        
+
     Returns:
         List of matching articles with similarity scores
     """
     vs = get_vector_store()
-    
+
     if vs is None:
         print("Vector search not available, falling back to keyword search")
         return search_articles_keyword(query, category, limit)
-    
+
     try:
         # Use lower threshold for better recall
         results = vs.search(
             query=query,
             category=category,
             limit=limit,
-            score_threshold=0.3  # Lower = more lenient
+            score_threshold=0.3,  # Lower = more lenient
         )
-        
+
         # If no results, try without category filter
         if not results and category:
             print(f"No results in '{category}', searching all categories...")
-            results = vs.search(
-                query=query,
-                category=None,
-                limit=limit,
-                score_threshold=0.3
-            )
-        
+            results = vs.search(query=query, category=None, limit=limit, score_threshold=0.3)
+
         return results
-        
+
     except Exception as e:
         print(f"Vector search error: {e}, falling back to keyword search")
         return search_articles_keyword(query, category, limit)
 
 
-def search_articles_keyword(
-    query: str,
-    category: Optional[str] = None,
-    limit: int = 3
-) -> List[Dict]:
+def search_articles_keyword(query: str, category: str | None = None, limit: int = 3) -> list[dict]:
     """
     Search articles by keyword matching (FALLBACK)
-    
+
     Args:
         query: Search query (user's question)
         category: Filter by category (billing, technical, usage)
         limit: Maximum number of results
-        
+
     Returns:
         List of matching articles, sorted by relevance
     """
     articles = load_articles()
-    
+
     if not articles:
         return []
-    
+
     # Filter by category if provided
     if category:
-        articles = [a for a in articles if a['category'] == category]
-    
+        articles = [a for a in articles if a["category"] == category]
+
     # Convert query to lowercase for matching
     query_lower = query.lower()
     query_words = set(query_lower.split())
-    
+
     # Score each article
     results = []
     for article in articles:
         score = 0
-        
+
         # Check title (highest weight)
-        if query_lower in article['title'].lower():
+        if query_lower in article["title"].lower():
             score += 10
-        
+
         # Check content
-        if query_lower in article['content'].lower():
+        if query_lower in article["content"].lower():
             score += 5
-        
+
         # Check tags
-        for tag in article['tags']:
+        for tag in article["tags"]:
             if tag.lower() in query_lower or query_lower in tag.lower():
                 score += 3
-        
+
         # Check individual words
-        content_lower = (article['title'] + ' ' + article['content']).lower()
+        content_lower = (article["title"] + " " + article["content"]).lower()
         for word in query_words:
             if len(word) > 2 and word in content_lower:  # Skip short words
                 score += 1
-        
+
         if score > 0:
-            results.append({
-                'article': article,
-                'score': score
-            })
-    
+            results.append({"article": article, "score": score})
+
     # Sort by score (highest first)
-    results.sort(key=lambda x: x['score'], reverse=True)
-    
+    results.sort(key=lambda x: x["score"], reverse=True)
+
     # Return top results (convert to same format as vector search)
     formatted_results = []
     for r in results[:limit]:
-        article = r['article']
-        formatted_results.append({
-            'doc_id': article['id'],
-            'title': article['title'],
-            'content': article['content'],
-            'category': article['category'],
-            'tags': article.get('tags', []),
-            'similarity_score': r['score'] / 20  # Normalize to 0-1 range
-        })
-    
+        article = r["article"]
+        formatted_results.append(
+            {
+                "doc_id": article["id"],
+                "title": article["title"],
+                "content": article["content"],
+                "category": article["category"],
+                "tags": article.get("tags", []),
+                "similarity_score": r["score"] / 20,  # Normalize to 0-1 range
+            }
+        )
+
     return formatted_results
 
 
 # Main search function (use this in your agent)
 def search_articles(
-    query: str,
-    category: Optional[str] = None,
-    limit: int = 3,
-    use_vector: bool = True
-) -> List[Dict]:
+    query: str, category: str | None = None, limit: int = 3, use_vector: bool = True
+) -> list[dict]:
     """
     Search articles (automatically chooses best method)
 
@@ -189,11 +172,7 @@ def search_articles(
 
 
 # Alias for backward compatibility
-def search_knowledge_base(
-    query: str,
-    category: Optional[str] = None,
-    top_k: int = 3
-) -> List[Dict]:
+def search_knowledge_base(query: str, category: str | None = None, top_k: int = 3) -> list[dict]:
     """
     Search knowledge base (alias for search_articles)
 
@@ -208,7 +187,7 @@ def search_knowledge_base(
     results = search_articles(query, category, limit=top_k)
     # Rename similarity_score to score for compatibility
     for result in results:
-        result['score'] = result.pop('similarity_score', 0.0)
+        result["score"] = result.pop("similarity_score", 0.0)
     return results
 
 
@@ -217,22 +196,22 @@ if __name__ == "__main__":
     print("=" * 60)
     print("TESTING KNOWLEDGE BASE SEARCH")
     print("=" * 60)
-    
+
     test_queries = [
         ("how to upgrade my plan", None),
         ("project not syncing", "technical"),
         ("invite team members", None),
         ("refund", "billing"),
-        ("keyboard shortcuts", "usage")
+        ("keyboard shortcuts", "usage"),
     ]
-    
+
     for query, category in test_queries:
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Query: '{query}'")
         if category:
             print(f"Category: {category}")
-        print(f"{'='*60}")
-        
+        print(f"{'=' * 60}")
+
         # Vector search
         print("\n🔍 VECTOR SEARCH:")
         vector_results = search_articles_vector(query, category, limit=2)
@@ -243,7 +222,7 @@ if __name__ == "__main__":
                 print(f"     Score: {result['similarity_score']:.3f}")
         else:
             print("  No results")
-        
+
         # Keyword search (for comparison)
         print("\n📝 KEYWORD SEARCH (comparison):")
         keyword_results = search_articles_keyword(query, category, limit=2)
