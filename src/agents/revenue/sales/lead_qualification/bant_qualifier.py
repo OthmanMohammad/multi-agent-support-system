@@ -5,13 +5,12 @@ Deep BANT assessment (Budget, Authority, Need, Timeline).
 Converts MQL to SQL through comprehensive qualification.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("bant_qualifier", tier="revenue", category="sales")
@@ -36,13 +35,21 @@ class BANTQualifier(BaseAgent):
         "high": ["approved", "allocated", "budgeted", "funded"],
         "medium": ["exploring", "looking at", "considering budget"],
         "low": ["no budget", "tight budget", "limited budget"],
-        "unknown": []
+        "unknown": [],
     }
 
     # Authority indicators
     DECISION_MAKER_TITLES = [
-        "ceo", "cto", "cfo", "coo", "president", "founder",
-        "vp", "vice president", "head of", "director"
+        "ceo",
+        "cto",
+        "cfo",
+        "coo",
+        "president",
+        "founder",
+        "vp",
+        "vice president",
+        "head of",
+        "director",
     ]
 
     # Urgency indicators
@@ -50,7 +57,7 @@ class BANTQualifier(BaseAgent):
         "critical": ["asap", "urgent", "critical", "immediately", "emergency"],
         "high": ["soon", "this month", "this quarter", "quickly"],
         "medium": ["next quarter", "this year", "few months"],
-        "low": ["eventually", "someday", "exploring", "researching"]
+        "low": ["eventually", "someday", "exploring", "researching"],
     }
 
     def __init__(self):
@@ -62,10 +69,10 @@ class BANTQualifier(BaseAgent):
             capabilities=[
                 AgentCapability.KB_SEARCH,
                 AgentCapability.CONTEXT_AWARE,
-                AgentCapability.MULTI_TURN
+                AgentCapability.MULTI_TURN,
             ],
             kb_category="sales",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -81,11 +88,7 @@ class BANTQualifier(BaseAgent):
         conversation_history = state.get("messages", [])
 
         # Perform BANT assessment
-        bant_assessment = self._assess_bant(
-            message,
-            customer_metadata,
-            conversation_history
-        )
+        bant_assessment = self._assess_bant(message, customer_metadata, conversation_history)
 
         # Calculate overall BANT score
         overall_score = self._calculate_bant_score(bant_assessment)
@@ -94,21 +97,12 @@ class BANTQualifier(BaseAgent):
         qualification_status = self._determine_status(overall_score)
 
         # Search KB
-        kb_results = await self.search_knowledge_base(
-            message,
-            category="sales",
-            limit=3
-        )
+        kb_results = await self.search_knowledge_base(message, category="sales", limit=3)
         state["kb_results"] = kb_results
 
         # Generate response
         response = await self._generate_bant_response(
-            message,
-            bant_assessment,
-            overall_score,
-            qualification_status,
-            kb_results,
-            state
+            message, bant_assessment, overall_score, qualification_status, kb_results, state
         )
 
         # Determine next steps
@@ -124,19 +118,14 @@ class BANTQualifier(BaseAgent):
         state["status"] = "resolved"
 
         self.logger.info(
-            "bant_qualifier_completed",
-            bant_score=overall_score,
-            qualification=qualification_status
+            "bant_qualifier_completed", bant_score=overall_score, qualification=qualification_status
         )
 
         return state
 
     def _assess_bant(
-        self,
-        message: str,
-        customer_metadata: Dict,
-        conversation_history: List[Dict]
-    ) -> Dict[str, Any]:
+        self, message: str, customer_metadata: dict, conversation_history: list[dict]
+    ) -> dict[str, Any]:
         """Assess all BANT dimensions"""
         message_lower = message.lower()
 
@@ -162,10 +151,10 @@ class BANTQualifier(BaseAgent):
             "budget": budget_assessment,
             "authority": authority_assessment,
             "need": need_assessment,
-            "timeline": timeline_assessment
+            "timeline": timeline_assessment,
         }
 
-    def _assess_budget(self, text: str, metadata: Dict) -> Dict[str, Any]:
+    def _assess_budget(self, text: str, metadata: dict) -> dict[str, Any]:
         """Assess budget dimension (0-10 score)"""
         score = 5  # Default neutral score
         signals = []
@@ -204,10 +193,10 @@ class BANTQualifier(BaseAgent):
             "score": score,
             "signals": signals,
             "estimated_budget": estimated_range,
-            "confidence": confidence
+            "confidence": confidence,
         }
 
-    def _assess_authority(self, text: str, metadata: Dict) -> Dict[str, Any]:
+    def _assess_authority(self, text: str, metadata: dict) -> dict[str, Any]:
         """Assess authority dimension (0-10 score)"""
         score = 5
         signals = []
@@ -244,10 +233,10 @@ class BANTQualifier(BaseAgent):
             "signals": signals,
             "decision_maker": decision_maker,
             "needs_to_involve": needs_to_involve,
-            "confidence": confidence
+            "confidence": confidence,
         }
 
-    def _assess_need(self, text: str, metadata: Dict) -> Dict[str, Any]:
+    def _assess_need(self, text: str, metadata: dict) -> dict[str, Any]:
         """Assess need dimension (0-10 score)"""
         score = 5
         pain_points = []
@@ -260,7 +249,7 @@ class BANTQualifier(BaseAgent):
             "cost": ["expensive", "costly", "budget", "save money"],
             "quality": ["errors", "mistakes", "quality", "accuracy"],
             "scale": ["growth", "scaling", "capacity", "overwhelmed"],
-            "integration": ["disconnected", "silos", "integration", "consolidate"]
+            "integration": ["disconnected", "silos", "integration", "consolidate"],
         }
 
         for pain_type, keywords in pain_keywords.items():
@@ -286,10 +275,10 @@ class BANTQualifier(BaseAgent):
             "score": score,
             "pain_points": pain_points,
             "urgency": urgency,
-            "confidence": confidence
+            "confidence": confidence,
         }
 
-    def _assess_timeline(self, text: str, metadata: Dict) -> Dict[str, Any]:
+    def _assess_timeline(self, text: str, metadata: dict) -> dict[str, Any]:
         """Assess timeline dimension (0-10 score)"""
         score = 5
         timeframe = "Unknown"
@@ -330,10 +319,10 @@ class BANTQualifier(BaseAgent):
             "score": score,
             "timeframe": timeframe,
             "signals": signals,
-            "confidence": confidence
+            "confidence": confidence,
         }
 
-    def _calculate_bant_score(self, bant_assessment: Dict) -> int:
+    def _calculate_bant_score(self, bant_assessment: dict) -> int:
         """Calculate overall BANT score (0-100)"""
         # Average of all BANT dimensions (each 0-10) * 10 = 0-100
         budget_score = bant_assessment["budget"]["score"]
@@ -353,11 +342,7 @@ class BANTQualifier(BaseAgent):
         else:
             return "Unqualified"
 
-    def _determine_next_steps(
-        self,
-        qualification_status: str,
-        bant_assessment: Dict
-    ) -> List[str]:
+    def _determine_next_steps(self, qualification_status: str, bant_assessment: dict) -> list[str]:
         """Determine recommended next steps"""
         next_steps = []
 
@@ -379,11 +364,11 @@ class BANTQualifier(BaseAgent):
     async def _generate_bant_response(
         self,
         message: str,
-        bant_assessment: Dict,
+        bant_assessment: dict,
         overall_score: int,
         qualification_status: str,
-        kb_results: List[Dict],
-        state: AgentState
+        kb_results: list[dict],
+        state: AgentState,
     ) -> str:
         """Generate BANT qualification response"""
 
@@ -399,10 +384,10 @@ class BANTQualifier(BaseAgent):
         system_prompt = f"""You are a BANT Qualifier using the BANT framework.
 
 Lead BANT Assessment:
-- Budget Score: {bant_assessment['budget']['score']}/10 ({bant_assessment['budget']['estimated_budget']})
-- Authority Score: {bant_assessment['authority']['score']}/10 (Decision Maker: {bant_assessment['authority']['decision_maker']})
-- Need Score: {bant_assessment['need']['score']}/10 (Pain Points: {', '.join(bant_assessment['need']['pain_points'])})
-- Timeline Score: {bant_assessment['timeline']['score']}/10 ({bant_assessment['timeline']['timeframe']})
+- Budget Score: {bant_assessment["budget"]["score"]}/10 ({bant_assessment["budget"]["estimated_budget"]})
+- Authority Score: {bant_assessment["authority"]["score"]}/10 (Decision Maker: {bant_assessment["authority"]["decision_maker"]})
+- Need Score: {bant_assessment["need"]["score"]}/10 (Pain Points: {", ".join(bant_assessment["need"]["pain_points"])})
+- Timeline Score: {bant_assessment["timeline"]["score"]}/10 ({bant_assessment["timeline"]["timeframe"]})
 - Overall BANT Score: {overall_score}/100
 - Qualification: {qualification_status}
 
@@ -417,8 +402,6 @@ For high-scoring leads, move toward demo/next steps."""
 Generate appropriate response based on BANT assessment."""
 
         response = await self.call_llm(
-            system_prompt,
-            user_prompt,
-            conversation_history=conversation_history
+            system_prompt, user_prompt, conversation_history=conversation_history
         )
         return response
