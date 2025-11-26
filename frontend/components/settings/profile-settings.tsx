@@ -28,6 +28,7 @@ type ProfileFormData = z.infer<typeof profileSchema>;
  * Profile Settings Component
  * Manage user profile information
  */
+// eslint-disable-next-line complexity -- Complex form component with multiple fields and validation
 export function ProfileSettings(): JSX.Element {
   const { data: session } = useSession();
   const [isUploading, setIsUploading] = useState(false);
@@ -131,6 +132,7 @@ export function ProfileSettings(): JSX.Element {
           <div className="relative">
             <div className="h-24 w-24 overflow-hidden rounded-full bg-surface-hover">
               {avatarUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element -- Dynamic user avatar URL */
                 <img
                   src={avatarUrl}
                   alt="Profile"
