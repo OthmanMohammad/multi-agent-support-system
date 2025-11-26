@@ -5,13 +5,13 @@ Activates inactive users, re-engages dormant accounts, and measures DAU/MAU impr
 to increase product stickiness and reduce seat waste.
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("user_activation", tier="revenue", category="customer_success")
@@ -34,7 +34,7 @@ class UserActivationAgent(BaseAgent):
         "occasional": {"last_login_days": 14, "engagement": "medium"},
         "inactive": {"last_login_days": 30, "engagement": "low"},
         "dormant": {"last_login_days": 60, "engagement": "none"},
-        "zombie": {"last_login_days": 90, "engagement": "none"}
+        "zombie": {"last_login_days": 90, "engagement": "none"},
     }
 
     # Activation benchmarks
@@ -42,7 +42,7 @@ class UserActivationAgent(BaseAgent):
         "excellent": 80,  # 80%+ DAU/MAU ratio
         "good": 60,
         "acceptable": 40,
-        "poor": 20
+        "poor": 20,
     }
 
     def __init__(self):
@@ -52,7 +52,7 @@ class UserActivationAgent(BaseAgent):
             temperature=0.3,
             max_tokens=600,
             capabilities=[AgentCapability.CONTEXT_AWARE],
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -79,19 +79,15 @@ class UserActivationAgent(BaseAgent):
             "user_activation_details",
             customer_id=customer_id,
             total_seats=user_activity_data.get("total_seats", 0),
-            active_users=user_activity_data.get("active_users", 0)
+            active_users=user_activity_data.get("active_users", 0),
         )
 
         # Analyze user activation
-        activation_analysis = self._analyze_user_activation(
-            user_activity_data,
-            customer_metadata
-        )
+        activation_analysis = self._analyze_user_activation(user_activity_data, customer_metadata)
 
         # Generate re-engagement strategy
         reengagement_strategy = self._create_reengagement_strategy(
-            activation_analysis,
-            customer_metadata
+            activation_analysis, customer_metadata
         )
 
         # Calculate impact metrics
@@ -99,9 +95,7 @@ class UserActivationAgent(BaseAgent):
 
         # Format response
         response = self._format_activation_report(
-            activation_analysis,
-            reengagement_strategy,
-            impact_metrics
+            activation_analysis, reengagement_strategy, impact_metrics
         )
 
         state["agent_response"] = response
@@ -119,16 +113,14 @@ class UserActivationAgent(BaseAgent):
             customer_id=customer_id,
             activation_rate=activation_analysis["activation_rate"],
             inactive_count=activation_analysis["inactive_count"],
-            dormant_count=activation_analysis["dormant_count"]
+            dormant_count=activation_analysis["dormant_count"],
         )
 
         return state
 
     def _analyze_user_activation(
-        self,
-        user_activity_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, user_activity_data: dict[str, Any], customer_metadata: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Analyze user activation patterns.
 
@@ -163,7 +155,9 @@ class UserActivationAgent(BaseAgent):
         at_risk_count = inactive_count + dormant_count + zombie_count
 
         # Calculate seat waste
-        seat_waste_pct = ((total_seats - active_users) / total_seats * 100) if total_seats > 0 else 0
+        seat_waste_pct = (
+            ((total_seats - active_users) / total_seats * 100) if total_seats > 0 else 0
+        )
 
         # Analyze activation trends
         previous_active = user_activity_data.get("previous_month_active_users", active_users)
@@ -171,9 +165,7 @@ class UserActivationAgent(BaseAgent):
 
         # Identify activation barriers
         barriers = self._identify_activation_barriers(
-            users_by_state,
-            user_activity_data,
-            activation_rate
+            users_by_state, user_activity_data, activation_rate
         )
 
         return {
@@ -192,18 +184,12 @@ class UserActivationAgent(BaseAgent):
             "seat_waste_percentage": round(seat_waste_pct, 1),
             "activation_trend": activation_trend,
             "barriers": barriers,
-            "analyzed_at": datetime.now(UTC).isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat(),
         }
 
-    def _categorize_users(self, user_list: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+    def _categorize_users(self, user_list: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
         """Categorize users by activity state."""
-        categorized = {
-            "active": [],
-            "occasional": [],
-            "inactive": [],
-            "dormant": [],
-            "zombie": []
-        }
+        categorized = {"active": [], "occasional": [], "inactive": [], "dormant": [], "zombie": []}
 
         for user in user_list:
             last_login = user.get("last_login_date")
@@ -212,7 +198,7 @@ class UserActivationAgent(BaseAgent):
                 continue
 
             try:
-                last_login_dt = datetime.fromisoformat(last_login.replace('Z', '+00:00'))
+                last_login_dt = datetime.fromisoformat(last_login.replace("Z", "+00:00"))
                 days_since_login = (datetime.now(UTC) - last_login_dt).days
 
                 for state, criteria in self.USER_STATES.items():
@@ -238,40 +224,41 @@ class UserActivationAgent(BaseAgent):
         else:
             return "poor"
 
-    def _calculate_trend(self, current: int, previous: int) -> Dict[str, Any]:
+    def _calculate_trend(self, current: int, previous: int) -> dict[str, Any]:
         """Calculate activation trend."""
-        if previous > 0:
-            change_pct = ((current - previous) / previous) * 100
-        else:
-            change_pct = 0
+        change_pct = (current - previous) / previous * 100 if previous > 0 else 0
 
         direction = "improving" if change_pct > 5 else "stable" if change_pct >= -5 else "declining"
 
         return {
             "direction": direction,
             "change_percentage": round(change_pct, 1),
-            "change_count": current - previous
+            "change_count": current - previous,
         }
 
     def _identify_activation_barriers(
         self,
-        users_by_state: Dict[str, List[Dict[str, Any]]],
-        user_activity_data: Dict[str, Any],
-        activation_rate: float
-    ) -> List[str]:
+        users_by_state: dict[str, list[dict[str, Any]]],
+        user_activity_data: dict[str, Any],
+        activation_rate: float,
+    ) -> list[str]:
         """Identify barriers to user activation."""
         barriers = []
 
         # Check for high dormant rate
         total_users = sum(len(users) for users in users_by_state.values())
-        dormant_rate = (len(users_by_state.get("dormant", [])) / total_users * 100) if total_users > 0 else 0
+        dormant_rate = (
+            (len(users_by_state.get("dormant", [])) / total_users * 100) if total_users > 0 else 0
+        )
 
         if dormant_rate > 20:
             barriers.append("High dormant user rate suggests poor onboarding or unclear value prop")
 
         # Check for zombie users
         if len(users_by_state.get("zombie", [])) > 0:
-            barriers.append(f"{len(users_by_state['zombie'])} users never logged in - invitation or access issues")
+            barriers.append(
+                f"{len(users_by_state['zombie'])} users never logged in - invitation or access issues"
+            )
 
         # Check for low DAU/MAU
         dau = user_activity_data.get("dau", 0)
@@ -289,10 +276,8 @@ class UserActivationAgent(BaseAgent):
         return barriers
 
     def _create_reengagement_strategy(
-        self,
-        activation_analysis: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, activation_analysis: dict[str, Any], customer_metadata: dict[str, Any]
+    ) -> dict[str, Any]:
         """Create personalized re-engagement strategy."""
         users_by_state = activation_analysis["users_by_state"]
         activation_health = activation_analysis["activation_health"]
@@ -301,67 +286,75 @@ class UserActivationAgent(BaseAgent):
             "priority": "low",
             "campaigns": [],
             "target_groups": [],
-            "expected_improvement": 0
+            "expected_improvement": 0,
         }
 
         # Zombie users - never logged in
         if users_by_state.get("zombie"):
-            strategy["campaigns"].append({
-                "name": "Never-Logged-In Recovery",
-                "target": "zombie",
-                "tactics": [
-                    "Resend invitation emails with personalized message",
-                    "Direct outreach from CSM to verify access",
-                    "Offer guided setup session"
-                ],
-                "priority": "high",
-                "target_count": len(users_by_state["zombie"])
-            })
+            strategy["campaigns"].append(
+                {
+                    "name": "Never-Logged-In Recovery",
+                    "target": "zombie",
+                    "tactics": [
+                        "Resend invitation emails with personalized message",
+                        "Direct outreach from CSM to verify access",
+                        "Offer guided setup session",
+                    ],
+                    "priority": "high",
+                    "target_count": len(users_by_state["zombie"]),
+                }
+            )
             strategy["target_groups"].append("zombie")
 
         # Dormant users - haven't logged in 60+ days
         if users_by_state.get("dormant") and len(users_by_state["dormant"]) > 0:
-            strategy["campaigns"].append({
-                "name": "Dormant User Reactivation",
-                "target": "dormant",
-                "tactics": [
-                    "Send 'We Miss You' email with new feature highlights",
-                    "Offer 1:1 refresher training session",
-                    "Share recent customer success stories"
-                ],
-                "priority": "high",
-                "target_count": len(users_by_state["dormant"])
-            })
+            strategy["campaigns"].append(
+                {
+                    "name": "Dormant User Reactivation",
+                    "target": "dormant",
+                    "tactics": [
+                        "Send 'We Miss You' email with new feature highlights",
+                        "Offer 1:1 refresher training session",
+                        "Share recent customer success stories",
+                    ],
+                    "priority": "high",
+                    "target_count": len(users_by_state["dormant"]),
+                }
+            )
             strategy["target_groups"].append("dormant")
 
         # Inactive users - haven't logged in 30+ days
         if users_by_state.get("inactive") and len(users_by_state["inactive"]) > 0:
-            strategy["campaigns"].append({
-                "name": "Inactive User Nudge",
-                "target": "inactive",
-                "tactics": [
-                    "Send reminder email with quick-win use cases",
-                    "In-app notifications for their team members",
-                    "Highlight features they haven't tried"
-                ],
-                "priority": "medium",
-                "target_count": len(users_by_state["inactive"])
-            })
+            strategy["campaigns"].append(
+                {
+                    "name": "Inactive User Nudge",
+                    "target": "inactive",
+                    "tactics": [
+                        "Send reminder email with quick-win use cases",
+                        "In-app notifications for their team members",
+                        "Highlight features they haven't tried",
+                    ],
+                    "priority": "medium",
+                    "target_count": len(users_by_state["inactive"]),
+                }
+            )
             strategy["target_groups"].append("inactive")
 
         # Occasional users - make them regular
         if users_by_state.get("occasional") and len(users_by_state["occasional"]) >= 5:
-            strategy["campaigns"].append({
-                "name": "Occasional to Active Conversion",
-                "target": "occasional",
-                "tactics": [
-                    "Email series on advanced features",
-                    "Create habit-forming workflows",
-                    "Invite to user community"
-                ],
-                "priority": "low",
-                "target_count": len(users_by_state["occasional"])
-            })
+            strategy["campaigns"].append(
+                {
+                    "name": "Occasional to Active Conversion",
+                    "target": "occasional",
+                    "tactics": [
+                        "Email series on advanced features",
+                        "Create habit-forming workflows",
+                        "Invite to user community",
+                    ],
+                    "priority": "low",
+                    "target_count": len(users_by_state["occasional"]),
+                }
+            )
             strategy["target_groups"].append("occasional")
 
         # Set overall priority
@@ -378,7 +371,7 @@ class UserActivationAgent(BaseAgent):
 
         return strategy
 
-    def _calculate_activation_impact(self, activation_analysis: Dict[str, Any]) -> Dict[str, Any]:
+    def _calculate_activation_impact(self, activation_analysis: dict[str, Any]) -> dict[str, Any]:
         """Calculate impact of improving activation."""
         total_seats = activation_analysis["total_seats"]
         current_active = activation_analysis["active_users"]
@@ -394,11 +387,15 @@ class UserActivationAgent(BaseAgent):
         improvement_pct = potential_activation_rate - activation_analysis["activation_rate"]
 
         # Retention impact
-        retention_impact = "high" if improvement_pct > 20 else "medium" if improvement_pct > 10 else "low"
+        retention_impact = (
+            "high" if improvement_pct > 20 else "medium" if improvement_pct > 10 else "low"
+        )
 
         # Revenue protection (seat waste reduction)
         current_waste = activation_analysis["seat_waste_percentage"]
-        potential_waste = ((total_seats - potential_active) / total_seats * 100) if total_seats > 0 else 0
+        potential_waste = (
+            ((total_seats - potential_active) / total_seats * 100) if total_seats > 0 else 0
+        )
         waste_reduction = current_waste - potential_waste
 
         return {
@@ -406,35 +403,30 @@ class UserActivationAgent(BaseAgent):
             "potential_activation_rate": round(potential_activation_rate, 1),
             "improvement_percentage": round(improvement_pct, 1),
             "retention_impact": retention_impact,
-            "waste_reduction_percentage": round(waste_reduction, 1)
+            "waste_reduction_percentage": round(waste_reduction, 1),
         }
 
     def _format_activation_report(
         self,
-        activation_analysis: Dict[str, Any],
-        reengagement_strategy: Dict[str, Any],
-        impact_metrics: Dict[str, Any]
+        activation_analysis: dict[str, Any],
+        reengagement_strategy: dict[str, Any],
+        impact_metrics: dict[str, Any],
     ) -> str:
         """Format user activation report."""
         health = activation_analysis["activation_health"]
 
-        health_emoji = {
-            "excellent": "????",
-            "good": "???",
-            "acceptable": "??????",
-            "poor": "????"
-        }
+        health_emoji = {"excellent": "????", "good": "???", "acceptable": "??????", "poor": "????"}
 
-        report = f"""**{health_emoji.get(health, '????')} User Activation Analysis**
+        report = f"""**{health_emoji.get(health, "????")} User Activation Analysis**
 
 **Activation Health:** {health.upper()}
-**Activation Rate:** {activation_analysis['activation_rate']}% ({activation_analysis['active_users']}/{activation_analysis['total_seats']} seats)
-**Seat Waste:** {activation_analysis['seat_waste_percentage']}%
+**Activation Rate:** {activation_analysis["activation_rate"]}% ({activation_analysis["active_users"]}/{activation_analysis["total_seats"]} seats)
+**Seat Waste:** {activation_analysis["seat_waste_percentage"]}%
 
 **Engagement Metrics:**
-- Daily Active Users (DAU): {activation_analysis['dau']}
-- Monthly Active Users (MAU): {activation_analysis['mau']}
-- DAU/MAU Ratio: {activation_analysis['dau_mau_ratio']}%
+- Daily Active Users (DAU): {activation_analysis["dau"]}
+- Monthly Active Users (MAU): {activation_analysis["mau"]}
+- DAU/MAU Ratio: {activation_analysis["dau_mau_ratio"]}%
 
 **User Distribution:**
 """
@@ -443,14 +435,30 @@ class UserActivationAgent(BaseAgent):
         for state in ["active", "occasional", "inactive", "dormant", "zombie"]:
             count = len(activation_analysis["users_by_state"].get(state, []))
             if count > 0:
-                state_icon = "????" if state == "active" else "????" if state == "occasional" else "????" if state == "inactive" else "????"
+                state_icon = (
+                    "????"
+                    if state == "active"
+                    else "????"
+                    if state == "occasional"
+                    else "????"
+                    if state == "inactive"
+                    else "????"
+                )
                 report += f"- {state_icon} {state.title()}: {count} users\n"
 
         # Activation trend
         trend = activation_analysis["activation_trend"]
-        trend_icon = "????" if trend["direction"] == "improving" else "??????" if trend["direction"] == "stable" else "????"
+        trend_icon = (
+            "????"
+            if trend["direction"] == "improving"
+            else "??????"
+            if trend["direction"] == "stable"
+            else "????"
+        )
         report += f"\n**Activation Trend:** {trend_icon} {trend['direction'].title()}\n"
-        report += f"- Change: {trend['change_percentage']:+.1f}% ({trend['change_count']:+d} users)\n"
+        report += (
+            f"- Change: {trend['change_percentage']:+.1f}% ({trend['change_count']:+d} users)\n"
+        )
 
         # Barriers
         if activation_analysis.get("barriers"):
@@ -467,7 +475,7 @@ class UserActivationAgent(BaseAgent):
                     report += f"- {tactic}\n"
 
         # Impact projection
-        report += f"\n**???? Potential Impact:**\n"
+        report += "\n**???? Potential Impact:**\n"
         report += f"- Recoverable Users: {impact_metrics['potential_recovery']}\n"
         report += f"- Target Activation Rate: {impact_metrics['potential_activation_rate']}%\n"
         report += f"- Improvement: +{impact_metrics['improvement_percentage']}%\n"
@@ -479,6 +487,7 @@ class UserActivationAgent(BaseAgent):
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -496,8 +505,8 @@ if __name__ == "__main__":
             "Analyze user activation",
             context={
                 "customer_id": "cust_poor_activation",
-                "customer_metadata": {"plan": "enterprise"}
-            }
+                "customer_metadata": {"plan": "enterprise"},
+            },
         )
         state1["entities"] = {
             "user_activity_data": {
@@ -507,12 +516,13 @@ if __name__ == "__main__":
                 "mau": 18,
                 "previous_month_active_users": 20,
                 "users": [
-                    {"id": f"user_{i}", "last_login_date": (datetime.now(UTC) - timedelta(days=i*3)).isoformat()}
+                    {
+                        "id": f"user_{i}",
+                        "last_login_date": (datetime.now(UTC) - timedelta(days=i * 3)).isoformat(),
+                    }
                     for i in range(1, 31)
-                ] + [
-                    {"id": f"zombie_{i}", "last_login_date": None}
-                    for i in range(1, 21)
                 ]
+                + [{"id": f"zombie_{i}", "last_login_date": None} for i in range(1, 21)],
             }
         }
 
@@ -532,8 +542,8 @@ if __name__ == "__main__":
             "Check user activation",
             context={
                 "customer_id": "cust_good_activation",
-                "customer_metadata": {"plan": "premium"}
-            }
+                "customer_metadata": {"plan": "premium"},
+            },
         )
         state2["entities"] = {
             "user_activity_data": {
@@ -543,9 +553,12 @@ if __name__ == "__main__":
                 "mau": 26,
                 "previous_month_active_users": 23,
                 "users": [
-                    {"id": f"user_{i}", "last_login_date": (datetime.now(UTC) - timedelta(days=i)).isoformat()}
+                    {
+                        "id": f"user_{i}",
+                        "last_login_date": (datetime.now(UTC) - timedelta(days=i)).isoformat(),
+                    }
                     for i in range(1, 31)
-                ]
+                ],
             }
         }
 
