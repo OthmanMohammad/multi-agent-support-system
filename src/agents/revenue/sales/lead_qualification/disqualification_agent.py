@@ -5,13 +5,13 @@ Identifies bad-fit leads and disqualifies them politely.
 Routes to nurture, self-serve, or reject based on reason.
 """
 
-from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("disqualification_agent", tier="revenue", category="sales")
@@ -33,63 +33,58 @@ class DisqualificationAgent(BaseAgent):
             "category": "budget",
             "severity": "medium",
             "route_to": "self_serve",
-            "re_qualify_in_days": 90
+            "re_qualify_in_days": 90,
         },
         "wrong_company_size": {
             "category": "firmographic",
             "severity": "high",
             "route_to": "reject",
-            "re_qualify_in_days": None
+            "re_qualify_in_days": None,
         },
         "no_authority": {
             "category": "authority",
             "severity": "low",
             "route_to": "nurture",
-            "re_qualify_in_days": 60
+            "re_qualify_in_days": 60,
         },
         "wrong_industry": {
             "category": "firmographic",
             "severity": "medium",
             "route_to": "reject",
-            "re_qualify_in_days": None
+            "re_qualify_in_days": None,
         },
         "no_timeline": {
             "category": "timeline",
             "severity": "low",
             "route_to": "nurture",
-            "re_qualify_in_days": 180
+            "re_qualify_in_days": 180,
         },
         "competitor": {
             "category": "other",
             "severity": "high",
             "route_to": "reject",
-            "re_qualify_in_days": None
+            "re_qualify_in_days": None,
         },
         "student_personal": {
             "category": "other",
             "severity": "high",
             "route_to": "reject",
-            "re_qualify_in_days": None
+            "re_qualify_in_days": None,
         },
         "spam": {
             "category": "other",
             "severity": "critical",
             "route_to": "reject",
-            "re_qualify_in_days": None
-        }
+            "re_qualify_in_days": None,
+        },
     }
 
     # Minimum viable thresholds
     MIN_COMPANY_SIZE = 10  # Minimum 10 employees
-    MIN_LEAD_SCORE = 20    # Below 20 is auto-disqualify
+    MIN_LEAD_SCORE = 20  # Below 20 is auto-disqualify
 
     # Competitor domains
-    COMPETITOR_DOMAINS = [
-        "salesforce.com",
-        "hubspot.com",
-        "zoho.com",
-        "pipedrive.com"
-    ]
+    COMPETITOR_DOMAINS = ["salesforce.com", "hubspot.com", "zoho.com", "pipedrive.com"]
 
     # Self-serve resources
     SELF_SERVE_RESOURCES = {
@@ -97,18 +92,10 @@ class DisqualificationAgent(BaseAgent):
             "Free tier/trial",
             "Product documentation",
             "Video tutorials",
-            "Community forum"
+            "Community forum",
         ],
-        "no_timeline": [
-            "Product roadmap",
-            "Case studies",
-            "ROI calculator",
-            "Monthly newsletter"
-        ],
-        "wrong_company_size": [
-            "Starter plan information",
-            "Small business resources"
-        ]
+        "no_timeline": ["Product roadmap", "Case studies", "ROI calculator", "Monthly newsletter"],
+        "wrong_company_size": ["Starter plan information", "Small business resources"],
     }
 
     def __init__(self):
@@ -120,10 +107,10 @@ class DisqualificationAgent(BaseAgent):
             capabilities=[
                 AgentCapability.KB_SEARCH,
                 AgentCapability.CONTEXT_AWARE,
-                AgentCapability.DATABASE_WRITE
+                AgentCapability.DATABASE_WRITE,
             ],
             kb_category="sales",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -149,10 +136,7 @@ class DisqualificationAgent(BaseAgent):
 
         # Detect disqualification reasons
         disqualification_analysis = self._analyze_disqualification_signals(
-            message,
-            customer_metadata,
-            lead_score,
-            qualification_status
+            message, customer_metadata, lead_score, qualification_status
         )
 
         if not disqualification_analysis["should_disqualify"]:
@@ -174,20 +158,13 @@ class DisqualificationAgent(BaseAgent):
 
         # Search KB for relevant resources
         kb_results = await self.search_knowledge_base(
-            f"alternatives for {primary_reason}",
-            category="sales",
-            limit=3
+            f"alternatives for {primary_reason}", category="sales", limit=3
         )
         state["kb_results"] = kb_results
 
         # Generate polite disqualification response
         response = await self._generate_disqualification_response(
-            message,
-            primary_reason,
-            route_to,
-            customer_metadata,
-            kb_results,
-            state
+            message, primary_reason, route_to, customer_metadata, kb_results, state
         )
 
         # Get recommended resources
@@ -210,18 +187,14 @@ class DisqualificationAgent(BaseAgent):
             "disqualification_completed",
             reason=primary_reason,
             route=route_to,
-            re_qualify_date=re_qualify_date
+            re_qualify_date=re_qualify_date,
         )
 
         return state
 
     def _analyze_disqualification_signals(
-        self,
-        message: str,
-        customer_metadata: Dict,
-        lead_score: int,
-        qualification_status: str
-    ) -> Dict[str, Any]:
+        self, message: str, customer_metadata: dict, lead_score: int, qualification_status: str
+    ) -> dict[str, Any]:
         """
         Analyze signals to determine if lead should be disqualified.
 
@@ -241,7 +214,9 @@ class DisqualificationAgent(BaseAgent):
             reasons.append("wrong_company_size")
 
         # 3. Check for budget signals
-        if any(phrase in message_lower for phrase in ["no budget", "can't afford", "too expensive"]):
+        if any(
+            phrase in message_lower for phrase in ["no budget", "can't afford", "too expensive"]
+        ):
             reasons.append("no_budget")
 
         # 4. Check for competitor
@@ -250,7 +225,9 @@ class DisqualificationAgent(BaseAgent):
             reasons.append("competitor")
 
         # 5. Check for student/personal
-        if any(word in message_lower for word in ["student", "school", "university", "personal use"]):
+        if any(
+            word in message_lower for word in ["student", "school", "university", "personal use"]
+        ):
             reasons.append("student_personal")
 
         # 6. Check for spam signals
@@ -267,7 +244,9 @@ class DisqualificationAgent(BaseAgent):
 
         # 8. Check for no timeline
         if qualification_status == "Unqualified" and lead_score < 40:
-            if any(phrase in message_lower for phrase in ["just looking", "exploring", "researching"]):
+            if any(
+                phrase in message_lower for phrase in ["just looking", "exploring", "researching"]
+            ):
                 reasons.append("no_timeline")
 
         # Determine if should disqualify
@@ -294,7 +273,7 @@ class DisqualificationAgent(BaseAgent):
         return {
             "should_disqualify": should_disqualify,
             "primary_reason": primary_reason,
-            "all_reasons": reasons
+            "all_reasons": reasons,
         }
 
     def _determine_routing(self, reason: str) -> str:
@@ -308,7 +287,7 @@ class DisqualificationAgent(BaseAgent):
             return self.DISQUALIFICATION_REASONS[reason]["route_to"]
         return "reject"
 
-    def _calculate_requalification_date(self, reason: str) -> Optional[str]:
+    def _calculate_requalification_date(self, reason: str) -> str | None:
         """
         Calculate when to re-qualify this lead (if applicable).
 
@@ -325,22 +304,20 @@ class DisqualificationAgent(BaseAgent):
         re_qualify_date = datetime.now() + timedelta(days=days)
         return re_qualify_date.isoformat()
 
-    def _get_recommended_resources(self, reason: str) -> List[str]:
+    def _get_recommended_resources(self, reason: str) -> list[str]:
         """Get recommended self-serve resources based on disqualification reason"""
-        return self.SELF_SERVE_RESOURCES.get(reason, [
-            "Product documentation",
-            "Knowledge base",
-            "Community forum"
-        ])
+        return self.SELF_SERVE_RESOURCES.get(
+            reason, ["Product documentation", "Knowledge base", "Community forum"]
+        )
 
     async def _generate_disqualification_response(
         self,
         message: str,
         reason: str,
         route_to: str,
-        customer_metadata: Dict,
-        kb_results: List[Dict],
-        state: AgentState
+        customer_metadata: dict,
+        kb_results: list[dict],
+        state: AgentState,
     ) -> str:
         """Generate polite disqualification response using Claude"""
 
@@ -381,9 +358,7 @@ Recommended resources to mention:
 Generate a polite, helpful disqualification response."""
 
         response = await self.call_llm(
-            system_prompt,
-            user_prompt,
-            conversation_history=conversation_history
+            system_prompt, user_prompt, conversation_history=conversation_history
         )
         return response
 
@@ -407,19 +382,19 @@ if __name__ == "__main__":
                     "company": "University",
                     "title": "Student",
                     "company_size": 0,
-                    "email": "student@university.edu"
+                    "email": "student@university.edu",
                 },
                 "lead_score": 15,
-                "qualification_status": "Unqualified"
-            }
+                "qualification_status": "Unqualified",
+            },
         )
 
         agent = DisqualificationAgent()
         result1 = await agent.process(state1)
 
-        print(f"\nTest 1 - Student Lead")
+        print("\nTest 1 - Student Lead")
         print(f"Disqualification Status: {result1['disqualification_status']}")
-        if result1['disqualification_status'] == "disqualified":
+        if result1["disqualification_status"] == "disqualified":
             print(f"Reason: {result1['disqualification_reason']}")
             print(f"Route To: {result1['route_to']}")
             print(f"Re-qualification Date: {result1['re_qualification_date']}")
@@ -432,18 +407,18 @@ if __name__ == "__main__":
                 "customer_metadata": {
                     "company": "Small Corp",
                     "title": "Manager",
-                    "company_size": 25
+                    "company_size": 25,
                 },
                 "lead_score": 35,
-                "qualification_status": "Unqualified"
-            }
+                "qualification_status": "Unqualified",
+            },
         )
 
         result2 = await agent.process(state2)
 
-        print(f"\nTest 2 - No Timeline Lead")
+        print("\nTest 2 - No Timeline Lead")
         print(f"Disqualification Status: {result2['disqualification_status']}")
-        if result2['disqualification_status'] == "disqualified":
+        if result2["disqualification_status"] == "disqualified":
             print(f"Reason: {result2['disqualification_reason']}")
             print(f"Route To: {result2['route_to']}")
             print(f"Re-qualification Date: {result2['re_qualification_date']}")
