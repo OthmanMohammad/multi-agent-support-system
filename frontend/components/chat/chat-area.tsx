@@ -1,14 +1,14 @@
 "use client";
 
 import type { JSX } from "react";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useConversation } from "@/lib/api/hooks/useConversations";
 import { useChatStore } from "@/stores/chat-store";
 import { ChatHeader } from "./chat-header";
 import { MessageList } from "./message-list";
 import { MessageInput } from "./message-input";
 import { Button } from "@/components/ui/button";
-import { RotateCcw, AlertCircle } from "lucide-react";
+import { AlertCircle, RotateCcw } from "lucide-react";
 
 interface ChatAreaProps {
   conversationId: string;
@@ -26,7 +26,9 @@ interface ChatAreaProps {
 export function ChatArea({ conversationId }: ChatAreaProps): JSX.Element {
   const { conversation, isLoading, reopen } = useConversation(conversationId);
   const setMessages = useChatStore((state) => state.setMessages);
-  const setCurrentConversation = useChatStore((state) => state.setCurrentConversation);
+  const setCurrentConversation = useChatStore(
+    (state) => state.setCurrentConversation
+  );
   const [isReopening, setIsReopening] = useState(false);
 
   // Track previous conversation ID to detect actual conversation changes
@@ -100,7 +102,8 @@ export function ChatArea({ conversationId }: ChatAreaProps): JSX.Element {
           <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
             <AlertCircle className="h-4 w-4" />
             <span className="text-sm">
-              This conversation is {conversation.status}. Reopen to continue chatting.
+              This conversation is {conversation.status}. Reopen to continue
+              chatting.
             </span>
           </div>
           <Button
@@ -110,7 +113,9 @@ export function ChatArea({ conversationId }: ChatAreaProps): JSX.Element {
             disabled={isReopening}
             className="shrink-0"
           >
-            <RotateCcw className={`mr-2 h-4 w-4 ${isReopening ? "animate-spin" : ""}`} />
+            <RotateCcw
+              className={`mr-2 h-4 w-4 ${isReopening ? "animate-spin" : ""}`}
+            />
             {isReopening ? "Reopening..." : "Reopen"}
           </Button>
         </div>
