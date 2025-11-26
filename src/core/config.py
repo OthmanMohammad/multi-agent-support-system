@@ -45,7 +45,10 @@ class APIConfig(BaseSettings):
     workers: int = Field(default=4, ge=1, le=32)
 
     # CORS configuration
-    cors_origins: list[str] = Field(..., description="Allowed CORS origins (no wildcards allowed)")
+    cors_origins: list[str] = Field(
+        default=["http://localhost:3000", "http://localhost:8000"],
+        description="Allowed CORS origins (no wildcards allowed)",
+    )
     cors_credentials: bool = Field(default=True)
     cors_methods: list[str] = Field(default=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
     cors_headers: list[str] = Field(default=["*"])
