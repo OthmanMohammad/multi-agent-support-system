@@ -4,14 +4,14 @@ Unit tests for KnowledgeBaseService
 import pytest
 from unittest.mock import MagicMock, patch
 
-from services.infrastructure.knowledge_base_service import KnowledgeBaseService
-from core.errors import ExternalServiceError
+from src.services.infrastructure.knowledge_base_service import KnowledgeBaseService
+from src.core.errors import ExternalServiceError
 
 
 @pytest.fixture
 def mock_vector_store():
     """Create mock vector store"""
-    with patch('services.infrastructure.knowledge_base_service.VectorStore') as mock:
+    with patch('src.services.infrastructure.knowledge_base_service.VectorStore') as mock:
         yield mock.return_value
 
 
