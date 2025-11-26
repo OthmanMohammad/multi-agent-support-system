@@ -222,7 +222,8 @@ class FeatureGapHandler(BaseAgent):
             workarounds,
             alternatives,
             kb_results,
-            customer_metadata
+            customer_metadata,
+            state
         )
 
         # Calculate resolution confidence
@@ -459,9 +460,13 @@ class FeatureGapHandler(BaseAgent):
         workarounds: List,
         alternatives: List,
         kb_results: List[Dict],
-        customer_metadata: Dict
+        customer_metadata: Dict,
+        state: AgentState
     ) -> str:
         """Generate personalized response to feature gap objection"""
+
+        # Get conversation history for context continuity
+        conversation_history = self.get_conversation_context(state)
 
         # Build KB context
         kb_context = ""
@@ -541,7 +546,11 @@ Supporting Materials: {', '.join(strategy['supporting_materials'])}"""
 
 Generate a helpful, honest response that addresses their feature gap concern."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt,
+            user_prompt,
+            conversation_history=conversation_history
+        )
         return response
 
 
