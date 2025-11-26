@@ -7,15 +7,16 @@ qualification, education, objection, progression.
 Part of: STORY-01 Routing & Orchestration Swarm (TASK-105)
 """
 
-from typing import Dict, Any, Optional, List
 import json
 from datetime import datetime
+from typing import Any
+
 import structlog
 
-from src.agents.base.base_agent import RoutingAgent, AgentConfig
-from src.agents.base.agent_types import AgentType, AgentCapability
-from src.workflow.state import AgentState
+from src.agents.base.agent_types import AgentCapability, AgentType
+from src.agents.base.base_agent import AgentConfig, RoutingAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.workflow.state import AgentState
 
 logger = structlog.get_logger(__name__)
 
@@ -35,18 +36,30 @@ class SalesDomainRouter(RoutingAgent):
     # Valid sales categories
     SALES_CATEGORIES = [
         "qualification",  # Needs assessment, fit evaluation
-        "education",      # Product demos, feature education
-        "objection",      # Pricing concerns, competitor comparison
-        "progression"     # Trial conversion, closing deals
+        "education",  # Product demos, feature education
+        "objection",  # Pricing concerns, competitor comparison
+        "progression",  # Trial conversion, closing deals
     ]
 
     # Valid agent names for each category
     VALID_AGENTS = {
         "qualification": ["inbound_qualifier", "bant_qualifier"],
-        "education": ["feature_explainer", "demo_scheduler", "value_proposition", "use_case_matcher", "roi_calculator"],
-        "objection": ["price_objection_handler", "competitor_comparison_handler", "integration_objection_handler",
-                      "security_objection_handler", "timing_objection_handler", "feature_gap_handler"],
-        "progression": ["closer", "trial_optimizer", "proposal_generator", "contract_negotiator"]
+        "education": [
+            "feature_explainer",
+            "demo_scheduler",
+            "value_proposition",
+            "use_case_matcher",
+            "roi_calculator",
+        ],
+        "objection": [
+            "price_objection_handler",
+            "competitor_comparison_handler",
+            "integration_objection_handler",
+            "security_objection_handler",
+            "timing_objection_handler",
+            "feature_gap_handler",
+        ],
+        "progression": ["closer", "trial_optimizer", "proposal_generator", "contract_negotiator"],
     }
 
     # Default agent for each category (fallback)
@@ -54,7 +67,7 @@ class SalesDomainRouter(RoutingAgent):
         "qualification": "inbound_qualifier",
         "education": "feature_explainer",
         "objection": "price_objection_handler",
-        "progression": "closer"
+        "progression": "closer",
     }
 
     def __init__(self, **kwargs):
@@ -64,12 +77,10 @@ class SalesDomainRouter(RoutingAgent):
             type=AgentType.ROUTER,
             temperature=0.1,  # Consistent routing
             max_tokens=200,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE],
             system_prompt_template=self._get_system_prompt(),
             tier="essential",
-            role="sales_domain_router"
+            role="sales_domain_router",
         )
         super().__init__(config=config, **kwargs)
         self.logger = logger.bind(agent="sales_domain_router", agent_type="router")
@@ -187,8 +198,7 @@ Output ONLY valid JSON. Choose exactly ONE agent."""
             conversation_history = self.get_conversation_context(state)
 
             self.logger.debug(
-                "sales_router_conversation_context",
-                history_length=len(conversation_history)
+                "sales_router_conversation_context", history_length=len(conversation_history)
             )
 
             # Call LLM for routing
@@ -204,7 +214,7 @@ Consider any previous conversation context when making your routing decision."""
             response = await self.call_llm(
                 system_prompt=self._get_system_prompt(),
                 user_message=prompt,
-                conversation_history=conversation_history
+                conversation_history=conversation_history,
             )
 
             # Parse response
@@ -219,9 +229,7 @@ Consider any previous conversation context when making your routing decision."""
             # Validate category
             if category not in self.SALES_CATEGORIES:
                 self.logger.warning(
-                    "invalid_sales_category",
-                    category=category,
-                    defaulting_to="qualification"
+                    "invalid_sales_category", category=category, defaulting_to="qualification"
                 )
                 category = "qualification"
 
@@ -235,7 +243,7 @@ Consider any previous conversation context when making your routing decision."""
                     "invalid_sales_agent",
                     agent=agent,
                     category=category,
-                    defaulting_to=self.DEFAULT_AGENTS.get(category)
+                    defaulting_to=self.DEFAULT_AGENTS.get(category),
                 )
                 agent = self.DEFAULT_AGENTS.get(category, "inbound_qualifier")
 
@@ -254,7 +262,7 @@ Consider any previous conversation context when making your routing decision."""
             state["sales_routing_metadata"] = {
                 "latency_ms": latency_ms,
                 "timestamp": datetime.now().isoformat(),
-                "model": self.config.model
+                "model": self.config.model,
             }
 
             self.logger.info(
@@ -262,17 +270,13 @@ Consider any previous conversation context when making your routing decision."""
                 category=category,
                 next_agent=state["next_agent"],
                 confidence=confidence,
-                latency_ms=latency_ms
+                latency_ms=latency_ms,
             )
 
             return state
 
         except Exception as e:
-            self.logger.error(
-                "sales_routing_failed",
-                error=str(e),
-                error_type=type(e).__name__
-            )
+            self.logger.error("sales_routing_failed", error=str(e), error_type=type(e).__name__)
 
             # Fallback to qualification category
             state["sales_category"] = "qualification"
@@ -281,7 +285,7 @@ Consider any previous conversation context when making your routing decision."""
             state["next_agent"] = "escalation"  # Route to escalation as fallback
             return state
 
-    def _parse_response(self, response: str) -> Dict[str, Any]:
+    def _parse_response(self, response: str) -> dict[str, Any]:
         """
         Parse LLM response into routing decision.
 
@@ -297,8 +301,7 @@ Consider any previous conversation context when making your routing decision."""
             if cleaned_response.startswith("```"):
                 lines = cleaned_response.split("\n")
                 cleaned_response = "\n".join(
-                    line for line in lines
-                    if not line.strip().startswith("```")
+                    line for line in lines if not line.strip().startswith("```")
                 )
 
             # Parse JSON
@@ -306,19 +309,14 @@ Consider any previous conversation context when making your routing decision."""
 
             # Ensure it's a dict
             if not isinstance(routing, dict):
-                self.logger.warning(
-                    "sales_router_invalid_type",
-                    type=type(routing).__name__
-                )
+                self.logger.warning("sales_router_invalid_type", type=type(routing).__name__)
                 return {"category": "qualification", "confidence": 0.5}
 
             return routing
 
         except json.JSONDecodeError as e:
             self.logger.warning(
-                "sales_router_invalid_json",
-                response_preview=response[:100],
-                error=str(e)
+                "sales_router_invalid_json", response_preview=response[:100], error=str(e)
             )
             return {"category": "qualification", "confidence": 0.5}
 
@@ -340,6 +338,7 @@ def create_sales_domain_router(**kwargs) -> SalesDomainRouter:
 # Example usage (for development/testing)
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test_sales_domain_router():
@@ -355,47 +354,48 @@ if __name__ == "__main__":
             {
                 "message": "What are your pricing options for a team of 50?",
                 "context": {"plan": "free"},
-                "expected_category": "qualification"
+                "expected_category": "qualification",
             },
             {
                 "message": "Can you show me how the reporting feature works?",
                 "context": {"plan": "free"},
-                "expected_category": "education"
+                "expected_category": "education",
             },
             {
                 "message": "How does your pricing compare to Asana?",
                 "context": {"plan": "free"},
-                "expected_category": "objection"
+                "expected_category": "objection",
             },
             {
                 "message": "We're ready to move forward with the Enterprise plan",
                 "context": {"plan": "free", "team_size": 100},
-                "expected_category": "progression"
+                "expected_category": "progression",
             },
             {
                 "message": "Can I schedule a demo for next week?",
                 "context": {},
-                "expected_category": "education"
+                "expected_category": "education",
             },
         ]
 
         for i, test in enumerate(test_cases, 1):
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"TEST CASE {i}: {test['message']}")
-            print(f"{'='*60}")
+            print(f"{'=' * 60}")
 
             state = create_initial_state(
-                message=test["message"],
-                context={"customer_metadata": test.get("context", {})}
+                message=test["message"], context={"customer_metadata": test.get("context", {})}
             )
 
             result = await router.process(state)
 
-            print(f"\n✓ Routing Decision:")
+            print("\n✓ Routing Decision:")
             print(f"  Category: {result['sales_category']}")
             print(f"  Confidence: {result['sales_category_confidence']:.2%}")
             print(f"  Expected: {test['expected_category']}")
-            print(f"  Match: {'✓' if result['sales_category'] == test['expected_category'] else '✗'}")
+            print(
+                f"  Match: {'✓' if result['sales_category'] == test['expected_category'] else '✗'}"
+            )
 
     # Run tests
     asyncio.run(test_sales_domain_router())
