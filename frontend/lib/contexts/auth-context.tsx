@@ -13,22 +13,18 @@
 
 import {
   createContext,
-  useContext,
+  type ReactNode,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
-  useState,
   useRef,
-  type ReactNode,
+  useState,
 } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { toast } from "sonner";
-import {
-  authAPI,
-  type RegisterRequest,
-  type UserProfile,
-} from "../api";
+import { authAPI, type RegisterRequest, type UserProfile } from "../api";
 import { TokenManager } from "../api-client";
 
 // =============================================================================
@@ -94,23 +90,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // FETCH USER PROFILE
   // ---------------------------------------------------------------------------
 
-  const fetchUserProfile = useCallback(async (): Promise<UserProfile | null> => {
-    const token = TokenManager.getAccessToken();
-    if (!token) {
-      return null;
-    }
-
-    try {
-      const result = await authAPI.me();
-      if (result.success) {
-        return result.data;
+  const fetchUserProfile =
+    useCallback(async (): Promise<UserProfile | null> => {
+      const token = TokenManager.getAccessToken();
+      if (!token) {
+        return null;
       }
-      return null;
-    } catch (error) {
-      console.error("Failed to fetch user profile:", error);
-      return null;
-    }
-  }, []);
+
+      try {
+        const result = await authAPI.me();
+        if (result.success) {
+          return result.data;
+        }
+        return null;
+      } catch (error) {
+        console.error("Failed to fetch user profile:", error);
+        return null;
+      }
+    }, []);
 
   // ---------------------------------------------------------------------------
   // INITIALIZE AUTH STATE
@@ -159,7 +156,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (session?.accessToken) {
           TokenManager.setTokens(
             session.accessToken as string,
-            session.refreshToken as string || ""
+            (session.refreshToken as string) || ""
           );
 
           const user = await fetchUserProfile();
@@ -196,13 +193,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
           isLoading: false,
           isInitialized: true,
           isNewUser: false,
-          error: error instanceof Error ? error : new Error("Auth initialization failed"),
+          error:
+            error instanceof Error
+              ? error
+              : new Error("Auth initialization failed"),
         });
       }
     };
 
     initializeAuth();
-  }, [sessionStatus, session?.accessToken, session?.refreshToken, fetchUserProfile]);
+  }, [
+    sessionStatus,
+    session?.accessToken,
+    session?.refreshToken,
+    session?.isNewUser,
+    fetchUserProfile,
+  ]);
 
   // ---------------------------------------------------------------------------
   // LOGIN
@@ -241,7 +247,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         });
 
         if (nextAuthResult?.error) {
-          console.warn("NextAuth session creation failed:", nextAuthResult.error);
+          console.warn(
+            "NextAuth session creation failed:",
+            nextAuthResult.error
+          );
           // Continue anyway - we have backend tokens
         }
 
@@ -262,7 +271,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         return { success: true };
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred";
         toast.error(errorMessage);
         setState((prev) => ({
           ...prev,
@@ -312,7 +324,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         });
 
         if (nextAuthResult?.error) {
-          console.warn("NextAuth session creation failed:", nextAuthResult.error);
+          console.warn(
+            "NextAuth session creation failed:",
+            nextAuthResult.error
+          );
         }
 
         // Step 3: Fetch full user profile
@@ -336,7 +351,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
               full_name: result.data.full_name,
               organization: null,
               role: result.data.role as "user" | "admin" | "moderator",
-              status: result.data.status as "active" | "inactive" | "suspended" | "pending_verification",
+              status: result.data.status as
+                | "active"
+                | "inactive"
+                | "suspended"
+                | "pending_verification",
               is_active: true,
               is_verified: false,
               scopes: [],
@@ -356,7 +375,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         return { success: true };
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred";
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred";
         toast.error(errorMessage);
         setState((prev) => ({
           ...prev,
@@ -480,7 +502,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       refreshUser,
       clearNewUserFlag,
     }),
-    [state, login, register, logout, loginWithGoogle, loginWithGitHub, refreshUser, clearNewUserFlag]
+    [
+      state,
+      login,
+      register,
+      logout,
+      loginWithGoogle,
+      loginWithGitHub,
+      refreshUser,
+      clearNewUserFlag,
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
