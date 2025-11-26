@@ -35,6 +35,7 @@ export function ConversationItem({
 
   const handleDelete = async (e: React.MouseEvent): Promise<void> => {
     e.stopPropagation();
+    // eslint-disable-next-line no-alert -- Simple confirmation for delete action
     if (window.confirm("Are you sure you want to delete this conversation?")) {
       try {
         await deleteConversation(conversation.conversation_id);
