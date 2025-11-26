@@ -5,13 +5,12 @@ Analyzes pricing strategy effectiveness and recommends optimizations.
 Monitors competitive pricing and identifies pricing improvement opportunities.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("pricing_analyzer", tier="revenue", category="monetization")
@@ -36,26 +35,26 @@ class PricingAnalyzer(BaseAgent):
             "description": "Per-user pricing",
             "best_for": ["B2B SaaS", "collaboration tools"],
             "pros": ["Simple", "Scales with growth"],
-            "cons": ["Seat sharing", "Resistance to adding users"]
+            "cons": ["Seat sharing", "Resistance to adding users"],
         },
         "usage_based": {
             "description": "Pay for what you use",
             "best_for": ["APIs", "infrastructure", "consumption"],
             "pros": ["Fair pricing", "Low barrier to entry"],
-            "cons": ["Unpredictable revenue", "Billing complexity"]
+            "cons": ["Unpredictable revenue", "Billing complexity"],
         },
         "tiered": {
             "description": "Good-better-best tiers",
             "best_for": ["Diverse customer base"],
             "pros": ["Clear upgrade path", "Multiple price points"],
-            "cons": ["Choice paralysis", "Tier cannibalization"]
+            "cons": ["Choice paralysis", "Tier cannibalization"],
         },
         "value_based": {
             "description": "Price based on value delivered",
             "best_for": ["High ROI products"],
             "pros": ["Captures value", "Premium positioning"],
-            "cons": ["Hard to quantify", "Sales complexity"]
-        }
+            "cons": ["Hard to quantify", "Sales complexity"],
+        },
     }
 
     # Pricing health metrics
@@ -63,23 +62,23 @@ class PricingAnalyzer(BaseAgent):
         "win_rate": {
             "healthy_range": (0.25, 0.40),
             "warning_threshold": 0.20,
-            "critical_threshold": 0.15
+            "critical_threshold": 0.15,
         },
         "discount_rate": {
             "healthy_range": (0.05, 0.15),
             "warning_threshold": 0.20,
-            "critical_threshold": 0.30
+            "critical_threshold": 0.30,
         },
         "price_objection_rate": {
             "healthy_range": (0.10, 0.25),
             "warning_threshold": 0.35,
-            "critical_threshold": 0.50
+            "critical_threshold": 0.50,
         },
         "expansion_rate": {
             "healthy_range": (1.15, 1.30),
             "warning_threshold": 1.10,
-            "critical_threshold": 1.05
-        }
+            "critical_threshold": 1.05,
+        },
     }
 
     # Competitive positioning
@@ -87,22 +86,19 @@ class PricingAnalyzer(BaseAgent):
         "premium": {"multiplier": 1.30, "description": "30% above market"},
         "market_rate": {"multiplier": 1.00, "description": "At market rate"},
         "value": {"multiplier": 0.85, "description": "15% below market"},
-        "aggressive": {"multiplier": 0.70, "description": "30% below market"}
+        "aggressive": {"multiplier": 0.70, "description": "30% below market"},
     }
 
     def __init__(self):
         config = AgentConfig(
             name="pricing_analyzer",
             type=AgentType.SPECIALIST,
-             # Sonnet for complex analysis
+            # Sonnet for complex analysis
             temperature=0.2,  # Low for analytical accuracy
             max_tokens=700,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.KB_SEARCH
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.KB_SEARCH],
             kb_category="monetization",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -128,39 +124,29 @@ class PricingAnalyzer(BaseAgent):
         pricing_performance = self._analyze_pricing_performance(customer_metadata)
 
         # Calculate pricing health score
-        health_score = self._calculate_pricing_health(
-            pricing_performance,
-            customer_metadata
-        )
+        health_score = self._calculate_pricing_health(pricing_performance, customer_metadata)
 
         # Analyze competitive positioning
         competitive_analysis = self._analyze_competitive_position(customer_metadata)
 
         # Identify pricing issues
         pricing_issues = self._identify_pricing_issues(
-            pricing_performance,
-            health_score,
-            customer_metadata
+            pricing_performance, health_score, customer_metadata
         )
 
         # Generate pricing recommendations
         recommendations = self._generate_pricing_recommendations(
-            pricing_issues,
-            competitive_analysis,
-            customer_metadata
+            pricing_issues, competitive_analysis, customer_metadata
         )
 
         # Calculate optimization impact
         optimization_impact = self._calculate_optimization_impact(
-            recommendations,
-            customer_metadata
+            recommendations, customer_metadata
         )
 
         # Search KB for pricing resources
         kb_results = await self.search_knowledge_base(
-            "pricing strategy optimization value-based",
-            category="monetization",
-            limit=3
+            "pricing strategy optimization value-based", category="monetization", limit=3
         )
         state["kb_results"] = kb_results
 
@@ -174,7 +160,7 @@ class PricingAnalyzer(BaseAgent):
             recommendations,
             optimization_impact,
             kb_results,
-            customer_metadata
+            customer_metadata,
         )
 
         # Update state
@@ -192,12 +178,12 @@ class PricingAnalyzer(BaseAgent):
             "pricing_analyzer_completed",
             health_score=health_score["overall_score"],
             issues_count=len(pricing_issues),
-            recommendations_count=len(recommendations)
+            recommendations_count=len(recommendations),
         )
 
         return state
 
-    def _analyze_pricing_performance(self, customer_metadata: Dict) -> Dict[str, Any]:
+    def _analyze_pricing_performance(self, customer_metadata: dict) -> dict[str, Any]:
         """Analyze current pricing performance metrics"""
         win_rate = customer_metadata.get("win_rate", 0.30)
         avg_discount = customer_metadata.get("avg_discount_percentage", 0.10)
@@ -214,14 +200,12 @@ class PricingAnalyzer(BaseAgent):
             "avg_deal_size": avg_deal_size,
             "avg_sales_cycle_days": sales_cycle_days,
             "conversion_by_tier": customer_metadata.get("conversion_by_tier", {}),
-            "revenue_by_tier": customer_metadata.get("revenue_by_tier", {})
+            "revenue_by_tier": customer_metadata.get("revenue_by_tier", {}),
         }
 
     def _calculate_pricing_health(
-        self,
-        performance: Dict,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, performance: dict, customer_metadata: dict
+    ) -> dict[str, Any]:
         """Calculate overall pricing health score"""
         health_scores = {}
         total_score = 0
@@ -238,10 +222,18 @@ class PricingAnalyzer(BaseAgent):
             if healthy_min <= actual_value <= healthy_max:
                 score = 100
                 status = "healthy"
-            elif actual_value >= config["critical_threshold"] if metric_name != "expansion_rate" else actual_value <= config["critical_threshold"]:
+            elif (
+                actual_value >= config["critical_threshold"]
+                if metric_name != "expansion_rate"
+                else actual_value <= config["critical_threshold"]
+            ):
                 score = 30
                 status = "critical"
-            elif actual_value >= config["warning_threshold"] if metric_name != "expansion_rate" else actual_value <= config["warning_threshold"]:
+            elif (
+                actual_value >= config["warning_threshold"]
+                if metric_name != "expansion_rate"
+                else actual_value <= config["warning_threshold"]
+            ):
                 score = 60
                 status = "warning"
             else:
@@ -252,7 +244,7 @@ class PricingAnalyzer(BaseAgent):
                 "score": score,
                 "status": status,
                 "actual_value": actual_value,
-                "healthy_range": config["healthy_range"]
+                "healthy_range": config["healthy_range"],
             }
 
             total_score += score
@@ -263,7 +255,7 @@ class PricingAnalyzer(BaseAgent):
         return {
             "overall_score": overall_score,
             "overall_status": self._determine_health_status(overall_score),
-            "metric_scores": health_scores
+            "metric_scores": health_scores,
         }
 
     def _determine_health_status(self, score: float) -> str:
@@ -275,7 +267,7 @@ class PricingAnalyzer(BaseAgent):
         else:
             return "critical"
 
-    def _analyze_competitive_position(self, customer_metadata: Dict) -> Dict[str, Any]:
+    def _analyze_competitive_position(self, customer_metadata: dict) -> dict[str, Any]:
         """Analyze competitive pricing position"""
         our_price = customer_metadata.get("avg_deal_size", 10000)
         market_avg = customer_metadata.get("market_avg_price", 10000)
@@ -300,7 +292,7 @@ class PricingAnalyzer(BaseAgent):
             "position": position,
             "position_description": self.COMPETITIVE_POSITIONS[position]["description"],
             "competitor_comparison": competitor_prices,
-            "recommendation": self._get_position_recommendation(position, price_ratio)
+            "recommendation": self._get_position_recommendation(position, price_ratio),
         }
 
     def _get_position_recommendation(self, position: str, ratio: float) -> str:
@@ -315,126 +307,136 @@ class PricingAnalyzer(BaseAgent):
             return "Good value positioning - monitor competitive response"
 
     def _identify_pricing_issues(
-        self,
-        performance: Dict,
-        health_score: Dict,
-        customer_metadata: Dict
-    ) -> List[Dict[str, Any]]:
+        self, performance: dict, health_score: dict, customer_metadata: dict
+    ) -> list[dict[str, Any]]:
         """Identify specific pricing issues"""
         issues = []
 
         # Check win rate
         if performance["win_rate"] < 0.20:
-            issues.append({
-                "issue": "low_win_rate",
-                "severity": "critical",
-                "description": f"Win rate of {performance['win_rate']*100:.0f}% is below healthy range",
-                "impact": "Lost revenue and market share",
-                "root_cause": "Price too high or value not communicated"
-            })
+            issues.append(
+                {
+                    "issue": "low_win_rate",
+                    "severity": "critical",
+                    "description": f"Win rate of {performance['win_rate'] * 100:.0f}% is below healthy range",
+                    "impact": "Lost revenue and market share",
+                    "root_cause": "Price too high or value not communicated",
+                }
+            )
 
         # Check discount levels
         if performance["avg_discount_percentage"] > 0.20:
-            issues.append({
-                "issue": "high_discounting",
-                "severity": "warning",
-                "description": f"Average discount of {performance['avg_discount_percentage']*100:.0f}% exceeds healthy range",
-                "impact": "Revenue leakage and price erosion",
-                "root_cause": "Weak pricing power or sales desperation"
-            })
+            issues.append(
+                {
+                    "issue": "high_discounting",
+                    "severity": "warning",
+                    "description": f"Average discount of {performance['avg_discount_percentage'] * 100:.0f}% exceeds healthy range",
+                    "impact": "Revenue leakage and price erosion",
+                    "root_cause": "Weak pricing power or sales desperation",
+                }
+            )
 
         # Check price objections
         if performance["price_objection_rate"] > 0.35:
-            issues.append({
-                "issue": "high_price_objections",
-                "severity": "warning",
-                "description": f"Price objections in {performance['price_objection_rate']*100:.0f}% of deals",
-                "impact": "Longer sales cycles and lower win rates",
-                "root_cause": "Pricing misalignment with perceived value"
-            })
+            issues.append(
+                {
+                    "issue": "high_price_objections",
+                    "severity": "warning",
+                    "description": f"Price objections in {performance['price_objection_rate'] * 100:.0f}% of deals",
+                    "impact": "Longer sales cycles and lower win rates",
+                    "root_cause": "Pricing misalignment with perceived value",
+                }
+            )
 
         # Check expansion rate
         if performance["net_expansion_rate"] < 1.10:
-            issues.append({
-                "issue": "low_expansion",
-                "severity": "warning",
-                "description": f"Net expansion rate of {performance['net_expansion_rate']} below target",
-                "impact": "Limited account growth and CLV",
-                "root_cause": "Pricing doesn't encourage expansion"
-            })
+            issues.append(
+                {
+                    "issue": "low_expansion",
+                    "severity": "warning",
+                    "description": f"Net expansion rate of {performance['net_expansion_rate']} below target",
+                    "impact": "Limited account growth and CLV",
+                    "root_cause": "Pricing doesn't encourage expansion",
+                }
+            )
 
         return issues
 
     def _generate_pricing_recommendations(
-        self,
-        issues: List[Dict],
-        competitive_analysis: Dict,
-        customer_metadata: Dict
-    ) -> List[Dict[str, Any]]:
+        self, issues: list[dict], competitive_analysis: dict, customer_metadata: dict
+    ) -> list[dict[str, Any]]:
         """Generate specific pricing recommendations"""
         recommendations = []
 
         # Address each issue
         for issue in issues:
             if issue["issue"] == "low_win_rate":
-                recommendations.append({
-                    "recommendation": "Reduce entry-level pricing by 15%",
-                    "rationale": "Lower barrier to entry while maintaining premium tiers",
-                    "expected_impact": "Increase win rate from {:.0f}% to 30%".format(
-                        customer_metadata.get("win_rate", 0.20) * 100
-                    ),
-                    "implementation": "Test price decrease in one region first",
-                    "priority": "high"
-                })
+                recommendations.append(
+                    {
+                        "recommendation": "Reduce entry-level pricing by 15%",
+                        "rationale": "Lower barrier to entry while maintaining premium tiers",
+                        "expected_impact": "Increase win rate from {:.0f}% to 30%".format(
+                            customer_metadata.get("win_rate", 0.20) * 100
+                        ),
+                        "implementation": "Test price decrease in one region first",
+                        "priority": "high",
+                    }
+                )
 
             elif issue["issue"] == "high_discounting":
-                recommendations.append({
-                    "recommendation": "Implement discount approval thresholds",
-                    "rationale": "Control discounting and improve pricing discipline",
-                    "expected_impact": "Reduce average discount from {:.0f}% to 10%".format(
-                        customer_metadata.get("avg_discount_percentage", 0.25) * 100
-                    ),
-                    "implementation": "Require VP approval for >15% discounts",
-                    "priority": "high"
-                })
+                recommendations.append(
+                    {
+                        "recommendation": "Implement discount approval thresholds",
+                        "rationale": "Control discounting and improve pricing discipline",
+                        "expected_impact": "Reduce average discount from {:.0f}% to 10%".format(
+                            customer_metadata.get("avg_discount_percentage", 0.25) * 100
+                        ),
+                        "implementation": "Require VP approval for >15% discounts",
+                        "priority": "high",
+                    }
+                )
 
             elif issue["issue"] == "high_price_objections":
-                recommendations.append({
-                    "recommendation": "Improve value communication and ROI tools",
-                    "rationale": "Better articulate value to justify pricing",
-                    "expected_impact": "Reduce price objections by 40%",
-                    "implementation": "Create ROI calculator and case studies",
-                    "priority": "medium"
-                })
+                recommendations.append(
+                    {
+                        "recommendation": "Improve value communication and ROI tools",
+                        "rationale": "Better articulate value to justify pricing",
+                        "expected_impact": "Reduce price objections by 40%",
+                        "implementation": "Create ROI calculator and case studies",
+                        "priority": "medium",
+                    }
+                )
 
             elif issue["issue"] == "low_expansion":
-                recommendations.append({
-                    "recommendation": "Introduce usage-based pricing tier",
-                    "rationale": "Align pricing with value to encourage expansion",
-                    "expected_impact": "Increase NRR from {:.0f}% to 120%".format(
-                        customer_metadata.get("net_expansion_rate", 1.10) * 100
-                    ),
-                    "implementation": "Launch consumption-based add-ons",
-                    "priority": "medium"
-                })
+                recommendations.append(
+                    {
+                        "recommendation": "Introduce usage-based pricing tier",
+                        "rationale": "Align pricing with value to encourage expansion",
+                        "expected_impact": "Increase NRR from {:.0f}% to 120%".format(
+                            customer_metadata.get("net_expansion_rate", 1.10) * 100
+                        ),
+                        "implementation": "Launch consumption-based add-ons",
+                        "priority": "medium",
+                    }
+                )
 
         # General optimization recommendations
         if competitive_analysis["position"] == "aggressive":
-            recommendations.append({
-                "recommendation": "Increase prices by 15-20%",
-                "rationale": f"Currently priced {competitive_analysis['price_ratio']:.0%} of market - room to capture more value",
-                "expected_impact": "Increase revenue 15%+ with minimal churn",
-                "implementation": "Grandfather existing customers, new pricing for new customers",
-                "priority": "high"
-            })
+            recommendations.append(
+                {
+                    "recommendation": "Increase prices by 15-20%",
+                    "rationale": f"Currently priced {competitive_analysis['price_ratio']:.0%} of market - room to capture more value",
+                    "expected_impact": "Increase revenue 15%+ with minimal churn",
+                    "implementation": "Grandfather existing customers, new pricing for new customers",
+                    "priority": "high",
+                }
+            )
 
         return recommendations
 
     def _calculate_optimization_impact(
-        self,
-        recommendations: List[Dict],
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, recommendations: list[dict], customer_metadata: dict
+    ) -> dict[str, Any]:
         """Calculate financial impact of pricing optimizations"""
         current_arr = customer_metadata.get("total_arr", 100000)
         current_win_rate = customer_metadata.get("win_rate", 0.25)
@@ -463,44 +465,46 @@ class PricingAnalyzer(BaseAgent):
             "current_arr": current_arr,
             "projected_arr": round(projected_arr, 2),
             "revenue_impact": round(revenue_impact, 2),
-            "revenue_impact_percentage": round((revenue_impact / current_arr * 100) if current_arr > 0 else 0, 2),
+            "revenue_impact_percentage": round(
+                (revenue_impact / current_arr * 100) if current_arr > 0 else 0, 2
+            ),
             "current_win_rate": current_win_rate,
             "projected_win_rate": round(projected_win_rate, 2),
             "implementation_timeline": "3-6 months",
-            "confidence": "medium-high"
+            "confidence": "medium-high",
         }
 
     async def _generate_pricing_response(
         self,
         message: str,
-        performance: Dict,
-        health_score: Dict,
-        competitive_analysis: Dict,
-        issues: List[Dict],
-        recommendations: List[Dict],
-        impact: Dict,
-        kb_results: List[Dict],
-        customer_metadata: Dict
+        performance: dict,
+        health_score: dict,
+        competitive_analysis: dict,
+        issues: list[dict],
+        recommendations: list[dict],
+        impact: dict,
+        kb_results: list[dict],
+        customer_metadata: dict,
     ) -> str:
         """Generate pricing analysis response"""
 
         # Build health context
         health_context = f"""
-Pricing Health Score: {health_score['overall_score']}/100 ({health_score['overall_status']})
+Pricing Health Score: {health_score["overall_score"]}/100 ({health_score["overall_status"]})
 
 Key Metrics:
-- Win Rate: {performance['win_rate']*100:.0f}%
-- Avg Discount: {performance['avg_discount_percentage']*100:.0f}%
-- Price Objection Rate: {performance['price_objection_rate']*100:.0f}%
-- Net Expansion Rate: {performance['net_expansion_rate']*100:.0f}%
+- Win Rate: {performance["win_rate"] * 100:.0f}%
+- Avg Discount: {performance["avg_discount_percentage"] * 100:.0f}%
+- Price Objection Rate: {performance["price_objection_rate"] * 100:.0f}%
+- Net Expansion Rate: {performance["net_expansion_rate"] * 100:.0f}%
 """
 
         # Build competitive context
         competitive_context = f"""
 Competitive Position:
-- Our Price: ${competitive_analysis['our_price']:,.0f}
-- Market Avg: ${competitive_analysis['market_avg_price']:,.0f}
-- Position: {competitive_analysis['position']} ({competitive_analysis['position_description']})
+- Our Price: ${competitive_analysis["our_price"]:,.0f}
+- Market Avg: ${competitive_analysis["market_avg_price"]:,.0f}
+- Position: {competitive_analysis["position"]} ({competitive_analysis["position_description"]})
 """
 
         # Build issues context
@@ -550,9 +554,9 @@ Tone: Analytical, strategic, data-driven"""
 {recs_context}
 
 Optimization Impact:
-- Revenue Impact: ${impact['revenue_impact']:,.0f} ({impact['revenue_impact_percentage']:.0f}%)
-- Projected ARR: ${impact['projected_arr']:,.0f}
-- Win Rate: {impact['current_win_rate']*100:.0f}% ??? {impact['projected_win_rate']*100:.0f}%
+- Revenue Impact: ${impact["revenue_impact"]:,.0f} ({impact["revenue_impact_percentage"]:.0f}%)
+- Projected ARR: ${impact["projected_arr"]:,.0f}
+- Win Rate: {impact["current_win_rate"] * 100:.0f}% ??? {impact["projected_win_rate"] * 100:.0f}%
 
 {kb_context}
 
@@ -561,6 +565,6 @@ Generate a comprehensive pricing analysis."""
         response = await self.call_llm(
             system_prompt=system_prompt,
             user_message=user_prompt,
-            conversation_history=[]  # Pricing analysis uses metrics data
+            conversation_history=[],  # Pricing analysis uses metrics data
         )
         return response
