@@ -374,7 +374,11 @@ Your response should:
 
 Generate a compelling response that matches their needs to our solutions."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # Use case matching uses prospect context
+        )
         return response
 
 
