@@ -5,13 +5,12 @@ Sells professional services for custom development, integrations, and migrations
 Converts complex implementation needs into professional services engagements.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("prof_services_seller", tier="revenue", category="monetization")
@@ -41,9 +40,9 @@ class ProfServicesSeller(BaseAgent):
                 "Custom integration code",
                 "API documentation",
                 "Testing and validation",
-                "Deployment support"
+                "Deployment support",
             ],
-            "ideal_for": ["custom_integrations", "complex_workflows"]
+            "ideal_for": ["custom_integrations", "complex_workflows"],
         },
         "data_migration": {
             "name": "Data Migration Services",
@@ -55,9 +54,9 @@ class ProfServicesSeller(BaseAgent):
                 "Data mapping and transformation",
                 "Migration scripts",
                 "Data validation",
-                "Rollback procedures"
+                "Rollback procedures",
             ],
-            "ideal_for": ["platform_migration", "consolidation"]
+            "ideal_for": ["platform_migration", "consolidation"],
         },
         "custom_development": {
             "name": "Custom Feature Development",
@@ -69,9 +68,9 @@ class ProfServicesSeller(BaseAgent):
                 "Custom feature development",
                 "Testing and QA",
                 "Documentation",
-                "Ongoing support"
+                "Ongoing support",
             ],
-            "ideal_for": ["unique_requirements", "competitive_advantage"]
+            "ideal_for": ["unique_requirements", "competitive_advantage"],
         },
         "implementation_consulting": {
             "name": "Implementation Consulting",
@@ -83,9 +82,9 @@ class ProfServicesSeller(BaseAgent):
                 "Best practices guidance",
                 "Implementation roadmap",
                 "Hands-on configuration",
-                "Knowledge transfer"
+                "Knowledge transfer",
             ],
-            "ideal_for": ["enterprise_rollout", "complex_setup"]
+            "ideal_for": ["enterprise_rollout", "complex_setup"],
         },
         "optimization_audit": {
             "name": "Platform Optimization Audit",
@@ -97,10 +96,10 @@ class ProfServicesSeller(BaseAgent):
                 "Optimization recommendations",
                 "Performance tuning",
                 "Workflow improvements",
-                "ROI analysis"
+                "ROI analysis",
             ],
-            "ideal_for": ["performance_issues", "scaling_challenges"]
-        }
+            "ideal_for": ["performance_issues", "scaling_challenges"],
+        },
     }
 
     # Qualification signals for PS needs
@@ -109,32 +108,32 @@ class ProfServicesSeller(BaseAgent):
             "metric": "integration_requests",
             "threshold": 2,
             "weight": 0.30,
-            "service": "integration_development"
+            "service": "integration_development",
         },
         "migration_mentioned": {
             "metric": "migration_mentions",
             "threshold": 1,
             "weight": 0.25,
-            "service": "data_migration"
+            "service": "data_migration",
         },
         "custom_feature_requests": {
             "metric": "feature_requests_custom",
             "threshold": 3,
             "weight": 0.20,
-            "service": "custom_development"
+            "service": "custom_development",
         },
         "complex_implementation": {
             "metric": "team_size",
             "threshold": 50,
             "weight": 0.15,
-            "service": "implementation_consulting"
+            "service": "implementation_consulting",
         },
         "performance_issues": {
             "metric": "performance_complaints",
             "threshold": 2,
             "weight": 0.10,
-            "service": "optimization_audit"
-        }
+            "service": "optimization_audit",
+        },
     }
 
     # Project scoping factors
@@ -144,22 +143,19 @@ class ProfServicesSeller(BaseAgent):
         "complexity_high": 2.0,
         "urgency_standard": 1.0,
         "urgency_rush": 1.3,
-        "scope_creep_buffer": 0.20  # 20% buffer for unknowns
+        "scope_creep_buffer": 0.20,  # 20% buffer for unknowns
     }
 
     def __init__(self):
         config = AgentConfig(
             name="prof_services_seller",
             type=AgentType.SPECIALIST,
-             # Sonnet for complex scoping
+            # Sonnet for complex scoping
             temperature=0.3,
             max_tokens=700,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.KB_SEARCH
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.KB_SEARCH],
             kb_category="monetization",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -185,39 +181,25 @@ class ProfServicesSeller(BaseAgent):
         qualification = self._qualify_for_services(customer_metadata)
 
         # Recommend service offerings
-        recommended_services = self._recommend_services(
-            qualification,
-            customer_metadata
-        )
+        recommended_services = self._recommend_services(qualification, customer_metadata)
 
         # Scope and estimate projects
-        project_estimates = self._scope_projects(
-            recommended_services,
-            customer_metadata
-        )
+        project_estimates = self._scope_projects(recommended_services, customer_metadata)
 
         # Calculate value and ROI
-        value_analysis = self._calculate_services_value(
-            project_estimates,
-            customer_metadata
-        )
+        value_analysis = self._calculate_services_value(project_estimates, customer_metadata)
 
         # Build engagement proposal
         proposal = self._build_proposal(
-            recommended_services,
-            project_estimates,
-            value_analysis,
-            customer_metadata
+            recommended_services, project_estimates, value_analysis, customer_metadata
         )
 
         # Generate risk mitigation plan
-        risk_mitigation = self._generate_risk_mitigation()
+        self._generate_risk_mitigation()
 
         # Search KB for PS resources
         kb_results = await self.search_knowledge_base(
-            "professional services custom integration migration",
-            category="monetization",
-            limit=2
+            "professional services custom integration migration", category="monetization", limit=2
         )
         state["kb_results"] = kb_results
 
@@ -230,7 +212,7 @@ class ProfServicesSeller(BaseAgent):
             value_analysis,
             proposal,
             kb_results,
-            customer_metadata
+            customer_metadata,
         )
 
         # Update state
@@ -247,18 +229,18 @@ class ProfServicesSeller(BaseAgent):
             "prof_services_seller_completed",
             qualified=qualification["is_qualified"],
             services_count=len(recommended_services),
-            total_estimate=sum(e["total_cost"] for e in project_estimates)
+            total_estimate=sum(e["total_cost"] for e in project_estimates),
         )
 
         return state
 
-    def _qualify_for_services(self, customer_metadata: Dict) -> Dict[str, Any]:
+    def _qualify_for_services(self, customer_metadata: dict) -> dict[str, Any]:
         """Qualify customer for professional services"""
         qualification = {
             "is_qualified": False,
             "qualification_score": 0.0,
             "signals_met": [],
-            "recommended_service_types": []
+            "recommended_service_types": [],
         }
 
         total_weight = 0
@@ -274,26 +256,19 @@ class ProfServicesSeller(BaseAgent):
 
             if actual_value >= threshold:
                 weighted_score += weight
-                qualification["signals_met"].append({
-                    "signal": signal_name,
-                    "metric": metric,
-                    "value": actual_value
-                })
+                qualification["signals_met"].append(
+                    {"signal": signal_name, "metric": metric, "value": actual_value}
+                )
                 qualification["recommended_service_types"].append(config["service"])
 
         qualification["qualification_score"] = round(
-            (weighted_score / total_weight) * 100 if total_weight > 0 else 0,
-            2
+            (weighted_score / total_weight) * 100 if total_weight > 0 else 0, 2
         )
         qualification["is_qualified"] = qualification["qualification_score"] >= 30
 
         return qualification
 
-    def _recommend_services(
-        self,
-        qualification: Dict,
-        customer_metadata: Dict
-    ) -> List[str]:
+    def _recommend_services(self, qualification: dict, customer_metadata: dict) -> list[str]:
         """Recommend specific professional services"""
         services = set(qualification["recommended_service_types"])
 
@@ -307,11 +282,7 @@ class ProfServicesSeller(BaseAgent):
 
         return list(services)
 
-    def _scope_projects(
-        self,
-        services: List[str],
-        customer_metadata: Dict
-    ) -> List[Dict[str, Any]]:
+    def _scope_projects(self, services: list[str], customer_metadata: dict) -> list[dict[str, Any]]:
         """Scope and estimate each recommended service"""
         estimates = []
 
@@ -323,10 +294,7 @@ class ProfServicesSeller(BaseAgent):
 
             # Determine complexity
             complexity = self._assess_complexity(service_id, customer_metadata)
-            complexity_multiplier = self.SCOPING_FACTORS.get(
-                f"complexity_{complexity}",
-                1.0
-            )
+            complexity_multiplier = self.SCOPING_FACTORS.get(f"complexity_{complexity}", 1.0)
 
             # Calculate hours
             base_hours = service_info["typical_hours"]
@@ -340,20 +308,22 @@ class ProfServicesSeller(BaseAgent):
             # Timeline estimate
             weeks = round(buffered_hours / 40, 1)  # Assume 40-hour weeks
 
-            estimates.append({
-                "service_id": service_id,
-                "service_name": service_info["name"],
-                "complexity": complexity,
-                "estimated_hours": round(buffered_hours, 0),
-                "hourly_rate": hourly_rate,
-                "total_cost": round(total_cost, 2),
-                "timeline_weeks": weeks,
-                "deliverables": service_info["deliverables"]
-            })
+            estimates.append(
+                {
+                    "service_id": service_id,
+                    "service_name": service_info["name"],
+                    "complexity": complexity,
+                    "estimated_hours": round(buffered_hours, 0),
+                    "hourly_rate": hourly_rate,
+                    "total_cost": round(total_cost, 2),
+                    "timeline_weeks": weeks,
+                    "deliverables": service_info["deliverables"],
+                }
+            )
 
         return estimates
 
-    def _assess_complexity(self, service_id: str, customer_metadata: Dict) -> str:
+    def _assess_complexity(self, service_id: str, customer_metadata: dict) -> str:
         """Assess project complexity"""
         # Simplified complexity assessment
         team_size = customer_metadata.get("team_size", 0)
@@ -387,10 +357,8 @@ class ProfServicesSeller(BaseAgent):
         return "medium"  # Default
 
     def _calculate_services_value(
-        self,
-        estimates: List[Dict],
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, estimates: list[dict], customer_metadata: dict
+    ) -> dict[str, Any]:
         """Calculate value delivered by professional services"""
         total_cost = sum(e["total_cost"] for e in estimates)
         total_hours = sum(e["estimated_hours"] for e in estimates)
@@ -402,10 +370,7 @@ class ProfServicesSeller(BaseAgent):
         ongoing_efficiency = 10000  # Annual efficiency gains
 
         total_value = (
-            internal_dev_cost +
-            time_to_market_value +
-            risk_reduction_value +
-            ongoing_efficiency
+            internal_dev_cost + time_to_market_value + risk_reduction_value + ongoing_efficiency
         )
 
         roi_percentage = ((total_value - total_cost) / total_cost) * 100 if total_cost > 0 else 0
@@ -419,30 +384,32 @@ class ProfServicesSeller(BaseAgent):
             "ongoing_efficiency_value": ongoing_efficiency,
             "total_value": round(total_value, 2),
             "roi_percentage": round(roi_percentage, 2),
-            "cost_savings": round(total_value - total_cost, 2)
+            "cost_savings": round(total_value - total_cost, 2),
         }
 
     def _build_proposal(
         self,
-        services: List[str],
-        estimates: List[Dict],
-        value_analysis: Dict,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        services: list[str],
+        estimates: list[dict],
+        value_analysis: dict,
+        customer_metadata: dict,
+    ) -> dict[str, Any]:
         """Build professional services proposal"""
         return {
             "customer": customer_metadata.get("company", "Customer"),
             "services_count": len(estimates),
             "total_investment": value_analysis["total_cost"],
             "total_hours": value_analysis["total_hours"],
-            "estimated_timeline_weeks": max([e["timeline_weeks"] for e in estimates]) if estimates else 0,
+            "estimated_timeline_weeks": max([e["timeline_weeks"] for e in estimates])
+            if estimates
+            else 0,
             "roi": value_analysis["roi_percentage"],
             "projects": estimates,
             "payment_terms": "50% upfront, 50% on completion",
-            "guarantee": "100% satisfaction guarantee"
+            "guarantee": "100% satisfaction guarantee",
         }
 
-    def _generate_risk_mitigation(self) -> List[str]:
+    def _generate_risk_mitigation(self) -> list[str]:
         """Generate risk mitigation strategies"""
         return [
             "Fixed-price proposals with no surprises",
@@ -450,29 +417,29 @@ class ProfServicesSeller(BaseAgent):
             "Weekly progress updates and demos",
             "Escrow milestone payments",
             "90-day warranty on all deliverables",
-            "Knowledge transfer and documentation included"
+            "Knowledge transfer and documentation included",
         ]
 
     async def _generate_services_response(
         self,
         message: str,
-        qualification: Dict,
-        services: List[str],
-        estimates: List[Dict],
-        value_analysis: Dict,
-        proposal: Dict,
-        kb_results: List[Dict],
-        customer_metadata: Dict
+        qualification: dict,
+        services: list[str],
+        estimates: list[dict],
+        value_analysis: dict,
+        proposal: dict,
+        kb_results: list[dict],
+        customer_metadata: dict,
     ) -> str:
         """Generate professional services sales response"""
 
         # Build qualification context
         qual_context = f"""
-PS Qualification Score: {qualification['qualification_score']}/100
+PS Qualification Score: {qualification["qualification_score"]}/100
 Services Recommended: {len(services)}
-Total Investment: ${value_analysis['total_cost']:,.0f}
-Total Value: ${value_analysis['total_value']:,.0f}
-ROI: {value_analysis['roi_percentage']:.0f}%
+Total Investment: ${value_analysis["total_cost"]:,.0f}
+Total Value: ${value_analysis["total_value"]:,.0f}
+ROI: {value_analysis["roi_percentage"]:.0f}%
 """
 
         # Build project estimates context
@@ -491,7 +458,7 @@ ROI: {value_analysis['roi_percentage']:.0f}%
 
         system_prompt = f"""You are a Professional Services Seller helping customers with complex implementations.
 
-Customer: {customer_metadata.get('company', 'Customer')}
+Customer: {customer_metadata.get("company", "Customer")}
 {qual_context}
 {projects_context}
 
@@ -512,9 +479,9 @@ Tone: Expert, trustworthy, results-oriented"""
         user_prompt = f"""Customer message: {message}
 
 Value Proposition:
-- Professional implementation vs {value_analysis['total_hours']:.0f}+ hours of internal development
-- ${value_analysis['cost_savings']:,.0f} in total value vs cost
-- {max([e['timeline_weeks'] for e in estimates], default=0):.0f} week delivery timeline
+- Professional implementation vs {value_analysis["total_hours"]:.0f}+ hours of internal development
+- ${value_analysis["cost_savings"]:,.0f} in total value vs cost
+- {max([e["timeline_weeks"] for e in estimates], default=0):.0f} week delivery timeline
 - Zero implementation risk with expert delivery
 
 {kb_context}
@@ -524,6 +491,6 @@ Generate a compelling professional services proposal."""
         response = await self.call_llm(
             system_prompt=system_prompt,
             user_message=user_prompt,
-            conversation_history=[]  # PS proposal context built from requirements
+            conversation_history=[],  # PS proposal context built from requirements
         )
         return response
