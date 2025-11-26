@@ -5,14 +5,12 @@ Executes multi-step workflows with branching logic, conditional steps,
 and error handling. Orchestrates complex automation sequences.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, UTC
-import json
+from datetime import UTC, datetime
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("workflow_executor", tier="operational", category="automation")
@@ -39,7 +37,7 @@ class WorkflowExecutorAgent(BaseAgent):
         "parallel": "Execute steps in parallel",
         "wait": "Wait for duration or event",
         "approval": "Wait for approval",
-        "webhook": "Call external webhook"
+        "webhook": "Call external webhook",
     }
 
     def __init__(self):
@@ -49,7 +47,7 @@ class WorkflowExecutorAgent(BaseAgent):
             temperature=0.1,
             max_tokens=1000,
             capabilities=[AgentCapability.DATABASE_WRITE],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -74,27 +72,31 @@ class WorkflowExecutorAgent(BaseAgent):
         # Generate response
         response = f"""**Workflow Executed**
 
-Workflow: {workflow['name']}
-Total Steps: {len(workflow['steps'])}
-Completed: {execution_result['completed_steps']}
-Status: {execution_result['status'].title()}
-Duration: {execution_result['duration_seconds']}s
+Workflow: {workflow["name"]}
+Total Steps: {len(workflow["steps"])}
+Completed: {execution_result["completed_steps"]}
+Status: {execution_result["status"].title()}
+Duration: {execution_result["duration_seconds"]}s
 
 **Execution Summary:**
 """
-        for step_result in execution_result['step_results']:
-            status_icon = "✓" if step_result['status'] == 'success' else "✗"
-            response += f"{status_icon} {step_result['step_name']} ({step_result['duration_ms']}ms)\n"
+        for step_result in execution_result["step_results"]:
+            status_icon = "✓" if step_result["status"] == "success" else "✗"
+            response += (
+                f"{status_icon} {step_result['step_name']} ({step_result['duration_ms']}ms)\n"
+            )
 
         state["agent_response"] = response
         state["workflow_result"] = execution_result
         state["response_confidence"] = 0.94
         state["status"] = "resolved"
 
-        self.logger.info("workflow_executed", workflow_id=workflow_id, status=execution_result['status'])
+        self.logger.info(
+            "workflow_executed", workflow_id=workflow_id, status=execution_result["status"]
+        )
         return state
 
-    def _load_workflow(self, workflow_id: str) -> Dict:
+    def _load_workflow(self, workflow_id: str) -> dict:
         """Load workflow definition."""
         return {
             "id": workflow_id,
@@ -103,11 +105,11 @@ Duration: {execution_result['duration_seconds']}s
                 {"id": "step1", "type": "action", "action": "send_welcome_email"},
                 {"id": "step2", "type": "action", "action": "create_account"},
                 {"id": "step3", "type": "condition", "condition": "is_enterprise"},
-                {"id": "step4", "type": "action", "action": "assign_csm"}
-            ]
+                {"id": "step4", "type": "action", "action": "assign_csm"},
+            ],
         }
 
-    def _initialize_workflow_state(self, workflow: Dict) -> Dict:
+    def _initialize_workflow_state(self, workflow: dict) -> dict:
         """Initialize workflow execution state."""
         return {
             "workflow_id": workflow["id"],
@@ -115,10 +117,10 @@ Duration: {execution_result['duration_seconds']}s
             "started_at": datetime.now(UTC).isoformat(),
             "current_step": 0,
             "step_results": [],
-            "variables": {}
+            "variables": {},
         }
 
-    async def _execute_workflow(self, workflow: Dict, workflow_state: Dict) -> Dict:
+    async def _execute_workflow(self, workflow: dict, workflow_state: dict) -> dict:
         """Execute workflow steps."""
         start_time = datetime.now(UTC)
         step_results = []
@@ -128,11 +130,13 @@ Duration: {execution_result['duration_seconds']}s
             result = await self._execute_step(step, workflow_state)
             step_end = datetime.now(UTC)
 
-            step_results.append({
-                "step_name": step.get("action", step["type"]),
-                "status": result["status"],
-                "duration_ms": int((step_end - step_start).total_seconds() * 1000)
-            })
+            step_results.append(
+                {
+                    "step_name": step.get("action", step["type"]),
+                    "status": result["status"],
+                    "duration_ms": int((step_end - step_start).total_seconds() * 1000),
+                }
+            )
 
             if result["status"] != "success":
                 break
@@ -144,10 +148,10 @@ Duration: {execution_result['duration_seconds']}s
             "completed_steps": len(step_results),
             "step_results": step_results,
             "duration_seconds": (end_time - start_time).total_seconds(),
-            "completed_at": end_time.isoformat()
+            "completed_at": end_time.isoformat(),
         }
 
-    async def _execute_step(self, step: Dict, workflow_state: Dict) -> Dict:
+    async def _execute_step(self, step: dict, workflow_state: dict) -> dict:
         """Execute a single workflow step."""
         # Mock step execution
         return {"status": "success", "output": {}}
