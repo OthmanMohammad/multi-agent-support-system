@@ -5,13 +5,12 @@ This agent specializes in team operations including inviting members, removing u
 changing roles, and managing team permissions and invitations.
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("team_manager", tier="essential", category="account")
@@ -35,7 +34,7 @@ class TeamManager(BaseAgent):
             "can_invite": True,
             "can_remove": True,
             "can_change_billing": True,
-            "description": "Full control, cannot be removed, only 1 per account"
+            "description": "Full control, cannot be removed, only 1 per account",
         },
         "admin": {
             "level": 3,
@@ -43,7 +42,7 @@ class TeamManager(BaseAgent):
             "can_invite": True,
             "can_remove": True,
             "can_change_billing": False,
-            "description": "Full control except billing and SSO"
+            "description": "Full control except billing and SSO",
         },
         "member": {
             "level": 2,
@@ -51,7 +50,7 @@ class TeamManager(BaseAgent):
             "can_invite": False,
             "can_remove": False,
             "can_change_billing": False,
-            "description": "Can create and edit content, no team management"
+            "description": "Can create and edit content, no team management",
         },
         "viewer": {
             "level": 1,
@@ -59,17 +58,12 @@ class TeamManager(BaseAgent):
             "can_invite": False,
             "can_remove": False,
             "can_change_billing": False,
-            "description": "Read-only access, can comment"
-        }
+            "description": "Read-only access, can comment",
+        },
     }
 
     # Plan limits for team size
-    PLAN_LIMITS = {
-        "free": 3,
-        "basic": 10,
-        "premium": 50,
-        "enterprise": float('inf')
-    }
+    PLAN_LIMITS = {"free": 3, "basic": 10, "premium": 50, "enterprise": float("inf")}
 
     # Team action keywords
     TEAM_KEYWORDS = {
@@ -77,7 +71,7 @@ class TeamManager(BaseAgent):
         "remove": ["remove", "delete", "kick", "remove user", "offboard"],
         "change_role": ["role", "permission", "promote", "demote", "change role", "upgrade"],
         "list": ["list", "show", "view team", "team members", "who is on"],
-        "resend_invite": ["resend", "send again", "invitation", "invite again"]
+        "resend_invite": ["resend", "send again", "invitation", "invite again"],
     }
 
     def __init__(self):
@@ -85,12 +79,9 @@ class TeamManager(BaseAgent):
             name="team_manager",
             type=AgentType.SPECIALIST,
             temperature=0.3,
-            capabilities=[
-                AgentCapability.KB_SEARCH,
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="account",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -113,9 +104,7 @@ class TeamManager(BaseAgent):
         customer_context = state.get("customer_metadata", {})
 
         self.logger.debug(
-            "team_processing_details",
-            message_preview=message[:100],
-            turn_count=state["turn_count"]
+            "team_processing_details", message_preview=message[:100], turn_count=state["turn_count"]
         )
 
         # Detect team action
@@ -123,19 +112,11 @@ class TeamManager(BaseAgent):
         self.logger.info("team_action_detected", action=team_action)
 
         # Search KB
-        kb_results = await self.search_knowledge_base(
-            message,
-            category="account",
-            limit=2
-        )
+        kb_results = await self.search_knowledge_base(message, category="account", limit=2)
         state["kb_results"] = kb_results
 
         # Generate response
-        response = self._generate_team_response(
-            team_action,
-            customer_context,
-            kb_results
-        )
+        response = self._generate_team_response(team_action, customer_context, kb_results)
 
         state["agent_response"] = response
         state["team_action"] = team_action
@@ -158,10 +139,7 @@ class TeamManager(BaseAgent):
         return "general"
 
     def _generate_team_response(
-        self,
-        action: str,
-        customer_context: Dict[str, Any],
-        kb_results: list
+        self, action: str, customer_context: dict[str, Any], kb_results: list
     ) -> str:
         """Generate team management response."""
         user_role = customer_context.get("role", "member")
@@ -209,7 +187,7 @@ Only **admins** and **owners** can invite team members.
         limit = self.PLAN_LIMITS.get(plan, 3)
         remaining = limit - team_size
 
-        if remaining <= 0 and limit != float('inf'):
+        if remaining <= 0 and limit != float("inf"):
             return f"""**⚠️ Team Member Limit Reached**
 
 Your {plan.title()} plan allows **{limit} members**.
@@ -261,9 +239,9 @@ Settings > Billing > Upgrade Plan"""
 - Can comment only
 
 **Your Plan:** {plan.title()}
-- **Limit:** {limit if limit != float('inf') else 'Unlimited'} members
+- **Limit:** {limit if limit != float("inf") else "Unlimited"} members
 - **Current:** {team_size} members
-- **Available:** {remaining if limit != float('inf') else 'Unlimited'} seats
+- **Available:** {remaining if limit != float("inf") else "Unlimited"} seats
 
 **Invitation Process:**
 1. User receives email
@@ -367,7 +345,7 @@ Only **owners** and **admins** can change member roles."""
 - ✅ You can change
 
 **Your Permissions ({user_role.title()}):**
-- {'✅ Can change any role' if user_role == 'owner' else '✅ Can change Member and Viewer roles only'}
+- {"✅ Can change any role" if user_role == "owner" else "✅ Can change Member and Viewer roles only"}
 
 **Common Role Changes:**
 - Member → Admin: Promote for team management
@@ -534,6 +512,7 @@ Settings > Team > Pending Invitations > Resend"""
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -546,7 +525,7 @@ if __name__ == "__main__":
         # Test 1: Invite member
         state1 = create_initial_state(
             "How do I invite a team member?",
-            context={"customer_metadata": {"plan": "premium", "role": "admin", "team_size": 5}}
+            context={"customer_metadata": {"plan": "premium", "role": "admin", "team_size": 5}},
         )
         result1 = await agent.process(state1)
         print(f"\nTest 1 - Action: {result1.get('team_action')}")
@@ -555,7 +534,7 @@ if __name__ == "__main__":
         # Test 2: Permission denied
         state2 = create_initial_state(
             "I want to remove someone",
-            context={"customer_metadata": {"plan": "basic", "role": "member", "team_size": 3}}
+            context={"customer_metadata": {"plan": "basic", "role": "member", "team_size": 3}},
         )
         result2 = await agent.process(state2)
         print(f"\nTest 2 - Action: {result2.get('team_action')}")
