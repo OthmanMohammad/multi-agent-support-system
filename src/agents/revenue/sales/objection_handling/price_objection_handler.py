@@ -190,7 +190,8 @@ class PriceObjectionHandler(BaseAgent):
             payment_options,
             competitor_comparisons,
             kb_results,
-            customer_metadata
+            customer_metadata,
+            state
         )
 
         # Calculate resolution confidence
@@ -369,9 +370,12 @@ class PriceObjectionHandler(BaseAgent):
         payment_options: List[str],
         competitor_comparisons: Dict,
         kb_results: List[Dict],
-        customer_metadata: Dict
+        customer_metadata: Dict,
+        state: AgentState
     ) -> str:
         """Generate personalized response to price objection"""
+        # Extract conversation history for context continuity
+        conversation_history = self.get_conversation_context(state)
 
         # Build KB context
         kb_context = ""
@@ -436,7 +440,11 @@ Supporting Materials: {', '.join(strategy['supporting_materials'])}"""
 
 Generate a empathetic, value-focused response that addresses their pricing concern."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt,
+            user_prompt,
+            conversation_history=conversation_history
+        )
         return response
 
 
