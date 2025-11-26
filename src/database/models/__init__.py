@@ -1,203 +1,200 @@
 """
 Database models package
 """
+
 # Base classes
-from src.database.models.base import Base, BaseModel, TimestampMixin, AuditMixin
-
-# Authentication & authorization
-from src.database.models.user import User, UserRole, UserStatus, OAuthProvider
-from src.database.models.api_key import APIKey
-
-# Core models
-from src.database.models.customer import Customer
-from src.database.models.conversation import Conversation
-from src.database.models.message import Message
-from src.database.models.agent_performance import AgentPerformance
-
-# Customer health & segmentation
-from src.database.models.customer_health import (
-    CustomerHealthEvent,
-    CustomerSegment,
-    CustomerNote,
-    CustomerContact,
-    CustomerIntegration,
-)
-
 # Agent collaboration
 from src.database.models.agent_handoff import (
-    AgentHandoff,
     AgentCollaboration,
+    AgentHandoff,
     ConversationTag,
 )
-
-# Subscription & billing
-from src.database.models.subscription import (
-    Subscription,
-    Invoice,
-    Payment,
-    UsageEvent,
-    Credit,
-)
-
-# Sales & leads
-from src.database.models.sales import (
-    Employee,
-    Lead,
-    Deal,
-    SalesActivity,
-    Quote,
-)
+from src.database.models.agent_performance import AgentPerformance
 
 # Analytics
 from src.database.models.analytics import (
+    ABTest,
     ConversationAnalytics,
     FeatureUsage,
-    ABTest,
 )
-
-# Workflow automation
-from src.database.models.workflow import (
-    Workflow,
-    WorkflowExecution,
-    ScheduledTask,
-)
+from src.database.models.api_key import APIKey
 
 # Security & compliance
 from src.database.models.audit_log import AuditLog
-
-# Knowledge Base
-from src.database.models.kb_article import (
-    KBArticle,
-    KBUsage,
-    KBQualityReport,
-)
-
-# Tier 3: Operational Excellence models
-from src.database.models.operational_analytics import (
-    AnomalyDetection,
-    CohortAnalysis,
-    ABTestResult,
-    FunnelStep,
-    FunnelAnalysis,
-    CorrelationAnalysis,
-    NLQuery,
-    ExecutiveReport,
-    Insight,
-    PredictionExplanation,
-)
-
-from src.database.models.qa_metrics import (
-    ResponseQualityCheck,
-    KBArticleQuality,
-    PolicyRule,
-    CodeValidationResult,
-    LinkCheckResult,
-    SensitivityViolation,
-    HallucinationDetection,
-)
-
 from src.database.models.automation import (
     AutomatedTask,
     AutomationWorkflowExecution,
     SLACompliance,
 )
+from src.database.models.base import AuditMixin, Base, BaseModel, TimestampMixin
+from src.database.models.conversation import Conversation
 
+# Core models
+from src.database.models.customer import Customer
+
+# Customer health & segmentation
+from src.database.models.customer_health import (
+    CustomerContact,
+    CustomerHealthEvent,
+    CustomerIntegration,
+    CustomerNote,
+    CustomerSegment,
+)
+
+# Knowledge Base
+from src.database.models.kb_article import (
+    KBArticle,
+    KBQualityReport,
+    KBUsage,
+)
+from src.database.models.message import Message
+
+# Tier 3: Operational Excellence models
+from src.database.models.operational_analytics import (
+    ABTestResult,
+    AnomalyDetection,
+    CohortAnalysis,
+    CorrelationAnalysis,
+    ExecutiveReport,
+    FunnelAnalysis,
+    FunnelStep,
+    Insight,
+    NLQuery,
+    PredictionExplanation,
+)
+from src.database.models.qa_metrics import (
+    CodeValidationResult,
+    HallucinationDetection,
+    KBArticleQuality,
+    LinkCheckResult,
+    PolicyRule,
+    ResponseQualityCheck,
+    SensitivityViolation,
+)
+
+# Sales & leads
+from src.database.models.sales import (
+    Deal,
+    Employee,
+    Lead,
+    Quote,
+    SalesActivity,
+)
 from src.database.models.security import (
-    PIIDetection,
     AccessControlLog,
-    SecurityIncident,
     ComplianceAudit,
-    VulnerabilityScan,
-    DataRetentionPolicy,
     ConsentRecord,
+    DataRetentionPolicy,
     EncryptionValidation,
     PenetrationTest,
+    PIIDetection,
+    SecurityIncident,
+    VulnerabilityScan,
+)
+
+# Subscription & billing
+from src.database.models.subscription import (
+    Credit,
+    Invoice,
+    Payment,
+    Subscription,
+    UsageEvent,
+)
+
+# Authentication & authorization
+from src.database.models.user import OAuthProvider, User, UserRole, UserStatus
+
+# Workflow automation
+from src.database.models.workflow import (
+    ScheduledTask,
+    Workflow,
+    WorkflowExecution,
 )
 
 __all__ = [
+    "ABTest",
+    "ABTestResult",
+    "APIKey",
+    "AccessControlLog",
+    "AgentCollaboration",
+    # Agent collaboration
+    "AgentHandoff",
+    "AgentPerformance",
+    # Tier 3: Operational Analytics
+    "AnomalyDetection",
+    # Security & compliance
+    "AuditLog",
+    "AuditMixin",
+    # Tier 3: Automation
+    "AutomatedTask",
+    "AutomationWorkflowExecution",
     # Base classes
     "Base",
     "BaseModel",
+    "CodeValidationResult",
+    "CohortAnalysis",
+    "ComplianceAudit",
+    "ConsentRecord",
+    "Conversation",
+    # Analytics
+    "ConversationAnalytics",
+    "ConversationTag",
+    "CorrelationAnalysis",
+    "Credit",
+    # Core models
+    "Customer",
+    "CustomerContact",
+    # Customer health & segmentation
+    "CustomerHealthEvent",
+    "CustomerIntegration",
+    "CustomerNote",
+    "CustomerSegment",
+    "DataRetentionPolicy",
+    "Deal",
+    # Sales & leads
+    "Employee",
+    "EncryptionValidation",
+    "ExecutiveReport",
+    "FeatureUsage",
+    "FunnelAnalysis",
+    "FunnelStep",
+    "HallucinationDetection",
+    "Insight",
+    "Invoice",
+    # Knowledge Base
+    "KBArticle",
+    "KBArticleQuality",
+    "KBQualityReport",
+    "KBUsage",
+    "Lead",
+    "LinkCheckResult",
+    "Message",
+    "NLQuery",
+    "OAuthProvider",
+    # Tier 3: Security
+    "PIIDetection",
+    "Payment",
+    "PenetrationTest",
+    "PolicyRule",
+    "PredictionExplanation",
+    "Quote",
+    # Tier 3: QA Metrics
+    "ResponseQualityCheck",
+    "SLACompliance",
+    "SalesActivity",
+    "ScheduledTask",
+    "SecurityIncident",
+    "SensitivityViolation",
+    # Subscription & billing
+    "Subscription",
     "TimestampMixin",
-    "AuditMixin",
+    "UsageEvent",
     # Authentication & authorization
     "User",
     "UserRole",
     "UserStatus",
-    "OAuthProvider",
-    "APIKey",
-    # Core models
-    "Customer",
-    "Conversation",
-    "Message",
-    "AgentPerformance",
-    # Customer health & segmentation
-    "CustomerHealthEvent",
-    "CustomerSegment",
-    "CustomerNote",
-    "CustomerContact",
-    "CustomerIntegration",
-    # Agent collaboration
-    "AgentHandoff",
-    "AgentCollaboration",
-    "ConversationTag",
-    # Subscription & billing
-    "Subscription",
-    "Invoice",
-    "Payment",
-    "UsageEvent",
-    "Credit",
-    # Sales & leads
-    "Employee",
-    "Lead",
-    "Deal",
-    "SalesActivity",
-    "Quote",
-    # Analytics
-    "ConversationAnalytics",
-    "FeatureUsage",
-    "ABTest",
+    "VulnerabilityScan",
     # Workflow automation
     "Workflow",
     "WorkflowExecution",
-    "ScheduledTask",
-    # Security & compliance
-    "AuditLog",
-    # Knowledge Base
-    "KBArticle",
-    "KBUsage",
-    "KBQualityReport",
-    # Tier 3: Operational Analytics
-    "AnomalyDetection",
-    "CohortAnalysis",
-    "ABTestResult",
-    "FunnelStep",
-    "FunnelAnalysis",
-    "CorrelationAnalysis",
-    "NLQuery",
-    "ExecutiveReport",
-    "Insight",
-    "PredictionExplanation",
-    # Tier 3: QA Metrics
-    "ResponseQualityCheck",
-    "KBArticleQuality",
-    "PolicyRule",
-    "CodeValidationResult",
-    "LinkCheckResult",
-    "SensitivityViolation",
-    "HallucinationDetection",
-    # Tier 3: Automation
-    "AutomatedTask",
-    "AutomationWorkflowExecution",
-    "SLACompliance",
-    # Tier 3: Security
-    "PIIDetection",
-    "AccessControlLog",
-    "SecurityIncident",
-    "ComplianceAudit",
-    "VulnerabilityScan",
-    "DataRetentionPolicy",
-    "ConsentRecord",
-    "EncryptionValidation",
-    "PenetrationTest",
 ]
