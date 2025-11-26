@@ -3,11 +3,10 @@ Capacity Predictor Agent - TASK-4016
 Forecasts infrastructure capacity needs.
 """
 
-from typing import Dict, Any
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("capacity_predictor", tier="advanced", category="predictive")
@@ -21,7 +20,7 @@ class CapacityPredictorAgent(BaseAgent):
             temperature=0.1,
             max_tokens=1200,
             capabilities=[AgentCapability.DATABASE_READ],
-            tier="advanced"
+            tier="advanced",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -34,7 +33,7 @@ class CapacityPredictorAgent(BaseAgent):
         forecast = {
             "30_days": {"cpu": "65%", "memory": "72%", "storage": "80%"},
             "60_days": {"cpu": "78%", "memory": "85%", "storage": "92%"},
-            "90_days": {"cpu": "88%", "memory": "95%", "storage": "105%"}
+            "90_days": {"cpu": "88%", "memory": "95%", "storage": "105%"},
         }
 
         response = """**Capacity Forecast**
@@ -46,4 +45,11 @@ class CapacityPredictorAgent(BaseAgent):
 **Recommendation:** Provision additional 500GB within 60 days
 """
 
-        return self.update_state(state, agent_response=response, capacity_forecast=forecast, status="resolved", response_confidence=0.78, next_agent=None)
+        return self.update_state(
+            state,
+            agent_response=response,
+            capacity_forecast=forecast,
+            status="resolved",
+            response_confidence=0.78,
+            next_agent=None,
+        )
