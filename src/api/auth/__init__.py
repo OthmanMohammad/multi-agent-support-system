@@ -9,51 +9,51 @@ Provides authentication and authorization utilities:
 - RBAC (Role-Based Access Control)
 """
 
+from src.api.auth.api_key_manager import APIKeyManager
 from src.api.auth.jwt import JWTManager
 from src.api.auth.password import PasswordManager
-from src.api.auth.api_key_manager import APIKeyManager
-from src.api.auth.redis_client import (
-    get_redis_client,
-    close_redis_client,
-    TokenBlacklist,
-    RateLimiter,
-    SessionCache
-)
 from src.api.auth.permissions import (
-    PermissionScope,
-    SCOPE_DESCRIPTIONS,
     ROLE_SCOPES,
-    has_permission,
-    has_any_permission,
-    has_all_permissions,
+    SCOPE_DESCRIPTIONS,
+    PermissionScope,
     get_missing_permissions,
     get_role_scopes,
-    require_scopes,
+    has_all_permissions,
+    has_any_permission,
+    has_permission,
     require_any_scope,
+    require_scopes,
+)
+from src.api.auth.redis_client import (
+    RateLimiter,
+    SessionCache,
+    TokenBlacklist,
+    close_redis_client,
+    get_redis_client,
 )
 
 __all__ = [
+    "ROLE_SCOPES",
+    "SCOPE_DESCRIPTIONS",
+    # API Keys
+    "APIKeyManager",
     # JWT
     "JWTManager",
     # Passwords
     "PasswordManager",
-    # API Keys
-    "APIKeyManager",
-    # Redis
-    "get_redis_client",
-    "close_redis_client",
-    "TokenBlacklist",
-    "RateLimiter",
-    "SessionCache",
     # Permissions
     "PermissionScope",
-    "SCOPE_DESCRIPTIONS",
-    "ROLE_SCOPES",
-    "has_permission",
-    "has_any_permission",
-    "has_all_permissions",
+    "RateLimiter",
+    "SessionCache",
+    "TokenBlacklist",
+    "close_redis_client",
     "get_missing_permissions",
+    # Redis
+    "get_redis_client",
     "get_role_scopes",
-    "require_scopes",
+    "has_all_permissions",
+    "has_any_permission",
+    "has_permission",
     "require_any_scope",
+    "require_scopes",
 ]
