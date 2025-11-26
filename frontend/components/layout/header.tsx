@@ -42,9 +42,11 @@ export const Header = (): JSX.Element => {
    */
   const getUserInitials = (name: string | undefined): string => {
     if (!name) return "U";
-    const parts = name.split(" ");
-    if (parts.length >= 2) {
-      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    const parts = name.split(" ").filter(Boolean);
+    const first = parts[0]?.[0] ?? "";
+    const second = parts[1]?.[0] ?? "";
+    if (first && second) {
+      return `${first}${second}`.toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
   };
