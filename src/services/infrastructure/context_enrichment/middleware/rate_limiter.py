@@ -4,12 +4,13 @@ Rate limiter for context enrichment requests.
 Prevents abuse and ensures fair resource allocation.
 """
 
-from typing import Dict, Optional, Callable, Any
-from datetime import datetime, timedelta, UTC
-from collections import deque
 import asyncio
-import structlog
+from collections import deque
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 from functools import wraps
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 
@@ -25,11 +26,7 @@ class RateLimiter:
         >>> await limiter.acquire("customer_123")
     """
 
-    def __init__(
-        self,
-        max_requests: int = 100,
-        period_seconds: int = 60
-    ):
+    def __init__(self, max_requests: int = 100, period_seconds: int = 60):
         """
         Initialize rate limiter.
 
@@ -39,8 +36,8 @@ class RateLimiter:
         """
         self.max_requests = max_requests
         self.period_seconds = period_seconds
-        self._buckets: Dict[str, deque] = {}
-        self._locks: Dict[str, asyncio.Lock] = {}
+        self._buckets: dict[str, deque] = {}
+        self._locks: dict[str, asyncio.Lock] = {}
 
     async def acquire(self, key: str) -> bool:
         """
@@ -82,7 +79,7 @@ class RateLimiter:
                     "rate_limit_allowed",
                     key=key,
                     current_requests=len(bucket),
-                    max_requests=self.max_requests
+                    max_requests=self.max_requests,
                 )
                 return True
             else:
@@ -90,7 +87,7 @@ class RateLimiter:
                     "rate_limit_exceeded",
                     key=key,
                     current_requests=len(bucket),
-                    max_requests=self.max_requests
+                    max_requests=self.max_requests,
                 )
                 return False
 
@@ -130,13 +127,10 @@ class RateLimiter:
 
 
 # Global rate limiter instance
-_rate_limiter: Optional[RateLimiter] = None
+_rate_limiter: RateLimiter | None = None
 
 
-def get_rate_limiter(
-    max_requests: int = 100,
-    period_seconds: int = 60
-) -> RateLimiter:
+def get_rate_limiter(max_requests: int = 100, period_seconds: int = 60) -> RateLimiter:
     """
     Get or create global rate limiter instance.
 
@@ -153,11 +147,7 @@ def get_rate_limiter(
     return _rate_limiter
 
 
-def rate_limit(
-    max_requests: int = 100,
-    period_seconds: int = 60,
-    key_func: Optional[Callable] = None
-):
+def rate_limit(max_requests: int = 100, period_seconds: int = 60, key_func: Callable | None = None):
     """
     Decorator to apply rate limiting to async functions.
 
@@ -171,6 +161,7 @@ def rate_limit(
         ... async def fetch_data(customer_id: str):
         ...     return await expensive_operation(customer_id)
     """
+
     def decorator(func):
         limiter = RateLimiter(max_requests, period_seconds)
 
@@ -196,9 +187,11 @@ def rate_limit(
             return await func(*args, **kwargs)
 
         return wrapper
+
     return decorator
 
 
 class RateLimitExceeded(Exception):
     """Raised when rate limit is exceeded"""
+
     pass
