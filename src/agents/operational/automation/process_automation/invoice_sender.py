@@ -5,13 +5,12 @@ Auto-sends invoices via email with PDF attachments, payment links,
 and automated follow-ups for unpaid invoices.
 """
 
-from typing import Dict, Any
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("invoice_sender", tier="operational", category="automation")
@@ -25,7 +24,7 @@ class InvoiceSenderAgent(BaseAgent):
             temperature=0.1,
             max_tokens=600,
             capabilities=[AgentCapability.DATABASE_WRITE],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -46,12 +45,12 @@ class InvoiceSenderAgent(BaseAgent):
 
         response = f"""**Invoice Sent**
 
-Invoice Number: {invoice['number']}
-Amount: ${invoice['amount']:,.2f}
-Due Date: {invoice['due_date']}
+Invoice Number: {invoice["number"]}
+Amount: ${invoice["amount"]:,.2f}
+Due Date: {invoice["due_date"]}
 
-Sent to: {customer_metadata.get('email', 'customer@example.com')}
-Status: {email_result['status'].title()}
+Sent to: {customer_metadata.get("email", "customer@example.com")}
+Status: {email_result["status"].title()}
 
 Payment link included in email."""
 
@@ -60,21 +59,18 @@ Payment link included in email."""
         state["response_confidence"] = 0.95
         state["status"] = "resolved"
 
-        self.logger.info("invoice_sent", invoice_number=invoice['number'])
+        self.logger.info("invoice_sent", invoice_number=invoice["number"])
         return state
 
-    async def _generate_invoice(self, customer: Dict, invoice_data: Dict) -> Dict:
+    async def _generate_invoice(self, customer: dict, invoice_data: dict) -> dict:
         """Generate invoice."""
         return {
             "number": f"INV-{datetime.now(UTC).strftime('%Y%m%d')}-{customer.get('customer_id', '001')}",
             "amount": invoice_data.get("amount", 1000),
-            "due_date": (datetime.now(UTC) + timedelta(days=30)).strftime('%Y-%m-%d'),
-            "generated_at": datetime.now(UTC).isoformat()
+            "due_date": (datetime.now(UTC) + timedelta(days=30)).strftime("%Y-%m-%d"),
+            "generated_at": datetime.now(UTC).isoformat(),
         }
 
-    async def _send_invoice_email(self, invoice: Dict, customer: Dict) -> Dict:
+    async def _send_invoice_email(self, invoice: dict, customer: dict) -> dict:
         """Send invoice via email."""
-        return {
-            "status": "sent",
-            "sent_at": datetime.now(UTC).isoformat()
-        }
+        return {"status": "sent", "sent_at": datetime.now(UTC).isoformat()}
