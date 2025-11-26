@@ -868,7 +868,11 @@ class KBArticleService:
         if not content or len(content.strip()) < 20:
             errors.append("Content must be at least 20 characters")
 
-        valid_categories = ["billing", "technical", "usage", "api", "account"]
+        valid_categories = [
+            "billing", "technical", "usage", "api", "account",
+            "integration", "sales", "success", "general", "security",
+            "onboarding", "troubleshooting", "features", "pricing"
+        ]
         if category.lower() not in valid_categories:
             errors.append(
                 f"Category must be one of: {', '.join(valid_categories)}"
