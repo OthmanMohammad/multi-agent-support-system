@@ -18,7 +18,7 @@ Architecture:
 
 Example:
     from src.services.application import ConversationApplicationService
-    
+
     service = ConversationApplicationService(uow, domain_service, customer_service, workflow_engine)
     result = await service.create_conversation(
         customer_email="user@example.com",
