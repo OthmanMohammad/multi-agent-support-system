@@ -107,7 +107,8 @@ class BANTQualifier(BaseAgent):
             bant_assessment,
             overall_score,
             qualification_status,
-            kb_results
+            kb_results,
+            state
         )
 
         # Determine next steps
@@ -381,9 +382,13 @@ class BANTQualifier(BaseAgent):
         bant_assessment: Dict,
         overall_score: int,
         qualification_status: str,
-        kb_results: List[Dict]
+        kb_results: List[Dict],
+        state: AgentState
     ) -> str:
         """Generate BANT qualification response"""
+
+        # Get conversation history for context continuity
+        conversation_history = self.get_conversation_context(state)
 
         kb_context = ""
         if kb_results:
@@ -411,5 +416,9 @@ For high-scoring leads, move toward demo/next steps."""
 
 Generate appropriate response based on BANT assessment."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt,
+            user_prompt,
+            conversation_history=conversation_history
+        )
         return response
