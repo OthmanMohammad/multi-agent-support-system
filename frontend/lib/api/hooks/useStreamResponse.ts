@@ -4,11 +4,11 @@
  * Handles streaming message responses via SSE.
  */
 
-'use client';
+"use client";
 
-import { useState, useCallback, useRef } from 'react';
-import { conversationsAPI } from '../conversations';
-import type { StreamEvent } from '@/lib/types/api';
+import { useCallback, useRef, useState } from "react";
+import { conversationsAPI } from "../conversations";
+import type { StreamEvent } from "@/lib/types/api";
 
 interface StreamState {
   isStreaming: boolean;
@@ -21,7 +21,7 @@ interface StreamState {
 export function useStreamResponse() {
   const [state, setState] = useState<StreamState>({
     isStreaming: false,
-    content: '',
+    content: "",
     error: null,
     messageId: null,
     agentName: null,
@@ -40,13 +40,13 @@ export function useStreamResponse() {
       // Reset state
       setState({
         isStreaming: true,
-        content: '',
+        content: "",
         error: null,
         messageId: null,
         agentName: null,
       });
 
-      let fullContent = '';
+      let fullContent = "";
 
       try {
         await conversationsAPI.streamMessage(
@@ -54,7 +54,7 @@ export function useStreamResponse() {
           message,
           // On chunk
           (event: StreamEvent) => {
-            if (event.type === 'content' && event.chunk) {
+            if (event.type === "content" && event.chunk) {
               fullContent += event.chunk;
               setState((prev) => ({
                 ...prev,
@@ -62,7 +62,7 @@ export function useStreamResponse() {
                 messageId: event.messageId || prev.messageId,
               }));
               onChunk?.(fullContent);
-            } else if (event.type === 'agent_switch') {
+            } else if (event.type === "agent_switch") {
               setState((prev) => ({
                 ...prev,
                 agentName: event.to_agent || prev.agentName,
@@ -114,7 +114,7 @@ export function useStreamResponse() {
   const reset = useCallback(() => {
     setState({
       isStreaming: false,
-      content: '',
+      content: "",
       error: null,
       messageId: null,
       agentName: null,
