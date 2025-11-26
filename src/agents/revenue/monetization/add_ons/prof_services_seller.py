@@ -521,5 +521,9 @@ Value Proposition:
 
 Generate a compelling professional services proposal."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # PS proposal context built from requirements
+        )
         return response
