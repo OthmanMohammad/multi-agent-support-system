@@ -136,6 +136,7 @@ export function RecentConversations(): JSX.Element {
                 <td className="py-4">
                   <span
                     className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                      // eslint-disable-next-line no-nested-ternary -- Status color conditional
                       conversation.status === "active"
                         ? "bg-blue-500/10 text-blue-500"
                         : conversation.status === "resolved"
