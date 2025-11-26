@@ -14,10 +14,10 @@ Features:
 
 Quick Start:
     from src.utils.monitoring import init_sentry, capture_exception
-    
+
     # Initialize once at startup
     init_sentry()
-    
+
     # Manually capture exceptions with context
     try:
         process_payment()
@@ -37,15 +37,15 @@ Automatic Capture:
 """
 
 from src.utils.monitoring.sentry_config import (
-    init_sentry,
     capture_exception,
     capture_message,
+    init_sentry,
 )
 
 __version__ = "1.0.0"
 
 __all__ = [
-    "init_sentry",
     "capture_exception",
     "capture_message",
+    "init_sentry",
 ]
