@@ -4,18 +4,21 @@ Circuit breaker for context enrichment providers.
 Prevents cascading failures by failing fast when a provider is unhealthy.
 """
 
-from typing import Optional, Callable, Any
-from datetime import datetime, timedelta, UTC
-from enum import Enum
 import asyncio
-import structlog
+from collections.abc import Callable
+from datetime import UTC, datetime
+from enum import Enum
 from functools import wraps
+from typing import Any
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 
 
 class CircuitState(Enum):
     """Circuit breaker states"""
+
     CLOSED = "closed"  # Normal operation
     OPEN = "open"  # Failing fast
     HALF_OPEN = "half_open"  # Testing recovery
@@ -44,7 +47,7 @@ class CircuitBreaker:
         failure_threshold: int = 5,
         success_threshold: int = 2,
         timeout: int = 60,
-        name: str = "default"
+        name: str = "default",
     ):
         """
         Initialize circuit breaker.
@@ -63,7 +66,7 @@ class CircuitBreaker:
         self._state = CircuitState.CLOSED
         self._failure_count = 0
         self._success_count = 0
-        self._last_failure_time: Optional[datetime] = None
+        self._last_failure_time: datetime | None = None
         self._lock = asyncio.Lock()
 
     @property
@@ -90,17 +93,11 @@ class CircuitBreaker:
             # Check if should attempt recovery
             if self._state == CircuitState.OPEN:
                 if self._should_attempt_reset():
-                    logger.info(
-                        "circuit_breaker_half_open",
-                        name=self.name,
-                        timeout_elapsed=True
-                    )
+                    logger.info("circuit_breaker_half_open", name=self.name, timeout_elapsed=True)
                     self._state = CircuitState.HALF_OPEN
                     self._success_count = 0
                 else:
-                    raise CircuitBreakerOpen(
-                        f"Circuit breaker '{self.name}' is OPEN"
-                    )
+                    raise CircuitBreakerOpen(f"Circuit breaker '{self.name}' is OPEN")
 
         # Attempt to call function
         try:
@@ -108,7 +105,7 @@ class CircuitBreaker:
             await self._on_success()
             return result
 
-        except Exception as e:
+        except Exception:
             await self._on_failure()
             raise
 
@@ -122,9 +119,7 @@ class CircuitBreaker:
 
                 if self._success_count >= self.success_threshold:
                     logger.info(
-                        "circuit_breaker_closed",
-                        name=self.name,
-                        success_count=self._success_count
+                        "circuit_breaker_closed", name=self.name, success_count=self._success_count
                     )
                     self._state = CircuitState.CLOSED
                     self._success_count = 0
@@ -137,9 +132,7 @@ class CircuitBreaker:
 
             if self._state == CircuitState.HALF_OPEN:
                 logger.warning(
-                    "circuit_breaker_reopened",
-                    name=self.name,
-                    reason="failure_in_half_open"
+                    "circuit_breaker_reopened", name=self.name, reason="failure_in_half_open"
                 )
                 self._state = CircuitState.OPEN
                 self._success_count = 0
@@ -149,7 +142,7 @@ class CircuitBreaker:
                     "circuit_breaker_opened",
                     name=self.name,
                     failure_count=self._failure_count,
-                    threshold=self.failure_threshold
+                    threshold=self.failure_threshold,
                 )
                 self._state = CircuitState.OPEN
 
@@ -178,9 +171,7 @@ class CircuitBreaker:
                     self._state = CircuitState.HALF_OPEN
                     self._success_count = 0
                 else:
-                    raise CircuitBreakerOpen(
-                        f"Circuit breaker '{self.name}' is OPEN"
-                    )
+                    raise CircuitBreakerOpen(f"Circuit breaker '{self.name}' is OPEN")
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -194,6 +185,7 @@ class CircuitBreaker:
 
 class CircuitBreakerOpen(Exception):
     """Raised when circuit breaker is open"""
+
     pass
 
 
@@ -201,11 +193,7 @@ class CircuitBreakerOpen(Exception):
 _circuit_breakers: dict[str, CircuitBreaker] = {}
 
 
-def get_circuit_breaker(
-    name: str,
-    failure_threshold: int = 5,
-    timeout: int = 60
-) -> CircuitBreaker:
+def get_circuit_breaker(name: str, failure_threshold: int = 5, timeout: int = 60) -> CircuitBreaker:
     """
     Get or create a circuit breaker.
 
@@ -219,18 +207,12 @@ def get_circuit_breaker(
     """
     if name not in _circuit_breakers:
         _circuit_breakers[name] = CircuitBreaker(
-            failure_threshold=failure_threshold,
-            timeout=timeout,
-            name=name
+            failure_threshold=failure_threshold, timeout=timeout, name=name
         )
     return _circuit_breakers[name]
 
 
-def circuit_breaker(
-    name: Optional[str] = None,
-    failure_threshold: int = 5,
-    timeout: int = 60
-):
+def circuit_breaker(name: str | None = None, failure_threshold: int = 5, timeout: int = 60):
     """
     Decorator to apply circuit breaker to async functions.
 
@@ -244,6 +226,7 @@ def circuit_breaker(
         ... async def fetch_data(customer_id: str):
         ...     return await external_api_call(customer_id)
     """
+
     def decorator(func):
         breaker_name = name or func.__name__
         breaker = get_circuit_breaker(breaker_name, failure_threshold, timeout)
@@ -253,4 +236,5 @@ def circuit_breaker(
             return await breaker.call(func, *args, **kwargs)
 
         return wrapper
+
     return decorator
