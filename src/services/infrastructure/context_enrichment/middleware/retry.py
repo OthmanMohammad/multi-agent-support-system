@@ -4,11 +4,13 @@ Retry logic for context enrichment operations.
 Automatically retries failed operations with exponential backoff.
 """
 
-from typing import Optional, Callable, Any, Type, Tuple
 import asyncio
-import structlog
-from functools import wraps
+from collections.abc import Callable
 from dataclasses import dataclass
+from functools import wraps
+from typing import Any
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 
@@ -25,6 +27,7 @@ class RetryPolicy:
         exponential_base: Multiplier for exponential backoff
         jitter: Add randomness to prevent thundering herd
     """
+
     max_attempts: int = 3
     initial_delay: float = 1.0
     max_delay: float = 60.0
@@ -35,9 +38,9 @@ class RetryPolicy:
 async def with_retry(
     func: Callable,
     *args,
-    policy: Optional[RetryPolicy] = None,
-    retry_exceptions: Tuple[Type[Exception], ...] = (Exception,),
-    **kwargs
+    policy: RetryPolicy | None = None,
+    retry_exceptions: tuple[type[Exception], ...] = (Exception,),
+    **kwargs,
 ) -> Any:
     """
     Execute async function with retry logic.
@@ -77,7 +80,7 @@ async def with_retry(
                     "retry_succeeded",
                     function=func.__name__,
                     attempt=attempt + 1,
-                    max_attempts=policy.max_attempts
+                    max_attempts=policy.max_attempts,
                 )
 
             return result
@@ -87,22 +90,17 @@ async def with_retry(
 
             if attempt + 1 >= policy.max_attempts:
                 logger.error(
-                    "retry_exhausted",
-                    function=func.__name__,
-                    attempts=attempt + 1,
-                    error=str(e)
+                    "retry_exhausted", function=func.__name__, attempts=attempt + 1, error=str(e)
                 )
                 raise
 
             # Calculate delay with exponential backoff
-            delay = min(
-                policy.initial_delay * (policy.exponential_base ** attempt),
-                policy.max_delay
-            )
+            delay = min(policy.initial_delay * (policy.exponential_base**attempt), policy.max_delay)
 
             # Add jitter if enabled
             if policy.jitter:
                 import random
+
                 delay = delay * (0.5 + random.random())
 
             logger.warning(
@@ -111,7 +109,7 @@ async def with_retry(
                 attempt=attempt + 1,
                 max_attempts=policy.max_attempts,
                 delay=delay,
-                error=str(e)
+                error=str(e),
             )
 
             await asyncio.sleep(delay)
@@ -127,7 +125,7 @@ def retry(
     max_delay: float = 60.0,
     exponential_base: float = 2.0,
     jitter: bool = True,
-    retry_exceptions: Tuple[Type[Exception], ...] = (Exception,)
+    retry_exceptions: tuple[type[Exception], ...] = (Exception,),
 ):
     """
     Decorator to add retry logic to async functions.
@@ -150,28 +148,28 @@ def retry(
         initial_delay=initial_delay,
         max_delay=max_delay,
         exponential_base=exponential_base,
-        jitter=jitter
+        jitter=jitter,
     )
 
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             return await with_retry(
-                func,
-                *args,
-                policy=policy,
-                retry_exceptions=retry_exceptions,
-                **kwargs
+                func, *args, policy=policy, retry_exceptions=retry_exceptions, **kwargs
             )
+
         return wrapper
+
     return decorator
 
 
 class RetryableError(Exception):
     """Base class for retryable errors"""
+
     pass
 
 
 class NonRetryableError(Exception):
     """Base class for non-retryable errors"""
+
     pass
