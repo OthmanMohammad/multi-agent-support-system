@@ -5,14 +5,15 @@ Combines and merges results from multiple providers into a unified context.
 Handles conflicts, deduplication, and intelligent merging strategies.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+from typing import Any
+
 import structlog
 
 from src.services.infrastructure.context_enrichment.types import (
-    ProviderResult,
     AgentType,
-    ProviderStatus
+    ProviderResult,
+    ProviderStatus,
 )
 
 logger = structlog.get_logger(__name__)
@@ -39,10 +40,8 @@ class ResultAggregator:
         self.logger = logger.bind(component="aggregator")
 
     async def aggregate(
-        self,
-        results: List[ProviderResult],
-        agent_type: AgentType
-    ) -> Dict[str, Any]:
+        self, results: list[ProviderResult], agent_type: AgentType
+    ) -> dict[str, Any]:
         """
         Aggregate results from multiple providers.
 
@@ -57,32 +56,23 @@ class ResultAggregator:
             return {}
 
         # Filter successful results
-        successful_results = [
-            r for r in results
-            if r.status == ProviderStatus.SUCCESS and r.data
-        ]
+        successful_results = [r for r in results if r.status == ProviderStatus.SUCCESS and r.data]
 
         if not successful_results:
             self.logger.warning(
-                "no_successful_results",
-                total_results=len(results),
-                agent_type=agent_type.value
+                "no_successful_results", total_results=len(results), agent_type=agent_type.value
             )
             return {}
 
         # Start with empty aggregated data
-        aggregated: Dict[str, Any] = {}
+        aggregated: dict[str, Any] = {}
 
         # Process each result in priority order
         prioritized_results = self._prioritize_results(successful_results)
 
         for result in prioritized_results:
             # Merge result data into aggregated data
-            aggregated = self._merge_data(
-                aggregated,
-                result.data,
-                result.provider_name
-            )
+            aggregated = self._merge_data(aggregated, result.data, result.provider_name)
 
         # Deduplicate data
         aggregated = self._deduplicate(aggregated)
@@ -90,7 +80,9 @@ class ResultAggregator:
         # Add metadata
         aggregated["_metadata"] = {
             "providers_used": [r.provider_name for r in successful_results],
-            "providers_failed": [r.provider_name for r in results if r.status != ProviderStatus.SUCCESS],
+            "providers_failed": [
+                r.provider_name for r in results if r.status != ProviderStatus.SUCCESS
+            ],
             "total_latency_ms": sum(r.latency_ms for r in results),
             "aggregated_at": datetime.now(UTC),
         }
@@ -99,15 +91,12 @@ class ResultAggregator:
             "aggregation_completed",
             successful_count=len(successful_results),
             failed_count=len(results) - len(successful_results),
-            data_keys=len(aggregated)
+            data_keys=len(aggregated),
         )
 
         return aggregated
 
-    def _prioritize_results(
-        self,
-        results: List[ProviderResult]
-    ) -> List[ProviderResult]:
+    def _prioritize_results(self, results: list[ProviderResult]) -> list[ProviderResult]:
         """
         Prioritize results by latency and provider order.
 
@@ -123,11 +112,8 @@ class ResultAggregator:
         return sorted(results, key=lambda r: r.latency_ms)
 
     def _merge_data(
-        self,
-        target: Dict[str, Any],
-        source: Dict[str, Any],
-        provider_name: str
-    ) -> Dict[str, Any]:
+        self, target: dict[str, Any], source: dict[str, Any], provider_name: str
+    ) -> dict[str, Any]:
         """
         Merge source data into target data.
 
@@ -151,21 +137,13 @@ class ResultAggregator:
                 target[key] = self._merge_lists(target[key], value)
             else:
                 # Conflict - use conflict resolution strategy
-                target[key] = self._resolve_conflict(
-                    target[key],
-                    value,
-                    key,
-                    provider_name
-                )
+                target[key] = self._resolve_conflict(target[key], value, key, provider_name)
 
         return target
 
     def _merge_dicts(
-        self,
-        dict1: Dict[str, Any],
-        dict2: Dict[str, Any],
-        provider_name: str
-    ) -> Dict[str, Any]:
+        self, dict1: dict[str, Any], dict2: dict[str, Any], provider_name: str
+    ) -> dict[str, Any]:
         """
         Recursively merge two dictionaries.
 
@@ -187,16 +165,11 @@ class ResultAggregator:
             elif isinstance(value, list) and isinstance(result[key], list):
                 result[key] = self._merge_lists(result[key], value)
             else:
-                result[key] = self._resolve_conflict(
-                    result[key],
-                    value,
-                    key,
-                    provider_name
-                )
+                result[key] = self._resolve_conflict(result[key], value, key, provider_name)
 
         return result
 
-    def _merge_lists(self, list1: List, list2: List) -> List:
+    def _merge_lists(self, list1: list, list2: list) -> list:
         """
         Merge two lists with deduplication.
 
@@ -217,13 +190,7 @@ class ResultAggregator:
 
         return result
 
-    def _resolve_conflict(
-        self,
-        value1: Any,
-        value2: Any,
-        key: str,
-        provider_name: str
-    ) -> Any:
+    def _resolve_conflict(self, value1: Any, value2: Any, key: str, provider_name: str) -> Any:
         """
         Resolve conflict between two values.
 
@@ -260,7 +227,7 @@ class ResultAggregator:
             return max(value1, value2)
 
         # For numeric values in specific keys, prefer higher
-        if key in ['health_score', 'nps_score', 'engagement_score']:
+        if key in ["health_score", "nps_score", "engagement_score"]:
             try:
                 num1 = float(value1)
                 num2 = float(value2)
@@ -269,7 +236,7 @@ class ResultAggregator:
                 pass
 
         # For counts and metrics, prefer higher
-        if key.endswith('_count') or key.endswith('_total'):
+        if key.endswith("_count") or key.endswith("_total"):
             try:
                 num1 = float(value1)
                 num2 = float(value2)
@@ -283,12 +250,12 @@ class ResultAggregator:
             key=key,
             value1=str(value1)[:50],
             value2=str(value2)[:50],
-            provider=provider_name
+            provider=provider_name,
         )
 
         return value1
 
-    def _deduplicate(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _deduplicate(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Deduplicate data recursively.
 
@@ -310,7 +277,7 @@ class ResultAggregator:
 
         return result
 
-    def _deduplicate_list(self, items: List) -> List:
+    def _deduplicate_list(self, items: list) -> list:
         """
         Deduplicate list while preserving order.
 
@@ -337,11 +304,8 @@ class ResultAggregator:
         return result
 
     async def merge_with_previous(
-        self,
-        current: Dict[str, Any],
-        previous: Dict[str, Any],
-        max_age_seconds: int = 3600
-    ) -> Dict[str, Any]:
+        self, current: dict[str, Any], previous: dict[str, Any], max_age_seconds: int = 3600
+    ) -> dict[str, Any]:
         """
         Merge current data with previous cached data.
 
@@ -362,9 +326,7 @@ class ResultAggregator:
                 age = (datetime.now(UTC) - aggregated_at).total_seconds()
                 if age > max_age_seconds:
                     self.logger.debug(
-                        "previous_data_too_old",
-                        age_seconds=age,
-                        max_age=max_age_seconds
+                        "previous_data_too_old", age_seconds=age, max_age=max_age_seconds
                     )
                     return current
 
@@ -374,7 +336,7 @@ class ResultAggregator:
 
         return merged
 
-    def calculate_completeness(self, data: Dict[str, Any]) -> float:
+    def calculate_completeness(self, data: dict[str, Any]) -> float:
         """
         Calculate completeness score of aggregated data.
 
@@ -406,7 +368,7 @@ class ResultAggregator:
 
         return completeness
 
-    def calculate_freshness(self, data: Dict[str, Any]) -> float:
+    def calculate_freshness(self, data: dict[str, Any]) -> float:
         """
         Calculate freshness score of aggregated data.
 
@@ -449,11 +411,7 @@ class ResultAggregator:
         else:
             return 10.0
 
-    def extract_summary(
-        self,
-        data: Dict[str, Any],
-        agent_type: AgentType
-    ) -> Dict[str, Any]:
+    def extract_summary(self, data: dict[str, Any], agent_type: AgentType) -> dict[str, Any]:
         """
         Extract key summary information for agent.
 
