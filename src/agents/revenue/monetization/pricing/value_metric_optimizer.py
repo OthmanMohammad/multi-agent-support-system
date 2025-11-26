@@ -581,5 +581,9 @@ Recommended Pricing Model:
 
 Generate a comprehensive value metric recommendation."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # Value metric analysis uses pricing data
+        )
         return response
