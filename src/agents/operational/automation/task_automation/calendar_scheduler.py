@@ -254,7 +254,11 @@ Default timezone: {customer_metadata.get('timezone', 'America/New_York')}
 
 Return JSON with title, date, time, duration_minutes, attendees (array), meeting_type, timezone, video_platform, and notes."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # Meeting request parsing uses message context
+        )
 
         # Parse LLM response
         try:
