@@ -236,7 +236,8 @@ class ValueProposition(BaseAgent):
             industry_angle,
             differentiators,
             kb_results,
-            customer_metadata
+            customer_metadata,
+            state
         )
 
         # Update state
@@ -398,9 +399,13 @@ class ValueProposition(BaseAgent):
         industry_angle: str,
         differentiators: List[str],
         kb_results: List[Dict],
-        customer_metadata: Dict
+        customer_metadata: Dict,
+        state: AgentState
     ) -> str:
         """Generate tailored value proposition response"""
+
+        # Get conversation history for context continuity
+        conversation_history = self.get_conversation_context(state)
 
         # Build pillars context
         pillars_context = "\n\nKey Value Pillars:\n"
@@ -458,7 +463,11 @@ Your response should:
 
 Generate a compelling, tailored value proposition response."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt,
+            user_prompt,
+            conversation_history=conversation_history
+        )
         return response
 
 
