@@ -4,10 +4,14 @@
  * Provides dashboard analytics data.
  */
 
-'use client';
+"use client";
 
-import useSWR from 'swr';
-import { analyticsAPI, type AnalyticsOverview, type AgentPerformance } from '../api';
+import useSWR from "swr";
+import {
+  type AgentPerformance,
+  analyticsAPI,
+  type AnalyticsOverview,
+} from "../api";
 
 // =============================================================================
 // USE ANALYTICS HOOK
@@ -21,7 +25,7 @@ export function useAnalytics(days = 7) {
     mutate: mutateOverview,
     isLoading: isLoadingOverview,
   } = useSWR<AnalyticsOverview>(
-    ['analytics/overview', days],
+    ["analytics/overview", days],
     async () => {
       const result = await analyticsAPI.getOverview(days);
       if (result.success) {
@@ -42,7 +46,7 @@ export function useAnalytics(days = 7) {
     mutate: mutateAgents,
     isLoading: isLoadingAgents,
   } = useSWR<AgentPerformance[]>(
-    ['analytics/agents', days],
+    ["analytics/agents", days],
     async () => {
       const result = await analyticsAPI.getAgentPerformance(days);
       if (result.success) {
