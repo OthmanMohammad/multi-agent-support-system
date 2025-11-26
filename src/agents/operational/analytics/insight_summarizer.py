@@ -188,6 +188,7 @@ Generate insights that are:
             insights = await self.call_llm(
                 system_prompt=system_prompt,
                 user_message=user_message,
+                conversation_history=[],  # Insight summaries use data context
                 max_tokens=1200
             )
             return insights
