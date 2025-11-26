@@ -5,13 +5,12 @@ Helps prospects migrate from competitors, provides migration guides,
 calculates migration effort, and offers migration support services.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("migration_specialist", tier="revenue", category="sales")
@@ -42,8 +41,8 @@ class MigrationSpecialist(BaseAgent):
                         "Identify custom fields and objects",
                         "Document workflows and automation",
                         "Map user roles and permissions",
-                        "Identify integration points"
-                    ]
+                        "Identify integration points",
+                    ],
                 },
                 {
                     "phase": "Data Migration",
@@ -53,8 +52,8 @@ class MigrationSpecialist(BaseAgent):
                         "Clean and transform data",
                         "Import to our platform",
                         "Validate data integrity",
-                        "Migrate attachments and files"
-                    ]
+                        "Migrate attachments and files",
+                    ],
                 },
                 {
                     "phase": "Configuration & Testing",
@@ -64,8 +63,8 @@ class MigrationSpecialist(BaseAgent):
                         "Configure automation rules",
                         "Set up integrations",
                         "User acceptance testing",
-                        "Train team on new platform"
-                    ]
+                        "Train team on new platform",
+                    ],
                 },
                 {
                     "phase": "Cutover & Go-Live",
@@ -75,20 +74,27 @@ class MigrationSpecialist(BaseAgent):
                         "Switch DNS/integrations",
                         "Go live with team",
                         "Monitor for issues",
-                        "Decommission Salesforce"
-                    ]
-                }
+                        "Decommission Salesforce",
+                    ],
+                },
             ],
             "data_objects": [
-                "Accounts", "Contacts", "Leads", "Opportunities", "Cases",
-                "Activities", "Tasks", "Events", "Custom Objects"
+                "Accounts",
+                "Contacts",
+                "Leads",
+                "Opportunities",
+                "Cases",
+                "Activities",
+                "Tasks",
+                "Events",
+                "Custom Objects",
             ],
             "common_challenges": [
                 "Complex custom configurations",
                 "Large data volumes",
                 "Many integrations to migrate",
-                "User adoption and training"
-            ]
+                "User adoption and training",
+            ],
         },
         "hubspot": {
             "competitor": "HubSpot",
@@ -103,8 +109,8 @@ class MigrationSpecialist(BaseAgent):
                         "Identify marketing automation workflows",
                         "Document contact lists and segments",
                         "Map deal pipeline stages",
-                        "Identify key integrations"
-                    ]
+                        "Identify key integrations",
+                    ],
                 },
                 {
                     "phase": "Data Migration",
@@ -114,8 +120,8 @@ class MigrationSpecialist(BaseAgent):
                         "Export email templates and sequences",
                         "Import to our platform",
                         "Validate data quality",
-                        "Migrate forms and landing pages"
-                    ]
+                        "Migrate forms and landing pages",
+                    ],
                 },
                 {
                     "phase": "Configuration & Testing",
@@ -125,19 +131,25 @@ class MigrationSpecialist(BaseAgent):
                         "Set up email templates",
                         "Configure deal pipeline",
                         "Test automation",
-                        "Train team"
-                    ]
-                }
+                        "Train team",
+                    ],
+                },
             ],
             "data_objects": [
-                "Contacts", "Companies", "Deals", "Tickets",
-                "Email Templates", "Workflows", "Lists", "Forms"
+                "Contacts",
+                "Companies",
+                "Deals",
+                "Tickets",
+                "Email Templates",
+                "Workflows",
+                "Lists",
+                "Forms",
             ],
             "common_challenges": [
                 "Marketing automation complexity",
                 "Email sequences and templates",
-                "Contact list segmentation"
-            ]
+                "Contact list segmentation",
+            ],
         },
         "zendesk": {
             "competitor": "Zendesk",
@@ -152,8 +164,8 @@ class MigrationSpecialist(BaseAgent):
                         "Document SLA policies",
                         "Identify macros and triggers",
                         "Map agent roles and groups",
-                        "Review help center content"
-                    ]
+                        "Review help center content",
+                    ],
                 },
                 {
                     "phase": "Data Migration",
@@ -163,8 +175,8 @@ class MigrationSpecialist(BaseAgent):
                         "Export help center articles",
                         "Import tickets to our platform",
                         "Migrate knowledge base content",
-                        "Preserve ticket history"
-                    ]
+                        "Preserve ticket history",
+                    ],
                 },
                 {
                     "phase": "Configuration & Go-Live",
@@ -174,19 +186,25 @@ class MigrationSpecialist(BaseAgent):
                         "Configure automation rules",
                         "Set up help center",
                         "Train support team",
-                        "Go live"
-                    ]
-                }
+                        "Go live",
+                    ],
+                },
             ],
             "data_objects": [
-                "Tickets", "Users", "Organizations", "Help Center Articles",
-                "Macros", "Triggers", "Automations", "Views"
+                "Tickets",
+                "Users",
+                "Organizations",
+                "Help Center Articles",
+                "Macros",
+                "Triggers",
+                "Automations",
+                "Views",
             ],
             "common_challenges": [
                 "Ticket history preservation",
                 "Help center migration",
-                "Macro and trigger recreation"
-            ]
+                "Macro and trigger recreation",
+            ],
         },
         "intercom": {
             "competitor": "Intercom",
@@ -200,8 +218,8 @@ class MigrationSpecialist(BaseAgent):
                         "Review Intercom messenger setup",
                         "Document conversation workflows",
                         "Identify bots and automation",
-                        "Review help center content"
-                    ]
+                        "Review help center content",
+                    ],
                 },
                 {
                     "phase": "Data Migration",
@@ -210,8 +228,8 @@ class MigrationSpecialist(BaseAgent):
                         "Export users and conversations",
                         "Export help center articles",
                         "Import to our platform",
-                        "Validate data"
-                    ]
+                        "Validate data",
+                    ],
                 },
                 {
                     "phase": "Configuration & Go-Live",
@@ -220,19 +238,24 @@ class MigrationSpecialist(BaseAgent):
                         "Install our messenger widget",
                         "Recreate automation rules",
                         "Set up help center",
-                        "Train team and go live"
-                    ]
-                }
+                        "Train team and go live",
+                    ],
+                },
             ],
             "data_objects": [
-                "Users", "Conversations", "Messages", "Help Articles",
-                "Bots", "Automation Rules", "Product Tours"
+                "Users",
+                "Conversations",
+                "Messages",
+                "Help Articles",
+                "Bots",
+                "Automation Rules",
+                "Product Tours",
             ],
             "common_challenges": [
                 "Conversation history preservation",
                 "Bot recreation",
-                "Widget installation"
-            ]
+                "Widget installation",
+            ],
         },
         "freshdesk": {
             "competitor": "Freshdesk",
@@ -245,8 +268,8 @@ class MigrationSpecialist(BaseAgent):
                     "activities": [
                         "Review Freshdesk setup",
                         "Document automation rules",
-                        "Identify ticket fields and statuses"
-                    ]
+                        "Identify ticket fields and statuses",
+                    ],
                 },
                 {
                     "phase": "Data Migration",
@@ -254,8 +277,8 @@ class MigrationSpecialist(BaseAgent):
                     "activities": [
                         "Export tickets and contacts",
                         "Import to our platform",
-                        "Validate data integrity"
-                    ]
+                        "Validate data integrity",
+                    ],
                 },
                 {
                     "phase": "Configuration & Go-Live",
@@ -263,19 +286,20 @@ class MigrationSpecialist(BaseAgent):
                     "activities": [
                         "Configure automation",
                         "Set up email forwarding",
-                        "Train team and go live"
-                    ]
-                }
+                        "Train team and go live",
+                    ],
+                },
             ],
             "data_objects": [
-                "Tickets", "Contacts", "Companies", "Solutions Articles",
-                "Automation Rules", "Email Templates"
+                "Tickets",
+                "Contacts",
+                "Companies",
+                "Solutions Articles",
+                "Automation Rules",
+                "Email Templates",
             ],
-            "common_challenges": [
-                "Ticket history preservation",
-                "Automation rule recreation"
-            ]
-        }
+            "common_challenges": ["Ticket history preservation", "Automation rule recreation"],
+        },
     }
 
     # Migration support services
@@ -290,10 +314,10 @@ class MigrationSpecialist(BaseAgent):
                 "Configuration matching current setup",
                 "Integration setup and testing",
                 "Team training sessions",
-                "Post-migration support (30 days)"
+                "Post-migration support (30 days)",
             ],
             "timeline": "2-4 weeks",
-            "customer_effort": "minimal"
+            "customer_effort": "minimal",
         },
         "guided_migration": {
             "name": "Guided Migration",
@@ -305,10 +329,10 @@ class MigrationSpecialist(BaseAgent):
                 "Data import assistance",
                 "Configuration review",
                 "Team training webinar",
-                "Post-migration support (14 days)"
+                "Post-migration support (14 days)",
             ],
             "timeline": "1-3 weeks",
-            "customer_effort": "low"
+            "customer_effort": "low",
         },
         "self_service": {
             "name": "Self-Service Migration",
@@ -319,10 +343,10 @@ class MigrationSpecialist(BaseAgent):
                 "Data import templates",
                 "Video tutorials",
                 "Email support",
-                "Community forum access"
+                "Community forum access",
             ],
             "timeline": "1-2 weeks",
-            "customer_effort": "medium"
+            "customer_effort": "medium",
         },
         "parallel_run": {
             "name": "Parallel Run Option",
@@ -332,11 +356,11 @@ class MigrationSpecialist(BaseAgent):
                 "Extended parallel access",
                 "Bi-directional sync (if needed)",
                 "Flexible cutover timing",
-                "Risk mitigation"
+                "Risk mitigation",
             ],
             "timeline": "flexible",
-            "customer_effort": "low"
-        }
+            "customer_effort": "low",
+        },
     }
 
     # Migration success stories
@@ -348,7 +372,7 @@ class MigrationSpecialist(BaseAgent):
             "migration_time": "3 weeks",
             "records_migrated": 500000,
             "outcome": "Successful migration with 95% user adoption in first week",
-            "quote": "The migration was smoother than we expected. We're now more productive than ever."
+            "quote": "The migration was smoother than we expected. We're now more productive than ever.",
         },
         "hubspot_migration": {
             "from_competitor": "hubspot",
@@ -357,7 +381,7 @@ class MigrationSpecialist(BaseAgent):
             "migration_time": "1 week",
             "records_migrated": 100000,
             "outcome": "Zero downtime migration, all automation recreated",
-            "quote": "Switching was the best decision. We're saving thousands and getting more features."
+            "quote": "Switching was the best decision. We're saving thousands and getting more features.",
         },
         "zendesk_migration": {
             "from_competitor": "zendesk",
@@ -366,8 +390,8 @@ class MigrationSpecialist(BaseAgent):
             "migration_time": "1.5 weeks",
             "records_migrated": 50000,
             "outcome": "Complete ticket history preserved, team trained in 2 days",
-            "quote": "Much easier platform to use. Our team was productive immediately."
-        }
+            "quote": "Much easier platform to use. Our team was productive immediately.",
+        },
     }
 
     def __init__(self):
@@ -376,12 +400,9 @@ class MigrationSpecialist(BaseAgent):
             type=AgentType.SPECIALIST,
             temperature=0.3,
             max_tokens=1500,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.KB_SEARCH
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.KB_SEARCH],
             kb_category="sales",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -432,7 +453,7 @@ class MigrationSpecialist(BaseAgent):
         self.logger.info(
             "migration_specialist_completed",
             source_competitor=source_competitor,
-            estimated_timeline_weeks=effort_estimate.get("timeline_weeks")
+            estimated_timeline_weeks=effort_estimate.get("timeline_weeks"),
         )
 
         return state
@@ -441,7 +462,7 @@ class MigrationSpecialist(BaseAgent):
         """Identify which competitor they're migrating from"""
         message_lower = message.lower()
 
-        for competitor in self.MIGRATION_PLAYBOOKS.keys():
+        for competitor in self.MIGRATION_PLAYBOOKS:
             if competitor in message_lower:
                 return competitor
 
@@ -453,10 +474,8 @@ class MigrationSpecialist(BaseAgent):
         return "generic"
 
     def _generate_migration_plan(
-        self,
-        source_competitor: str,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, source_competitor: str, customer_metadata: dict
+    ) -> dict[str, Any]:
         """Generate detailed migration plan"""
 
         if source_competitor not in self.MIGRATION_PLAYBOOKS:
@@ -473,12 +492,12 @@ class MigrationSpecialist(BaseAgent):
             "data_objects_to_migrate": playbook["data_objects"],
             "common_challenges": playbook["common_challenges"],
             "risk_level": self._assess_risk_level(playbook["migration_difficulty"]),
-            "recommended_approach": self._recommend_approach(playbook, customer_metadata)
+            "recommended_approach": self._recommend_approach(playbook, customer_metadata),
         }
 
         return plan
 
-    def _generic_migration_plan(self) -> Dict[str, Any]:
+    def _generic_migration_plan(self) -> dict[str, Any]:
         """Generate generic migration plan"""
         return {
             "from_system": "Current System",
@@ -489,27 +508,23 @@ class MigrationSpecialist(BaseAgent):
                 {
                     "phase": "Discovery",
                     "duration_weeks": 0.5,
-                    "activities": ["Audit current system", "Plan migration"]
+                    "activities": ["Audit current system", "Plan migration"],
                 },
                 {
                     "phase": "Migration",
                     "duration_weeks": 1,
-                    "activities": ["Export data", "Import to our platform", "Validate"]
+                    "activities": ["Export data", "Import to our platform", "Validate"],
                 },
                 {
                     "phase": "Go-Live",
                     "duration_weeks": 0.5,
-                    "activities": ["Train team", "Go live", "Monitor"]
-                }
+                    "activities": ["Train team", "Go live", "Monitor"],
+                },
             ],
-            "risk_level": "low_medium"
+            "risk_level": "low_medium",
         }
 
-    def _calculate_effort(
-        self,
-        source_competitor: str,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+    def _calculate_effort(self, source_competitor: str, customer_metadata: dict) -> dict[str, Any]:
         """Calculate migration effort and timeline"""
 
         company_size = customer_metadata.get("company_size", 50)
@@ -533,12 +548,7 @@ class MigrationSpecialist(BaseAgent):
             timeline_weeks = base_weeks
 
         # Adjust for data volume
-        volume_multipliers = {
-            "low": 0.8,
-            "medium": 1.0,
-            "high": 1.3,
-            "very_high": 1.5
-        }
+        volume_multipliers = {"low": 0.8, "medium": 1.0, "high": 1.3, "very_high": 1.5}
         timeline_weeks *= volume_multipliers.get(data_volume, 1.0)
 
         estimate = {
@@ -547,20 +557,14 @@ class MigrationSpecialist(BaseAgent):
             "difficulty": difficulty,
             "internal_effort_hours": self._estimate_internal_hours(difficulty, company_size),
             "our_support_hours": self._estimate_support_hours(difficulty, company_size),
-            "recommended_resources": self._recommend_resources(company_size)
+            "recommended_resources": self._recommend_resources(company_size),
         }
 
         return estimate
 
     def _estimate_internal_hours(self, difficulty: str, company_size: int) -> int:
         """Estimate internal team effort hours"""
-        base_hours = {
-            "easy": 20,
-            "easy_medium": 30,
-            "medium": 40,
-            "medium_high": 60,
-            "high": 80
-        }
+        base_hours = {"easy": 20, "easy_medium": 30, "medium": 40, "medium_high": 60, "high": 80}
 
         hours = base_hours.get(difficulty, 40)
 
@@ -574,31 +578,24 @@ class MigrationSpecialist(BaseAgent):
 
     def _estimate_support_hours(self, difficulty: str, company_size: int) -> int:
         """Estimate our support hours"""
-        base_hours = {
-            "easy": 10,
-            "easy_medium": 15,
-            "medium": 20,
-            "medium_high": 30,
-            "high": 40
-        }
+        base_hours = {"easy": 10, "easy_medium": 15, "medium": 20, "medium_high": 30, "high": 40}
 
         return base_hours.get(difficulty, 20)
 
-    def _recommend_resources(self, company_size: int) -> List[str]:
+    def _recommend_resources(self, company_size: int) -> list[str]:
         """Recommend resources for migration"""
         resources = ["Project manager or migration lead"]
 
         if company_size > 200:
-            resources.extend([
-                "Technical lead for integrations",
-                "Data analyst for data cleanup",
-                "Change management lead"
-            ])
+            resources.extend(
+                [
+                    "Technical lead for integrations",
+                    "Data analyst for data cleanup",
+                    "Change management lead",
+                ]
+            )
         elif company_size > 50:
-            resources.extend([
-                "Technical contact for integrations",
-                "Data quality reviewer"
-            ])
+            resources.extend(["Technical contact for integrations", "Data quality reviewer"])
 
         return resources
 
@@ -609,11 +606,11 @@ class MigrationSpecialist(BaseAgent):
             "easy_medium": "low",
             "medium": "low_medium",
             "medium_high": "medium",
-            "high": "medium_high"
+            "high": "medium_high",
         }
         return risk_map.get(difficulty, "low_medium")
 
-    def _recommend_approach(self, playbook: Dict, customer_metadata: Dict) -> str:
+    def _recommend_approach(self, playbook: dict, customer_metadata: dict) -> str:
         """Recommend migration approach"""
         company_size = customer_metadata.get("company_size", 50)
 
@@ -624,7 +621,7 @@ class MigrationSpecialist(BaseAgent):
         else:
             return "Guided Migration or Self-Service with our comprehensive tools"
 
-    def _recommend_services(self, customer_metadata: Dict) -> List[Dict[str, Any]]:
+    def _recommend_services(self, customer_metadata: dict) -> list[dict[str, Any]]:
         """Recommend migration services"""
         company_size = customer_metadata.get("company_size", 50)
         services = []
@@ -640,50 +637,52 @@ class MigrationSpecialist(BaseAgent):
         # Add applicable services
         for service_key, service_data in self.MIGRATION_SERVICES.items():
             if tier in service_data["included_in"] or "all_plans" in service_data["included_in"]:
-                services.append({
-                    "service": service_data["name"],
-                    "description": service_data["description"],
-                    "services_included": service_data["services"],
-                    "timeline": service_data["timeline"],
-                    "customer_effort": service_data["customer_effort"],
-                    "recommended": service_key in ["concierge_migration", "guided_migration"]
-                })
+                services.append(
+                    {
+                        "service": service_data["name"],
+                        "description": service_data["description"],
+                        "services_included": service_data["services"],
+                        "timeline": service_data["timeline"],
+                        "customer_effort": service_data["customer_effort"],
+                        "recommended": service_key in ["concierge_migration", "guided_migration"],
+                    }
+                )
 
         return services
 
-    def _address_concerns(self, source_competitor: str) -> List[Dict[str, Any]]:
+    def _address_concerns(self, source_competitor: str) -> list[dict[str, Any]]:
         """Address common migration concerns"""
         concerns = [
             {
                 "concern": "Will we lose data during migration?",
                 "response": "No. We have a proven migration process with multiple validation checkpoints. Your data is safe.",
-                "mitigation": "Multiple data validation steps, backup of original data"
+                "mitigation": "Multiple data validation steps, backup of original data",
             },
             {
                 "concern": "How long will we be down?",
                 "response": "Zero downtime. We can run systems in parallel during transition.",
-                "mitigation": "Parallel run option, phased cutover"
+                "mitigation": "Parallel run option, phased cutover",
             },
             {
                 "concern": "What if our team doesn't adopt the new platform?",
                 "response": "Our platform is more intuitive. We also provide comprehensive training.",
-                "mitigation": "Hands-on training, ongoing support, user-friendly interface"
+                "mitigation": "Hands-on training, ongoing support, user-friendly interface",
             },
             {
                 "concern": "What about our integrations?",
                 "response": "We integrate with all major tools. We'll help set up your integrations.",
-                "mitigation": "500+ native integrations, API support, integration assistance"
+                "mitigation": "500+ native integrations, API support, integration assistance",
             },
             {
                 "concern": "This seems risky",
                 "response": "Hundreds of companies have migrated successfully. We have a proven playbook.",
-                "mitigation": "Proven process, dedicated support, success stories"
-            }
+                "mitigation": "Proven process, dedicated support, success stories",
+            },
         ]
 
         return concerns
 
-    def _get_success_stories(self, source_competitor: str) -> List[Dict[str, Any]]:
+    def _get_success_stories(self, source_competitor: str) -> list[dict[str, Any]]:
         """Get relevant migration success stories"""
         stories = []
 
@@ -694,10 +693,8 @@ class MigrationSpecialist(BaseAgent):
         return stories[:2]  # Top 2 relevant stories
 
     def _generate_checklist(
-        self,
-        source_competitor: str,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, source_competitor: str, customer_metadata: dict
+    ) -> dict[str, Any]:
         """Generate migration checklist"""
 
         checklist = {
@@ -707,7 +704,7 @@ class MigrationSpecialist(BaseAgent):
                 "Identify critical workflows and automation",
                 "Document integration points",
                 "Determine migration timeline",
-                "Assign internal migration team"
+                "Assign internal migration team",
             ],
             "during_migration": [
                 "Export data from current system",
@@ -717,7 +714,7 @@ class MigrationSpecialist(BaseAgent):
                 "Set up integrations",
                 "Recreate workflows and automation",
                 "Configure user roles and permissions",
-                "Test thoroughly"
+                "Test thoroughly",
             ],
             "post_migration": [
                 "Train team on new platform",
@@ -725,8 +722,8 @@ class MigrationSpecialist(BaseAgent):
                 "Monitor for issues",
                 "Gather team feedback",
                 "Optimize configuration",
-                "Decommission old system"
-            ]
+                "Decommission old system",
+            ],
         }
 
         return checklist
@@ -751,28 +748,28 @@ if __name__ == "__main__":
                     "company": "Enterprise Corp",
                     "company_size": 250,
                     "industry": "technology",
-                    "data_volume": "high"
+                    "data_volume": "high",
                 }
-            }
+            },
         )
 
         agent = MigrationSpecialist()
         result1 = await agent.process(state1)
 
-        print(f"\nTest 1 - Salesforce Migration (Large Enterprise)")
-        plan = result1['migration_plan']
+        print("\nTest 1 - Salesforce Migration (Large Enterprise)")
+        plan = result1["migration_plan"]
         print(f"From: {plan['from_system']} → To: {plan['to_system']}")
         print(f"Difficulty: {plan['difficulty']}")
         print(f"Timeline: {plan['estimated_timeline_weeks']} weeks")
         print(f"Risk Level: {plan['risk_level']}")
-        print(f"\nPhases:")
-        for phase in plan['phases']:
+        print("\nPhases:")
+        for phase in plan["phases"]:
             print(f"  {phase['phase']} ({phase['duration_weeks']} weeks)")
-            for activity in phase['activities'][:2]:
+            for activity in phase["activities"][:2]:
                 print(f"    • {activity}")
 
-        effort = result1['migration_effort_estimate']
-        print(f"\nEffort Estimate:")
+        effort = result1["migration_effort_estimate"]
+        print("\nEffort Estimate:")
         print(f"  Timeline Range: {effort['timeline_range']}")
         print(f"  Internal Effort: {effort['internal_effort_hours']} hours")
         print(f"  Our Support: {effort['our_support_hours']} hours")
@@ -785,17 +782,17 @@ if __name__ == "__main__":
                     "company": "StartupCo",
                     "company_size": 30,
                     "industry": "saas",
-                    "data_volume": "medium"
+                    "data_volume": "medium",
                 }
-            }
+            },
         )
 
         result2 = await agent.process(state2)
 
-        print(f"\n\nTest 2 - HubSpot Migration (Small Company)")
+        print("\n\nTest 2 - HubSpot Migration (Small Company)")
         print(f"Estimated Timeline: {result2['migration_effort_estimate']['timeline_weeks']} weeks")
-        print(f"\nRecommended Services:")
-        for service in result2['migration_services'][:2]:
+        print("\nRecommended Services:")
+        for service in result2["migration_services"][:2]:
             print(f"\n  {service['service']}")
             print(f"  {service['description']}")
             print(f"  Customer Effort: {service['customer_effort']}")
@@ -804,30 +801,25 @@ if __name__ == "__main__":
         # Test case 3: Migration concerns
         state3 = create_initial_state(
             "I'm worried about migrating from Zendesk. What could go wrong?",
-            context={
-                "customer_metadata": {
-                    "company": "SupportCo",
-                    "company_size": 75
-                }
-            }
+            context={"customer_metadata": {"company": "SupportCo", "company_size": 75}},
         )
 
         result3 = await agent.process(state3)
 
-        print(f"\n\nTest 3 - Addressing Migration Concerns")
-        print(f"Common Concerns & Responses:")
-        for concern in result3['migration_concerns'][:3]:
+        print("\n\nTest 3 - Addressing Migration Concerns")
+        print("Common Concerns & Responses:")
+        for concern in result3["migration_concerns"][:3]:
             print(f"\n  Q: {concern['concern']}")
             print(f"  A: {concern['response']}")
             print(f"  Mitigation: {concern['mitigation']}")
 
-        print(f"\nSuccess Stories:")
-        for story in result3['migration_success_stories']:
+        print("\nSuccess Stories:")
+        for story in result3["migration_success_stories"]:
             print(f"\n  {story['company']} ({story['company_size']} employees)")
             print(f"  From: {story['from_competitor'].title()}")
             print(f"  Timeline: {story['migration_time']}")
             print(f"  Result: {story['outcome']}")
-            print(f"  Quote: \"{story['quote']}\"")
+            print(f'  Quote: "{story["quote"]}"')
 
         print(f"\nConfidence: {result3['response_confidence']:.2f}")
 
