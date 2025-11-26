@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
+from uuid import UUID  # noqa: TC003 - Required at runtime for SQLAlchemy ORM
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -15,8 +16,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.database.models.base import BaseModel
 
 if TYPE_CHECKING:
-    from uuid import UUID
-
     from src.database.models.user import User
 
 
