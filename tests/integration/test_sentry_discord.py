@@ -8,7 +8,7 @@ This script triggers different types of errors to test that:
 
 Usage:
     python test_sentry_discord.py [error_type]
-    
+
 Error types:
     - critical: Trigger a fatal error
     - error: Trigger a regular error
@@ -20,10 +20,6 @@ import os
 import sys
 from pathlib import Path
 
-# Add src to Python path
-project_root = Path(__file__).parent
-sys.path.insert(0, str(project_root / "src"))
-
 # Load .env file if python-dotenv is available
 try:
     from dotenv import load_dotenv
@@ -32,8 +28,10 @@ try:
 except ImportError:
     print("⚠️  python-dotenv not installed, using system environment variables")
 
-# Now we can import from src
-from utils.monitoring import init_sentry, capture_exception, capture_message
+from src.utils.monitoring import init_sentry, capture_exception, capture_message
+
+# project_root for checking directory structure
+project_root = Path(__file__).parent.parent.parent
 
 
 def test_critical_error():
