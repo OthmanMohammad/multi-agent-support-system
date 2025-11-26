@@ -6,15 +6,14 @@ Improves relevance by considering quality, recency, and historical helpfulness.
 
 """
 
-from typing import List, Dict
-from datetime import datetime
 import math
+from datetime import datetime
 
-from src.agents.base.base_agent import BaseAgent
-from src.agents.base.agent_types import AgentType
 from src.agents.base import AgentConfig
-from src.workflow.state import AgentState
+from src.agents.base.agent_types import AgentType
+from src.agents.base.base_agent import BaseAgent
 from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 class KBRanker(BaseAgent):
@@ -41,7 +40,7 @@ class KBRanker(BaseAgent):
             type=AgentType.UTILITY,
             model="",  # No LLM needed for ranking
             temperature=0.0,
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -51,7 +50,7 @@ class KBRanker(BaseAgent):
             similarity_weight=self.SIMILARITY_WEIGHT,
             quality_weight=self.QUALITY_WEIGHT,
             recency_weight=self.RECENCY_WEIGHT,
-            helpfulness_weight=self.HELPFULNESS_WEIGHT
+            helpfulness_weight=self.HELPFULNESS_WEIGHT,
         )
 
     async def process(self, state: AgentState) -> AgentState:
@@ -71,10 +70,7 @@ class KBRanker(BaseAgent):
             state = self.update_state(state, kb_ranked_results=[])
             return state
 
-        self.logger.info(
-            "kb_ranking_started",
-            articles_count=len(kb_results)
-        )
+        self.logger.info("kb_ranking_started", articles_count=len(kb_results))
 
         # Re-rank results
         ranked_results = self.rank(kb_results)
@@ -85,12 +81,12 @@ class KBRanker(BaseAgent):
         self.logger.info(
             "kb_ranking_completed",
             articles_count=len(ranked_results),
-            top_score=ranked_results[0]["final_score"] if ranked_results else 0
+            top_score=ranked_results[0]["final_score"] if ranked_results else 0,
         )
 
         return state
 
-    def rank(self, articles: List[Dict]) -> List[Dict]:
+    def rank(self, articles: list[dict]) -> list[dict]:
         """
         Re-rank articles by multiple factors.
 
@@ -105,35 +101,34 @@ class KBRanker(BaseAgent):
         for idx, article in enumerate(articles):
             # Calculate individual scores
             similarity_score = article.get("similarity_score", 0.0)
-            quality_score = self._normalize_quality_score(
-                article.get("quality_score", None)
-            )
+            quality_score = self._normalize_quality_score(article.get("quality_score", None))
             recency_score = self._calculate_recency_score(
-                article.get("created_at"),
-                article.get("updated_at")
+                article.get("created_at"), article.get("updated_at")
             )
             helpfulness_score = self._calculate_helpfulness_score(
                 article.get("helpful_count", 0),
                 article.get("not_helpful_count", 0),
-                article.get("view_count", 0)
+                article.get("view_count", 0),
             )
 
             # Calculate weighted final score
             final_score = (
-                similarity_score * self.SIMILARITY_WEIGHT +
-                quality_score * self.QUALITY_WEIGHT +
-                recency_score * self.RECENCY_WEIGHT +
-                helpfulness_score * self.HELPFULNESS_WEIGHT
+                similarity_score * self.SIMILARITY_WEIGHT
+                + quality_score * self.QUALITY_WEIGHT
+                + recency_score * self.RECENCY_WEIGHT
+                + helpfulness_score * self.HELPFULNESS_WEIGHT
             )
 
-            ranked_articles.append({
-                **article,  # Keep all original fields
-                "final_score": round(final_score, 3),
-                "quality_score_normalized": round(quality_score, 3),
-                "recency_score": round(recency_score, 3),
-                "helpfulness_score": round(helpfulness_score, 3),
-                "original_rank": idx + 1
-            })
+            ranked_articles.append(
+                {
+                    **article,  # Keep all original fields
+                    "final_score": round(final_score, 3),
+                    "quality_score_normalized": round(quality_score, 3),
+                    "recency_score": round(recency_score, 3),
+                    "helpfulness_score": round(helpfulness_score, 3),
+                    "original_rank": idx + 1,
+                }
+            )
 
         # Sort by final score (descending)
         ranked_articles.sort(key=lambda x: x["final_score"], reverse=True)
@@ -162,9 +157,7 @@ class KBRanker(BaseAgent):
         return max(0.0, min(1.0, quality_score / 100.0))
 
     def _calculate_recency_score(
-        self,
-        created_at: str | datetime | None,
-        updated_at: str | datetime | None = None
+        self, created_at: str | datetime | None, updated_at: str | datetime | None = None
     ) -> float:
         """
         Calculate recency score (0-1).
@@ -188,7 +181,7 @@ class KBRanker(BaseAgent):
         try:
             # Parse date
             if isinstance(date_str, str):
-                article_date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+                article_date = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
             elif isinstance(date_str, datetime):
                 article_date = date_str
             else:
@@ -205,17 +198,12 @@ class KBRanker(BaseAgent):
 
         except (ValueError, AttributeError, TypeError) as e:
             self.logger.warning(
-                "recency_score_calculation_failed",
-                error=str(e),
-                date_str=str(date_str)
+                "recency_score_calculation_failed", error=str(e), date_str=str(date_str)
             )
             return 0.5  # Default if date parsing fails
 
     def _calculate_helpfulness_score(
-        self,
-        helpful_count: int,
-        not_helpful_count: int,
-        view_count: int
+        self, helpful_count: int, not_helpful_count: int, view_count: int
     ) -> float:
         """
         Calculate helpfulness score (0-1).
@@ -247,10 +235,12 @@ class KBRanker(BaseAgent):
 
         try:
             numerator = (
-                positive_ratio +
-                z * z / (2 * total_votes) -
-                z * math.sqrt(
-                    (positive_ratio * (1 - positive_ratio) + z * z / (4 * total_votes)) / total_votes
+                positive_ratio
+                + z * z / (2 * total_votes)
+                - z
+                * math.sqrt(
+                    (positive_ratio * (1 - positive_ratio) + z * z / (4 * total_votes))
+                    / total_votes
                 )
             )
             denominator = 1 + z * z / total_votes
@@ -264,7 +254,7 @@ class KBRanker(BaseAgent):
                 "helpfulness_score_calculation_failed",
                 error=str(e),
                 helpful_count=helpful_count,
-                total_votes=total_votes
+                total_votes=total_votes,
             )
             # Fallback to simple ratio
             return positive_ratio
@@ -274,6 +264,7 @@ if __name__ == "__main__":
     # Test KB Ranker
     import asyncio
     from datetime import timedelta
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -294,7 +285,7 @@ if __name__ == "__main__":
                 "helpful_count": 5,
                 "not_helpful_count": 10,
                 "view_count": 50,
-                "created_at": (now - timedelta(days=400)).isoformat()
+                "created_at": (now - timedelta(days=400)).isoformat(),
             },
             {
                 "article_id": "kb_2",
@@ -304,7 +295,7 @@ if __name__ == "__main__":
                 "helpful_count": 50,
                 "not_helpful_count": 2,
                 "view_count": 500,
-                "created_at": (now - timedelta(days=30)).isoformat()
+                "created_at": (now - timedelta(days=30)).isoformat(),
             },
             {
                 "article_id": "kb_3",
@@ -314,8 +305,8 @@ if __name__ == "__main__":
                 "helpful_count": 30,
                 "not_helpful_count": 3,
                 "view_count": 300,
-                "created_at": (now - timedelta(days=90)).isoformat()
-            }
+                "created_at": (now - timedelta(days=90)).isoformat(),
+            },
         ]
 
         print("\nOriginal ranking (by similarity):")
@@ -330,10 +321,12 @@ if __name__ == "__main__":
         for i, article in enumerate(ranked, 1):
             print(f"  {i}. {article['title']}")
             print(f"     Final Score: {article['final_score']:.3f}")
-            print(f"     Sim: {article['similarity_score']:.2f}, "
-                  f"Qual: {article['quality_score_normalized']:.2f}, "
-                  f"Recency: {article['recency_score']:.2f}, "
-                  f"Helpful: {article['helpfulness_score']:.2f}")
+            print(
+                f"     Sim: {article['similarity_score']:.2f}, "
+                f"Qual: {article['quality_score_normalized']:.2f}, "
+                f"Recency: {article['recency_score']:.2f}, "
+                f"Helpful: {article['helpfulness_score']:.2f}"
+            )
             print(f"     Rank change: {article['rank_change']:+d}")
 
         # Test with state
