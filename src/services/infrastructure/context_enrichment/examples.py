@@ -5,6 +5,7 @@ Run this file to see the context enrichment system in action.
 """
 
 import asyncio
+
 from src.services.infrastructure.context_enrichment import get_context_service
 
 
@@ -81,7 +82,7 @@ async def example_multiple_customers():
     print(f"{'Customer':<15} {'Plan':<10} {'Health':<8} {'Churn Risk':<12} {'Logins/30d'}")
     print("-" * 65)
 
-    for cid, ctx in zip(customer_ids, contexts):
+    for cid, ctx in zip(customer_ids, contexts, strict=False):
         print(
             f"{cid:<15} "
             f"{ctx.customer_intelligence.plan:<10} "
@@ -110,22 +111,22 @@ async def example_account_health_flags():
         ah = context.account_health
 
         if ah.red_flags:
-            print(f"   🚨 RED FLAGS:")
+            print("   🚨 RED FLAGS:")
             for flag in ah.red_flags:
                 print(f"      - {flag}")
 
         if ah.yellow_flags:
-            print(f"   ⚠️  YELLOW FLAGS:")
+            print("   ⚠️  YELLOW FLAGS:")
             for flag in ah.yellow_flags:
                 print(f"      - {flag}")
 
         if ah.green_flags:
-            print(f"   ✅ GREEN FLAGS (Opportunities):")
+            print("   ✅ GREEN FLAGS (Opportunities):")
             for flag in ah.green_flags:
                 print(f"      - {flag}")
 
         if not (ah.red_flags or ah.yellow_flags or ah.green_flags):
-            print(f"   ℹ️  No flags - account is stable")
+            print("   ℹ️  No flags - account is stable")
 
 
 async def example_agent_integration():
@@ -134,7 +135,7 @@ async def example_agent_integration():
     print("EXAMPLE 5: Agent Integration")
     print("=" * 80)
 
-    from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
+    from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 
     # Create a simple test agent
     class TestAgent(BaseAgent):
@@ -142,7 +143,7 @@ async def example_agent_integration():
             config = AgentConfig(
                 name="test_agent",
                 type=AgentType.SPECIALIST,
-                capabilities=[AgentCapability.CONTEXT_AWARE]
+                capabilities=[AgentCapability.CONTEXT_AWARE],
             )
             super().__init__(config)
 
@@ -161,7 +162,7 @@ async def example_agent_integration():
 
     if context:
         print("✅ Context retrieved successfully!")
-        print(f"\n📝 Agent would receive this context in prompts:")
+        print("\n📝 Agent would receive this context in prompts:")
         print("-" * 80)
         print(context.to_prompt_context()[:500] + "...")
     else:
