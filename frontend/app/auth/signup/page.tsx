@@ -137,10 +137,10 @@ export default function SignUpPage(): JSX.Element {
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
-          <CardDescription>
-            Enter your details to get started
-          </CardDescription>
+          <CardTitle className="text-2xl font-bold">
+            Create an account
+          </CardTitle>
+          <CardDescription>Enter your details to get started</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Error message */}
@@ -195,7 +195,8 @@ export default function SignUpPage(): JSX.Element {
                 <p className="text-sm text-error">{errors.password.message}</p>
               )}
               <p className="text-xs text-foreground-secondary">
-                Must be 8+ characters with uppercase, lowercase, number, and special character
+                Must be 8+ characters with uppercase, lowercase, number, and
+                special character
               </p>
             </div>
 
@@ -210,7 +211,9 @@ export default function SignUpPage(): JSX.Element {
                 {...register("confirmPassword")}
               />
               {errors.confirmPassword && (
-                <p className="text-sm text-error">{errors.confirmPassword.message}</p>
+                <p className="text-sm text-error">
+                  {errors.confirmPassword.message}
+                </p>
               )}
             </div>
 
@@ -233,7 +236,9 @@ export default function SignUpPage(): JSX.Element {
                 </div>
               </div>
 
-              <div className={`grid gap-4 ${oauthProviders.google && oauthProviders.github ? "grid-cols-2" : "grid-cols-1"}`}>
+              <div
+                className={`grid gap-4 ${oauthProviders.google && oauthProviders.github ? "grid-cols-2" : "grid-cols-1"}`}
+              >
                 {oauthProviders.google && (
                   <Button
                     type="button"
