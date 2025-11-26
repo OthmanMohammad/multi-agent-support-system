@@ -5,6 +5,8 @@ This middleware adds security-related HTTP headers to all responses
 to protect against common web vulnerabilities.
 """
 
+import contextlib
+
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
@@ -17,6 +19,7 @@ logger = get_logger(__name__)
 # =============================================================================
 # SECURITY HEADERS MIDDLEWARE
 # =============================================================================
+
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """
@@ -68,7 +71,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         logger.info(
             "security_headers_middleware_initialized",
             hsts_enabled=hsts_enabled,
-            csp_enabled=csp_enabled
+            csp_enabled=csp_enabled,
         )
 
     async def dispatch(self, request: Request, call_next):
@@ -125,19 +128,13 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
         # Remove server header (information disclosure)
         # MutableHeaders doesn't have pop(), use del with try/except
-        try:
+        with contextlib.suppress(KeyError):
             del response.headers["Server"]
-        except KeyError:
-            pass
 
         # Add custom header to identify API
         response.headers["X-API-Version"] = "1.0.0"
 
-        logger.debug(
-            "security_headers_added",
-            path=request.url.path,
-            method=request.method
-        )
+        logger.debug("security_headers_added", path=request.url.path, method=request.method)
 
         return response
 
@@ -145,6 +142,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 # =============================================================================
 # CORS SECURITY MIDDLEWARE
 # =============================================================================
+
 
 class CORSSecurityMiddleware(BaseHTTPMiddleware):
     """
@@ -160,10 +158,10 @@ class CORSSecurityMiddleware(BaseHTTPMiddleware):
     def __init__(
         self,
         app: ASGIApp,
-        allowed_origins: list[str] = None,
-        allowed_methods: list[str] = None,
-        allowed_headers: list[str] = None,
-        expose_headers: list[str] = None,
+        allowed_origins: list[str] | None = None,
+        allowed_methods: list[str] | None = None,
+        allowed_headers: list[str] | None = None,
+        expose_headers: list[str] | None = None,
         max_age: int = 600,
         allow_credentials: bool = True,
     ):
@@ -181,13 +179,20 @@ class CORSSecurityMiddleware(BaseHTTPMiddleware):
         """
         super().__init__(app)
         self.allowed_origins = allowed_origins or ["*"]
-        self.allowed_methods = allowed_methods or ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+        self.allowed_methods = allowed_methods or [
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "PATCH",
+            "OPTIONS",
+        ]
         self.allowed_headers = allowed_headers or ["*"]
         self.expose_headers = expose_headers or [
             "X-RateLimit-Limit",
             "X-RateLimit-Remaining",
             "X-RateLimit-Reset",
-            "X-API-Version"
+            "X-API-Version",
         ]
         self.max_age = max_age
         self.allow_credentials = allow_credentials
@@ -195,7 +200,7 @@ class CORSSecurityMiddleware(BaseHTTPMiddleware):
         logger.info(
             "cors_security_middleware_initialized",
             allowed_origins=allowed_origins,
-            allow_credentials=allow_credentials
+            allow_credentials=allow_credentials,
         )
 
     async def dispatch(self, request: Request, call_next):
@@ -222,7 +227,9 @@ class CORSSecurityMiddleware(BaseHTTPMiddleware):
         # Add CORS headers
         if origin and self._is_origin_allowed(origin):
             response.headers["Access-Control-Allow-Origin"] = origin
-            response.headers["Access-Control-Allow-Credentials"] = str(self.allow_credentials).lower()
+            response.headers["Access-Control-Allow-Credentials"] = str(
+                self.allow_credentials
+            ).lower()
 
             if self.expose_headers:
                 response.headers["Access-Control-Expose-Headers"] = ", ".join(self.expose_headers)
@@ -253,7 +260,9 @@ class CORSSecurityMiddleware(BaseHTTPMiddleware):
             response.headers["Access-Control-Allow-Origin"] = origin
             response.headers["Access-Control-Allow-Methods"] = ", ".join(self.allowed_methods)
             response.headers["Access-Control-Allow-Headers"] = ", ".join(self.allowed_headers)
-            response.headers["Access-Control-Allow-Credentials"] = str(self.allow_credentials).lower()
+            response.headers["Access-Control-Allow-Credentials"] = str(
+                self.allow_credentials
+            ).lower()
             response.headers["Access-Control-Max-Age"] = str(self.max_age)
 
         # Vary header for caching
@@ -262,7 +271,7 @@ class CORSSecurityMiddleware(BaseHTTPMiddleware):
         logger.debug(
             "cors_preflight_handled",
             origin=origin,
-            method=request.headers.get("access-control-request-method")
+            method=request.headers.get("access-control-request-method"),
         )
 
         return response
