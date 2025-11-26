@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 pwd_context = CryptContext(
     schemes=["bcrypt"],
     deprecated="auto",
-    bcrypt__rounds=12  # Cost factor (higher = more secure but slower)
+    bcrypt__rounds=12,  # Cost factor (higher = more secure but slower)
 )
 
 
@@ -161,7 +161,7 @@ class PasswordManager:
         if not any(c in special_chars for c in password):
             return (
                 False,
-                f"Password must contain at least one special character ({special_chars})"
+                f"Password must contain at least one special character ({special_chars})",
             )
 
         return True, ""
