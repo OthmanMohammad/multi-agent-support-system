@@ -15,17 +15,15 @@ Part of: EPIC-006 Advanced Workflow Patterns
 """
 
 import asyncio
-from typing import List, Dict, Any, Optional, Callable
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+from typing import Any
+
 import structlog
 
+from src.workflow.exceptions import AgentTimeoutError, WorkflowException
 from src.workflow.state import AgentState
-from src.workflow.exceptions import (
-    WorkflowException,
-    AgentExecutionError,
-    AgentTimeoutError
-)
 
 # Alias for backward compatibility
 WorkflowExecutionError = WorkflowException
@@ -47,13 +45,14 @@ class SequentialStep:
         max_retries: Maximum number of retry attempts
         condition: Optional function to determine if step should execute
     """
+
     agent_name: str
     required: bool = True
     timeout: int = 30
     retry_on_failure: bool = True
     max_retries: int = 2
-    condition: Optional[Callable[[AgentState], bool]] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    condition: Callable[[AgentState], bool] | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -70,13 +69,14 @@ class SequentialResult:
         step_results: Results from each step
         error: Error message if workflow failed
     """
+
     success: bool
-    steps_executed: List[str]
-    steps_skipped: List[str]
-    final_state: Optional[AgentState]
+    steps_executed: list[str]
+    steps_skipped: list[str]
+    final_state: AgentState | None
     execution_time: float
-    step_results: Dict[str, Any]
-    error: Optional[str] = None
+    step_results: dict[str, Any]
+    error: str | None = None
 
 
 class SequentialWorkflow:
@@ -105,10 +105,10 @@ class SequentialWorkflow:
     def __init__(
         self,
         name: str,
-        steps: List[SequentialStep],
+        steps: list[SequentialStep],
         rollback_on_failure: bool = False,
-        overall_timeout: Optional[int] = None,
-        continue_on_optional_failure: bool = True
+        overall_timeout: int | None = None,
+        continue_on_optional_failure: bool = True,
     ):
         """
         Initialize sequential workflow.
@@ -139,13 +139,11 @@ class SequentialWorkflow:
             self.logger.warning(
                 "long_workflow",
                 step_count=len(self.steps),
-                message="Workflow has many steps, consider breaking into smaller workflows"
+                message="Workflow has many steps, consider breaking into smaller workflows",
             )
 
     async def execute(
-        self,
-        initial_state: AgentState,
-        agent_executor: Callable[[str, AgentState], Any]
+        self, initial_state: AgentState, agent_executor: Callable[[str, AgentState], Any]
     ) -> SequentialResult:
         """
         Execute the sequential workflow.
@@ -158,15 +156,13 @@ class SequentialWorkflow:
             SequentialResult with execution details
         """
         start_time = datetime.now(UTC)
-        executed_steps: List[str] = []
-        skipped_steps: List[str] = []
-        step_results: Dict[str, Any] = {}
+        executed_steps: list[str] = []
+        skipped_steps: list[str] = []
+        step_results: dict[str, Any] = {}
         current_state = initial_state.copy()
 
         self.logger.info(
-            "workflow_started",
-            step_count=len(self.steps),
-            timeout=self.overall_timeout
+            "workflow_started", step_count=len(self.steps), timeout=self.overall_timeout
         )
 
         try:
@@ -188,17 +184,14 @@ class SequentialWorkflow:
                         "step_skipped",
                         step=step.agent_name,
                         step_num=step_num,
-                        reason="condition_not_met"
+                        reason="condition_not_met",
                     )
                     skipped_steps.append(step.agent_name)
                     continue
 
                 # Execute step with retries
                 step_result = await self._execute_step(
-                    step=step,
-                    state=current_state,
-                    agent_executor=agent_executor,
-                    step_num=step_num
+                    step=step, state=current_state, agent_executor=agent_executor, step_num=step_num
                 )
 
                 # Handle step result
@@ -211,54 +204,52 @@ class SequentialWorkflow:
                         "step_completed",
                         step=step.agent_name,
                         step_num=step_num,
-                        execution_time=step_result["execution_time"]
+                        execution_time=step_result["execution_time"],
                     )
+                # Step failed
+                elif step.required:
+                    # Required step failed - workflow fails
+                    error_msg = f"Required step '{step.agent_name}' failed: {step_result['error']}"
+                    self.logger.error(
+                        "workflow_failed",
+                        step=step.agent_name,
+                        step_num=step_num,
+                        error=step_result["error"],
+                    )
+
+                    if self.rollback_on_failure:
+                        await self._rollback(executed_steps)
+
+                    return SequentialResult(
+                        success=False,
+                        steps_executed=executed_steps,
+                        steps_skipped=skipped_steps,
+                        final_state=current_state,
+                        execution_time=(datetime.now(UTC) - start_time).total_seconds(),
+                        step_results=step_results,
+                        error=error_msg,
+                    )
+                # Optional step failed
+                elif self.continue_on_optional_failure:
+                    self.logger.warning(
+                        "optional_step_failed",
+                        step=step.agent_name,
+                        step_num=step_num,
+                        error=step_result["error"],
+                    )
+                    skipped_steps.append(step.agent_name)
+                    step_results[step.agent_name] = step_result
                 else:
-                    # Step failed
-                    if step.required:
-                        # Required step failed - workflow fails
-                        error_msg = f"Required step '{step.agent_name}' failed: {step_result['error']}"
-                        self.logger.error(
-                            "workflow_failed",
-                            step=step.agent_name,
-                            step_num=step_num,
-                            error=step_result["error"]
-                        )
-
-                        if self.rollback_on_failure:
-                            await self._rollback(executed_steps)
-
-                        return SequentialResult(
-                            success=False,
-                            steps_executed=executed_steps,
-                            steps_skipped=skipped_steps,
-                            final_state=current_state,
-                            execution_time=(datetime.now(UTC) - start_time).total_seconds(),
-                            step_results=step_results,
-                            error=error_msg
-                        )
-                    else:
-                        # Optional step failed
-                        if self.continue_on_optional_failure:
-                            self.logger.warning(
-                                "optional_step_failed",
-                                step=step.agent_name,
-                                step_num=step_num,
-                                error=step_result["error"]
-                            )
-                            skipped_steps.append(step.agent_name)
-                            step_results[step.agent_name] = step_result
-                        else:
-                            # Don't continue on optional failure
-                            return SequentialResult(
-                                success=False,
-                                steps_executed=executed_steps,
-                                steps_skipped=skipped_steps,
-                                final_state=current_state,
-                                execution_time=(datetime.now(UTC) - start_time).total_seconds(),
-                                step_results=step_results,
-                                error=f"Optional step failed: {step_result['error']}"
-                            )
+                    # Don't continue on optional failure
+                    return SequentialResult(
+                        success=False,
+                        steps_executed=executed_steps,
+                        steps_skipped=skipped_steps,
+                        final_state=current_state,
+                        execution_time=(datetime.now(UTC) - start_time).total_seconds(),
+                        step_results=step_results,
+                        error=f"Optional step failed: {step_result['error']}",
+                    )
 
             # All steps completed
             execution_time = (datetime.now(UTC) - start_time).total_seconds()
@@ -267,7 +258,7 @@ class SequentialWorkflow:
                 "workflow_completed",
                 steps_executed=len(executed_steps),
                 steps_skipped=len(skipped_steps),
-                execution_time=execution_time
+                execution_time=execution_time,
             )
 
             return SequentialResult(
@@ -276,7 +267,7 @@ class SequentialWorkflow:
                 steps_skipped=skipped_steps,
                 final_state=current_state,
                 execution_time=execution_time,
-                step_results=step_results
+                step_results=step_results,
             )
 
         except WorkflowTimeoutError as e:
@@ -288,7 +279,7 @@ class SequentialWorkflow:
                 final_state=current_state,
                 execution_time=(datetime.now(UTC) - start_time).total_seconds(),
                 step_results=step_results,
-                error=str(e)
+                error=str(e),
             )
         except Exception as e:
             self.logger.error("workflow_error", error=str(e), exc_info=True)
@@ -299,16 +290,12 @@ class SequentialWorkflow:
                 final_state=current_state,
                 execution_time=(datetime.now(UTC) - start_time).total_seconds(),
                 step_results=step_results,
-                error=f"Workflow error: {str(e)}"
+                error=f"Workflow error: {e!s}",
             )
 
     async def _execute_step(
-        self,
-        step: SequentialStep,
-        state: AgentState,
-        agent_executor: Callable,
-        step_num: int
-    ) -> Dict[str, Any]:
+        self, step: SequentialStep, state: AgentState, agent_executor: Callable, step_num: int
+    ) -> dict[str, Any]:
         """
         Execute a single step with retries.
 
@@ -331,16 +318,12 @@ class SequentialWorkflow:
                 step_start = datetime.now(UTC)
 
                 self.logger.debug(
-                    "step_executing",
-                    step=step.agent_name,
-                    step_num=step_num,
-                    attempt=attempts
+                    "step_executing", step=step.agent_name, step_num=step_num, attempt=attempts
                 )
 
                 # Execute with timeout
                 result = await asyncio.wait_for(
-                    agent_executor(step.agent_name, state),
-                    timeout=step.timeout
+                    agent_executor(step.agent_name, state), timeout=step.timeout
                 )
 
                 execution_time = (datetime.now(UTC) - step_start).total_seconds()
@@ -349,39 +332,28 @@ class SequentialWorkflow:
                     "success": True,
                     "state": result,
                     "execution_time": execution_time,
-                    "attempts": attempts
+                    "attempts": attempts,
                 }
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 last_error = f"Step timed out after {step.timeout}s"
                 self.logger.warning(
-                    "step_timeout",
-                    step=step.agent_name,
-                    attempt=attempts,
-                    timeout=step.timeout
+                    "step_timeout", step=step.agent_name, attempt=attempts, timeout=step.timeout
                 )
             except Exception as e:
                 last_error = str(e)
                 self.logger.warning(
-                    "step_failed",
-                    step=step.agent_name,
-                    attempt=attempts,
-                    error=str(e)
+                    "step_failed", step=step.agent_name, attempt=attempts, error=str(e)
                 )
 
             # Wait before retry
             if attempts <= step.max_retries and step.retry_on_failure:
-                await asyncio.sleep(min(2 ** attempts, 10))  # Exponential backoff
+                await asyncio.sleep(min(2**attempts, 10))  # Exponential backoff
 
         # All retries exhausted
-        return {
-            "success": False,
-            "error": last_error,
-            "attempts": attempts,
-            "execution_time": 0
-        }
+        return {"success": False, "error": last_error, "attempts": attempts, "execution_time": 0}
 
-    async def _rollback(self, executed_steps: List[str]):
+    async def _rollback(self, executed_steps: list[str]):
         """
         Rollback executed steps (if supported by agents).
 
@@ -397,11 +369,7 @@ class SequentialWorkflow:
                 # This is a placeholder - agents would need to implement rollback
                 self.logger.debug("step_rolled_back", step=agent_name)
             except Exception as e:
-                self.logger.error(
-                    "rollback_failed",
-                    step=agent_name,
-                    error=str(e)
-                )
+                self.logger.error("rollback_failed", step=agent_name, error=str(e))
 
         self.logger.info("rollback_completed")
 
@@ -409,10 +377,10 @@ class SequentialWorkflow:
 # Convenience function for quick sequential execution
 async def execute_sequential(
     workflow_name: str,
-    agent_names: List[str],
+    agent_names: list[str],
     initial_state: AgentState,
     agent_executor: Callable,
-    **kwargs
+    **kwargs,
 ) -> SequentialResult:
     """
     Quick helper to execute agents sequentially.
