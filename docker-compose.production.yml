@@ -1,0 +1,408 @@
+# =============================================================================
+# Multi-Agent Support System - Production Docker Compose
+# Optimized for Oracle Cloud Always Free Tier (24GB RAM, 4 vCPUs ARM64)
+# Domain: thatagentsproject.com
+# =============================================================================
+
+version: '3.8'
+
+# =============================================================================
+# SERVICES
+# =============================================================================
+services:
+  # ===========================================================================
+  # Frontend - Next.js Application
+  # ===========================================================================
+  frontend:
+    image: ${FRONTEND_IMAGE:-ghcr.io/owner/repo/frontend:latest}
+    container_name: frontend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=https://api.thatagentsproject.com
+      - NEXT_PUBLIC_APP_URL=https://thatagentsproject.com
+      - NEXTAUTH_URL=https://thatagentsproject.com
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "com.thatagentsproject.service=frontend"
+      - "com.thatagentsproject.tier=application"
+
+  # ===========================================================================
+  # Backend - FastAPI Application
+  # ===========================================================================
+  fastapi:
+    image: ${BACKEND_IMAGE:-ghcr.io/owner/repo/backend:latest}
+    container_name: fastapi
+    restart: unless-stopped
+    environment:
+      # Database
+      - DATABASE_URL=${DATABASE_URL}
+      # Redis
+      - REDIS_URL=redis://redis:6379/0
+      - REDIS_ENABLED=true
+      - REDIS_RATE_LIMIT_ENABLED=true
+      - REDIS_TOKEN_BLACKLIST_ENABLED=true
+      # LLM
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      # Vector Store
+      - QDRANT_URL=${QDRANT_URL}
+      - QDRANT_API_KEY=${QDRANT_API_KEY}
+      # Security
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - ENVIRONMENT=production
+      # CORS - Production domains only
+      - API_CORS_ORIGINS=["https://thatagentsproject.com","https://www.thatagentsproject.com"]
+      # Logging
+      - LOG_LEVEL=INFO
+      - LOG_FORMAT=json
+      - LOG_MASK_PII=true
+      # Monitoring
+      - SENTRY_DSN=${SENTRY_DSN}
+      - SENTRY_ENVIRONMENT=production
+      - SENTRY_TRACES_SAMPLE_RATE=0.1
+      # OAuth
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+    volumes:
+      - app-logs:/app/logs
+      - huggingface-cache:/app/.cache
+    networks:
+      - app-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 3G
+        reservations:
+          cpus: '1'
+          memory: 2G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "com.thatagentsproject.service=fastapi"
+      - "com.thatagentsproject.tier=application"
+
+  # ===========================================================================
+  # PostgreSQL Database
+  # ===========================================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB:-support_agent}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./deployment/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 6G
+        reservations:
+          cpus: '1'
+          memory: 4G
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-support_agent}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    labels:
+      - "com.thatagentsproject.service=postgres"
+      - "com.thatagentsproject.tier=database"
+
+  # ===========================================================================
+  # Redis Cache
+  # ===========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - redis-data:/data
+      - ./deployment/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    labels:
+      - "com.thatagentsproject.service=redis"
+      - "com.thatagentsproject.tier=cache"
+
+  # ===========================================================================
+  # Nginx Reverse Proxy
+  # ===========================================================================
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deployment/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deployment/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./deployment/certbot/conf:/etc/letsencrypt:ro
+      - ./deployment/certbot/www:/var/www/certbot:ro
+      - nginx-logs:/var/log/nginx
+    networks:
+      - app-network
+    depends_on:
+      - fastapi
+      - frontend
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "com.thatagentsproject.service=nginx"
+      - "com.thatagentsproject.tier=proxy"
+
+  # ===========================================================================
+  # Certbot (SSL Certificate Management)
+  # ===========================================================================
+  certbot:
+    image: certbot/certbot:latest
+    container_name: certbot
+    volumes:
+      - ./deployment/certbot/conf:/etc/letsencrypt
+      - ./deployment/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - app-network
+    labels:
+      - "com.thatagentsproject.service=certbot"
+      - "com.thatagentsproject.tier=ssl"
+
+  # ===========================================================================
+  # Prometheus (Metrics Collection)
+  # ===========================================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    volumes:
+      - ./deployment/prometheus:/etc/prometheus:ro
+      - prometheus-data:/prometheus
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "com.thatagentsproject.service=prometheus"
+      - "com.thatagentsproject.tier=monitoring"
+
+  # ===========================================================================
+  # Grafana (Dashboards)
+  # ===========================================================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=https://thatagentsproject.com/grafana
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - ./deployment/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./deployment/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    networks:
+      - app-network
+    depends_on:
+      - prometheus
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "com.thatagentsproject.service=grafana"
+      - "com.thatagentsproject.tier=monitoring"
+
+  # ===========================================================================
+  # Node Exporter (System Metrics)
+  # ===========================================================================
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+    labels:
+      - "com.thatagentsproject.service=node-exporter"
+      - "com.thatagentsproject.tier=monitoring"
+
+  # ===========================================================================
+  # PostgreSQL Exporter
+  # ===========================================================================
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: postgres-exporter
+    restart: unless-stopped
+    environment:
+      - DATA_SOURCE_URI=postgres:5432/${POSTGRES_DB:-support_agent}?sslmode=disable
+      - DATA_SOURCE_USER=${POSTGRES_USER:-postgres}
+      - DATA_SOURCE_PASS=${POSTGRES_PASSWORD}
+    networks:
+      - app-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+    labels:
+      - "com.thatagentsproject.service=postgres-exporter"
+      - "com.thatagentsproject.tier=monitoring"
+
+  # ===========================================================================
+  # Redis Exporter
+  # ===========================================================================
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: redis-exporter
+    restart: unless-stopped
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+    networks:
+      - app-network
+    depends_on:
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+    labels:
+      - "com.thatagentsproject.service=redis-exporter"
+      - "com.thatagentsproject.tier=monitoring"
+
+# =============================================================================
+# NETWORKS
+# =============================================================================
+networks:
+  app-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+# =============================================================================
+# VOLUMES
+# =============================================================================
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  app-logs:
+    driver: local
+  nginx-logs:
+    driver: local
+  huggingface-cache:
+    driver: local
