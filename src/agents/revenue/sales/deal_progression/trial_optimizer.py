@@ -631,7 +631,11 @@ Recommended Actions:
 
 Generate a helpful trial optimization response."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # Trial optimization uses trial data context
+        )
         return response
 
 
