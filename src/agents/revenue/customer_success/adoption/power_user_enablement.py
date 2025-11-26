@@ -5,13 +5,13 @@ Identifies power users, provides advanced training, builds product champions,
 and leverages advocates to drive broader adoption and expansion.
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("power_user_enablement", tier="revenue", category="customer_success")
@@ -34,26 +34,26 @@ class PowerUserEnablementAgent(BaseAgent):
             "min_login_days": 20,
             "min_features_used": 10,
             "min_actions_per_day": 20,
-            "advanced_features": 3
+            "advanced_features": 3,
         },
         "advanced": {
             "min_login_days": 15,
             "min_features_used": 7,
             "min_actions_per_day": 10,
-            "advanced_features": 1
+            "advanced_features": 1,
         },
         "regular": {
             "min_login_days": 10,
             "min_features_used": 5,
             "min_actions_per_day": 5,
-            "advanced_features": 0
+            "advanced_features": 0,
         },
         "casual": {
             "min_login_days": 5,
             "min_features_used": 3,
             "min_actions_per_day": 2,
-            "advanced_features": 0
-        }
+            "advanced_features": 0,
+        },
     }
 
     # Champion program maturity
@@ -62,7 +62,7 @@ class PowerUserEnablementAgent(BaseAgent):
         "emerging": {"score_range": (21, 40), "champion_count": 2},
         "developing": {"score_range": (41, 65), "champion_count": 5},
         "established": {"score_range": (66, 85), "champion_count": 10},
-        "thriving": {"score_range": (86, 100), "champion_count": 15}
+        "thriving": {"score_range": (86, 100), "champion_count": 15},
     }
 
     # Champion activities
@@ -74,7 +74,7 @@ class PowerUserEnablementAgent(BaseAgent):
         "Participate in customer advisory board",
         "Contribute to case studies",
         "Speak at events or webinars",
-        "Share best practices in community"
+        "Share best practices in community",
     ]
 
     def __init__(self):
@@ -83,12 +83,9 @@ class PowerUserEnablementAgent(BaseAgent):
             type=AgentType.SPECIALIST,
             temperature=0.4,
             max_tokens=800,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.KB_SEARCH
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.KB_SEARCH],
             kb_category="customer_success",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -116,39 +113,25 @@ class PowerUserEnablementAgent(BaseAgent):
             "power_user_enablement_details",
             customer_id=customer_id,
             total_users=len(user_data.get("users", [])),
-            current_champions=len(current_champions)
+            current_champions=len(current_champions),
         )
 
         # Identify and segment users
-        user_analysis = self._analyze_user_segments(
-            user_data,
-            current_champions
-        )
+        user_analysis = self._analyze_user_segments(user_data, current_champions)
 
         # Identify champion candidates
-        champion_candidates = self._identify_champion_candidates(
-            user_analysis,
-            customer_metadata
-        )
+        champion_candidates = self._identify_champion_candidates(user_analysis, customer_metadata)
 
         # Create enablement strategy
         enablement_strategy = self._create_enablement_strategy(
-            user_analysis,
-            champion_candidates,
-            customer_metadata
+            user_analysis, champion_candidates, customer_metadata
         )
 
         # Develop champion program
-        champion_program = self._develop_champion_program(
-            user_analysis,
-            champion_candidates
-        )
+        champion_program = self._develop_champion_program(user_analysis, champion_candidates)
 
         # Calculate impact metrics
-        impact_metrics = self._calculate_champion_impact(
-            user_analysis,
-            champion_candidates
-        )
+        impact_metrics = self._calculate_champion_impact(user_analysis, champion_candidates)
 
         # Format response
         response = self._format_enablement_report(
@@ -156,7 +139,7 @@ class PowerUserEnablementAgent(BaseAgent):
             champion_candidates,
             enablement_strategy,
             champion_program,
-            impact_metrics
+            impact_metrics,
         )
 
         state["agent_response"] = response
@@ -174,16 +157,14 @@ class PowerUserEnablementAgent(BaseAgent):
             customer_id=customer_id,
             maturity=user_analysis["champion_maturity"],
             power_users=user_analysis["power_user_count"],
-            candidates=len(champion_candidates)
+            candidates=len(champion_candidates),
         )
 
         return state
 
     def _analyze_user_segments(
-        self,
-        user_data: Dict[str, Any],
-        current_champions: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        self, user_data: dict[str, Any], current_champions: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """
         Analyze and segment users by engagement level.
 
@@ -203,7 +184,7 @@ class PowerUserEnablementAgent(BaseAgent):
             "advanced": [],
             "regular": [],
             "casual": [],
-            "inactive": []
+            "inactive": [],
         }
 
         for user in users:
@@ -217,17 +198,14 @@ class PowerUserEnablementAgent(BaseAgent):
         # Calculate champion program maturity
         champion_count = len(current_champions)
         champion_score = self._calculate_champion_score(
-            champion_count,
-            power_user_count,
-            current_champions
+            champion_count, power_user_count, current_champions
         )
 
         champion_maturity = self._determine_champion_maturity(champion_score, champion_count)
 
         # Analyze champion effectiveness
         champion_effectiveness = self._analyze_champion_effectiveness(
-            current_champions,
-            segmented_users
+            current_champions, segmented_users
         )
 
         # Calculate power user ratio
@@ -243,10 +221,10 @@ class PowerUserEnablementAgent(BaseAgent):
             "champion_score": round(champion_score, 1),
             "champion_maturity": champion_maturity,
             "champion_effectiveness": champion_effectiveness,
-            "analyzed_at": datetime.now(UTC).isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat(),
         }
 
-    def _classify_user(self, user: Dict[str, Any]) -> str:
+    def _classify_user(self, user: dict[str, Any]) -> str:
         """Classify user into engagement tier."""
         login_days = user.get("login_days_last_30", 0)
         features_used = user.get("features_used_count", 0)
@@ -255,19 +233,18 @@ class PowerUserEnablementAgent(BaseAgent):
 
         # Check each tier from highest to lowest
         for tier, criteria in self.USER_TIERS.items():
-            if (login_days >= criteria["min_login_days"] and
-                features_used >= criteria["min_features_used"] and
-                actions_per_day >= criteria["min_actions_per_day"] and
-                advanced_features >= criteria["advanced_features"]):
+            if (
+                login_days >= criteria["min_login_days"]
+                and features_used >= criteria["min_features_used"]
+                and actions_per_day >= criteria["min_actions_per_day"]
+                and advanced_features >= criteria["advanced_features"]
+            ):
                 return tier
 
         return "inactive"
 
     def _calculate_champion_score(
-        self,
-        champion_count: int,
-        power_user_count: int,
-        current_champions: List[Dict[str, Any]]
+        self, champion_count: int, power_user_count: int, current_champions: list[dict[str, Any]]
     ) -> float:
         """Calculate champion program score (0-100)."""
         # Count score (max at 15 champions)
@@ -283,8 +260,7 @@ class PowerUserEnablementAgent(BaseAgent):
 
         # Activity score (based on champion engagement)
         active_champions = sum(
-            1 for champ in current_champions
-            if champ.get("activities_completed", 0) > 0
+            1 for champ in current_champions if champ.get("activities_completed", 0) > 0
         )
         activity_score = (active_champions / champion_count * 100) if champion_count > 0 else 0
 
@@ -303,16 +279,12 @@ class PowerUserEnablementAgent(BaseAgent):
 
     def _analyze_champion_effectiveness(
         self,
-        current_champions: List[Dict[str, Any]],
-        segmented_users: Dict[str, List[Dict[str, Any]]]
-    ) -> Dict[str, Any]:
+        current_champions: list[dict[str, Any]],
+        segmented_users: dict[str, list[dict[str, Any]]],
+    ) -> dict[str, Any]:
         """Analyze effectiveness of current champions."""
         if not current_champions:
-            return {
-                "avg_activities": 0,
-                "avg_impact_score": 0,
-                "total_users_helped": 0
-            }
+            return {"avg_activities": 0, "avg_impact_score": 0, "total_users_helped": 0}
 
         total_activities = sum(champ.get("activities_completed", 0) for champ in current_champions)
         total_users_helped = sum(champ.get("users_helped", 0) for champ in current_champions)
@@ -321,14 +293,12 @@ class PowerUserEnablementAgent(BaseAgent):
         return {
             "avg_activities": round(total_activities / len(current_champions), 1),
             "avg_impact_score": round(total_impact / len(current_champions), 1),
-            "total_users_helped": total_users_helped
+            "total_users_helped": total_users_helped,
         }
 
     def _identify_champion_candidates(
-        self,
-        user_analysis: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        self, user_analysis: dict[str, Any], customer_metadata: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Identify users who would make good product champions."""
         candidates = []
 
@@ -339,39 +309,43 @@ class PowerUserEnablementAgent(BaseAgent):
         for user in power_users[:10]:  # Top 10 power users
             candidate_score = self._calculate_candidate_score(user, "power_user")
 
-            candidates.append({
-                "user_id": user.get("user_id"),
-                "user_name": user.get("user_name", "User"),
-                "user_email": user.get("user_email", ""),
-                "current_tier": "power_user",
-                "candidate_score": candidate_score,
-                "strengths": self._identify_user_strengths(user),
-                "recommended_activities": self._recommend_champion_activities(user),
-                "potential_impact": "High - Can influence team adoption"
-            })
+            candidates.append(
+                {
+                    "user_id": user.get("user_id"),
+                    "user_name": user.get("user_name", "User"),
+                    "user_email": user.get("user_email", ""),
+                    "current_tier": "power_user",
+                    "candidate_score": candidate_score,
+                    "strengths": self._identify_user_strengths(user),
+                    "recommended_activities": self._recommend_champion_activities(user),
+                    "potential_impact": "High - Can influence team adoption",
+                }
+            )
 
         # Advanced users with high potential
         for user in advanced_users[:5]:
             candidate_score = self._calculate_candidate_score(user, "advanced")
 
             if candidate_score >= 60:  # Only high-scoring advanced users
-                candidates.append({
-                    "user_id": user.get("user_id"),
-                    "user_name": user.get("user_name", "User"),
-                    "user_email": user.get("user_email", ""),
-                    "current_tier": "advanced",
-                    "candidate_score": candidate_score,
-                    "strengths": self._identify_user_strengths(user),
-                    "recommended_activities": self._recommend_champion_activities(user),
-                    "potential_impact": "Medium - Can mentor peers"
-                })
+                candidates.append(
+                    {
+                        "user_id": user.get("user_id"),
+                        "user_name": user.get("user_name", "User"),
+                        "user_email": user.get("user_email", ""),
+                        "current_tier": "advanced",
+                        "candidate_score": candidate_score,
+                        "strengths": self._identify_user_strengths(user),
+                        "recommended_activities": self._recommend_champion_activities(user),
+                        "potential_impact": "Medium - Can mentor peers",
+                    }
+                )
 
         # Sort by candidate score
         candidates.sort(key=lambda x: x["candidate_score"], reverse=True)
 
         return candidates[:12]
 
-    def _calculate_candidate_score(self, user: Dict[str, Any], tier: str) -> int:
+    def _calculate_candidate_score(self, user: dict[str, Any], tier: str) -> int:
         """Calculate champion candidate score (0-100)."""
         base_score = 80 if tier == "power_user" else 60
 
@@ -387,7 +361,7 @@ class PowerUserEnablementAgent(BaseAgent):
 
         return int(min(total_score, 100))
 
-    def _identify_user_strengths(self, user: Dict[str, Any]) -> List[str]:
+    def _identify_user_strengths(self, user: dict[str, Any]) -> list[str]:
         """Identify specific strengths of a user."""
         strengths = []
 
@@ -411,7 +385,7 @@ class PowerUserEnablementAgent(BaseAgent):
 
         return strengths[:3]
 
-    def _recommend_champion_activities(self, user: Dict[str, Any]) -> List[str]:
+    def _recommend_champion_activities(self, user: dict[str, Any]) -> list[str]:
         """Recommend champion activities based on user profile."""
         activities = []
 
@@ -426,19 +400,18 @@ class PowerUserEnablementAgent(BaseAgent):
             activities.append("Contribute to case study")
 
         # Default activities
-        activities.extend([
-            "Share best practices in team meetings",
-            "Test and provide feedback on new features"
-        ])
+        activities.extend(
+            ["Share best practices in team meetings", "Test and provide feedback on new features"]
+        )
 
         return activities[:4]
 
     def _create_enablement_strategy(
         self,
-        user_analysis: Dict[str, Any],
-        champion_candidates: List[Dict[str, Any]],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        user_analysis: dict[str, Any],
+        champion_candidates: list[dict[str, Any]],
+        customer_metadata: dict[str, Any],
+    ) -> dict[str, Any]:
         """Create power user enablement strategy."""
         maturity = user_analysis["champion_maturity"]
         power_user_count = user_analysis["power_user_count"]
@@ -448,7 +421,7 @@ class PowerUserEnablementAgent(BaseAgent):
             "target_champion_count": 0,
             "recruitment_tactics": [],
             "enablement_tactics": [],
-            "success_metrics": []
+            "success_metrics": [],
         }
 
         # Determine focus based on maturity
@@ -458,7 +431,7 @@ class PowerUserEnablementAgent(BaseAgent):
             strategy["recruitment_tactics"] = [
                 "Identify and reach out to top 5 power users",
                 "Pitch champion program benefits (early access, recognition, etc.)",
-                "Start with low-commitment activities"
+                "Start with low-commitment activities",
             ]
 
         elif maturity == "developing":
@@ -467,7 +440,7 @@ class PowerUserEnablementAgent(BaseAgent):
             strategy["recruitment_tactics"] = [
                 "Expand champion network by 50%",
                 "Recruit from advanced user tier",
-                "Create champion application process"
+                "Create champion application process",
             ]
 
         else:  # established or thriving
@@ -476,7 +449,7 @@ class PowerUserEnablementAgent(BaseAgent):
             strategy["recruitment_tactics"] = [
                 "Maintain steady champion pipeline",
                 "Graduate top performers to advisory board",
-                "Focus on champion retention"
+                "Focus on champion retention",
             ]
 
         # Enablement tactics (common to all)
@@ -485,7 +458,7 @@ class PowerUserEnablementAgent(BaseAgent):
             "Grant early access to beta features",
             "Create champion-only Slack channel or community",
             "Recognize champions publicly (badges, certificates, etc.)",
-            "Offer direct line to product team"
+            "Offer direct line to product team",
         ]
 
         # Success metrics
@@ -493,23 +466,21 @@ class PowerUserEnablementAgent(BaseAgent):
             f"Recruit {strategy['target_champion_count']} active champions",
             "Each champion completes 2+ activities per quarter",
             "Champions help train 50+ other users",
-            "Measure 15%+ adoption increase in champion's teams"
+            "Measure 15%+ adoption increase in champion's teams",
         ]
 
         return strategy
 
     def _develop_champion_program(
-        self,
-        user_analysis: Dict[str, Any],
-        champion_candidates: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        self, user_analysis: dict[str, Any], champion_candidates: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Develop champion program structure."""
         program = {
             "program_name": "Product Champions",
             "tiers": [],
             "benefits": [],
             "responsibilities": [],
-            "quarterly_activities": []
+            "quarterly_activities": [],
         }
 
         # Program tiers
@@ -517,13 +488,13 @@ class PowerUserEnablementAgent(BaseAgent):
             {
                 "name": "Champion",
                 "requirements": "Active power user, completes 2+ activities/quarter",
-                "benefits": "Early access to features, exclusive training"
+                "benefits": "Early access to features, exclusive training",
             },
             {
                 "name": "Senior Champion",
                 "requirements": "6+ months as Champion, exceptional impact",
-                "benefits": "All Champion benefits + advisory board seat"
-            }
+                "benefits": "All Champion benefits + advisory board seat",
+            },
         ]
 
         # Benefits
@@ -533,7 +504,7 @@ class PowerUserEnablementAgent(BaseAgent):
             "Recognition badges and certificates",
             "Invitations to customer advisory board",
             "Speaking opportunities at events",
-            "Feature in customer success stories"
+            "Feature in customer success stories",
         ]
 
         # Responsibilities
@@ -542,7 +513,7 @@ class PowerUserEnablementAgent(BaseAgent):
             "Provide feedback on new features and improvements",
             "Help onboard and train team members",
             "Share best practices and use cases",
-            "Participate in monthly champion calls"
+            "Participate in monthly champion calls",
         ]
 
         # Quarterly activities
@@ -550,19 +521,17 @@ class PowerUserEnablementAgent(BaseAgent):
             "Host 1-2 internal training sessions",
             "Create 1 template or workflow to share",
             "Test 1-2 beta features and provide feedback",
-            "Mentor 3-5 newer or struggling users"
+            "Mentor 3-5 newer or struggling users",
         ]
 
         return program
 
     def _calculate_champion_impact(
-        self,
-        user_analysis: Dict[str, Any],
-        champion_candidates: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        self, user_analysis: dict[str, Any], champion_candidates: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Calculate potential impact of champion program."""
         total_users = user_analysis["total_users"]
-        current_champions = user_analysis["champion_count"]
+        user_analysis["champion_count"]
         target_champions = len(champion_candidates)
 
         # Estimate users each champion can influence (avg 10 users)
@@ -574,7 +543,9 @@ class PowerUserEnablementAgent(BaseAgent):
         potential_adoption_increase = min(potential_reach * adoption_multiplier, total_users * 0.3)
 
         # Calculate expansion potential
-        expansion_likelihood = "high" if target_champions >= 5 else "medium" if target_champions >= 3 else "low"
+        expansion_likelihood = (
+            "high" if target_champions >= 5 else "medium" if target_champions >= 3 else "low"
+        )
 
         # NPS impact (champions typically increase NPS by 10-20 points)
         nps_impact = "+10-20 points from champion advocacy"
@@ -585,16 +556,16 @@ class PowerUserEnablementAgent(BaseAgent):
             "potential_adoption_increase": int(potential_adoption_increase),
             "expansion_likelihood": expansion_likelihood,
             "nps_impact": nps_impact,
-            "reference_potential": "High" if target_champions >= 5 else "Medium"
+            "reference_potential": "High" if target_champions >= 5 else "Medium",
         }
 
     def _format_enablement_report(
         self,
-        user_analysis: Dict[str, Any],
-        champion_candidates: List[Dict[str, Any]],
-        enablement_strategy: Dict[str, Any],
-        champion_program: Dict[str, Any],
-        impact_metrics: Dict[str, Any]
+        user_analysis: dict[str, Any],
+        champion_candidates: list[dict[str, Any]],
+        enablement_strategy: dict[str, Any],
+        champion_program: dict[str, Any],
+        impact_metrics: dict[str, Any],
     ) -> str:
         """Format power user enablement report."""
         maturity = user_analysis["champion_maturity"]
@@ -604,15 +575,15 @@ class PowerUserEnablementAgent(BaseAgent):
             "emerging": "????",
             "developing": "????",
             "established": "????",
-            "thriving": "????"
+            "thriving": "????",
         }
 
-        report = f"""**{maturity_emoji.get(maturity, '????')} Power User Enablement Report**
+        report = f"""**{maturity_emoji.get(maturity, "????")} Power User Enablement Report**
 
 **Champion Program Maturity:** {maturity.upper()}
-**Champion Score:** {user_analysis['champion_score']}/100
-**Current Champions:** {user_analysis['champion_count']}
-**Power Users:** {user_analysis['power_user_count']} ({user_analysis['power_user_ratio']}% of users)
+**Champion Score:** {user_analysis["champion_score"]}/100
+**Current Champions:** {user_analysis["champion_count"]}
+**Power Users:** {user_analysis["power_user_count"]} ({user_analysis["power_user_ratio"]}% of users)
 
 **User Segmentation:**
 """
@@ -621,13 +592,21 @@ class PowerUserEnablementAgent(BaseAgent):
         for tier in ["power_user", "advanced", "regular", "casual"]:
             count = len(user_analysis["segmented_users"].get(tier, []))
             if count > 0:
-                tier_icon = "???" if tier == "power_user" else "????" if tier == "advanced" else "???" if tier == "regular" else "????"
+                tier_icon = (
+                    "???"
+                    if tier == "power_user"
+                    else "????"
+                    if tier == "advanced"
+                    else "???"
+                    if tier == "regular"
+                    else "????"
+                )
                 report += f"- {tier_icon} {tier.replace('_', ' ').title()}: {count} users\n"
 
         # Champion effectiveness
         if user_analysis["champion_count"] > 0:
             effectiveness = user_analysis["champion_effectiveness"]
-            report += f"\n**Current Champion Effectiveness:**\n"
+            report += "\n**Current Champion Effectiveness:**\n"
             report += f"- Avg Activities: {effectiveness['avg_activities']}/quarter\n"
             report += f"- Avg Impact Score: {effectiveness['avg_impact_score']}/10\n"
             report += f"- Total Users Helped: {effectiveness['total_users_helped']}\n"
@@ -643,7 +622,7 @@ class PowerUserEnablementAgent(BaseAgent):
                 report += f"   - Impact: {candidate['potential_impact']}\n"
 
         # Enablement strategy
-        report += f"\n**???? Enablement Strategy**\n"
+        report += "\n**???? Enablement Strategy**\n"
         report += f"**Focus:** {enablement_strategy['focus_area']}\n"
         report += f"**Target Champions:** {enablement_strategy['target_champion_count']}\n\n"
 
@@ -685,6 +664,7 @@ class PowerUserEnablementAgent(BaseAgent):
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -702,11 +682,8 @@ if __name__ == "__main__":
             "Analyze power user landscape",
             context={
                 "customer_id": "cust_no_champions",
-                "customer_metadata": {
-                    "plan": "premium",
-                    "industry": "healthcare"
-                }
-            }
+                "customer_metadata": {"plan": "premium", "industry": "healthcare"},
+            },
         )
         state1["entities"] = {
             "user_data": {
@@ -720,12 +697,12 @@ if __name__ == "__main__":
                         "avg_actions_per_day": 25 if i <= 3 else 12 if i <= 8 else 3,
                         "advanced_features_used": 4 if i <= 3 else 1 if i <= 8 else 0,
                         "collaboration_score": 8 if i <= 3 else 5 if i <= 8 else 2,
-                        "account_age_days": 200 if i <= 5 else 90
+                        "account_age_days": 200 if i <= 5 else 90,
                     }
                     for i in range(1, 31)
                 ]
             },
-            "current_champions": []
+            "current_champions": [],
         }
 
         result1 = await agent.process(state1)
@@ -744,11 +721,8 @@ if __name__ == "__main__":
             "Review champion program",
             context={
                 "customer_id": "cust_champions",
-                "customer_metadata": {
-                    "plan": "enterprise",
-                    "industry": "technology"
-                }
-            }
+                "customer_metadata": {"plan": "enterprise", "industry": "technology"},
+            },
         )
         state2["entities"] = {
             "user_data": {
@@ -762,7 +736,7 @@ if __name__ == "__main__":
                         "avg_actions_per_day": 30 if i <= 15 else 15 if i <= 35 else 5,
                         "advanced_features_used": 5 if i <= 15 else 2 if i <= 35 else 0,
                         "collaboration_score": 9 if i <= 15 else 6 if i <= 35 else 3,
-                        "account_age_days": 365 if i <= 20 else 180
+                        "account_age_days": 365 if i <= 20 else 180,
                     }
                     for i in range(1, 61)
                 ]
@@ -772,10 +746,10 @@ if __name__ == "__main__":
                     "user_id": f"user_{i}",
                     "activities_completed": 3,
                     "impact_score": 8,
-                    "users_helped": 12
+                    "users_helped": 12,
                 }
                 for i in range(1, 11)
-            ]
+            ],
         }
 
         result2 = await agent.process(state2)
