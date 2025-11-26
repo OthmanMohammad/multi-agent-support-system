@@ -189,6 +189,9 @@ Output ONLY valid JSON."""
             # Build rich context for assessment
             context_str = self._build_assessment_context(state)
 
+            # Get conversation history for context
+            conversation_history = self.get_conversation_context(state)
+
             # Call LLM for complexity assessment
             prompt = f"""Assess the complexity of this query.
 
@@ -200,7 +203,8 @@ Provide complexity assessment in JSON format."""
 
             response = await self.call_llm(
                 system_prompt=self._get_system_prompt(),
-                user_message=prompt
+                user_message=prompt,
+                conversation_history=conversation_history
             )
 
             # Parse response
