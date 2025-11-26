@@ -5,13 +5,12 @@ Identifies and cultivates internal champions within customer organizations,
 empowers them with resources, and builds champion networks to drive adoption.
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("champion_cultivator", tier="revenue", category="customer_success")
@@ -34,15 +33,18 @@ class ChampionCultivatorAgent(BaseAgent):
         "organizational_influence": {"weight": 25, "threshold": 60},
         "engagement_level": {"weight": 20, "threshold": 75},
         "advocacy_activity": {"weight": 20, "threshold": 50},
-        "peer_training": {"weight": 10, "threshold": 40}
+        "peer_training": {"weight": 10, "threshold": 40},
     }
 
     # Champion tiers
     CHAMPION_TIERS = {
-        "superstar": {"score_min": 85, "benefits": "Premium support, early access, speaking opportunities"},
+        "superstar": {
+            "score_min": 85,
+            "benefits": "Premium support, early access, speaking opportunities",
+        },
         "active": {"score_min": 70, "benefits": "Advanced training, community leadership"},
         "emerging": {"score_min": 50, "benefits": "Champion enablement program"},
-        "potential": {"score_min": 30, "benefits": "Basic resources and support"}
+        "potential": {"score_min": 30, "benefits": "Basic resources and support"},
     }
 
     # Champion activities
@@ -52,7 +54,7 @@ class ChampionCultivatorAgent(BaseAgent):
         "best_practice_sharing",
         "feature_evangelism",
         "new_user_onboarding",
-        "feedback_provision"
+        "feedback_provision",
     ]
 
     def __init__(self):
@@ -61,12 +63,9 @@ class ChampionCultivatorAgent(BaseAgent):
             type=AgentType.SPECIALIST,
             temperature=0.4,
             max_tokens=700,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.KB_SEARCH
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.KB_SEARCH],
             kb_category="customer_success",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -94,38 +93,23 @@ class ChampionCultivatorAgent(BaseAgent):
         self.logger.debug(
             "champion_cultivation_details",
             customer_id=customer_id,
-            total_users=len(user_data.get("users", []))
+            total_users=len(user_data.get("users", [])),
         )
 
         # Identify champions
-        champion_analysis = self._identify_champions(
-            user_data,
-            engagement_data,
-            usage_data
-        )
+        champion_analysis = self._identify_champions(user_data, engagement_data, usage_data)
 
         # Assess champion network strength
-        network_strength = self._assess_champion_network(
-            champion_analysis,
-            customer_metadata
-        )
+        network_strength = self._assess_champion_network(champion_analysis, customer_metadata)
 
         # Create cultivation plan
-        cultivation_plan = self._create_cultivation_plan(
-            champion_analysis,
-            network_strength
-        )
+        cultivation_plan = self._create_cultivation_plan(champion_analysis, network_strength)
 
         # Generate empowerment resources
-        empowerment_resources = self._generate_empowerment_resources(
-            champion_analysis
-        )
+        empowerment_resources = self._generate_empowerment_resources(champion_analysis)
 
         # Create action plan
-        action_plan = self._create_champion_action_plan(
-            champion_analysis,
-            network_strength
-        )
+        action_plan = self._create_champion_action_plan(champion_analysis, network_strength)
 
         # Format response
         response = self._format_champion_report(
@@ -133,7 +117,7 @@ class ChampionCultivatorAgent(BaseAgent):
             network_strength,
             cultivation_plan,
             empowerment_resources,
-            action_plan
+            action_plan,
         )
 
         state["agent_response"] = response
@@ -149,17 +133,14 @@ class ChampionCultivatorAgent(BaseAgent):
             "champion_cultivation_completed",
             customer_id=customer_id,
             total_champions=champion_analysis["total_champions"],
-            network_strength=network_strength["overall_strength"]
+            network_strength=network_strength["overall_strength"],
         )
 
         return state
 
     def _identify_champions(
-        self,
-        user_data: Dict[str, Any],
-        engagement_data: Dict[str, Any],
-        usage_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, user_data: dict[str, Any], engagement_data: dict[str, Any], usage_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Identify potential and active champions.
 
@@ -173,7 +154,7 @@ class ChampionCultivatorAgent(BaseAgent):
         """
         users = user_data.get("users", [])
         champions = []
-        champions_by_tier = {tier: [] for tier in self.CHAMPION_TIERS.keys()}
+        champions_by_tier = {tier: [] for tier in self.CHAMPION_TIERS}
         champions_by_tier["none"] = []
 
         for user in users:
@@ -188,7 +169,7 @@ class ChampionCultivatorAgent(BaseAgent):
                 "champion_score": champion_score,
                 "champion_tier": champion_tier,
                 "strengths": self._identify_champion_strengths(user, champion_score),
-                "activities": self._track_champion_activities(user)
+                "activities": self._track_champion_activities(user),
             }
 
             if champion_tier != "none":
@@ -207,14 +188,11 @@ class ChampionCultivatorAgent(BaseAgent):
             "emerging_count": len(champions_by_tier["emerging"]),
             "potential_count": len(champions_by_tier["potential"]),
             "total_users": len(users),
-            "champion_percentage": int((len(champions) / len(users) * 100)) if users else 0
+            "champion_percentage": int(len(champions) / len(users) * 100) if users else 0,
         }
 
     def _calculate_champion_score(
-        self,
-        user: Dict[str, Any],
-        engagement_data: Dict[str, Any],
-        usage_data: Dict[str, Any]
+        self, user: dict[str, Any], engagement_data: dict[str, Any], usage_data: dict[str, Any]
     ) -> int:
         """Calculate champion score for a user (0-100)."""
         score = 0
@@ -226,7 +204,9 @@ class ChampionCultivatorAgent(BaseAgent):
         score += expertise_score
 
         # Organizational influence (0-25)
-        is_manager = any(term in user.get("title", "").lower() for term in ["manager", "director", "vp", "lead"])
+        is_manager = any(
+            term in user.get("title", "").lower() for term in ["manager", "director", "vp", "lead"]
+        )
         has_team = user.get("team_size", 0) > 3
         influence_score = 15 if is_manager else 5
         influence_score += 10 if has_team else 0
@@ -253,15 +233,13 @@ class ChampionCultivatorAgent(BaseAgent):
     def _determine_champion_tier(self, score: int) -> str:
         """Determine champion tier from score."""
         for tier, config in sorted(
-            self.CHAMPION_TIERS.items(),
-            key=lambda x: x[1]["score_min"],
-            reverse=True
+            self.CHAMPION_TIERS.items(), key=lambda x: x[1]["score_min"], reverse=True
         ):
             if score >= config["score_min"]:
                 return tier
         return "none"
 
-    def _identify_champion_strengths(self, user: Dict[str, Any], score: int) -> List[str]:
+    def _identify_champion_strengths(self, user: dict[str, Any], score: int) -> list[str]:
         """Identify specific strengths of a champion."""
         strengths = []
 
@@ -282,7 +260,7 @@ class ChampionCultivatorAgent(BaseAgent):
 
         return strengths[:3]
 
-    def _track_champion_activities(self, user: Dict[str, Any]) -> List[str]:
+    def _track_champion_activities(self, user: dict[str, Any]) -> list[str]:
         """Track champion activities."""
         activities = []
 
@@ -298,10 +276,8 @@ class ChampionCultivatorAgent(BaseAgent):
         return activities
 
     def _assess_champion_network(
-        self,
-        champion_analysis: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, champion_analysis: dict[str, Any], customer_metadata: dict[str, Any]
+    ) -> dict[str, Any]:
         """Assess strength of champion network."""
         total_users = champion_analysis["total_users"]
         total_champions = champion_analysis["total_champions"]
@@ -312,7 +288,7 @@ class ChampionCultivatorAgent(BaseAgent):
 
         # Assess department coverage
         champions = champion_analysis["champions"]
-        departments_covered = len(set(c["department"] for c in champions))
+        departments_covered = len({c["department"] for c in champions})
 
         # Determine overall network strength
         if superstar_count >= 2 and coverage_percentage >= 15:
@@ -340,22 +316,20 @@ class ChampionCultivatorAgent(BaseAgent):
             "coverage_percentage": int(coverage_percentage),
             "departments_covered": departments_covered,
             "network_gaps": gaps,
-            "growth_potential": "high" if coverage_percentage < 20 else "medium"
+            "growth_potential": "high" if coverage_percentage < 20 else "medium",
         }
 
     def _create_cultivation_plan(
-        self,
-        champion_analysis: Dict[str, Any],
-        network_strength: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, champion_analysis: dict[str, Any], network_strength: dict[str, Any]
+    ) -> dict[str, Any]:
         """Create champion cultivation plan."""
-        champions = champion_analysis["champions"]
+        champion_analysis["champions"]
 
         plan = {
             "focus_areas": [],
             "recruitment_targets": 0,
             "development_programs": [],
-            "recognition_opportunities": []
+            "recognition_opportunities": [],
         }
 
         # Determine focus areas
@@ -366,13 +340,17 @@ class ChampionCultivatorAgent(BaseAgent):
             plan["focus_areas"].append("Develop emerging champions through advanced training")
 
         if network_strength["overall_strength"] in ["weak", "developing"]:
-            plan["focus_areas"].append("Expand champion network through identification and recruitment")
+            plan["focus_areas"].append(
+                "Expand champion network through identification and recruitment"
+            )
 
         # Recruitment targets
         target_coverage = 15  # Target 15% champion coverage
         current_coverage = network_strength["coverage_percentage"]
         if current_coverage < target_coverage:
-            gap_champions = int((target_coverage - current_coverage) / 100 * champion_analysis["total_users"])
+            gap_champions = int(
+                (target_coverage - current_coverage) / 100 * champion_analysis["total_users"]
+            )
             plan["recruitment_targets"] = max(gap_champions, 2)
 
         # Development programs
@@ -388,128 +366,141 @@ class ChampionCultivatorAgent(BaseAgent):
         return plan
 
     def _generate_empowerment_resources(
-        self,
-        champion_analysis: Dict[str, Any]
-    ) -> Dict[str, List[str]]:
+        self, champion_analysis: dict[str, Any]
+    ) -> dict[str, list[str]]:
         """Generate resources to empower champions."""
         resources = {
             "training_materials": [
                 "Advanced feature training videos",
                 "Best practices playbook",
                 "Use case library and templates",
-                "Admin certification program"
+                "Admin certification program",
             ],
             "advocacy_tools": [
                 "Peer training presentation deck",
                 "ROI calculator and templates",
                 "Feature demonstration scripts",
-                "Success story examples"
+                "Success story examples",
             ],
             "recognition_benefits": [
                 "Champion badge and certificate",
                 "Early access to new features",
                 "Direct line to product team",
-                "Quarterly champion webinars"
+                "Quarterly champion webinars",
             ],
             "community_access": [
                 "Private champion Slack channel",
                 "Monthly champion roundtables",
                 "Exclusive product roadmap previews",
-                "Champion-only events"
-            ]
+                "Champion-only events",
+            ],
         }
 
         return resources
 
     def _create_champion_action_plan(
-        self,
-        champion_analysis: Dict[str, Any],
-        network_strength: Dict[str, Any]
-    ) -> List[Dict[str, str]]:
+        self, champion_analysis: dict[str, Any], network_strength: dict[str, Any]
+    ) -> list[dict[str, str]]:
         """Create action plan for champion cultivation."""
         actions = []
 
         # Recruit new champions
         if champion_analysis["champion_percentage"] < 15:
-            actions.append({
-                "action": "Identify and recruit 3-5 new champion candidates",
-                "owner": "CSM",
-                "timeline": "Next 30 days",
-                "priority": "high"
-            })
+            actions.append(
+                {
+                    "action": "Identify and recruit 3-5 new champion candidates",
+                    "owner": "CSM",
+                    "timeline": "Next 30 days",
+                    "priority": "high",
+                }
+            )
 
         # Engage existing champions
         if champion_analysis["total_champions"] > 0:
-            actions.append({
-                "action": "Send champion enablement resources to active champions",
-                "owner": "CSM",
-                "timeline": "This week",
-                "priority": "medium"
-            })
+            actions.append(
+                {
+                    "action": "Send champion enablement resources to active champions",
+                    "owner": "CSM",
+                    "timeline": "This week",
+                    "priority": "medium",
+                }
+            )
 
         # Recognize superstar champions
         if champion_analysis["superstar_count"] > 0:
-            actions.append({
-                "action": "Schedule 1:1 with superstar champions for strategic partnership",
-                "owner": "CSM + CS Manager",
-                "timeline": "Next 2 weeks",
-                "priority": "high"
-            })
+            actions.append(
+                {
+                    "action": "Schedule 1:1 with superstar champions for strategic partnership",
+                    "owner": "CSM + CS Manager",
+                    "timeline": "Next 2 weeks",
+                    "priority": "high",
+                }
+            )
 
         # Build community
         if champion_analysis["total_champions"] >= 3:
-            actions.append({
-                "action": "Launch champion community channel or group",
-                "owner": "CSM",
-                "timeline": "Next 30 days",
-                "priority": "medium"
-            })
+            actions.append(
+                {
+                    "action": "Launch champion community channel or group",
+                    "owner": "CSM",
+                    "timeline": "Next 30 days",
+                    "priority": "medium",
+                }
+            )
 
         # Training and development
         if champion_analysis["emerging_count"] >= 2:
-            actions.append({
-                "action": "Invite emerging champions to advanced training session",
-                "owner": "CSM + Training Team",
-                "timeline": "Next quarter",
-                "priority": "medium"
-            })
+            actions.append(
+                {
+                    "action": "Invite emerging champions to advanced training session",
+                    "owner": "CSM + Training Team",
+                    "timeline": "Next quarter",
+                    "priority": "medium",
+                }
+            )
 
         return actions[:5]
 
     def _format_champion_report(
         self,
-        champion_analysis: Dict[str, Any],
-        network_strength: Dict[str, Any],
-        cultivation_plan: Dict[str, Any],
-        empowerment_resources: Dict[str, List[str]],
-        action_plan: List[Dict[str, str]]
+        champion_analysis: dict[str, Any],
+        network_strength: dict[str, Any],
+        cultivation_plan: dict[str, Any],
+        empowerment_resources: dict[str, list[str]],
+        action_plan: list[dict[str, str]],
     ) -> str:
         """Format champion cultivation report."""
         strength_emoji = {
             "excellent": "????",
             "good": "???",
             "developing": "????",
-            "weak": "??????"
+            "weak": "??????",
         }
 
         report = f"""**???? Champion Cultivation Analysis**
 
-**Network Strength:** {network_strength['overall_strength'].title()} {strength_emoji.get(network_strength['overall_strength'], '???')}
-**Total Champions:** {champion_analysis['total_champions']} ({champion_analysis['champion_percentage']}% of users)
-**Champion Coverage:** {network_strength['coverage_percentage']}% across {network_strength['departments_covered']} departments
+**Network Strength:** {network_strength["overall_strength"].title()} {strength_emoji.get(network_strength["overall_strength"], "???")}
+**Total Champions:** {champion_analysis["total_champions"]} ({champion_analysis["champion_percentage"]}% of users)
+**Champion Coverage:** {network_strength["coverage_percentage"]}% across {network_strength["departments_covered"]} departments
 
 **Champions by Tier:**
-- ???? Superstar: {champion_analysis['superstar_count']}
-- ??? Active: {champion_analysis['active_count']}
-- ???? Emerging: {champion_analysis['emerging_count']}
-- ???? Potential: {champion_analysis['potential_count']}
+- ???? Superstar: {champion_analysis["superstar_count"]}
+- ??? Active: {champion_analysis["active_count"]}
+- ???? Emerging: {champion_analysis["emerging_count"]}
+- ???? Potential: {champion_analysis["potential_count"]}
 """
 
         # Top champions
         if champion_analysis["champions"]:
             report += "\n**???? Top Champions:**\n"
             for i, champion in enumerate(champion_analysis["champions"][:5], 1):
-                tier_emoji = "????" if champion["champion_tier"] == "superstar" else "???" if champion["champion_tier"] == "active" else "????"
+                tier_emoji = (
+                    "????"
+                    if champion["champion_tier"] == "superstar"
+                    else "???"
+                    if champion["champion_tier"] == "active"
+                    else "????"
+                )
                 report += f"{i}. **{champion['name']}** {tier_emoji}\n"
                 report += f"   - {champion['title']}, {champion['department']}\n"
                 report += f"   - Score: {champion['champion_score']}/100\n"
@@ -541,7 +532,13 @@ class ChampionCultivatorAgent(BaseAgent):
         if action_plan:
             report += "\n\n**??? Action Plan:**\n"
             for i, action in enumerate(action_plan, 1):
-                priority_icon = "????" if action["priority"] == "critical" else "????" if action["priority"] == "high" else "????"
+                priority_icon = (
+                    "????"
+                    if action["priority"] == "critical"
+                    else "????"
+                    if action["priority"] == "high"
+                    else "????"
+                )
                 report += f"{i}. **{action['action']}** {priority_icon}\n"
                 report += f"   - Owner: {action['owner']}\n"
                 report += f"   - Timeline: {action['timeline']}\n"
@@ -551,6 +548,7 @@ class ChampionCultivatorAgent(BaseAgent):
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -568,10 +566,8 @@ if __name__ == "__main__":
             "Analyze champion network",
             context={
                 "customer_id": "cust_enterprise_001",
-                "customer_metadata": {
-                    "tier": "enterprise"
-                }
-            }
+                "customer_metadata": {"tier": "enterprise"},
+            },
         )
         state1["entities"] = {
             "user_data": {
@@ -582,13 +578,22 @@ if __name__ == "__main__":
                         "department": "Engineering",
                         "title": "Engineering Manager",
                         "login_frequency_per_week": 5,
-                        "features_used": ["analytics", "automation", "api", "reporting", "dashboards", "integrations", "workflows", "collaboration"],
+                        "features_used": [
+                            "analytics",
+                            "automation",
+                            "api",
+                            "reporting",
+                            "dashboards",
+                            "integrations",
+                            "workflows",
+                            "collaboration",
+                        ],
                         "team_size": 8,
                         "peer_assists": 12,
                         "training_sessions_delivered": 3,
                         "feature_requests": 5,
                         "support_interactions": 8,
-                        "peer_training_hours": 6
+                        "peer_training_hours": 6,
                     },
                     {
                         "name": "Bob Helper",
@@ -596,13 +601,19 @@ if __name__ == "__main__":
                         "department": "Sales",
                         "title": "Sales Operations Lead",
                         "login_frequency_per_week": 4,
-                        "features_used": ["reporting", "dashboards", "analytics", "automation", "api"],
+                        "features_used": [
+                            "reporting",
+                            "dashboards",
+                            "analytics",
+                            "automation",
+                            "api",
+                        ],
                         "team_size": 5,
                         "peer_assists": 8,
                         "training_sessions_delivered": 1,
                         "feature_requests": 3,
                         "support_interactions": 5,
-                        "peer_training_hours": 3
+                        "peer_training_hours": 3,
                     },
                     {
                         "name": "Carol User",
@@ -616,12 +627,12 @@ if __name__ == "__main__":
                         "training_sessions_delivered": 0,
                         "feature_requests": 0,
                         "support_interactions": 2,
-                        "peer_training_hours": 0
-                    }
+                        "peer_training_hours": 0,
+                    },
                 ]
             },
             "engagement_data": {},
-            "usage_data": {}
+            "usage_data": {},
         }
 
         result1 = await agent.process(state1)
@@ -638,12 +649,7 @@ if __name__ == "__main__":
 
         state2 = create_initial_state(
             "Build champion network",
-            context={
-                "customer_id": "cust_growth_002",
-                "customer_metadata": {
-                    "tier": "growth"
-                }
-            }
+            context={"customer_id": "cust_growth_002", "customer_metadata": {"tier": "growth"}},
         )
         state2["entities"] = {
             "user_data": {
@@ -660,12 +666,12 @@ if __name__ == "__main__":
                         "training_sessions_delivered": 0,
                         "feature_requests": 0,
                         "support_interactions": 1,
-                        "peer_training_hours": 0
+                        "peer_training_hours": 0,
                     }
                 ]
             },
             "engagement_data": {},
-            "usage_data": {}
+            "usage_data": {},
         }
 
         result2 = await agent.process(state2)
