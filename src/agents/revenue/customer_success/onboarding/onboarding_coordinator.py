@@ -5,13 +5,13 @@ Coordinates end-to-end onboarding process, tracks milestones, and measures time-
 Orchestrates kickoff, training, data migration, and success validation phases.
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("onboarding_coordinator", tier="revenue", category="customer_success")
@@ -33,16 +33,11 @@ class OnboardingCoordinatorAgent(BaseAgent):
         "training": {"duration_days": 14, "weight": 25},
         "migration": {"duration_days": 14, "weight": 30},
         "validation": {"duration_days": 10, "weight": 15},
-        "handoff": {"duration_days": 5, "weight": 10}
+        "handoff": {"duration_days": 5, "weight": 10},
     }
 
     # Time-to-value benchmarks (days)
-    TTV_BENCHMARKS = {
-        "excellent": 30,
-        "good": 45,
-        "acceptable": 60,
-        "delayed": 90
-    }
+    TTV_BENCHMARKS = {"excellent": 30, "good": 45, "acceptable": 60, "delayed": 90}
 
     def __init__(self):
         config = AgentConfig(
@@ -50,12 +45,9 @@ class OnboardingCoordinatorAgent(BaseAgent):
             type=AgentType.SPECIALIST,
             temperature=0.3,
             max_tokens=800,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.KB_SEARCH
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.KB_SEARCH],
             kb_category="customer_success",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -82,14 +74,11 @@ class OnboardingCoordinatorAgent(BaseAgent):
             "onboarding_coordination_details",
             customer_id=customer_id,
             current_phase=onboarding_data.get("current_phase"),
-            days_elapsed=onboarding_data.get("days_elapsed", 0)
+            days_elapsed=onboarding_data.get("days_elapsed", 0),
         )
 
         # Analyze onboarding status
-        coordination_analysis = self._analyze_onboarding_status(
-            onboarding_data,
-            customer_metadata
-        )
+        coordination_analysis = self._analyze_onboarding_status(onboarding_data, customer_metadata)
 
         # Generate recommendations
         recommendations = self._generate_recommendations(coordination_analysis)
@@ -99,9 +88,7 @@ class OnboardingCoordinatorAgent(BaseAgent):
 
         # Build response
         response = self._format_coordination_report(
-            coordination_analysis,
-            recommendations,
-            next_steps
+            coordination_analysis, recommendations, next_steps
         )
 
         state["agent_response"] = response
@@ -119,16 +106,14 @@ class OnboardingCoordinatorAgent(BaseAgent):
             customer_id=customer_id,
             status=coordination_analysis["overall_status"],
             completion_pct=coordination_analysis["completion_percentage"],
-            projected_ttv=coordination_analysis["projected_ttv_days"]
+            projected_ttv=coordination_analysis["projected_ttv_days"],
         )
 
         return state
 
     def _analyze_onboarding_status(
-        self,
-        onboarding_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, onboarding_data: dict[str, Any], customer_metadata: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Analyze current onboarding status and progress.
 
@@ -141,7 +126,7 @@ class OnboardingCoordinatorAgent(BaseAgent):
         """
         start_date_str = onboarding_data.get("start_date")
         if start_date_str:
-            start_date = datetime.fromisoformat(start_date_str.replace('Z', '+00:00'))
+            start_date = datetime.fromisoformat(start_date_str.replace("Z", "+00:00"))
         else:
             start_date = datetime.now(UTC)
 
@@ -163,28 +148,19 @@ class OnboardingCoordinatorAgent(BaseAgent):
         is_on_track = completion_percentage >= expected_completion_pct - 10
 
         # Project time-to-value
-        projected_ttv_days = self._project_ttv(
-            days_elapsed,
-            completion_percentage,
-            is_on_track
-        )
+        projected_ttv_days = self._project_ttv(days_elapsed, completion_percentage, is_on_track)
 
         # Identify blockers
         blockers = self._identify_blockers(onboarding_data, is_on_track)
 
         # Calculate health indicators
         health_indicators = self._calculate_health_indicators(
-            onboarding_data,
-            is_on_track,
-            days_elapsed
+            onboarding_data, is_on_track, days_elapsed
         )
 
         # Determine overall status
         overall_status = self._determine_overall_status(
-            is_on_track,
-            blockers,
-            days_elapsed,
-            completion_percentage
+            is_on_track, blockers, days_elapsed, completion_percentage
         )
 
         return {
@@ -201,10 +177,10 @@ class OnboardingCoordinatorAgent(BaseAgent):
             "ttv_benchmark": self._get_ttv_benchmark(projected_ttv_days),
             "blockers": blockers,
             "health_indicators": health_indicators,
-            "analyzed_at": datetime.now(UTC).isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat(),
         }
 
-    def _calculate_phase_progress(self, current_phase: str, days_elapsed: int) -> Dict[str, Any]:
+    def _calculate_phase_progress(self, current_phase: str, days_elapsed: int) -> dict[str, Any]:
         """Calculate progress within current phase."""
         phase_info = self.PHASES.get(current_phase, self.PHASES["kickoff"])
 
@@ -223,7 +199,7 @@ class OnboardingCoordinatorAgent(BaseAgent):
             "phase": current_phase,
             "days_in_phase": days_in_phase,
             "phase_duration": phase_duration,
-            "progress_percentage": phase_progress_pct
+            "progress_percentage": phase_progress_pct,
         }
 
     def _calculate_expected_completion(self, days_elapsed: int) -> int:
@@ -231,12 +207,7 @@ class OnboardingCoordinatorAgent(BaseAgent):
         # Typical 45-day onboarding
         return min(int((days_elapsed / 45) * 100), 100)
 
-    def _project_ttv(
-        self,
-        days_elapsed: int,
-        completion_percentage: int,
-        is_on_track: bool
-    ) -> int:
+    def _project_ttv(self, days_elapsed: int, completion_percentage: int, is_on_track: bool) -> int:
         """Project time-to-value in days."""
         if completion_percentage == 0:
             return 60  # Default estimate
@@ -266,71 +237,76 @@ class OnboardingCoordinatorAgent(BaseAgent):
             return "delayed"
 
     def _identify_blockers(
-        self,
-        onboarding_data: Dict[str, Any],
-        is_on_track: bool
-    ) -> List[Dict[str, str]]:
+        self, onboarding_data: dict[str, Any], is_on_track: bool
+    ) -> list[dict[str, str]]:
         """Identify blockers affecting onboarding progress."""
         blockers = []
 
         # Check for specific blocker indicators
         if onboarding_data.get("kickoff_delayed", False):
-            blockers.append({
-                "blocker": "Kickoff call not completed",
-                "severity": "high",
-                "impact": "Cannot proceed with training until goals are aligned"
-            })
+            blockers.append(
+                {
+                    "blocker": "Kickoff call not completed",
+                    "severity": "high",
+                    "impact": "Cannot proceed with training until goals are aligned",
+                }
+            )
 
         if onboarding_data.get("training_attendance_low", False):
-            blockers.append({
-                "blocker": "Low training attendance",
-                "severity": "medium",
-                "impact": "Users not gaining required product knowledge"
-            })
+            blockers.append(
+                {
+                    "blocker": "Low training attendance",
+                    "severity": "medium",
+                    "impact": "Users not gaining required product knowledge",
+                }
+            )
 
         if onboarding_data.get("data_migration_stuck", False):
-            blockers.append({
-                "blocker": "Data migration blocked",
-                "severity": "critical",
-                "impact": "Cannot validate success criteria without complete data"
-            })
+            blockers.append(
+                {
+                    "blocker": "Data migration blocked",
+                    "severity": "critical",
+                    "impact": "Cannot validate success criteria without complete data",
+                }
+            )
 
         if onboarding_data.get("technical_issues", False):
-            blockers.append({
-                "blocker": "Technical integration issues",
-                "severity": "high",
-                "impact": "Product functionality limited"
-            })
+            blockers.append(
+                {
+                    "blocker": "Technical integration issues",
+                    "severity": "high",
+                    "impact": "Product functionality limited",
+                }
+            )
 
         if not is_on_track and not blockers:
-            blockers.append({
-                "blocker": "Behind schedule - cause unclear",
-                "severity": "medium",
-                "impact": "Need to investigate root cause of delays"
-            })
+            blockers.append(
+                {
+                    "blocker": "Behind schedule - cause unclear",
+                    "severity": "medium",
+                    "impact": "Need to investigate root cause of delays",
+                }
+            )
 
         return blockers
 
     def _calculate_health_indicators(
-        self,
-        onboarding_data: Dict[str, Any],
-        is_on_track: bool,
-        days_elapsed: int
-    ) -> Dict[str, str]:
+        self, onboarding_data: dict[str, Any], is_on_track: bool, days_elapsed: int
+    ) -> dict[str, str]:
         """Calculate health indicators for onboarding."""
         return {
             "schedule_health": "on_track" if is_on_track else "at_risk",
             "engagement_health": onboarding_data.get("engagement_level", "medium"),
             "technical_health": onboarding_data.get("technical_status", "good"),
-            "stakeholder_health": onboarding_data.get("stakeholder_engagement", "active")
+            "stakeholder_health": onboarding_data.get("stakeholder_engagement", "active"),
         }
 
     def _determine_overall_status(
         self,
         is_on_track: bool,
-        blockers: List[Dict[str, str]],
+        blockers: list[dict[str, str]],
         days_elapsed: int,
-        completion_percentage: int
+        completion_percentage: int,
     ) -> str:
         """Determine overall onboarding status."""
         critical_blockers = [b for b in blockers if b["severity"] == "critical"]
@@ -348,9 +324,8 @@ class OnboardingCoordinatorAgent(BaseAgent):
             return "on_track"
 
     def _generate_recommendations(
-        self,
-        coordination_analysis: Dict[str, Any]
-    ) -> List[Dict[str, str]]:
+        self, coordination_analysis: dict[str, Any]
+    ) -> list[dict[str, str]]:
         """Generate coordination recommendations."""
         recommendations = []
 
@@ -360,52 +335,59 @@ class OnboardingCoordinatorAgent(BaseAgent):
 
         # Critical status recommendations
         if status == "critical":
-            recommendations.append({
-                "action": "Escalate to executive sponsor immediately",
-                "priority": "critical",
-                "owner": "VP Customer Success",
-                "timeline": "Within 24 hours"
-            })
+            recommendations.append(
+                {
+                    "action": "Escalate to executive sponsor immediately",
+                    "priority": "critical",
+                    "owner": "VP Customer Success",
+                    "timeline": "Within 24 hours",
+                }
+            )
 
         # Blocker-specific recommendations
         for blocker in blockers:
             if "migration" in blocker["blocker"].lower():
-                recommendations.append({
-                    "action": "Assign technical resource to unblock data migration",
-                    "priority": "high",
-                    "owner": "Solutions Engineer",
-                    "timeline": "Within 2 days"
-                })
+                recommendations.append(
+                    {
+                        "action": "Assign technical resource to unblock data migration",
+                        "priority": "high",
+                        "owner": "Solutions Engineer",
+                        "timeline": "Within 2 days",
+                    }
+                )
             elif "training" in blocker["blocker"].lower():
-                recommendations.append({
-                    "action": "Schedule makeup training sessions",
-                    "priority": "medium",
-                    "owner": "Training Coordinator",
-                    "timeline": "This week"
-                })
+                recommendations.append(
+                    {
+                        "action": "Schedule makeup training sessions",
+                        "priority": "medium",
+                        "owner": "Training Coordinator",
+                        "timeline": "This week",
+                    }
+                )
 
         # Phase-specific recommendations
         if current_phase == "kickoff":
-            recommendations.append({
-                "action": "Complete success criteria documentation",
-                "priority": "high",
-                "owner": "Kickoff Facilitator",
-                "timeline": "Before next phase"
-            })
+            recommendations.append(
+                {
+                    "action": "Complete success criteria documentation",
+                    "priority": "high",
+                    "owner": "Kickoff Facilitator",
+                    "timeline": "Before next phase",
+                }
+            )
         elif current_phase == "validation":
-            recommendations.append({
-                "action": "Prepare handoff documentation for CSM",
-                "priority": "high",
-                "owner": "Onboarding Coordinator",
-                "timeline": "Before completion"
-            })
+            recommendations.append(
+                {
+                    "action": "Prepare handoff documentation for CSM",
+                    "priority": "high",
+                    "owner": "Onboarding Coordinator",
+                    "timeline": "Before completion",
+                }
+            )
 
         return recommendations[:5]  # Top 5 recommendations
 
-    def _determine_next_steps(
-        self,
-        coordination_analysis: Dict[str, Any]
-    ) -> List[str]:
+    def _determine_next_steps(self, coordination_analysis: dict[str, Any]) -> list[str]:
         """Determine next steps in onboarding journey."""
         next_steps = []
         current_phase = coordination_analysis["current_phase"]
@@ -421,7 +403,9 @@ class OnboardingCoordinatorAgent(BaseAgent):
                 next_steps.append(f"Complete remaining {current_phase} milestones")
         else:
             next_steps.append(f"Continue {current_phase} phase activities")
-            next_steps.append(f"Target {100 - phase_progress['progress_percentage']}% remaining in {current_phase}")
+            next_steps.append(
+                f"Target {100 - phase_progress['progress_percentage']}% remaining in {current_phase}"
+            )
 
         # Add specific actions based on blockers
         if coordination_analysis["blockers"]:
@@ -431,9 +415,9 @@ class OnboardingCoordinatorAgent(BaseAgent):
 
     def _format_coordination_report(
         self,
-        coordination_analysis: Dict[str, Any],
-        recommendations: List[Dict[str, str]],
-        next_steps: List[str]
+        coordination_analysis: dict[str, Any],
+        recommendations: list[dict[str, str]],
+        next_steps: list[str],
     ) -> str:
         """Format onboarding coordination report."""
         status = coordination_analysis["overall_status"]
@@ -443,36 +427,33 @@ class OnboardingCoordinatorAgent(BaseAgent):
             "on_track": "???",
             "needs_attention": "??????",
             "at_risk": "????",
-            "critical": "????"
+            "critical": "????",
         }
 
-        ttv_emoji = {
-            "excellent": "????",
-            "good": "???",
-            "acceptable": "??????",
-            "delayed": "???"
-        }
+        ttv_emoji = {"excellent": "????", "good": "???", "acceptable": "??????", "delayed": "???"}
 
-        report = f"""**{status_emoji.get(status, '????')} Onboarding Coordination Report**
+        report = f"""**{status_emoji.get(status, "????")} Onboarding Coordination Report**
 
-**Overall Status:** {status.replace('_', ' ').title()}
-**Current Phase:** {coordination_analysis['current_phase'].title()}
-**Days Elapsed:** {coordination_analysis['days_elapsed']}
-**Completion:** {coordination_analysis['completion_percentage']}% ({coordination_analysis['milestones_completed']}/{coordination_analysis['total_milestones']} milestones)
+**Overall Status:** {status.replace("_", " ").title()}
+**Current Phase:** {coordination_analysis["current_phase"].title()}
+**Days Elapsed:** {coordination_analysis["days_elapsed"]}
+**Completion:** {coordination_analysis["completion_percentage"]}% ({coordination_analysis["milestones_completed"]}/{coordination_analysis["total_milestones"]} milestones)
 
 **Phase Progress:**
-- {coordination_analysis['phase_progress']['phase'].title()} Phase: {coordination_analysis['phase_progress']['progress_percentage']}%
-- Days in Phase: {coordination_analysis['phase_progress']['days_in_phase']}/{coordination_analysis['phase_progress']['phase_duration']}
+- {coordination_analysis["phase_progress"]["phase"].title()} Phase: {coordination_analysis["phase_progress"]["progress_percentage"]}%
+- Days in Phase: {coordination_analysis["phase_progress"]["days_in_phase"]}/{coordination_analysis["phase_progress"]["phase_duration"]}
 
 **Time-to-Value Projection:**
-- Projected TTV: {coordination_analysis['projected_ttv_days']} days {ttv_emoji.get(coordination_analysis['ttv_benchmark'], '??????')}
-- Benchmark: {coordination_analysis['ttv_benchmark'].title()}
-- On Track: {'Yes' if coordination_analysis['is_on_track'] else 'No'}
+- Projected TTV: {coordination_analysis["projected_ttv_days"]} days {ttv_emoji.get(coordination_analysis["ttv_benchmark"], "??????")}
+- Benchmark: {coordination_analysis["ttv_benchmark"].title()}
+- On Track: {"Yes" if coordination_analysis["is_on_track"] else "No"}
 
 **Health Indicators:**
 """
-        for indicator, value in coordination_analysis['health_indicators'].items():
-            report += f"- {indicator.replace('_', ' ').title()}: {value.replace('_', ' ').title()}\n"
+        for indicator, value in coordination_analysis["health_indicators"].items():
+            report += (
+                f"- {indicator.replace('_', ' ').title()}: {value.replace('_', ' ').title()}\n"
+            )
 
         # Blockers
         if coordination_analysis.get("blockers"):
@@ -501,6 +482,7 @@ class OnboardingCoordinatorAgent(BaseAgent):
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -516,20 +498,21 @@ if __name__ == "__main__":
 
         state1 = create_initial_state(
             "Coordinate onboarding for this customer",
-            context={
-                "customer_id": "cust_123",
-                "customer_metadata": {"plan": "enterprise"}
-            }
+            context={"customer_id": "cust_123", "customer_metadata": {"plan": "enterprise"}},
         )
         state1["entities"] = {
             "onboarding_data": {
                 "start_date": (datetime.now(UTC) - timedelta(days=15)).isoformat(),
                 "current_phase": "training",
-                "milestones_completed": ["kickoff_complete", "success_plan_created", "training_scheduled"],
+                "milestones_completed": [
+                    "kickoff_complete",
+                    "success_plan_created",
+                    "training_scheduled",
+                ],
                 "total_milestones": 10,
                 "engagement_level": "high",
                 "technical_status": "good",
-                "stakeholder_engagement": "active"
+                "stakeholder_engagement": "active",
             }
         }
 
@@ -548,10 +531,7 @@ if __name__ == "__main__":
 
         state2 = create_initial_state(
             "Check onboarding status",
-            context={
-                "customer_id": "cust_456",
-                "customer_metadata": {"plan": "premium"}
-            }
+            context={"customer_id": "cust_456", "customer_metadata": {"plan": "premium"}},
         )
         state2["entities"] = {
             "onboarding_data": {
@@ -563,7 +543,7 @@ if __name__ == "__main__":
                 "training_attendance_low": True,
                 "engagement_level": "low",
                 "technical_status": "issues",
-                "stakeholder_engagement": "minimal"
+                "stakeholder_engagement": "minimal",
             }
         }
 
