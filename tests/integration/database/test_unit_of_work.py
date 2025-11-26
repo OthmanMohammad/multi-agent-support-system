@@ -6,13 +6,8 @@ import pytest
 import asyncio
 from uuid import uuid4
 
-import sys
-from pathlib import Path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root / 'src'))
-
-from database.unit_of_work import get_unit_of_work
-from database.connection import init_db, close_db
+from src.database.unit_of_work import get_unit_of_work
+from src.database.connection import init_db, close_db
 
 
 @pytest.mark.asyncio
