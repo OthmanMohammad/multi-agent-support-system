@@ -5,13 +5,12 @@ Handles "we're using competitor Y" objections by providing differentiation point
 competitive advantages, migration support, and case studies.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("competitor_comparison_handler", tier="revenue", category="sales")
@@ -32,23 +31,27 @@ class CompetitorComparisonHandler(BaseAgent):
         "considering_competitor": {
             "approach": "proactive_differentiation",
             "tactics": ["feature_comparison", "customer_testimonials", "unique_value_props"],
-            "supporting_materials": ["comparison_matrix", "case_studies", "competitive_battlecard"]
+            "supporting_materials": ["comparison_matrix", "case_studies", "competitive_battlecard"],
         },
         "using_competitor": {
             "approach": "migration_focused",
             "tactics": ["migration_support", "competitive_advantages", "switching_incentives"],
-            "supporting_materials": ["migration_guide", "win_stories", "switching_checklist"]
+            "supporting_materials": ["migration_guide", "win_stories", "switching_checklist"],
         },
         "satisfied_with_competitor": {
             "approach": "value_gap_identification",
             "tactics": ["uncover_pain_points", "show_unique_capabilities", "roi_comparison"],
-            "supporting_materials": ["capability_comparison", "roi_calculator", "analyst_reports"]
+            "supporting_materials": ["capability_comparison", "roi_calculator", "analyst_reports"],
         },
         "multi_vendor": {
             "approach": "partnership_positioning",
             "tactics": ["complementary_positioning", "integration_story", "consolidation_benefits"],
-            "supporting_materials": ["integration_docs", "consolidation_roi", "partnership_examples"]
-        }
+            "supporting_materials": [
+                "integration_docs",
+                "consolidation_roi",
+                "partnership_examples",
+            ],
+        },
     }
 
     # Known competitors and their weaknesses/our advantages
@@ -61,16 +64,16 @@ class CompetitorComparisonHandler(BaseAgent):
                 "60% lower total cost of ownership",
                 "No complex customization required",
                 "Built-in AI features (Salesforce charges extra)",
-                "Better user experience and adoption rates"
+                "Better user experience and adoption rates",
             ],
             "their_weaknesses": [
                 "Complex setup requiring consultants",
                 "High total cost with add-ons",
                 "Steep learning curve for users",
-                "Over-engineered for most companies"
+                "Over-engineered for most companies",
             ],
             "migration_difficulty": "medium",
-            "common_pain_points": ["complexity", "cost", "user adoption", "customization overhead"]
+            "common_pain_points": ["complexity", "cost", "user adoption", "customization overhead"],
         },
         "hubspot": {
             "name": "HubSpot",
@@ -80,16 +83,20 @@ class CompetitorComparisonHandler(BaseAgent):
                 "Better enterprise features",
                 "Superior API and integrations",
                 "Advanced automation capabilities",
-                "Better customer support"
+                "Better customer support",
             ],
             "their_weaknesses": [
                 "Expensive as you scale",
                 "Limited enterprise features",
                 "Less flexible workflows",
-                "Contact-based pricing gets expensive"
+                "Contact-based pricing gets expensive",
             ],
             "migration_difficulty": "easy",
-            "common_pain_points": ["pricing scaling", "enterprise limitations", "workflow flexibility"]
+            "common_pain_points": [
+                "pricing scaling",
+                "enterprise limitations",
+                "workflow flexibility",
+            ],
         },
         "zendesk": {
             "name": "Zendesk",
@@ -99,16 +106,20 @@ class CompetitorComparisonHandler(BaseAgent):
                 "Better AI-powered automation",
                 "More intuitive interface",
                 "Better value for money",
-                "Unified analytics across teams"
+                "Unified analytics across teams",
             ],
             "their_weaknesses": [
                 "Multiple products to buy separately",
                 "Complex pricing structure",
                 "Limited customization",
-                "Dated user interface"
+                "Dated user interface",
             ],
             "migration_difficulty": "easy",
-            "common_pain_points": ["product fragmentation", "pricing complexity", "limited automation"]
+            "common_pain_points": [
+                "product fragmentation",
+                "pricing complexity",
+                "limited automation",
+            ],
         },
         "intercom": {
             "name": "Intercom",
@@ -118,16 +129,20 @@ class CompetitorComparisonHandler(BaseAgent):
                 "Better support features",
                 "More comprehensive platform",
                 "Better reporting and analytics",
-                "No conversation-based pricing limits"
+                "No conversation-based pricing limits",
             ],
             "their_weaknesses": [
                 "Very expensive at scale",
                 "Conversation limits frustrating",
                 "Limited ticketing features",
-                "Missing some support capabilities"
+                "Missing some support capabilities",
             ],
             "migration_difficulty": "easy",
-            "common_pain_points": ["cost at scale", "conversation limits", "limited support features"]
+            "common_pain_points": [
+                "cost at scale",
+                "conversation limits",
+                "limited support features",
+            ],
         },
         "freshdesk": {
             "name": "Freshdesk",
@@ -137,16 +152,16 @@ class CompetitorComparisonHandler(BaseAgent):
                 "Better AI capabilities",
                 "Superior integration ecosystem",
                 "More scalable architecture",
-                "Better enterprise features"
+                "Better enterprise features",
             ],
             "their_weaknesses": [
                 "Basic automation",
                 "Limited AI capabilities",
                 "Fewer integrations",
-                "Performance issues at scale"
+                "Performance issues at scale",
             ],
             "migration_difficulty": "easy",
-            "common_pain_points": ["limited automation", "scalability", "basic features"]
+            "common_pain_points": ["limited automation", "scalability", "basic features"],
         },
         "trello": {
             "name": "Trello",
@@ -157,17 +172,22 @@ class CompetitorComparisonHandler(BaseAgent):
                 "Better team collaboration features",
                 "Stronger automation capabilities",
                 "Enterprise-grade security",
-                "Scalable for larger teams"
+                "Scalable for larger teams",
             ],
             "their_weaknesses": [
                 "Limited to basic Kanban boards",
                 "Gets messy with many cards",
                 "No built-in time tracking",
                 "Limited reporting",
-                "Not suitable for complex projects"
+                "Not suitable for complex projects",
             ],
             "migration_difficulty": "easy",
-            "common_pain_points": ["gets messy at scale", "limited views", "basic features only", "lack of reporting"]
+            "common_pain_points": [
+                "gets messy at scale",
+                "limited views",
+                "basic features only",
+                "lack of reporting",
+            ],
         },
         "asana": {
             "name": "Asana",
@@ -177,16 +197,16 @@ class CompetitorComparisonHandler(BaseAgent):
                 "Better pricing for teams",
                 "Stronger integration ecosystem",
                 "More flexible workflows",
-                "Better mobile experience"
+                "Better mobile experience",
             ],
             "their_weaknesses": [
                 "Can be overwhelming with features",
                 "Complex permission system",
                 "Expensive at scale",
-                "Steep learning curve"
+                "Steep learning curve",
             ],
             "migration_difficulty": "easy",
-            "common_pain_points": ["complexity", "pricing", "overwhelming features"]
+            "common_pain_points": ["complexity", "pricing", "overwhelming features"],
         },
         "monday": {
             "name": "Monday.com",
@@ -196,16 +216,16 @@ class CompetitorComparisonHandler(BaseAgent):
                 "Better out-of-box workflows",
                 "Simpler pricing model",
                 "Faster implementation",
-                "Better customer support"
+                "Better customer support",
             ],
             "their_weaknesses": [
                 "Very expensive",
                 "Complex pricing tiers",
                 "Requires significant setup",
-                "Too many features for simple needs"
+                "Too many features for simple needs",
             ],
             "migration_difficulty": "easy",
-            "common_pain_points": ["expensive", "complex pricing", "feature bloat"]
+            "common_pain_points": ["expensive", "complex pricing", "feature bloat"],
         },
         "jira": {
             "name": "Jira",
@@ -215,16 +235,16 @@ class CompetitorComparisonHandler(BaseAgent):
                 "Faster setup and onboarding",
                 "Better user experience",
                 "Lower administrative overhead",
-                "More flexible for different use cases"
+                "More flexible for different use cases",
             ],
             "their_weaknesses": [
                 "Complex admin and configuration",
                 "Steep learning curve",
                 "Designed primarily for software teams",
-                "Requires dedicated admin"
+                "Requires dedicated admin",
             ],
             "migration_difficulty": "medium",
-            "common_pain_points": ["complexity", "learning curve", "too developer-focused"]
+            "common_pain_points": ["complexity", "learning curve", "too developer-focused"],
         },
         "basecamp": {
             "name": "Basecamp",
@@ -234,16 +254,16 @@ class CompetitorComparisonHandler(BaseAgent):
                 "Better for scaling teams",
                 "Advanced automation",
                 "Superior integrations",
-                "Better reporting"
+                "Better reporting",
             ],
             "their_weaknesses": [
                 "Limited feature set",
                 "Basic task management",
                 "No time tracking",
-                "Limited customization"
+                "Limited customization",
             ],
             "migration_difficulty": "easy",
-            "common_pain_points": ["limited features", "basic functionality"]
+            "common_pain_points": ["limited features", "basic functionality"],
         },
         "clickup": {
             "name": "ClickUp",
@@ -253,17 +273,17 @@ class CompetitorComparisonHandler(BaseAgent):
                 "Better performance",
                 "More reliable platform",
                 "Better customer support",
-                "Clearer pricing"
+                "Clearer pricing",
             ],
             "their_weaknesses": [
                 "Feature overload",
                 "Performance issues",
                 "Steep learning curve",
-                "Frequent changes to interface"
+                "Frequent changes to interface",
             ],
             "migration_difficulty": "easy",
-            "common_pain_points": ["performance", "too many features", "constant changes"]
-        }
+            "common_pain_points": ["performance", "too many features", "constant changes"],
+        },
     }
 
     # Migration support offerings
@@ -272,32 +292,32 @@ class CompetitorComparisonHandler(BaseAgent):
             "service": "Free data migration assistance",
             "description": "We'll help migrate your data with zero downtime",
             "included_in": ["enterprise", "growth"],
-            "typical_timeline": "1-2 weeks"
+            "typical_timeline": "1-2 weeks",
         },
         "onboarding": {
             "service": "Dedicated onboarding specialist",
             "description": "Personal onboarding support for smooth transition",
             "included_in": ["enterprise", "growth", "startup"],
-            "typical_timeline": "2-4 weeks"
+            "typical_timeline": "2-4 weeks",
         },
         "training": {
             "service": "Team training sessions",
             "description": "Live training for your team to get up to speed quickly",
             "included_in": ["enterprise", "growth"],
-            "typical_timeline": "1 week"
+            "typical_timeline": "1 week",
         },
         "parallel_run": {
             "service": "Parallel environment support",
             "description": "Run both systems in parallel during transition",
             "included_in": ["enterprise"],
-            "typical_timeline": "Flexible"
+            "typical_timeline": "Flexible",
         },
         "success_manager": {
             "service": "Dedicated success manager",
             "description": "Ongoing support post-migration",
             "included_in": ["enterprise", "growth"],
-            "typical_timeline": "Ongoing"
-        }
+            "typical_timeline": "Ongoing",
+        },
     }
 
     # Case studies of customers who switched from competitors
@@ -307,64 +327,64 @@ class CompetitorComparisonHandler(BaseAgent):
             "from_competitor": "salesforce",
             "results": "80% faster onboarding, 60% cost savings, 95% user adoption (vs 40% before)",
             "quote": "We got better results in 2 weeks than we did in 6 months with Salesforce",
-            "industry": "technology"
+            "industry": "technology",
         },
         "hubspot_to_us": {
             "company": "GrowthCo (200 employees)",
             "from_competitor": "hubspot",
             "results": "50% cost reduction, 3x more automation, better enterprise features",
             "quote": "We were paying more and getting less. The switch was a no-brainer",
-            "industry": "saas"
+            "industry": "saas",
         },
         "zendesk_to_us": {
             "company": "SupportFirst (150 employees)",
             "from_competitor": "zendesk",
             "results": "40% improvement in response time, unified platform, 35% cost savings",
             "quote": "One platform instead of three separate products. Game changer",
-            "industry": "ecommerce"
+            "industry": "ecommerce",
         },
         "intercom_to_us": {
             "company": "ScaleUp Inc (300 employees)",
             "from_competitor": "intercom",
             "results": "70% cost reduction, better features, no conversation limits",
             "quote": "Intercom became impossibly expensive. We got more for less",
-            "industry": "technology"
+            "industry": "technology",
         },
         "trello_to_us": {
             "company": "DesignStudio (75 employees)",
             "from_competitor": "trello",
             "results": "3x better project visibility, 50% faster delivery times, proper reporting",
             "quote": "Trello was fine until we grew. Now we actually know what's happening across teams",
-            "industry": "creative"
+            "industry": "creative",
         },
         "asana_to_us": {
             "company": "MarketingPros (120 employees)",
             "from_competitor": "asana",
             "results": "40% cost savings, simpler workflows, 90% team adoption in first week",
             "quote": "Asana was too complex for what we needed. This just works",
-            "industry": "marketing"
+            "industry": "marketing",
         },
         "monday_to_us": {
             "company": "ConsultCo (200 employees)",
             "from_competitor": "monday",
             "results": "60% cost reduction, same features, better support",
             "quote": "Monday.com pricing was crushing us. We got everything we needed for less",
-            "industry": "consulting"
+            "industry": "consulting",
         },
         "jira_to_us": {
             "company": "AgileTeam (80 employees)",
             "from_competitor": "jira",
             "results": "2x faster onboarding, no admin overhead, happier non-dev teams",
             "quote": "Jira is great for developers but our whole company uses project management. This fits everyone",
-            "industry": "technology"
-        }
+            "industry": "technology",
+        },
     }
 
     # Severity indicators
     SEVERITY_INDICATORS = {
         "blocker": ["locked in", "long-term contract", "heavily invested", "fully committed"],
         "major": ["currently using", "been with them for years", "satisfied with"],
-        "minor": ["looking at", "considering", "evaluating", "comparing"]
+        "minor": ["looking at", "considering", "evaluating", "comparing"],
     }
 
     def __init__(self):
@@ -376,10 +396,10 @@ class CompetitorComparisonHandler(BaseAgent):
             capabilities=[
                 AgentCapability.KB_SEARCH,
                 AgentCapability.CONTEXT_AWARE,
-                AgentCapability.ENTITY_EXTRACTION
+                AgentCapability.ENTITY_EXTRACTION,
             ],
             kb_category="sales",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -404,7 +424,7 @@ class CompetitorComparisonHandler(BaseAgent):
         self.logger.debug(
             "competitor_comparison_details",
             message_preview=message[:100],
-            turn_count=state["turn_count"]
+            turn_count=state["turn_count"],
         )
 
         # Identify mentioned competitors
@@ -420,7 +440,9 @@ class CompetitorComparisonHandler(BaseAgent):
         competitive_analysis = self._get_competitive_analysis(competitors)
 
         # Determine response strategy
-        strategy = self.RESPONSE_STRATEGIES.get(relationship_stage, self.RESPONSE_STRATEGIES["considering_competitor"])
+        strategy = self.RESPONSE_STRATEGIES.get(
+            relationship_stage, self.RESPONSE_STRATEGIES["considering_competitor"]
+        )
 
         # Get migration support options
         migration_support = self._get_migration_support(objection_severity, customer_metadata)
@@ -429,11 +451,7 @@ class CompetitorComparisonHandler(BaseAgent):
         win_stories = self._get_win_stories(competitors, customer_metadata)
 
         # Search knowledge base
-        kb_results = await self.search_knowledge_base(
-            message,
-            category="sales",
-            limit=4
-        )
+        kb_results = await self.search_knowledge_base(message, category="sales", limit=4)
         state["kb_results"] = kb_results
 
         # Generate response
@@ -448,21 +466,16 @@ class CompetitorComparisonHandler(BaseAgent):
             win_stories,
             kb_results,
             customer_metadata,
-            state
+            state,
         )
 
         # Calculate resolution confidence
         resolution_confidence = self._calculate_resolution_confidence(
-            objection_severity,
-            relationship_stage,
-            competitive_analysis
+            objection_severity, relationship_stage, competitive_analysis
         )
 
         # Determine escalation need
-        needs_escalation = self._check_escalation_needed(
-            objection_severity,
-            resolution_confidence
-        )
+        needs_escalation = self._check_escalation_needed(objection_severity, resolution_confidence)
 
         # Update state
         state["agent_response"] = response
@@ -482,12 +495,12 @@ class CompetitorComparisonHandler(BaseAgent):
             competitors_count=len(competitors),
             severity=objection_severity,
             confidence=resolution_confidence,
-            escalated=needs_escalation
+            escalated=needs_escalation,
         )
 
         return state
 
-    def _identify_competitors(self, message: str) -> List[str]:
+    def _identify_competitors(self, message: str) -> list[str]:
         """Identify which competitors are mentioned in the message"""
         message_lower = message.lower()
         mentioned = []
@@ -512,44 +525,54 @@ class CompetitorComparisonHandler(BaseAgent):
         """Determine the prospect's relationship stage with competitor"""
         message_lower = message.lower()
 
-        if any(phrase in message_lower for phrase in ["currently using", "been using", "migrating from"]):
+        if any(
+            phrase in message_lower
+            for phrase in ["currently using", "been using", "migrating from"]
+        ):
             return "using_competitor"
-        elif any(phrase in message_lower for phrase in ["happy with", "satisfied with", "works well"]):
+        elif any(
+            phrase in message_lower for phrase in ["happy with", "satisfied with", "works well"]
+        ):
             return "satisfied_with_competitor"
-        elif any(phrase in message_lower for phrase in ["also using", "in addition to", "alongside"]):
+        elif any(
+            phrase in message_lower for phrase in ["also using", "in addition to", "alongside"]
+        ):
             return "multi_vendor"
         else:
             return "considering_competitor"
 
-    def _get_competitive_analysis(self, competitors: List[str]) -> List[Dict[str, Any]]:
+    def _get_competitive_analysis(self, competitors: list[str]) -> list[dict[str, Any]]:
         """Get competitive analysis for mentioned competitors"""
         analysis = []
 
         for competitor in competitors:
             if competitor in self.COMPETITOR_ANALYSIS:
-                analysis.append({
-                    "competitor": competitor,
-                    "data": self.COMPETITOR_ANALYSIS[competitor]
-                })
+                analysis.append(
+                    {"competitor": competitor, "data": self.COMPETITOR_ANALYSIS[competitor]}
+                )
             else:
                 # Generic competitor analysis
-                analysis.append({
-                    "competitor": competitor,
-                    "data": {
-                        "name": competitor.replace("_", " ").title(),
-                        "our_advantages": [
-                            "Better user experience and ease of use",
-                            "More competitive pricing",
-                            "Superior customer support",
-                            "Faster innovation and feature releases"
-                        ],
-                        "migration_difficulty": "medium"
+                analysis.append(
+                    {
+                        "competitor": competitor,
+                        "data": {
+                            "name": competitor.replace("_", " ").title(),
+                            "our_advantages": [
+                                "Better user experience and ease of use",
+                                "More competitive pricing",
+                                "Superior customer support",
+                                "Faster innovation and feature releases",
+                            ],
+                            "migration_difficulty": "medium",
+                        },
                     }
-                })
+                )
 
         return analysis
 
-    def _get_migration_support(self, severity: str, customer_metadata: Dict) -> List[Dict[str, Any]]:
+    def _get_migration_support(
+        self, severity: str, customer_metadata: dict
+    ) -> list[dict[str, Any]]:
         """Get relevant migration support offerings"""
         company_size = customer_metadata.get("company_size", 0)
 
@@ -563,13 +586,15 @@ class CompetitorComparisonHandler(BaseAgent):
 
         # Get applicable migration support
         applicable_support = []
-        for service_key, service_data in self.MIGRATION_SUPPORT.items():
+        for _service_key, service_data in self.MIGRATION_SUPPORT.items():
             if tier in service_data["included_in"]:
                 applicable_support.append(service_data)
 
         return applicable_support
 
-    def _get_win_stories(self, competitors: List[str], customer_metadata: Dict) -> List[Dict[str, Any]]:
+    def _get_win_stories(
+        self, competitors: list[str], customer_metadata: dict
+    ) -> list[dict[str, Any]]:
         """Get relevant competitive win stories"""
         industry = customer_metadata.get("industry", "").lower()
         stories = []
@@ -587,20 +612,13 @@ class CompetitorComparisonHandler(BaseAgent):
         return stories[:3]  # Return top 3 most relevant
 
     def _calculate_resolution_confidence(
-        self,
-        severity: str,
-        relationship_stage: str,
-        competitive_analysis: List[Dict]
+        self, severity: str, relationship_stage: str, competitive_analysis: list[dict]
     ) -> float:
         """Calculate confidence in resolving the competitor objection"""
         base_confidence = 0.75
 
         # Adjust for severity
-        severity_adjustments = {
-            "minor": 0.15,
-            "major": 0.0,
-            "blocker": -0.20
-        }
+        severity_adjustments = {"minor": 0.15, "major": 0.0, "blocker": -0.20}
         confidence = base_confidence + severity_adjustments.get(severity, 0.0)
 
         # Adjust for relationship stage
@@ -608,12 +626,15 @@ class CompetitorComparisonHandler(BaseAgent):
             "considering_competitor": 0.10,
             "multi_vendor": 0.05,
             "using_competitor": -0.05,
-            "satisfied_with_competitor": -0.10
+            "satisfied_with_competitor": -0.10,
         }
         confidence += stage_adjustments.get(relationship_stage, 0.0)
 
         # Boost confidence if we have strong competitive analysis
-        if competitive_analysis and len(competitive_analysis[0].get("data", {}).get("our_advantages", [])) >= 4:
+        if (
+            competitive_analysis
+            and len(competitive_analysis[0].get("data", {}).get("our_advantages", [])) >= 4
+        ):
             confidence += 0.05
 
         return min(max(confidence, 0.0), 1.0)
@@ -622,23 +643,21 @@ class CompetitorComparisonHandler(BaseAgent):
         """Determine if escalation is needed"""
         if severity == "blocker" and confidence < 0.70:
             return True
-        if confidence < 0.60:
-            return True
-        return False
+        return confidence < 0.6
 
     async def _generate_competitor_response(
         self,
         message: str,
-        competitors: List[str],
+        competitors: list[str],
         severity: str,
         relationship_stage: str,
-        competitive_analysis: List[Dict],
-        strategy: Dict,
-        migration_support: List[Dict],
-        win_stories: List[Dict],
-        kb_results: List[Dict],
-        customer_metadata: Dict,
-        state: AgentState
+        competitive_analysis: list[dict],
+        strategy: dict,
+        migration_support: list[dict],
+        win_stories: list[dict],
+        kb_results: list[dict],
+        customer_metadata: dict,
+        state: AgentState,
     ) -> str:
         """Generate personalized competitive response"""
 
@@ -681,20 +700,20 @@ class CompetitorComparisonHandler(BaseAgent):
                 stories_context += f"\n{story['company']}:\n"
                 stories_context += f"  Previously: {story['from_competitor'].title()}\n"
                 stories_context += f"  Results: {story['results']}\n"
-                stories_context += f"  Quote: \"{story['quote']}\"\n"
+                stories_context += f'  Quote: "{story["quote"]}"\n'
 
         system_prompt = f"""You are a Competitor Comparison Handler specialist addressing competitive concerns.
 
 Objection Analysis:
-- Competitors Mentioned: {', '.join(c.title() for c in competitors)}
+- Competitors Mentioned: {", ".join(c.title() for c in competitors)}
 - Severity: {severity.upper()}
-- Relationship Stage: {relationship_stage.replace('_', ' ').title()}
-- Response Strategy: {strategy['approach'].replace('_', ' ').title()}
+- Relationship Stage: {relationship_stage.replace("_", " ").title()}
+- Response Strategy: {strategy["approach"].replace("_", " ").title()}
 
 Customer Profile:
-- Company: {customer_metadata.get('company', 'Unknown')}
-- Industry: {customer_metadata.get('industry', 'Unknown')}
-- Company Size: {customer_metadata.get('company_size', 'Unknown')}
+- Company: {customer_metadata.get("company", "Unknown")}
+- Industry: {customer_metadata.get("industry", "Unknown")}
+- Company Size: {customer_metadata.get("company_size", "Unknown")}
 
 Your response should:
 1. Acknowledge their current tool/evaluation respectfully (never badmouth competitors)
@@ -705,8 +724,8 @@ Your response should:
 6. Be confident but not arrogant - let facts speak
 7. Provide clear next steps (comparison guide, demo, trial)
 
-Key Tactics: {', '.join(strategy['tactics'])}
-Supporting Materials: {', '.join(strategy['supporting_materials'])}"""
+Key Tactics: {", ".join(strategy["tactics"])}
+Supporting Materials: {", ".join(strategy["supporting_materials"])}"""
 
         user_prompt = f"""Customer message: {message}
 
@@ -718,9 +737,7 @@ Supporting Materials: {', '.join(strategy['supporting_materials'])}"""
 Generate a respectful, fact-based response that differentiates our solution."""
 
         response = await self.call_llm(
-            system_prompt,
-            user_prompt,
-            conversation_history=conversation_history
+            system_prompt, user_prompt, conversation_history=conversation_history
         )
         return response
 
@@ -744,15 +761,15 @@ if __name__ == "__main__":
                     "company": "Enterprise Corp",
                     "title": "VP of Sales",
                     "company_size": 500,
-                    "industry": "technology"
+                    "industry": "technology",
                 }
-            }
+            },
         )
 
         agent = CompetitorComparisonHandler()
         result1 = await agent.process(state1)
 
-        print(f"\nTest 1 - Currently Using Salesforce")
+        print("\nTest 1 - Currently Using Salesforce")
         print(f"Competitors: {result1['competitors_mentioned']}")
         print(f"Severity: {result1['objection_severity']}")
         print(f"Relationship Stage: {result1['relationship_stage']}")
@@ -769,14 +786,14 @@ if __name__ == "__main__":
                     "company": "GrowthCo",
                     "title": "Marketing Director",
                     "company_size": 120,
-                    "industry": "saas"
+                    "industry": "saas",
                 }
-            }
+            },
         )
 
         result2 = await agent.process(state2)
 
-        print(f"\nTest 2 - Evaluating HubSpot")
+        print("\nTest 2 - Evaluating HubSpot")
         print(f"Competitors: {result2['competitors_mentioned']}")
         print(f"Severity: {result2['objection_severity']}")
         print(f"Relationship Stage: {result2['relationship_stage']}")
@@ -792,14 +809,14 @@ if __name__ == "__main__":
                     "company": "ScaleUp Inc",
                     "title": "CTO",
                     "company_size": 250,
-                    "industry": "technology"
+                    "industry": "technology",
                 }
-            }
+            },
         )
 
         result3 = await agent.process(state3)
 
-        print(f"\nTest 3 - Locked into Intercom Contract (Blocker)")
+        print("\nTest 3 - Locked into Intercom Contract (Blocker)")
         print(f"Competitors: {result3['competitors_mentioned']}")
         print(f"Severity: {result3['objection_severity']}")
         print(f"Relationship Stage: {result3['relationship_stage']}")
