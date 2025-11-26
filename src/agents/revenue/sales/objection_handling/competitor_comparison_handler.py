@@ -303,7 +303,8 @@ class CompetitorComparisonHandler(BaseAgent):
             migration_support,
             win_stories,
             kb_results,
-            customer_metadata
+            customer_metadata,
+            state
         )
 
         # Calculate resolution confidence
@@ -492,9 +493,13 @@ class CompetitorComparisonHandler(BaseAgent):
         migration_support: List[Dict],
         win_stories: List[Dict],
         kb_results: List[Dict],
-        customer_metadata: Dict
+        customer_metadata: Dict,
+        state: AgentState
     ) -> str:
         """Generate personalized competitive response"""
+
+        # Get conversation history for context continuity
+        conversation_history = self.get_conversation_context(state)
 
         # Build KB context
         kb_context = ""
@@ -568,7 +573,11 @@ Supporting Materials: {', '.join(strategy['supporting_materials'])}"""
 
 Generate a respectful, fact-based response that differentiates our solution."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt,
+            user_prompt,
+            conversation_history=conversation_history
+        )
         return response
 
 
