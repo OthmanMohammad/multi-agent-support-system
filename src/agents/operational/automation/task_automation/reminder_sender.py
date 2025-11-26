@@ -243,7 +243,11 @@ Customer: {customer_metadata.get('customer_name', 'Unknown')}
 
 Return JSON with subject, deadline, urgency_level, preferred_channels, and additional_context."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # Reminder parsing uses message context
+        )
 
         # Parse LLM response
         try:
