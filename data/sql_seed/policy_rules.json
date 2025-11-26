@@ -1,0 +1,146 @@
+{
+  "table": "policy_rules",
+  "records": [
+    {
+      "id": "ccf77c7d-b022-4b55-a2a8-0cd815b4d8e9",
+      "policy_name": "No refunds after 30 days",
+      "policy_category": "refund",
+      "policy_description": "Refunds are only allowed within 30 days of purchase",
+      "rule_type": "must_not_include",
+      "rule_config": {
+        "keywords": [
+          "refund",
+          "money back",
+          "reimbursement"
+        ],
+        "thresholds": {}
+      },
+      "enforcement_level": "strict",
+      "violation_action": "block",
+      "compliant_examples": [
+        "Example of compliant No refunds after 30 days"
+      ],
+      "violation_examples": [
+        "Example of violation of No refunds after 30 days"
+      ],
+      "active": true
+    },
+    {
+      "id": "4cf5d47b-8007-4a4c-be28-21056b4dc225",
+      "policy_name": "Discount approval required",
+      "policy_category": "pricing",
+      "policy_description": "Discounts >20% require manager approval",
+      "rule_type": "requires_approval",
+      "rule_config": {
+        "keywords": [
+          "discount",
+          "reduction",
+          "lower price"
+        ],
+        "thresholds": {}
+      },
+      "enforcement_level": "advisory",
+      "violation_action": "block",
+      "compliant_examples": [
+        "Example of compliant Discount approval required"
+      ],
+      "violation_examples": [
+        "Example of violation of Discount approval required"
+      ],
+      "active": true
+    },
+    {
+      "id": "cae25c95-81d5-4962-a162-50263b179bc1",
+      "policy_name": "No competitor pricing disclosure",
+      "policy_category": "pricing",
+      "policy_description": "Do not share details about competitor pricing",
+      "rule_type": "must_not_include",
+      "rule_config": {
+        "keywords": [
+          "Asana",
+          "Monday",
+          "Jira",
+          "competitor"
+        ],
+        "thresholds": {}
+      },
+      "enforcement_level": "advisory",
+      "violation_action": "escalate",
+      "compliant_examples": [
+        "Example of compliant No competitor pricing disclosure"
+      ],
+      "violation_examples": [
+        "Example of violation of No competitor pricing disclosure"
+      ],
+      "active": true
+    },
+    {
+      "id": "8ad682d6-0c28-4873-b073-bc5f3e223ace",
+      "policy_name": "PII must be masked",
+      "policy_category": "security",
+      "policy_description": "Always mask SSN, credit card, and phone numbers",
+      "rule_type": "must_include",
+      "rule_config": {
+        "keywords": [],
+        "thresholds": {}
+      },
+      "enforcement_level": "moderate",
+      "violation_action": "log",
+      "compliant_examples": [
+        "Example of compliant PII must be masked"
+      ],
+      "violation_examples": [
+        "Example of violation of PII must be masked"
+      ],
+      "active": true
+    },
+    {
+      "id": "07546ee2-f0f5-414c-94a1-fd2662e614c6",
+      "policy_name": "Security questions require 2FA",
+      "policy_category": "security",
+      "policy_description": "Password resets must verify 2FA before completion",
+      "rule_type": "requires_approval",
+      "rule_config": {
+        "keywords": [
+          "password",
+          "security",
+          "authentication"
+        ],
+        "thresholds": {}
+      },
+      "enforcement_level": "advisory",
+      "violation_action": "escalate",
+      "compliant_examples": [
+        "Example of compliant Security questions require 2FA"
+      ],
+      "violation_examples": [
+        "Example of violation of Security questions require 2FA"
+      ],
+      "active": true
+    },
+    {
+      "id": "1e5651d1-b3e3-406f-a76a-6fb9f03aa3de",
+      "policy_name": "Enterprise requests auto-escalate",
+      "policy_category": "escalation",
+      "policy_description": "Enterprise customer requests auto-escalate to CSM",
+      "rule_type": "auto_escalate",
+      "rule_config": {
+        "keywords": [
+          "enterprise",
+          "custom",
+          "dedicated"
+        ],
+        "thresholds": {}
+      },
+      "enforcement_level": "moderate",
+      "violation_action": "escalate",
+      "compliant_examples": [
+        "Example of compliant Enterprise requests auto-escalate"
+      ],
+      "violation_examples": [
+        "Example of violation of Enterprise requests auto-escalate"
+      ],
+      "active": true
+    }
+  ]
+}
