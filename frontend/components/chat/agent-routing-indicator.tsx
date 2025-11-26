@@ -194,6 +194,7 @@ export function AgentRoutingSteps({
                 step.status === "pending" && "border-border bg-background"
               )}
             >
+              {/* eslint-disable-next-line no-nested-ternary -- Status icon conditional */}
               {step.status === "complete" ? (
                 <CheckCircle className="h-4 w-4" />
               ) : step.status === "active" ? (
