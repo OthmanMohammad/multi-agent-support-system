@@ -1,15 +1,17 @@
 """Retention Sub-Swarm - 5 Agents"""
 
-from src.agents.revenue.customer_success.retention.renewal_manager import RenewalManagerAgent
-from src.agents.revenue.customer_success.retention.win_back import WinBackAgent
-from src.agents.revenue.customer_success.retention.save_team_coordinator import SaveTeamCoordinatorAgent
 from src.agents.revenue.customer_success.retention.feedback_loop import FeedbackLoopAgent
 from src.agents.revenue.customer_success.retention.loyalty_program import LoyaltyProgramAgent
+from src.agents.revenue.customer_success.retention.renewal_manager import RenewalManagerAgent
+from src.agents.revenue.customer_success.retention.save_team_coordinator import (
+    SaveTeamCoordinatorAgent,
+)
+from src.agents.revenue.customer_success.retention.win_back import WinBackAgent
 
 __all__ = [
-    "RenewalManagerAgent",
-    "WinBackAgent",
-    "SaveTeamCoordinatorAgent",
     "FeedbackLoopAgent",
     "LoyaltyProgramAgent",
+    "RenewalManagerAgent",
+    "SaveTeamCoordinatorAgent",
+    "WinBackAgent",
 ]
