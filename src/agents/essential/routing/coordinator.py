@@ -7,16 +7,17 @@ verification, and expert_panel for complex multi-agent workflows.
 Part of: STORY-01 Routing & Orchestration Swarm (TASK-107)
 """
 
-from typing import Dict, Any, Optional, List, Literal
 import asyncio
-from datetime import datetime
 from collections import Counter
+from datetime import datetime
+from typing import Any, Literal
+
 import structlog
 
-from src.agents.base.base_agent import BaseAgent, AgentConfig
-from src.agents.base.agent_types import AgentType, AgentCapability
-from src.workflow.state import AgentState
+from src.agents.base.agent_types import AgentCapability, AgentType
+from src.agents.base.base_agent import AgentConfig, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.workflow.state import AgentState
 
 logger = structlog.get_logger(__name__)
 
@@ -51,12 +52,10 @@ class Coordinator(BaseAgent):
             type=AgentType.ORCHESTRATOR,
             temperature=0.1,
             max_tokens=500,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE],
             system_prompt_template="",  # Coordinator doesn't need LLM
             tier="essential",
-            role="coordinator"
+            role="coordinator",
         )
         super().__init__(config=config, **kwargs)
         self.logger = logger.bind(agent="coordinator", agent_type="orchestrator")
@@ -80,10 +79,7 @@ class Coordinator(BaseAgent):
     # ==================== Sequential Pattern ====================
 
     async def execute_sequential(
-        self,
-        agents: List[BaseAgent],
-        state: AgentState,
-        stop_on_error: bool = False
+        self, agents: list[BaseAgent], state: AgentState, stop_on_error: bool = False
     ) -> AgentState:
         """
         Execute agents sequentially (A → B → C).
@@ -110,7 +106,7 @@ class Coordinator(BaseAgent):
         self.logger.info(
             "sequential_execution_started",
             num_agents=len(agents),
-            agent_names=[a.config.name for a in agents]
+            agent_names=[a.config.name for a in agents],
         )
 
         results = []
@@ -122,30 +118,19 @@ class Coordinator(BaseAgent):
                     "sequential_agent_executing",
                     agent=agent.config.name,
                     step=i + 1,
-                    total=len(agents)
+                    total=len(agents),
                 )
 
                 # Execute agent
                 current_state = await agent.process(current_state)
-                results.append({
-                    "agent": agent.config.name,
-                    "success": True,
-                    "error": None
-                })
+                results.append({"agent": agent.config.name, "success": True, "error": None})
 
             except Exception as e:
                 self.logger.error(
-                    "sequential_agent_failed",
-                    agent=agent.config.name,
-                    error=str(e),
-                    step=i + 1
+                    "sequential_agent_failed", agent=agent.config.name, error=str(e), step=i + 1
                 )
 
-                results.append({
-                    "agent": agent.config.name,
-                    "success": False,
-                    "error": str(e)
-                })
+                results.append({"agent": agent.config.name, "success": False, "error": str(e)})
 
                 if stop_on_error:
                     break
@@ -162,7 +147,7 @@ class Coordinator(BaseAgent):
             "successful_agents": sum(1 for r in results if r["success"]),
             "failed_agents": sum(1 for r in results if not r["success"]),
             "latency_ms": latency_ms,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         self.logger.info(
@@ -170,7 +155,7 @@ class Coordinator(BaseAgent):
             num_agents=len(agents),
             successful=sum(1 for r in results if r["success"]),
             failed=sum(1 for r in results if not r["success"]),
-            latency_ms=latency_ms
+            latency_ms=latency_ms,
         )
 
         return current_state
@@ -179,9 +164,9 @@ class Coordinator(BaseAgent):
 
     async def execute_parallel(
         self,
-        agents: List[BaseAgent],
+        agents: list[BaseAgent],
         state: AgentState,
-        merge_strategy: Literal["last_wins", "merge_all", "first_wins"] = "merge_all"
+        merge_strategy: Literal["last_wins", "merge_all", "first_wins"] = "merge_all",
     ) -> AgentState:
         """
         Execute agents in parallel (A + B + C).
@@ -212,14 +197,13 @@ class Coordinator(BaseAgent):
             "parallel_execution_started",
             num_agents=len(agents),
             agent_names=[a.config.name for a in agents],
-            merge_strategy=merge_strategy
+            merge_strategy=merge_strategy,
         )
 
         # Execute all agents concurrently
         try:
             results = await asyncio.gather(
-                *[agent.process(state.copy()) for agent in agents],
-                return_exceptions=True
+                *[agent.process(state.copy()) for agent in agents], return_exceptions=True
             )
         except Exception as e:
             self.logger.error("parallel_execution_failed", error=str(e))
@@ -231,14 +215,9 @@ class Coordinator(BaseAgent):
 
         for i, result in enumerate(results):
             if isinstance(result, Exception):
-                errors.append({
-                    "agent": agents[i].config.name,
-                    "error": str(result)
-                })
+                errors.append({"agent": agents[i].config.name, "error": str(result)})
                 self.logger.error(
-                    "parallel_agent_failed",
-                    agent=agents[i].config.name,
-                    error=str(result)
+                    "parallel_agent_failed", agent=agents[i].config.name, error=str(result)
                 )
             else:
                 successful_results.append(result)
@@ -264,7 +243,7 @@ class Coordinator(BaseAgent):
             "merge_strategy": merge_strategy,
             "latency_ms": latency_ms,
             "timestamp": datetime.now().isoformat(),
-            "errors": errors if errors else []
+            "errors": errors if errors else [],
         }
 
         self.logger.info(
@@ -272,7 +251,7 @@ class Coordinator(BaseAgent):
             num_agents=len(agents),
             successful=len(successful_results),
             failed=len(errors),
-            latency_ms=latency_ms
+            latency_ms=latency_ms,
         )
 
         return merged_state
@@ -281,10 +260,10 @@ class Coordinator(BaseAgent):
 
     async def execute_debate(
         self,
-        agents: List[BaseAgent],
+        agents: list[BaseAgent],
         state: AgentState,
         decision_field: str = "decision",
-        min_agents: int = 3
+        min_agents: int = 3,
     ) -> AgentState:
         """
         Execute debate pattern with voting.
@@ -313,23 +292,18 @@ class Coordinator(BaseAgent):
 
         if len(agents) < min_agents:
             self.logger.warning(
-                "debate_insufficient_agents",
-                required=min_agents,
-                provided=len(agents)
+                "debate_insufficient_agents", required=min_agents, provided=len(agents)
             )
             return state
 
         self.logger.info(
-            "debate_execution_started",
-            num_agents=len(agents),
-            decision_field=decision_field
+            "debate_execution_started", num_agents=len(agents), decision_field=decision_field
         )
 
         # Execute all agents in parallel
         try:
             results = await asyncio.gather(
-                *[agent.process(state.copy()) for agent in agents],
-                return_exceptions=True
+                *[agent.process(state.copy()) for agent in agents], return_exceptions=True
             )
         except Exception as e:
             self.logger.error("debate_execution_failed", error=str(e))
@@ -342,9 +316,7 @@ class Coordinator(BaseAgent):
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 self.logger.error(
-                    "debate_agent_failed",
-                    agent=agents[i].config.name,
-                    error=str(result)
+                    "debate_agent_failed", agent=agents[i].config.name, error=str(result)
                 )
                 continue
 
@@ -352,11 +324,13 @@ class Coordinator(BaseAgent):
             vote = result.get(decision_field)
             if vote is not None:
                 votes.append(vote)
-                vote_details.append({
-                    "agent": agents[i].config.name,
-                    "vote": vote,
-                    "confidence": result.get("confidence", 0.5)
-                })
+                vote_details.append(
+                    {
+                        "agent": agents[i].config.name,
+                        "vote": vote,
+                        "confidence": result.get("confidence", 0.5),
+                    }
+                )
 
         # No valid votes
         if not votes:
@@ -390,7 +364,7 @@ class Coordinator(BaseAgent):
             "consensus": vote_count == len(votes),
             "vote_distribution": dict(vote_counts),
             "latency_ms": latency_ms,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         self.logger.info(
@@ -399,7 +373,7 @@ class Coordinator(BaseAgent):
             vote_count=vote_count,
             total_votes=len(votes),
             consensus=vote_count == len(votes),
-            latency_ms=latency_ms
+            latency_ms=latency_ms,
         )
 
         return state
@@ -411,7 +385,7 @@ class Coordinator(BaseAgent):
         proposer_agent: BaseAgent,
         verifier_agent: BaseAgent,
         state: AgentState,
-        max_iterations: int = 2
+        max_iterations: int = 2,
     ) -> AgentState:
         """
         Execute verification pattern (propose → verify → refine).
@@ -441,7 +415,7 @@ class Coordinator(BaseAgent):
             "verification_execution_started",
             proposer=proposer_agent.config.name,
             verifier=verifier_agent.config.name,
-            max_iterations=max_iterations
+            max_iterations=max_iterations,
         )
 
         iterations = []
@@ -454,7 +428,7 @@ class Coordinator(BaseAgent):
                 self.logger.debug(
                     "verification_proposing",
                     iteration=iteration + 1,
-                    agent=proposer_agent.config.name
+                    agent=proposer_agent.config.name,
                 )
 
                 proposal_state = await proposer_agent.process(current_state)
@@ -463,7 +437,7 @@ class Coordinator(BaseAgent):
                 self.logger.debug(
                     "verification_verifying",
                     iteration=iteration + 1,
-                    agent=verifier_agent.config.name
+                    agent=verifier_agent.config.name,
                 )
 
                 # Add verification instruction to state
@@ -476,42 +450,37 @@ class Coordinator(BaseAgent):
                 # Check if verified
                 verified = verified_state.get("verification_passed", True)
 
-                iterations.append({
-                    "iteration": iteration + 1,
-                    "proposer": proposer_agent.config.name,
-                    "verifier": verifier_agent.config.name,
-                    "verified": verified,
-                    "issues": verified_state.get("verification_issues", [])
-                })
+                iterations.append(
+                    {
+                        "iteration": iteration + 1,
+                        "proposer": proposer_agent.config.name,
+                        "verifier": verifier_agent.config.name,
+                        "verified": verified,
+                        "issues": verified_state.get("verification_issues", []),
+                    }
+                )
 
                 if verified:
                     current_state = verified_state
-                    self.logger.info(
-                        "verification_passed",
-                        iteration=iteration + 1
-                    )
+                    self.logger.info("verification_passed", iteration=iteration + 1)
                     break
                 else:
                     # Verification failed, provide feedback for next iteration
                     current_state = verified_state
-                    current_state["verification_feedback"] = verified_state.get("verification_issues", [])
+                    current_state["verification_feedback"] = verified_state.get(
+                        "verification_issues", []
+                    )
                     self.logger.info(
                         "verification_failed_refining",
                         iteration=iteration + 1,
-                        issues=len(current_state["verification_feedback"])
+                        issues=len(current_state["verification_feedback"]),
                     )
 
             except Exception as e:
                 self.logger.error(
-                    "verification_iteration_failed",
-                    iteration=iteration + 1,
-                    error=str(e)
+                    "verification_iteration_failed", iteration=iteration + 1, error=str(e)
                 )
-                iterations.append({
-                    "iteration": iteration + 1,
-                    "error": str(e),
-                    "verified": False
-                })
+                iterations.append({"iteration": iteration + 1, "error": str(e), "verified": False})
                 break
 
         # Calculate latency
@@ -528,14 +497,14 @@ class Coordinator(BaseAgent):
             "iterations": len(iterations),
             "verified": verified,
             "latency_ms": latency_ms,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         self.logger.info(
             "verification_execution_completed",
             iterations=len(iterations),
             verified=verified,
-            latency_ms=latency_ms
+            latency_ms=latency_ms,
         )
 
         return current_state
@@ -544,9 +513,9 @@ class Coordinator(BaseAgent):
 
     async def execute_expert_panel(
         self,
-        agents: List[BaseAgent],
+        agents: list[BaseAgent],
         state: AgentState,
-        panel_strategy: Literal["parallel", "sequential"] = "parallel"
+        panel_strategy: Literal["parallel", "sequential"] = "parallel",
     ) -> AgentState:
         """
         Execute expert panel pattern.
@@ -574,7 +543,7 @@ class Coordinator(BaseAgent):
             "expert_panel_started",
             num_experts=len(agents),
             experts=[a.config.name for a in agents],
-            strategy=panel_strategy
+            strategy=panel_strategy,
         )
 
         # Execute based on strategy
@@ -594,7 +563,7 @@ class Coordinator(BaseAgent):
             insight = {
                 "expert": agent_name,
                 "domain": agent.config.tier,
-                "contribution": panel_state.get(f"{agent_name}_response", "")
+                "contribution": panel_state.get(f"{agent_name}_response", ""),
             }
             expert_insights.append(insight)
 
@@ -607,14 +576,14 @@ class Coordinator(BaseAgent):
             "expert_names": [a.config.name for a in agents],
             "strategy": panel_strategy,
             "latency_ms": latency_ms,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         self.logger.info(
             "expert_panel_completed",
             num_experts=len(agents),
             strategy=panel_strategy,
-            latency_ms=latency_ms
+            latency_ms=latency_ms,
         )
 
         return panel_state
@@ -622,9 +591,7 @@ class Coordinator(BaseAgent):
     # ==================== Helper Methods ====================
 
     def _merge_states(
-        self,
-        states: List[AgentState],
-        strategy: Literal["last_wins", "merge_all", "first_wins"]
+        self, states: list[AgentState], strategy: Literal["last_wins", "merge_all", "first_wins"]
     ) -> AgentState:
         """
         Merge multiple agent states based on strategy.
@@ -681,6 +648,7 @@ def create_coordinator(**kwargs) -> Coordinator:
 # Example usage (for development/testing)
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test_coordinator():
@@ -694,10 +662,7 @@ if __name__ == "__main__":
         # Create mock agents
         class MockAgent(BaseAgent):
             def __init__(self, name: str, decision: Any = None):
-                config = AgentConfig(
-                    name=name,
-                    type=AgentType.ANALYZER
-                )
+                config = AgentConfig(name=name, type=AgentType.ANALYZER)
                 super().__init__(config=config)
                 self.decision = decision
 
@@ -709,37 +674,43 @@ if __name__ == "__main__":
                 return state
 
         # Test Sequential
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("TEST: Sequential Execution")
-        print("="*60)
+        print("=" * 60)
 
         state = create_initial_state(message="Test", context={})
         agents = [MockAgent("agent1"), MockAgent("agent2"), MockAgent("agent3")]
 
         result = await coordinator.execute_sequential(agents, state)
-        print(f"✓ Sequential completed: {result['coordination_metadata']['successful_agents']} agents")
+        print(
+            f"✓ Sequential completed: {result['coordination_metadata']['successful_agents']} agents"
+        )
 
         # Test Parallel
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("TEST: Parallel Execution")
-        print("="*60)
+        print("=" * 60)
 
         result = await coordinator.execute_parallel(agents, state)
-        print(f"✓ Parallel completed: {result['coordination_metadata']['successful_agents']} agents")
+        print(
+            f"✓ Parallel completed: {result['coordination_metadata']['successful_agents']} agents"
+        )
 
         # Test Debate
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("TEST: Debate Execution")
-        print("="*60)
+        print("=" * 60)
 
         debate_agents = [
             MockAgent("agent1", decision="approve"),
             MockAgent("agent2", decision="approve"),
-            MockAgent("agent3", decision="reject")
+            MockAgent("agent3", decision="reject"),
         ]
 
         result = await coordinator.execute_debate(debate_agents, state)
-        print(f"✓ Debate winner: {result['debate_winner']} ({result['debate_vote_count']}/{result['debate_total_votes']} votes)")
+        print(
+            f"✓ Debate winner: {result['debate_winner']} ({result['debate_vote_count']}/{result['debate_total_votes']} votes)"
+        )
 
     # Run tests
     asyncio.run(test_coordinator())
