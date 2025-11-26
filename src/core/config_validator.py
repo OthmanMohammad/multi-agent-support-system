@@ -4,27 +4,30 @@ Configuration validation on application startup.
 Validates configuration and fails fast with clear errors.
 """
 
-from typing import List, Tuple
 from src.core.config import get_settings
+
 # Lazy import to avoid circular dependency:
 # config_validator → logging.setup → core.config → core.__init__ → config_validator
 _logger = None
+
 
 def _get_logger():
     """Lazy logger initialization"""
     global _logger
     if _logger is None:
         from src.utils.logging.setup import get_logger
+
         _logger = get_logger(__name__)
     return _logger
 
 
 class ConfigurationError(Exception):
     """Configuration validation error"""
+
     pass
 
 
-def validate_configuration() -> Tuple[bool, List[str]]:
+def validate_configuration() -> tuple[bool, list[str]]:
     """
     Validate application configuration.
 
@@ -42,8 +45,7 @@ def validate_configuration() -> Tuple[bool, List[str]]:
     # Validate environment
     if settings.environment not in ["staging", "production"]:
         errors.append(
-            f"Invalid environment '{settings.environment}'. "
-            f"Must be 'staging' or 'production'"
+            f"Invalid environment '{settings.environment}'. Must be 'staging' or 'production'"
         )
 
     # Validate CORS
@@ -53,14 +55,10 @@ def validate_configuration() -> Tuple[bool, List[str]]:
     # Validate database
     db_url = str(settings.database.url)
     if "localhost" in db_url and settings.is_production():
-        errors.append(
-            "SECURITY: localhost database URL detected in production"
-        )
+        errors.append("SECURITY: localhost database URL detected in production")
 
     if "example.com" in db_url:
-        errors.append(
-            "Database URL contains example.com - update with real database"
-        )
+        errors.append("Database URL contains example.com - update with real database")
 
     # Validate Anthropic API
     if "your" in settings.anthropic.api_key.lower():
@@ -87,16 +85,9 @@ def validate_configuration() -> Tuple[bool, List[str]]:
     # Log validation results
     log = _get_logger()
     if errors:
-        log.error(
-            "configuration_validation_failed",
-            error_count=len(errors),
-            errors=errors
-        )
+        log.error("configuration_validation_failed", error_count=len(errors), errors=errors)
     else:
-        log.info(
-            "configuration_validation_passed",
-            environment=settings.environment
-        )
+        log.info("configuration_validation_passed", environment=settings.environment)
 
     return len(errors) == 0, errors
 
@@ -106,7 +97,7 @@ def require_valid_configuration():
     Require valid configuration or exit application.
 
     Call this during application startup to fail fast.
-    
+
     Raises:
         SystemExit: If configuration is invalid
     """
@@ -114,10 +105,7 @@ def require_valid_configuration():
     log = _get_logger()
 
     if not is_valid:
-        log.critical(
-            "configuration_validation_failed_startup_aborted",
-            errors=errors
-        )
+        log.critical("configuration_validation_failed_startup_aborted", errors=errors)
 
         print("\n" + "=" * 70)
         print("CONFIGURATION VALIDATION FAILED")
@@ -130,7 +118,4 @@ def require_valid_configuration():
 
         raise SystemExit(1)
 
-    log.info(
-        "configuration_validated",
-        environment=get_settings().environment
-    )
+    log.info("configuration_validated", environment=get_settings().environment)
