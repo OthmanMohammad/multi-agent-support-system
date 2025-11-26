@@ -7,15 +7,15 @@ to human agents for better customer experience.
 Part of: STORY-01 Routing & Orchestration Swarm (TASK-109)
 """
 
-from typing import Dict, Any, Optional, List, Literal
-import re
 from datetime import datetime
+from typing import Any, Literal
+
 import structlog
 
-from src.agents.base.base_agent import BaseAgent, AgentConfig
-from src.agents.base.agent_types import AgentType, AgentCapability
-from src.workflow.state import AgentState
+from src.agents.base.agent_types import AgentCapability, AgentType
+from src.agents.base.base_agent import AgentConfig, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.workflow.state import AgentState
 
 logger = structlog.get_logger(__name__)
 
@@ -55,26 +55,50 @@ class EscalationDecider(BaseAgent):
         "explicit_request",
         "high_value_customer",
         "regulatory_legal",
-        "critical_bug"
+        "critical_bug",
     ]
 
     # Keywords for detection
     HUMAN_REQUEST_KEYWORDS = [
-        "human", "person", "agent", "representative", "manager",
-        "supervisor", "speak to someone", "talk to someone",
-        "real person", "actual person"
+        "human",
+        "person",
+        "agent",
+        "representative",
+        "manager",
+        "supervisor",
+        "speak to someone",
+        "talk to someone",
+        "real person",
+        "actual person",
     ]
 
     LEGAL_KEYWORDS = [
-        "gdpr", "lawyer", "attorney", "legal action", "sue",
-        "lawsuit", "compliance", "regulation", "data protection",
-        "privacy violation", "breach", "report you"
+        "gdpr",
+        "lawyer",
+        "attorney",
+        "legal action",
+        "sue",
+        "lawsuit",
+        "compliance",
+        "regulation",
+        "data protection",
+        "privacy violation",
+        "breach",
+        "report you",
     ]
 
     CRITICAL_KEYWORDS = [
-        "production down", "system down", "can't access",
-        "data loss", "lost data", "deleted", "critical",
-        "emergency", "urgent", "asap", "immediately"
+        "production down",
+        "system down",
+        "can't access",
+        "data loss",
+        "lost data",
+        "deleted",
+        "critical",
+        "emergency",
+        "urgent",
+        "asap",
+        "immediately",
     ]
 
     def __init__(self, **kwargs):
@@ -84,12 +108,10 @@ class EscalationDecider(BaseAgent):
             type=AgentType.ANALYZER,
             temperature=0.1,
             max_tokens=200,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE],
             system_prompt_template="",  # Escalation uses rule-based logic
             tier="essential",
-            role="escalation_decider"
+            role="escalation_decider",
         )
         super().__init__(config=config, **kwargs)
         self.logger = logger.bind(agent="escalation_decider", agent_type="analyzer")
@@ -126,7 +148,7 @@ class EscalationDecider(BaseAgent):
             state["escalation_metadata"] = {
                 "latency_ms": latency_ms,
                 "timestamp": datetime.now().isoformat(),
-                "num_triggers": len(escalation_result["reasons"])
+                "num_triggers": len(escalation_result["reasons"]),
             }
 
             self.logger.info(
@@ -134,16 +156,14 @@ class EscalationDecider(BaseAgent):
                 should_escalate=escalation_result["should_escalate"],
                 reasons=escalation_result["reasons"],
                 urgency=escalation_result["urgency"],
-                latency_ms=latency_ms
+                latency_ms=latency_ms,
             )
 
             return state
 
         except Exception as e:
             self.logger.error(
-                "escalation_evaluation_failed",
-                error=str(e),
-                error_type=type(e).__name__
+                "escalation_evaluation_failed", error=str(e), error_type=type(e).__name__
             )
 
             # Safe fallback: don't escalate if evaluation fails
@@ -152,7 +172,7 @@ class EscalationDecider(BaseAgent):
             state["escalation_urgency"] = "medium"
             return state
 
-    async def should_escalate(self, state: AgentState) -> Dict[str, Any]:
+    async def should_escalate(self, state: AgentState) -> dict[str, Any]:
         """
         Determine if escalation to human is needed.
 
@@ -176,7 +196,7 @@ class EscalationDecider(BaseAgent):
             reasons.append("low_confidence")
             trigger_details["low_confidence"] = {
                 "confidence": confidence,
-                "threshold": self.CONFIDENCE_THRESHOLD
+                "threshold": self.CONFIDENCE_THRESHOLD,
             }
 
         # Trigger 2: Very Negative Sentiment
@@ -186,7 +206,7 @@ class EscalationDecider(BaseAgent):
             trigger_details["very_negative_sentiment"] = {
                 "sentiment_score": sentiment,
                 "threshold": self.SENTIMENT_THRESHOLD,
-                "emotion": state.get("emotion", "unknown")
+                "emotion": state.get("emotion", "unknown"),
             }
 
         # Trigger 3: Too Many Turns
@@ -195,19 +215,14 @@ class EscalationDecider(BaseAgent):
             reasons.append("too_many_turns")
             trigger_details["too_many_turns"] = {
                 "turn_count": turn_count,
-                "threshold": self.MAX_TURNS_THRESHOLD
+                "threshold": self.MAX_TURNS_THRESHOLD,
             }
 
         # Trigger 4: Explicit Request for Human
         if self._detect_human_request(message):
             reasons.append("explicit_request")
-            matched_keywords = [
-                kw for kw in self.HUMAN_REQUEST_KEYWORDS
-                if kw in message
-            ]
-            trigger_details["explicit_request"] = {
-                "matched_keywords": matched_keywords
-            }
+            matched_keywords = [kw for kw in self.HUMAN_REQUEST_KEYWORDS if kw in message]
+            trigger_details["explicit_request"] = {"matched_keywords": matched_keywords}
 
         # Trigger 5: High-Value Customer with Complex Issue
         if self._is_high_value_complex(state):
@@ -216,30 +231,22 @@ class EscalationDecider(BaseAgent):
             trigger_details["high_value_customer"] = {
                 "plan": customer_metadata.get("plan"),
                 "complexity_score": state.get("complexity_score"),
-                "mrr": customer_metadata.get("mrr")
+                "mrr": customer_metadata.get("mrr"),
             }
 
         # Trigger 6: Regulatory/Legal
         if self._detect_legal_issue(message):
             reasons.append("regulatory_legal")
-            matched_keywords = [
-                kw for kw in self.LEGAL_KEYWORDS
-                if kw in message
-            ]
-            trigger_details["regulatory_legal"] = {
-                "matched_keywords": matched_keywords
-            }
+            matched_keywords = [kw for kw in self.LEGAL_KEYWORDS if kw in message]
+            trigger_details["regulatory_legal"] = {"matched_keywords": matched_keywords}
 
         # Trigger 7: Critical Bug/Production Issue
         if self._detect_critical_issue(message, state):
             reasons.append("critical_bug")
-            matched_keywords = [
-                kw for kw in self.CRITICAL_KEYWORDS
-                if kw in message
-            ]
+            matched_keywords = [kw for kw in self.CRITICAL_KEYWORDS if kw in message]
             trigger_details["critical_bug"] = {
                 "matched_keywords": matched_keywords,
-                "urgency": state.get("urgency")
+                "urgency": state.get("urgency"),
             }
 
         # Determine if should escalate
@@ -257,7 +264,7 @@ class EscalationDecider(BaseAgent):
             "urgency": urgency,
             "suggested_team": suggested_team,
             "trigger_details": trigger_details,
-            "recommendation": self._generate_recommendation(reasons, urgency, suggested_team)
+            "recommendation": self._generate_recommendation(reasons, urgency, suggested_team),
         }
 
     def _detect_human_request(self, message: str) -> bool:
@@ -270,10 +277,7 @@ class EscalationDecider(BaseAgent):
         Returns:
             True if human requested
         """
-        for keyword in self.HUMAN_REQUEST_KEYWORDS:
-            if keyword in message:
-                return True
-        return False
+        return any(keyword in message for keyword in self.HUMAN_REQUEST_KEYWORDS)
 
     def _is_high_value_complex(self, state: AgentState) -> bool:
         """
@@ -308,10 +312,7 @@ class EscalationDecider(BaseAgent):
         Returns:
             True if legal issue detected
         """
-        for keyword in self.LEGAL_KEYWORDS:
-            if keyword in message:
-                return True
-        return False
+        return any(keyword in message for keyword in self.LEGAL_KEYWORDS)
 
     def _detect_critical_issue(self, message: str, state: AgentState) -> bool:
         """
@@ -325,10 +326,7 @@ class EscalationDecider(BaseAgent):
             True if critical issue detected
         """
         # Check keywords
-        has_critical_keyword = any(
-            keyword in message
-            for keyword in self.CRITICAL_KEYWORDS
-        )
+        has_critical_keyword = any(keyword in message for keyword in self.CRITICAL_KEYWORDS)
 
         # Check urgency from sentiment analyzer
         urgency = state.get("urgency", "medium")
@@ -336,11 +334,7 @@ class EscalationDecider(BaseAgent):
 
         return has_critical_keyword or is_critical_urgency
 
-    def _calculate_urgency(
-        self,
-        reasons: List[str],
-        state: AgentState
-    ) -> UrgencyLevel:
+    def _calculate_urgency(self, reasons: list[str], state: AgentState) -> UrgencyLevel:
         """
         Calculate escalation urgency.
 
@@ -373,11 +367,7 @@ class EscalationDecider(BaseAgent):
         # Default
         return "medium"
 
-    def _suggest_team(
-        self,
-        reasons: List[str],
-        state: AgentState
-    ) -> EscalationTeam:
+    def _suggest_team(self, reasons: list[str], state: AgentState) -> EscalationTeam:
         """
         Suggest which team should handle escalation.
 
@@ -409,10 +399,7 @@ class EscalationDecider(BaseAgent):
         return "tier2_support"
 
     def _generate_recommendation(
-        self,
-        reasons: List[str],
-        urgency: UrgencyLevel,
-        suggested_team: EscalationTeam
+        self, reasons: list[str], urgency: UrgencyLevel, suggested_team: EscalationTeam
     ) -> str:
         """
         Generate human-readable recommendation.
@@ -429,10 +416,7 @@ class EscalationDecider(BaseAgent):
             return "No escalation needed. Continue with AI agent."
 
         reason_str = ", ".join(reasons)
-        return (
-            f"Escalate to {suggested_team} with {urgency} urgency. "
-            f"Triggers: {reason_str}."
-        )
+        return f"Escalate to {suggested_team} with {urgency} urgency. Triggers: {reason_str}."
 
     def get_escalation_summary(self, state: AgentState) -> str:
         """
@@ -477,6 +461,7 @@ def create_escalation_decider(**kwargs) -> EscalationDecider:
 # Example usage (for development/testing)
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test_escalation_decider():
@@ -493,56 +478,50 @@ if __name__ == "__main__":
                 "name": "No Escalation",
                 "state": create_initial_state(
                     message="How do I export data?",
-                    context={"confidence": 0.9, "sentiment_score": 0.0}
+                    context={"confidence": 0.9, "sentiment_score": 0.0},
                 ),
-                "expected": False
+                "expected": False,
             },
             {
                 "name": "Low Confidence",
-                "state": create_initial_state(
-                    message="Complex query",
-                    context={"confidence": 0.3}
-                ),
-                "expected": True
+                "state": create_initial_state(message="Complex query", context={"confidence": 0.3}),
+                "expected": True,
             },
             {
                 "name": "Very Negative Sentiment",
                 "state": create_initial_state(
                     message="This is TERRIBLE!",
-                    context={"sentiment_score": -0.9, "emotion": "angry"}
+                    context={"sentiment_score": -0.9, "emotion": "angry"},
                 ),
-                "expected": True
+                "expected": True,
             },
             {
                 "name": "Explicit Human Request",
                 "state": create_initial_state(
-                    message="I want to speak to a human agent please",
-                    context={}
+                    message="I want to speak to a human agent please", context={}
                 ),
-                "expected": True
+                "expected": True,
             },
             {
                 "name": "Legal Issue",
                 "state": create_initial_state(
-                    message="This is a GDPR violation, I'm contacting my lawyer",
-                    context={}
+                    message="This is a GDPR violation, I'm contacting my lawyer", context={}
                 ),
-                "expected": True
+                "expected": True,
             },
             {
                 "name": "Critical Production Issue",
                 "state": create_initial_state(
-                    message="URGENT: Production system is down!",
-                    context={"urgency": "critical"}
+                    message="URGENT: Production system is down!", context={"urgency": "critical"}
                 ),
-                "expected": True
-            }
+                "expected": True,
+            },
         ]
 
         for test in test_cases:
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"TEST: {test['name']}")
-            print(f"{'='*60}")
+            print(f"{'=' * 60}")
 
             # Add state fields
             test_state = test["state"]
