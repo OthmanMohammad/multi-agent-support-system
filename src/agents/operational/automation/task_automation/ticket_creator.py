@@ -5,14 +5,14 @@ Auto-creates tickets in Jira/Linear/GitHub based on customer requests,
 bug reports, and feature requests.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, UTC
 import json
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("ticket_creator", tier="operational", category="automation")
@@ -36,18 +36,18 @@ class TicketCreatorAgent(BaseAgent):
         "jira": {
             "api_endpoint": "https://api.atlassian.com/ex/jira",
             "issue_types": ["Bug", "Task", "Story", "Epic"],
-            "priorities": ["Highest", "High", "Medium", "Low", "Lowest"]
+            "priorities": ["Highest", "High", "Medium", "Low", "Lowest"],
         },
         "linear": {
             "api_endpoint": "https://api.linear.app/graphql",
             "issue_types": ["Bug", "Feature", "Improvement", "Task"],
-            "priorities": ["Urgent", "High", "Medium", "Low"]
+            "priorities": ["Urgent", "High", "Medium", "Low"],
         },
         "github": {
             "api_endpoint": "https://api.github.com",
             "issue_types": ["bug", "enhancement", "question", "documentation"],
-            "priorities": ["critical", "high", "medium", "low"]
-        }
+            "priorities": ["critical", "high", "medium", "low"],
+        },
     }
 
     # Ticket classification keywords
@@ -55,7 +55,7 @@ class TicketCreatorAgent(BaseAgent):
         "bug": ["bug", "error", "crash", "broken", "not working", "issue", "problem"],
         "feature": ["feature", "enhancement", "add", "new", "implement", "would like"],
         "support": ["help", "how to", "question", "assistance", "support"],
-        "task": ["task", "todo", "action item", "need to"]
+        "task": ["task", "todo", "action item", "need to"],
     }
 
     # Priority keywords
@@ -63,7 +63,7 @@ class TicketCreatorAgent(BaseAgent):
         "urgent": ["urgent", "critical", "asap", "immediately", "production down"],
         "high": ["important", "high priority", "blocker", "preventing"],
         "medium": ["soon", "medium", "moderate"],
-        "low": ["low priority", "nice to have", "eventually", "when possible"]
+        "low": ["low priority", "nice to have", "eventually", "when possible"],
     }
 
     def __init__(self):
@@ -73,7 +73,7 @@ class TicketCreatorAgent(BaseAgent):
             temperature=0.1,  # Deterministic automation
             max_tokens=800,
             capabilities=[AgentCapability.DATABASE_WRITE],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -97,13 +97,13 @@ class TicketCreatorAgent(BaseAgent):
         entities = state.get("entities", {})
 
         # Extract ticket parameters
-        ticket_system = entities.get("ticket_system", customer_metadata.get("default_ticket_system", "jira"))
+        ticket_system = entities.get(
+            "ticket_system", customer_metadata.get("default_ticket_system", "jira")
+        )
         auto_classify = entities.get("auto_classify", True)
 
         self.logger.debug(
-            "ticket_creation_details",
-            ticket_system=ticket_system,
-            auto_classify=auto_classify
+            "ticket_creation_details", ticket_system=ticket_system, auto_classify=auto_classify
         )
 
         # Analyze message to extract ticket details
@@ -117,39 +117,26 @@ class TicketCreatorAgent(BaseAgent):
 
         # Detect duplicate tickets
         duplicate_check = self._check_for_duplicates(
-            ticket_analysis,
-            customer_metadata.get("recent_tickets", [])
+            ticket_analysis, customer_metadata.get("recent_tickets", [])
         )
 
         # Prepare ticket data
         ticket_data = self._prepare_ticket_data(
-            ticket_system,
-            ticket_analysis,
-            classification,
-            customer_metadata
+            ticket_system, ticket_analysis, classification, customer_metadata
         )
 
         # Create ticket in external system
         created_ticket = await self._create_ticket_external(
-            ticket_system,
-            ticket_data,
-            duplicate_check
+            ticket_system, ticket_data, duplicate_check
         )
 
         # Log automated action
         automation_log = self._log_automation_action(
-            "ticket_created",
-            ticket_system,
-            created_ticket,
-            customer_metadata
+            "ticket_created", ticket_system, created_ticket, customer_metadata
         )
 
         # Generate response
-        response = self._format_ticket_response(
-            created_ticket,
-            duplicate_check,
-            ticket_system
-        )
+        response = self._format_ticket_response(created_ticket, duplicate_check, ticket_system)
 
         state["agent_response"] = response
         state["created_ticket"] = created_ticket
@@ -166,16 +153,14 @@ class TicketCreatorAgent(BaseAgent):
             ticket_id=created_ticket.get("id"),
             ticket_system=ticket_system,
             ticket_type=classification.get("type"),
-            priority=classification.get("priority")
+            priority=classification.get("priority"),
         )
 
         return state
 
     async def _analyze_ticket_content(
-        self,
-        message: str,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, message: str, customer_metadata: dict
+    ) -> dict[str, Any]:
         """
         Analyze message content to extract ticket details using LLM.
 
@@ -203,22 +188,23 @@ Be precise and actionable."""
 
 Message: {message}
 
-Customer Plan: {customer_metadata.get('plan_name', 'Unknown')}
-Customer Tier: {customer_metadata.get('tier', 'standard')}
+Customer Plan: {customer_metadata.get("plan_name", "Unknown")}
+Customer Tier: {customer_metadata.get("tier", "standard")}
 
 Return a JSON structure with title, description, steps_to_reproduce, expected_behavior, actual_behavior, affected_components, and urgency_level."""
 
         response = await self.call_llm(
             system_prompt=system_prompt,
             user_message=user_prompt,
-            conversation_history=[]  # Ticket analysis uses message context
+            conversation_history=[],  # Ticket analysis uses message context
         )
 
         # Parse LLM response to extract structured data
         try:
             # Try to extract JSON from response
             import re
-            json_match = re.search(r'\{.*\}', response, re.DOTALL)
+
+            json_match = re.search(r"\{.*\}", response, re.DOTALL)
             if json_match:
                 analysis = json.loads(json_match.group())
             else:
@@ -226,22 +212,14 @@ Return a JSON structure with title, description, steps_to_reproduce, expected_be
                 analysis = {
                     "title": message[:100],
                     "description": message,
-                    "urgency_level": "medium"
+                    "urgency_level": "medium",
                 }
-        except:
-            analysis = {
-                "title": message[:100],
-                "description": message,
-                "urgency_level": "medium"
-            }
+        except Exception:
+            analysis = {"title": message[:100], "description": message, "urgency_level": "medium"}
 
         return analysis
 
-    def _classify_ticket(
-        self,
-        message: str,
-        ticket_analysis: Dict
-    ) -> Dict[str, Any]:
+    def _classify_ticket(self, message: str, ticket_analysis: dict) -> dict[str, Any]:
         """
         Classify ticket type and priority based on content.
 
@@ -282,21 +260,19 @@ Return a JSON structure with title, description, steps_to_reproduce, expected_be
                 "urgent": "critical",
                 "high": "major",
                 "medium": "moderate",
-                "low": "minor"
+                "low": "minor",
             }.get(urgency, "moderate")
 
         return {
             "type": ticket_type,
             "priority": priority,
             "severity": severity,
-            "confidence": min(0.7 + (max_score * 0.1), 0.95)
+            "confidence": min(0.7 + (max_score * 0.1), 0.95),
         }
 
     def _check_for_duplicates(
-        self,
-        ticket_analysis: Dict,
-        recent_tickets: List[Dict]
-    ) -> Dict[str, Any]:
+        self, ticket_analysis: dict, recent_tickets: list[dict]
+    ) -> dict[str, Any]:
         """
         Check for potential duplicate tickets.
 
@@ -323,18 +299,21 @@ Return a JSON structure with title, description, steps_to_reproduce, expected_be
             overall_similarity = (title_similarity * 0.6) + (desc_similarity * 0.4)
 
             if overall_similarity > 0.7:
-                duplicates.append({
-                    "ticket_id": recent.get("id"),
-                    "title": recent.get("title"),
-                    "similarity": round(overall_similarity, 2),
-                    "status": recent.get("status")
-                })
+                duplicates.append(
+                    {
+                        "ticket_id": recent.get("id"),
+                        "title": recent.get("title"),
+                        "similarity": round(overall_similarity, 2),
+                        "status": recent.get("status"),
+                    }
+                )
 
         return {
             "has_duplicates": len(duplicates) > 0,
             "duplicate_count": len(duplicates),
             "potential_duplicates": duplicates[:3],  # Top 3
-            "should_proceed": len(duplicates) == 0 or all(d.get("status") == "closed" for d in duplicates)
+            "should_proceed": len(duplicates) == 0
+            or all(d.get("status") == "closed" for d in duplicates),
         }
 
     def _calculate_similarity(self, str1: str, str2: str) -> float:
@@ -353,10 +332,10 @@ Return a JSON structure with title, description, steps_to_reproduce, expected_be
     def _prepare_ticket_data(
         self,
         ticket_system: str,
-        ticket_analysis: Dict,
-        classification: Dict,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        ticket_analysis: dict,
+        classification: dict,
+        customer_metadata: dict,
+    ) -> dict[str, Any]:
         """
         Prepare ticket data for external system.
 
@@ -369,7 +348,7 @@ Return a JSON structure with title, description, steps_to_reproduce, expected_be
         Returns:
             Formatted ticket data
         """
-        system_config = self.TICKET_SYSTEMS.get(ticket_system, self.TICKET_SYSTEMS["jira"])
+        self.TICKET_SYSTEMS.get(ticket_system, self.TICKET_SYSTEMS["jira"])
 
         # Base ticket data
         ticket_data = {
@@ -383,8 +362,8 @@ Return a JSON structure with title, description, steps_to_reproduce, expected_be
                 "customer_name": customer_metadata.get("customer_name"),
                 "plan": customer_metadata.get("plan_name"),
                 "created_by": "automation",
-                "created_at": datetime.now(UTC).isoformat()
-            }
+                "created_at": datetime.now(UTC).isoformat(),
+            },
         }
 
         # Add steps to reproduce for bugs
@@ -399,7 +378,7 @@ Return a JSON structure with title, description, steps_to_reproduce, expected_be
                 "bug": "Bug",
                 "feature": "Story",
                 "support": "Task",
-                "task": "Task"
+                "task": "Task",
             }.get(classification.get("type"), "Task")
 
         elif ticket_system == "linear":
@@ -408,7 +387,9 @@ Return a JSON structure with title, description, steps_to_reproduce, expected_be
 
         elif ticket_system == "github":
             ticket_data["repo"] = customer_metadata.get("github_repo", "support/issues")
-            ticket_data["labels"].extend([classification.get("type"), classification.get("priority")])
+            ticket_data["labels"].extend(
+                [classification.get("type"), classification.get("priority")]
+            )
 
         # Add customer tier label
         if customer_metadata.get("tier"):
@@ -417,11 +398,8 @@ Return a JSON structure with title, description, steps_to_reproduce, expected_be
         return ticket_data
 
     async def _create_ticket_external(
-        self,
-        ticket_system: str,
-        ticket_data: Dict,
-        duplicate_check: Dict
-    ) -> Dict[str, Any]:
+        self, ticket_system: str, ticket_data: dict, duplicate_check: dict
+    ) -> dict[str, Any]:
         """
         Create ticket in external system (mocked for now).
 
@@ -437,9 +415,12 @@ Return a JSON structure with title, description, steps_to_reproduce, expected_be
         # For now, return mock created ticket
 
         import hashlib
-        ticket_id = hashlib.md5(
-            f"{ticket_data['title']}{datetime.now(UTC)}".encode()
-        ).hexdigest()[:8].upper()
+
+        ticket_id = (
+            hashlib.md5(f"{ticket_data['title']}{datetime.now(UTC)}".encode())
+            .hexdigest()[:8]
+            .upper()
+        )
 
         created_ticket = {
             "id": f"{ticket_system.upper()}-{ticket_id}",
@@ -453,7 +434,7 @@ Return a JSON structure with title, description, steps_to_reproduce, expected_be
             "created_at": datetime.now(UTC).isoformat(),
             "created_by": "automation",
             "system": ticket_system,
-            "duplicate_warning": duplicate_check.get("has_duplicates", False)
+            "duplicate_warning": duplicate_check.get("has_duplicates", False),
         }
 
         # Add severity for bugs
@@ -464,18 +445,14 @@ Return a JSON structure with title, description, steps_to_reproduce, expected_be
             "ticket_created_in_external_system",
             system=ticket_system,
             ticket_id=created_ticket["id"],
-            type=ticket_data["type"]
+            type=ticket_data["type"],
         )
 
         return created_ticket
 
     def _log_automation_action(
-        self,
-        action_type: str,
-        ticket_system: str,
-        created_ticket: Dict,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, action_type: str, ticket_system: str, created_ticket: dict, customer_metadata: dict
+    ) -> dict[str, Any]:
         """Log automated action for audit trail."""
         return {
             "action_type": action_type,
@@ -487,26 +464,23 @@ Return a JSON structure with title, description, steps_to_reproduce, expected_be
             "details": {
                 "ticket_type": created_ticket.get("type"),
                 "priority": created_ticket.get("priority"),
-                "url": created_ticket.get("url")
-            }
+                "url": created_ticket.get("url"),
+            },
         }
 
     def _format_ticket_response(
-        self,
-        created_ticket: Dict,
-        duplicate_check: Dict,
-        ticket_system: str
+        self, created_ticket: dict, duplicate_check: dict, ticket_system: str
     ) -> str:
         """Format ticket creation response."""
         response = f"""**Ticket Created Successfully**
 
-Ticket ID: {created_ticket['id']}
+Ticket ID: {created_ticket["id"]}
 System: {ticket_system.upper()}
-Type: {created_ticket['type'].title()}
-Priority: {created_ticket['priority'].title()}
-Status: {created_ticket['status'].title()}
+Type: {created_ticket["type"].title()}
+Priority: {created_ticket["priority"].title()}
+Status: {created_ticket["status"].title()}
 
-Title: {created_ticket['title']}
+Title: {created_ticket["title"]}
 
 """
 
@@ -519,7 +493,7 @@ Title: {created_ticket['title']}
         if duplicate_check.get("has_duplicates"):
             response += f"\n**Note:** {duplicate_check['duplicate_count']} potential duplicate(s) detected:\n"
             for dup in duplicate_check.get("potential_duplicates", [])[:2]:
-                response += f"- {dup['ticket_id']}: {dup['title']} (Similarity: {dup['similarity']*100:.0f}%)\n"
+                response += f"- {dup['ticket_id']}: {dup['title']} (Similarity: {dup['similarity'] * 100:.0f}%)\n"
 
         response += f"\nCreated: {created_ticket['created_at']}"
 
