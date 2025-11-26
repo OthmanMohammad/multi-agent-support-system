@@ -5,12 +5,10 @@ This agent diagnoses payment failures and guides customers through resolution,
 handling declined cards, expired cards, 3DS failures, and fraud flags.
 """
 
-from typing import Dict, Any, Optional, List
-
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("payment_troubleshooter", tier="essential", category="billing")
@@ -32,58 +30,58 @@ class PaymentTroubleshooter(BaseAgent):
         "card_declined": {
             "description": "Your card was declined by your bank",
             "category": "card_issue",
-            "severity": "high"
+            "severity": "high",
         },
         "expired_card": {
             "description": "Your card has expired",
             "category": "card_issue",
-            "severity": "high"
+            "severity": "high",
         },
         "insufficient_funds": {
             "description": "Insufficient funds in account",
             "category": "funds",
-            "severity": "high"
+            "severity": "high",
         },
         "3ds_failed": {
             "description": "3D Secure authentication failed",
             "category": "authentication",
-            "severity": "medium"
+            "severity": "medium",
         },
         "3ds_timeout": {
             "description": "3D Secure authentication timed out",
             "category": "authentication",
-            "severity": "medium"
+            "severity": "medium",
         },
         "fraud_suspected": {
             "description": "Transaction flagged as potential fraud",
             "category": "fraud",
-            "severity": "high"
+            "severity": "high",
         },
         "card_not_supported": {
             "description": "Card type not supported",
             "category": "card_issue",
-            "severity": "high"
+            "severity": "high",
         },
         "incorrect_cvc": {
             "description": "Incorrect CVC/CVV code",
             "category": "card_issue",
-            "severity": "medium"
+            "severity": "medium",
         },
         "incorrect_zip": {
             "description": "Incorrect billing ZIP code",
             "category": "card_issue",
-            "severity": "medium"
+            "severity": "medium",
         },
         "processing_error": {
             "description": "Payment processor error",
             "category": "system",
-            "severity": "medium"
+            "severity": "medium",
         },
         "rate_limit": {
             "description": "Too many payment attempts",
             "category": "system",
-            "severity": "low"
-        }
+            "severity": "low",
+        },
     }
 
     def __init__(self):
@@ -91,12 +89,9 @@ class PaymentTroubleshooter(BaseAgent):
             name="payment_troubleshooter",
             type=AgentType.SPECIALIST,
             temperature=0.3,
-            capabilities=[
-                AgentCapability.KB_SEARCH,
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="billing",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -127,7 +122,7 @@ class PaymentTroubleshooter(BaseAgent):
             message_preview=user_message[:100],
             payment_error=payment_error,
             customer_id=state.get("customer_id"),
-            turn_count=state["turn_count"]
+            turn_count=state["turn_count"],
         )
 
         # Diagnose issue
@@ -137,11 +132,7 @@ class PaymentTroubleshooter(BaseAgent):
         solution = self._get_solution(diagnosis, customer_metadata)
 
         # Build response
-        response = self._format_troubleshooting_response(
-            diagnosis,
-            solution,
-            customer_metadata
-        )
+        response = self._format_troubleshooting_response(diagnosis, solution, customer_metadata)
 
         state["agent_response"] = response
         state["payment_diagnosis"] = diagnosis["category"]
@@ -154,16 +145,12 @@ class PaymentTroubleshooter(BaseAgent):
             "payment_troubleshooting_completed",
             customer_id=state.get("customer_id"),
             error_code=payment_error,
-            category=diagnosis["category"]
+            category=diagnosis["category"],
         )
 
         return state
 
-    def _extract_payment_error(
-        self,
-        state: AgentState,
-        customer_metadata: Dict
-    ) -> str:
+    def _extract_payment_error(self, state: AgentState, customer_metadata: dict) -> str:
         """
         Extract payment error code from state or metadata.
 
@@ -203,11 +190,7 @@ class PaymentTroubleshooter(BaseAgent):
         else:
             return "card_declined"  # Default
 
-    def _diagnose_payment_failure(
-        self,
-        error_code: str,
-        customer_metadata: Dict
-    ) -> Dict:
+    def _diagnose_payment_failure(self, error_code: str, customer_metadata: dict) -> dict:
         """
         Diagnose payment failure.
 
@@ -220,32 +203,24 @@ class PaymentTroubleshooter(BaseAgent):
         """
         error_info = self.ERROR_CODES.get(
             error_code,
-            {
-                "description": "Unknown payment error",
-                "category": "unknown",
-                "severity": "medium"
-            }
+            {"description": "Unknown payment error", "category": "unknown", "severity": "medium"},
         )
 
         self.logger.debug(
             "payment_diagnosis",
             error_code=error_code,
             category=error_info["category"],
-            severity=error_info["severity"]
+            severity=error_info["severity"],
         )
 
         return {
             "error_code": error_code,
             "description": error_info["description"],
             "category": error_info["category"],
-            "severity": error_info["severity"]
+            "severity": error_info["severity"],
         }
 
-    def _get_solution(
-        self,
-        diagnosis: Dict,
-        customer_metadata: Dict
-    ) -> Dict:
+    def _get_solution(self, diagnosis: dict, customer_metadata: dict) -> dict:
         """
         Get solution steps based on diagnosis.
 
@@ -264,7 +239,7 @@ class PaymentTroubleshooter(BaseAgent):
                     "Update your payment method with a new card",
                     "Go to Settings → Billing → Payment Method",
                     "Click 'Update Card' and enter new card details",
-                    "Click 'Save' to update"
+                    "Click 'Save' to update",
                 ]
                 help_text = "Your card has expired. Please update it with a current card."
 
@@ -273,16 +248,18 @@ class PaymentTroubleshooter(BaseAgent):
                     "Re-enter your payment information",
                     "Double-check the CVC/CVV code (3-4 digits on back of card)",
                     "Make sure you're entering it correctly",
-                    "Try the payment again"
+                    "Try the payment again",
                 ]
-                help_text = "The security code (CVC/CVV) doesn't match. Please verify and try again."
+                help_text = (
+                    "The security code (CVC/CVV) doesn't match. Please verify and try again."
+                )
 
             elif diagnosis["error_code"] == "incorrect_zip":
                 steps = [
                     "Update your billing address",
                     "Go to Settings → Billing → Billing Address",
                     "Enter the ZIP code that matches your card's billing address",
-                    "Save and try payment again"
+                    "Save and try payment again",
                 ]
                 help_text = "The ZIP code doesn't match your card's billing address."
 
@@ -291,7 +268,7 @@ class PaymentTroubleshooter(BaseAgent):
                     "Contact your bank to authorize the transaction",
                     "Try a different payment method",
                     "Update your card information in Settings → Billing",
-                    "If issue persists, contact our support team"
+                    "If issue persists, contact our support team",
                 ]
                 help_text = "Your card was declined. This usually requires contacting your bank."
 
@@ -301,7 +278,7 @@ class PaymentTroubleshooter(BaseAgent):
                     "Try the payment again",
                     "When the authentication popup appears, complete it quickly",
                     "Make sure you have access to your phone for SMS/app authentication",
-                    "Ensure popup blockers aren't blocking the authentication window"
+                    "Ensure popup blockers aren't blocking the authentication window",
                 ]
                 help_text = "The 3D Secure authentication timed out. Please try again and complete the authentication promptly."
             else:
@@ -309,7 +286,7 @@ class PaymentTroubleshooter(BaseAgent):
                     "Check your phone for an authentication request from your bank",
                     "Approve the transaction in your banking app",
                     "Try the payment again",
-                    "Make sure you complete the 3D Secure authentication when prompted"
+                    "Make sure you complete the 3D Secure authentication when prompted",
                 ]
                 help_text = "3D Secure authentication helps protect against fraud. Please complete it when prompted."
 
@@ -318,7 +295,7 @@ class PaymentTroubleshooter(BaseAgent):
                 "Check your account balance",
                 "Add funds to your account",
                 "Try a different payment method",
-                "Contact your bank if you believe this is an error"
+                "Contact your bank if you believe this is an error",
             ]
             help_text = "There aren't sufficient funds in your account. Please add funds or use a different payment method."
 
@@ -327,7 +304,7 @@ class PaymentTroubleshooter(BaseAgent):
                 "Contact your bank to verify the transaction",
                 "Confirm with your bank that you authorized this payment",
                 "Ask them to remove the fraud flag",
-                "Try the payment again after bank confirmation"
+                "Try the payment again after bank confirmation",
             ]
             help_text = "This transaction was flagged for security. Please contact your bank to authorize it."
 
@@ -336,14 +313,14 @@ class PaymentTroubleshooter(BaseAgent):
                 steps = [
                     "Wait 15-30 minutes before trying again",
                     "Too many payment attempts can trigger security measures",
-                    "If urgent, contact our support team for assistance"
+                    "If urgent, contact our support team for assistance",
                 ]
                 help_text = "Too many payment attempts detected. Please wait before trying again."
             else:
                 steps = [
                     "Wait a few minutes and try again",
                     "If issue persists, try a different payment method",
-                    "Contact our support team if problem continues"
+                    "Contact our support team if problem continues",
                 ]
                 help_text = "There was a temporary processing error. Please try again."
 
@@ -351,20 +328,14 @@ class PaymentTroubleshooter(BaseAgent):
             steps = [
                 "Try the payment again",
                 "Try a different payment method",
-                "Contact our support team for assistance"
+                "Contact our support team for assistance",
             ]
             help_text = "We encountered an unexpected issue. Please try again or contact support."
 
-        return {
-            "steps": steps,
-            "help_text": help_text
-        }
+        return {"steps": steps, "help_text": help_text}
 
     def _format_troubleshooting_response(
-        self,
-        diagnosis: Dict,
-        solution: Dict,
-        customer_metadata: Dict
+        self, diagnosis: dict, solution: dict, customer_metadata: dict
     ) -> str:
         """
         Format troubleshooting response.
@@ -377,19 +348,21 @@ class PaymentTroubleshooter(BaseAgent):
         Returns:
             Formatted response message
         """
-        steps_formatted = "\n".join([f"{i+1}. {step}" for i, step in enumerate(solution["steps"])])
+        steps_formatted = "\n".join(
+            [f"{i + 1}. {step}" for i, step in enumerate(solution["steps"])]
+        )
 
         message = f"""I see your payment failed. Let me help you resolve this.
 
 **What happened:**
-{diagnosis['description']}
+{diagnosis["description"]}
 
 **How to fix it:**
 
 {steps_formatted}
 
 **Additional information:**
-{solution['help_text']}
+{solution["help_text"]}
 
 **Quick links:**
 - Update payment method: Settings → Billing → Payment Method
@@ -406,6 +379,7 @@ Is there anything else I can help you with?"""
 if __name__ == "__main__":
     # Test payment troubleshooter
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -419,56 +393,43 @@ if __name__ == "__main__":
         state1 = create_initial_state(
             "My payment was declined",
             context={
-                "customer_metadata": {
-                    "plan": "premium",
-                    "last_payment_error": "card_declined"
-                }
-            }
+                "customer_metadata": {"plan": "premium", "last_payment_error": "card_declined"}
+            },
         )
 
         result1 = await troubleshooter.process(state1)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("TEST 1: Card Declined")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Diagnosis: {result1.get('payment_diagnosis')}")
         print(f"Error code: {result1.get('payment_error_code')}")
         print(f"\nResponse:\n{result1['agent_response']}")
 
         # Test 2: 3DS authentication failed
         state2 = create_initial_state(
-            "3D Secure authentication failed",
-            context={
-                "customer_metadata": {
-                    "plan": "basic"
-                }
-            }
+            "3D Secure authentication failed", context={"customer_metadata": {"plan": "basic"}}
         )
         state2["entities"] = {"payment_error_code": "3ds_failed"}
 
         result2 = await troubleshooter.process(state2)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("TEST 2: 3DS Failed")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Diagnosis: {result2.get('payment_diagnosis')}")
         print(f"\nResponse:\n{result2['agent_response'][:300]}...")
 
         # Test 3: Expired card
         state3 = create_initial_state(
-            "My card expired",
-            context={
-                "customer_metadata": {
-                    "plan": "premium"
-                }
-            }
+            "My card expired", context={"customer_metadata": {"plan": "premium"}}
         )
 
         result3 = await troubleshooter.process(state3)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("TEST 3: Expired Card")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Diagnosis: {result3.get('payment_diagnosis')}")
         print(f"\nResponse:\n{result3['agent_response'][:300]}...")
 
