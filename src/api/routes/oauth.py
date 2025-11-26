@@ -10,20 +10,18 @@ Provides endpoints for:
 Part of: Phase 4 - Security & OAuth
 """
 
-from fastapi import APIRouter, HTTPException, status, Query, Depends
-from fastapi.responses import RedirectResponse
-from pydantic import BaseModel
-from typing import Optional
 import secrets
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
-from src.api.models.auth_models import LoginResponse, UserProfile
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import RedirectResponse
+
 from src.api.auth.jwt import JWTManager
-from src.database.repositories.user_repository import UserRepository
-from src.database.models.user import User, UserRole, UserStatus, OAuthProvider
-from src.database.connection import get_db_session
-from src.database.unit_of_work import UnitOfWork
+from src.api.models.auth_models import LoginResponse, UserProfile
 from src.core.config import get_settings
+from src.database.connection import get_db_session
+from src.database.models.user import OAuthProvider, User, UserRole, UserStatus
+from src.database.unit_of_work import UnitOfWork
 from src.utils.logging.setup import get_logger
 
 logger = get_logger(__name__)
@@ -36,6 +34,7 @@ router = APIRouter(prefix="/oauth")
 # =============================================================================
 # OAUTH STATE MANAGEMENT (in-memory for now, should use Redis)
 # =============================================================================
+
 
 class OAuthStateStore:
     """In-memory OAuth state storage"""
@@ -87,12 +86,9 @@ OAUTH_CONFIG = {
 # HELPER FUNCTIONS
 # =============================================================================
 
+
 async def get_or_create_oauth_user(
-    email: str,
-    full_name: str,
-    provider: str,
-    provider_user_id: str,
-    session
+    email: str, full_name: str, provider: str, provider_user_id: str, session
 ) -> User:
     """Get or create user from OAuth data"""
 
@@ -137,12 +133,7 @@ async def get_or_create_oauth_user(
     await uow.commit()
     await uow.session.refresh(user)
 
-    logger.info(
-        "oauth_user_created",
-        user_id=str(user.id),
-        email=email,
-        provider=provider
-    )
+    logger.info("oauth_user_created", user_id=str(user.id), email=email, provider=provider)
 
     return user
 
@@ -151,9 +142,10 @@ async def get_or_create_oauth_user(
 # GOOGLE OAUTH
 # =============================================================================
 
+
 @router.get("/google")
 async def google_oauth_login(
-    redirect_uri: Optional[str] = Query(None, description="Redirect URI after auth")
+    redirect_uri: str | None = Query(None, description="Redirect URI after auth"),
 ):
     """
     Initiate Google OAuth flow.
@@ -170,7 +162,9 @@ async def google_oauth_login(
 
     # Build authorization URL
     # Note: In production, use actual OAuth client ID from settings
-    client_id = settings.oauth.google_client_id if hasattr(settings, 'oauth') else "YOUR_GOOGLE_CLIENT_ID"
+    client_id = (
+        settings.oauth.google_client_id if hasattr(settings, "oauth") else "YOUR_GOOGLE_CLIENT_ID"
+    )
     callback_url = f"{settings.api.base_url}/api/oauth/google/callback"
 
     scopes = " ".join(OAUTH_CONFIG["google"]["scopes"])
@@ -193,7 +187,7 @@ async def google_oauth_login(
 async def google_oauth_callback(
     code: str = Query(..., description="Authorization code from Google"),
     state: str = Query(..., description="State token"),
-    session = Depends(get_db_session)
+    session=Depends(get_db_session),
 ):
     """
     Google OAuth callback endpoint.
@@ -208,10 +202,7 @@ async def google_oauth_callback(
     # Verify state
     if not oauth_state_store.verify_state(state, "google"):
         logger.warning("google_oauth_invalid_state", state=state)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid OAuth state"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid OAuth state")
 
     # TODO: Exchange code for access token
     # TODO: Fetch user info from Google
@@ -227,24 +218,17 @@ async def google_oauth_callback(
         full_name=mock_name,
         provider="google",
         provider_user_id=mock_provider_id,
-        session=session
+        session=session,
     )
 
     # Create JWT tokens
     access_token = JWTManager.create_access_token(
-        user_id=user.id,
-        email=user.email,
-        role=user.role.value,
-        scopes=user.get_scopes()
+        user_id=user.id, email=user.email, role=user.role.value, scopes=user.get_scopes()
     )
 
     refresh_token = JWTManager.create_refresh_token(user_id=user.id)
 
-    logger.info(
-        "google_oauth_success",
-        user_id=str(user.id),
-        email=user.email
-    )
+    logger.info("google_oauth_success", user_id=str(user.id), email=user.email)
 
     return LoginResponse(
         access_token=access_token,
@@ -263,7 +247,7 @@ async def google_oauth_callback(
             scopes=user.get_scopes(),
             created_at=user.created_at,
             last_login_at=user.last_login_at,
-        )
+        ),
     )
 
 
@@ -271,9 +255,10 @@ async def google_oauth_callback(
 # GITHUB OAUTH
 # =============================================================================
 
+
 @router.get("/github")
 async def github_oauth_login(
-    redirect_uri: Optional[str] = Query(None, description="Redirect URI after auth")
+    redirect_uri: str | None = Query(None, description="Redirect URI after auth"),
 ):
     """
     Initiate GitHub OAuth flow.
@@ -290,7 +275,9 @@ async def github_oauth_login(
 
     # Build authorization URL
     # Note: In production, use actual OAuth client ID from settings
-    client_id = settings.oauth.github_client_id if hasattr(settings, 'oauth') else "YOUR_GITHUB_CLIENT_ID"
+    client_id = (
+        settings.oauth.github_client_id if hasattr(settings, "oauth") else "YOUR_GITHUB_CLIENT_ID"
+    )
     callback_url = f"{settings.api.base_url}/api/oauth/github/callback"
 
     scopes = " ".join(OAUTH_CONFIG["github"]["scopes"])
@@ -310,7 +297,7 @@ async def github_oauth_login(
 async def github_oauth_callback(
     code: str = Query(..., description="Authorization code from GitHub"),
     state: str = Query(..., description="State token"),
-    session = Depends(get_db_session)
+    session=Depends(get_db_session),
 ):
     """
     GitHub OAuth callback endpoint.
@@ -325,10 +312,7 @@ async def github_oauth_callback(
     # Verify state
     if not oauth_state_store.verify_state(state, "github"):
         logger.warning("github_oauth_invalid_state", state=state)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid OAuth state"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid OAuth state")
 
     # TODO: Exchange code for access token
     # TODO: Fetch user info from GitHub
@@ -344,24 +328,17 @@ async def github_oauth_callback(
         full_name=mock_name,
         provider="github",
         provider_user_id=mock_provider_id,
-        session=session
+        session=session,
     )
 
     # Create JWT tokens
     access_token = JWTManager.create_access_token(
-        user_id=user.id,
-        email=user.email,
-        role=user.role.value,
-        scopes=user.get_scopes()
+        user_id=user.id, email=user.email, role=user.role.value, scopes=user.get_scopes()
     )
 
     refresh_token = JWTManager.create_refresh_token(user_id=user.id)
 
-    logger.info(
-        "github_oauth_success",
-        user_id=str(user.id),
-        email=user.email
-    )
+    logger.info("github_oauth_success", user_id=str(user.id), email=user.email)
 
     return LoginResponse(
         access_token=access_token,
@@ -380,13 +357,14 @@ async def github_oauth_callback(
             scopes=user.get_scopes(),
             created_at=user.created_at,
             last_login_at=user.last_login_at,
-        )
+        ),
     )
 
 
 # =============================================================================
 # OAUTH STATUS
 # =============================================================================
+
 
 @router.get("/providers")
 async def list_oauth_providers():
