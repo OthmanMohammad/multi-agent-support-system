@@ -33,98 +33,92 @@ Part of: EPIC-006 Advanced Workflow Patterns
 """
 
 # Sequential Pattern
-from src.workflow.patterns.sequential import (
-    SequentialWorkflow,
-    SequentialStep,
-    SequentialResult,
-    execute_sequential
-)
-
-# Parallel Pattern
-from src.workflow.patterns.parallel import (
-    ParallelWorkflow,
-    ParallelAgent,
-    ParallelResult,
-    AggregationStrategy,
-    CompletionStrategy,
-    execute_parallel
-)
-
 # Debate Pattern
 from src.workflow.patterns.debate import (
-    DebateWorkflow,
-    DebateParticipant,
-    DebateRound,
-    DebateResult,
-    DebateFormat,
     ConsensusMethod,
-    execute_debate
-)
-
-# Verification Pattern
-from src.workflow.patterns.verification import (
-    VerificationWorkflow,
-    MultiVerifierWorkflow,
-    VerificationCheck,
-    VerificationFinding,
-    VerificationResult,
-    VerificationLevel,
-    VerificationAction,
-    execute_verification
+    DebateFormat,
+    DebateParticipant,
+    DebateResult,
+    DebateRound,
+    DebateWorkflow,
+    execute_debate,
 )
 
 # Expert Panel Pattern
 from src.workflow.patterns.expert_panel import (
-    ExpertPanelWorkflow,
     Expert,
     ExpertContribution,
     ExpertPanelResult,
+    ExpertPanelWorkflow,
     ExpertRole,
     SynthesisStrategy,
-    execute_expert_panel
+    execute_expert_panel,
 )
 
+# Parallel Pattern
+from src.workflow.patterns.parallel import (
+    AggregationStrategy,
+    CompletionStrategy,
+    ParallelAgent,
+    ParallelResult,
+    ParallelWorkflow,
+    execute_parallel,
+)
+from src.workflow.patterns.sequential import (
+    SequentialResult,
+    SequentialStep,
+    SequentialWorkflow,
+    execute_sequential,
+)
+
+# Verification Pattern
+from src.workflow.patterns.verification import (
+    MultiVerifierWorkflow,
+    VerificationAction,
+    VerificationCheck,
+    VerificationFinding,
+    VerificationLevel,
+    VerificationResult,
+    VerificationWorkflow,
+    execute_verification,
+)
 
 __all__ = [
-    # Sequential
-    "SequentialWorkflow",
-    "SequentialStep",
-    "SequentialResult",
-    "execute_sequential",
-
-    # Parallel
-    "ParallelWorkflow",
-    "ParallelAgent",
-    "ParallelResult",
     "AggregationStrategy",
     "CompletionStrategy",
-    "execute_parallel",
-
+    "ConsensusMethod",
+    "DebateFormat",
+    "DebateParticipant",
+    "DebateResult",
+    "DebateRound",
     # Debate
     "DebateWorkflow",
-    "DebateParticipant",
-    "DebateRound",
-    "DebateResult",
-    "DebateFormat",
-    "ConsensusMethod",
-    "execute_debate",
-
-    # Verification
-    "VerificationWorkflow",
-    "MultiVerifierWorkflow",
-    "VerificationCheck",
-    "VerificationFinding",
-    "VerificationResult",
-    "VerificationLevel",
-    "VerificationAction",
-    "execute_verification",
-
-    # Expert Panel
-    "ExpertPanelWorkflow",
     "Expert",
     "ExpertContribution",
     "ExpertPanelResult",
+    # Expert Panel
+    "ExpertPanelWorkflow",
     "ExpertRole",
+    "MultiVerifierWorkflow",
+    "ParallelAgent",
+    "ParallelResult",
+    # Parallel
+    "ParallelWorkflow",
+    "SequentialResult",
+    "SequentialStep",
+    # Sequential
+    "SequentialWorkflow",
     "SynthesisStrategy",
+    "VerificationAction",
+    "VerificationCheck",
+    "VerificationFinding",
+    "VerificationLevel",
+    "VerificationResult",
+    # Verification
+    "VerificationWorkflow",
+    "execute_debate",
     "execute_expert_panel",
+    "execute_parallel",
+    "execute_sequential",
+    "execute_verification",
 ]
