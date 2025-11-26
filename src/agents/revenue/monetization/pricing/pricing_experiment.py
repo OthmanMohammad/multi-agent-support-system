@@ -519,7 +519,11 @@ Timeline: {experiment['duration_weeks']} weeks
 
 Generate a comprehensive experiment design."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # Experiment design uses config data
+        )
         return response
 
     async def _generate_analysis_response(
@@ -582,5 +586,9 @@ Recommendations:
 
 Generate a comprehensive experiment analysis."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # Experiment analysis uses results data
+        )
         return response
