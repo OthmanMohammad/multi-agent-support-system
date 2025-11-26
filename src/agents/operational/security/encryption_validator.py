@@ -5,13 +5,13 @@ Validates encryption at rest and in transit across all systems.
 Ensures compliance with security standards and best practices.
 """
 
-from typing import Dict, Any, List, Optional, Set
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("encryption_validator", tier="operational", category="security")
@@ -42,28 +42,25 @@ class EncryptionValidatorAgent(BaseAgent):
             "AES-256-GCM": {"strength": "strong", "key_size": 256},
             "AES-256-CBC": {"strength": "strong", "key_size": 256},
             "AES-128-GCM": {"strength": "adequate", "key_size": 128},
-            "ChaCha20-Poly1305": {"strength": "strong", "key_size": 256}
+            "ChaCha20-Poly1305": {"strength": "strong", "key_size": 256},
         },
         "asymmetric": {
             "RSA-4096": {"strength": "strong", "key_size": 4096},
             "RSA-2048": {"strength": "adequate", "key_size": 2048},
             "ECDSA-P256": {"strength": "strong", "key_size": 256},
             "ECDSA-P384": {"strength": "strong", "key_size": 384},
-            "Ed25519": {"strength": "strong", "key_size": 256}
+            "Ed25519": {"strength": "strong", "key_size": 256},
         },
         "hash": {
             "SHA-256": {"strength": "strong"},
             "SHA-384": {"strength": "strong"},
             "SHA-512": {"strength": "strong"},
-            "SHA3-256": {"strength": "strong"}
-        }
+            "SHA3-256": {"strength": "strong"},
+        },
     }
 
     # Deprecated/weak algorithms
-    DEPRECATED_ALGORITHMS = [
-        "DES", "3DES", "RC4", "MD5", "SHA1",
-        "AES-128-ECB", "RSA-1024", "DSA"
-    ]
+    DEPRECATED_ALGORITHMS = ["DES", "3DES", "RC4", "MD5", "SHA1", "AES-128-ECB", "RSA-1024", "DSA"]
 
     # TLS versions
     TLS_VERSIONS = {
@@ -72,7 +69,7 @@ class EncryptionValidatorAgent(BaseAgent):
         "TLS 1.1": {"status": "deprecated", "strength": "weak"},
         "TLS 1.0": {"status": "deprecated", "strength": "weak"},
         "SSL 3.0": {"status": "forbidden", "strength": "insecure"},
-        "SSL 2.0": {"status": "forbidden", "strength": "insecure"}
+        "SSL 2.0": {"status": "forbidden", "strength": "insecure"},
     }
 
     # Key rotation policies (in days)
@@ -80,7 +77,7 @@ class EncryptionValidatorAgent(BaseAgent):
         "symmetric_keys": 90,
         "certificates": 365,
         "api_keys": 180,
-        "signing_keys": 730
+        "signing_keys": 730,
     }
 
     def __init__(self):
@@ -91,7 +88,7 @@ class EncryptionValidatorAgent(BaseAgent):
             temperature=0.1,
             max_tokens=2500,
             capabilities=[AgentCapability.DATABASE_READ],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -111,7 +108,9 @@ class EncryptionValidatorAgent(BaseAgent):
         state = self.update_state(state)
 
         # Extract parameters
-        validation_scope = state.get("entities", {}).get("scope", "comprehensive")  # comprehensive, transit, rest
+        validation_scope = state.get("entities", {}).get(
+            "scope", "comprehensive"
+        )  # comprehensive, transit, rest
         databases = state.get("entities", {}).get("databases", [])
         storage_systems = state.get("entities", {}).get("storage_systems", [])
         api_endpoints = state.get("entities", {}).get("api_endpoints", [])
@@ -122,24 +121,18 @@ class EncryptionValidatorAgent(BaseAgent):
             "encryption_validation_details",
             scope=validation_scope,
             databases=len(databases),
-            api_endpoints=len(api_endpoints)
+            api_endpoints=len(api_endpoints),
         )
 
         # Validate encryption at rest
         rest_results = []
         if validation_scope in ["comprehensive", "rest"]:
-            rest_results = self._validate_encryption_at_rest(
-                databases,
-                storage_systems
-            )
+            rest_results = self._validate_encryption_at_rest(databases, storage_systems)
 
         # Validate encryption in transit
         transit_results = []
         if validation_scope in ["comprehensive", "transit"]:
-            transit_results = self._validate_encryption_in_transit(
-                api_endpoints,
-                certificates
-            )
+            transit_results = self._validate_encryption_in_transit(api_endpoints, certificates)
 
         # Validate key management
         key_management_results = self._validate_key_management(encryption_keys)
@@ -156,15 +149,12 @@ class EncryptionValidatorAgent(BaseAgent):
         coverage_score = self._calculate_encryption_coverage(
             rest_results,
             transit_results,
-            len(databases) + len(storage_systems) + len(api_endpoints)
+            len(databases) + len(storage_systems) + len(api_endpoints),
         )
 
         # Identify vulnerabilities
         vulnerabilities = self._identify_vulnerabilities(
-            deprecated_usage,
-            certificate_issues,
-            rest_results,
-            transit_results
+            deprecated_usage, certificate_issues, rest_results, transit_results
         )
 
         # Generate remediation plan
@@ -172,10 +162,7 @@ class EncryptionValidatorAgent(BaseAgent):
 
         # Generate recommendations
         recommendations = self._generate_recommendations(
-            coverage_score,
-            vulnerabilities,
-            deprecated_usage,
-            certificate_issues
+            coverage_score, vulnerabilities, deprecated_usage, certificate_issues
         )
 
         # Format response
@@ -188,7 +175,7 @@ class EncryptionValidatorAgent(BaseAgent):
             vulnerabilities,
             certificate_issues,
             remediation_plan,
-            recommendations
+            recommendations,
         )
 
         state["agent_response"] = response
@@ -215,16 +202,14 @@ class EncryptionValidatorAgent(BaseAgent):
             "encryption_validation_completed",
             coverage_score=coverage_score,
             vulnerabilities=len(vulnerabilities),
-            critical_count=len(critical_vulns)
+            critical_count=len(critical_vulns),
         )
 
         return state
 
     def _validate_encryption_at_rest(
-        self,
-        databases: List[Dict[str, Any]],
-        storage_systems: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, databases: list[dict[str, Any]], storage_systems: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """
         Validate encryption at rest for databases and storage.
 
@@ -249,7 +234,7 @@ class EncryptionValidatorAgent(BaseAgent):
                 "encryption_enabled": encryption_enabled,
                 "algorithm": encryption_algorithm,
                 "compliant": False,
-                "issues": []
+                "issues": [],
             }
 
             if not encryption_enabled:
@@ -261,7 +246,9 @@ class EncryptionValidatorAgent(BaseAgent):
             elif encryption_algorithm in self.APPROVED_ALGORITHMS["symmetric"]:
                 validation["compliant"] = True
                 validation["severity"] = "none"
-                validation["algorithm_strength"] = self.APPROVED_ALGORITHMS["symmetric"][encryption_algorithm]["strength"]
+                validation["algorithm_strength"] = self.APPROVED_ALGORITHMS["symmetric"][
+                    encryption_algorithm
+                ]["strength"]
             else:
                 validation["issues"].append(f"Unknown encryption algorithm: {encryption_algorithm}")
                 validation["severity"] = "medium"
@@ -280,7 +267,7 @@ class EncryptionValidatorAgent(BaseAgent):
                 "encryption_enabled": encryption_enabled,
                 "encryption_type": encryption_type,
                 "compliant": False,
-                "issues": []
+                "issues": [],
             }
 
             if not encryption_enabled:
@@ -298,10 +285,8 @@ class EncryptionValidatorAgent(BaseAgent):
         return results
 
     def _validate_encryption_in_transit(
-        self,
-        api_endpoints: List[Dict[str, Any]],
-        certificates: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, api_endpoints: list[dict[str, Any]], certificates: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """
         Validate encryption in transit (TLS/SSL).
 
@@ -326,7 +311,7 @@ class EncryptionValidatorAgent(BaseAgent):
                 "tls_enabled": tls_enabled,
                 "tls_version": tls_version,
                 "compliant": False,
-                "issues": []
+                "issues": [],
             }
 
             if not tls_enabled:
@@ -351,7 +336,9 @@ class EncryptionValidatorAgent(BaseAgent):
             # Check cipher suites
             weak_ciphers = [c for c in cipher_suites if any(w in c for w in ["RC4", "DES", "MD5"])]
             if weak_ciphers:
-                validation["issues"].append(f"Weak cipher suites detected: {', '.join(weak_ciphers)}")
+                validation["issues"].append(
+                    f"Weak cipher suites detected: {', '.join(weak_ciphers)}"
+                )
                 validation["severity"] = "high"
                 validation["compliant"] = False
 
@@ -360,9 +347,8 @@ class EncryptionValidatorAgent(BaseAgent):
         return results
 
     def _validate_key_management(
-        self,
-        encryption_keys: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, encryption_keys: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """
         Validate encryption key management practices.
 
@@ -378,7 +364,9 @@ class EncryptionValidatorAgent(BaseAgent):
             key_id = key.get("key_id", "unknown")
             key_type = key.get("key_type", "symmetric")
             algorithm = key.get("algorithm", "unknown")
-            created_at = datetime.fromisoformat(key.get("created_at", datetime.now(UTC).isoformat()))
+            created_at = datetime.fromisoformat(
+                key.get("created_at", datetime.now(UTC).isoformat())
+            )
             last_rotated = datetime.fromisoformat(key.get("last_rotated", created_at.isoformat()))
 
             validation = {
@@ -386,17 +374,16 @@ class EncryptionValidatorAgent(BaseAgent):
                 "key_type": key_type,
                 "algorithm": algorithm,
                 "compliant": False,
-                "issues": []
+                "issues": [],
             }
 
             # Check algorithm
             if algorithm in self.DEPRECATED_ALGORITHMS:
                 validation["issues"].append(f"Deprecated algorithm: {algorithm}")
                 validation["severity"] = "critical"
-            elif key_type == "symmetric" and algorithm in self.APPROVED_ALGORITHMS["symmetric"]:
-                validation["compliant"] = True
-                validation["severity"] = "none"
-            elif key_type == "asymmetric" and algorithm in self.APPROVED_ALGORITHMS["asymmetric"]:
+            elif (
+                key_type == "symmetric" and algorithm in self.APPROVED_ALGORITHMS["symmetric"]
+            ) or (key_type == "asymmetric" and algorithm in self.APPROVED_ALGORITHMS["asymmetric"]):
                 validation["compliant"] = True
                 validation["severity"] = "none"
 
@@ -408,7 +395,9 @@ class EncryptionValidatorAgent(BaseAgent):
                 validation["issues"].append(
                     f"Key not rotated in {days_since_rotation} days (policy: {rotation_period} days)"
                 )
-                validation["severity"] = "high" if validation.get("severity") == "none" else validation.get("severity")
+                validation["severity"] = (
+                    "high" if validation.get("severity") == "none" else validation.get("severity")
+                )
                 validation["compliant"] = False
 
             validation["days_since_rotation"] = days_since_rotation
@@ -418,86 +407,94 @@ class EncryptionValidatorAgent(BaseAgent):
 
         return results
 
-    def _validate_certificates(
-        self,
-        certificates: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+    def _validate_certificates(self, certificates: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Validate SSL/TLS certificates."""
         issues = []
 
         for cert in certificates:
             cert_name = cert.get("name", "unknown")
-            expiry_date = datetime.fromisoformat(cert.get("expiry_date", datetime.now(UTC).isoformat()))
+            expiry_date = datetime.fromisoformat(
+                cert.get("expiry_date", datetime.now(UTC).isoformat())
+            )
             days_until_expiry = (expiry_date - datetime.now(UTC)).days
 
             if days_until_expiry < 0:
-                issues.append({
-                    "certificate": cert_name,
-                    "issue": "Certificate expired",
-                    "severity": "critical",
-                    "days_expired": abs(days_until_expiry)
-                })
+                issues.append(
+                    {
+                        "certificate": cert_name,
+                        "issue": "Certificate expired",
+                        "severity": "critical",
+                        "days_expired": abs(days_until_expiry),
+                    }
+                )
             elif days_until_expiry < 30:
-                issues.append({
-                    "certificate": cert_name,
-                    "issue": "Certificate expiring soon",
-                    "severity": "high",
-                    "days_until_expiry": days_until_expiry
-                })
+                issues.append(
+                    {
+                        "certificate": cert_name,
+                        "issue": "Certificate expiring soon",
+                        "severity": "high",
+                        "days_until_expiry": days_until_expiry,
+                    }
+                )
 
             # Check key size
             key_size = cert.get("key_size", 0)
             if key_size < 2048:
-                issues.append({
-                    "certificate": cert_name,
-                    "issue": f"Weak key size: {key_size} bits (minimum 2048)",
-                    "severity": "high"
-                })
+                issues.append(
+                    {
+                        "certificate": cert_name,
+                        "issue": f"Weak key size: {key_size} bits (minimum 2048)",
+                        "severity": "high",
+                    }
+                )
 
         return issues
 
     def _check_deprecated_algorithms(
-        self,
-        all_results: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, all_results: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Check for usage of deprecated algorithms."""
         deprecated_usage = []
 
         for result in all_results:
             algorithm = result.get("algorithm", "")
             if algorithm in self.DEPRECATED_ALGORITHMS:
-                deprecated_usage.append({
-                    "system": result.get("system_name", result.get("endpoint", "unknown")),
-                    "algorithm": algorithm,
-                    "severity": "critical",
-                    "message": f"Deprecated algorithm in use: {algorithm}"
-                })
+                deprecated_usage.append(
+                    {
+                        "system": result.get("system_name", result.get("endpoint", "unknown")),
+                        "algorithm": algorithm,
+                        "severity": "critical",
+                        "message": f"Deprecated algorithm in use: {algorithm}",
+                    }
+                )
 
         return deprecated_usage
 
     def _calculate_encryption_coverage(
         self,
-        rest_results: List[Dict[str, Any]],
-        transit_results: List[Dict[str, Any]],
-        total_systems: int
+        rest_results: list[dict[str, Any]],
+        transit_results: list[dict[str, Any]],
+        total_systems: int,
     ) -> float:
         """Calculate encryption coverage percentage (0-100)."""
         if total_systems == 0:
             return 100.0
 
         all_results = rest_results + transit_results
-        encrypted = len([r for r in all_results if r.get("encryption_enabled") or r.get("tls_enabled")])
+        encrypted = len(
+            [r for r in all_results if r.get("encryption_enabled") or r.get("tls_enabled")]
+        )
 
         coverage = (encrypted / total_systems) * 100
         return round(coverage, 1)
 
     def _identify_vulnerabilities(
         self,
-        deprecated_usage: List[Dict[str, Any]],
-        certificate_issues: List[Dict[str, Any]],
-        rest_results: List[Dict[str, Any]],
-        transit_results: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        deprecated_usage: list[dict[str, Any]],
+        certificate_issues: list[dict[str, Any]],
+        rest_results: list[dict[str, Any]],
+        transit_results: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
         """Identify all encryption vulnerabilities."""
         vulnerabilities = []
 
@@ -510,25 +507,25 @@ class EncryptionValidatorAgent(BaseAgent):
         # Add unencrypted systems
         for result in rest_results + transit_results:
             if not result.get("encryption_enabled") and not result.get("tls_enabled"):
-                vulnerabilities.append({
-                    "system": result.get("system_name", result.get("endpoint", "unknown")),
-                    "severity": "critical",
-                    "message": "No encryption enabled",
-                    "type": result.get("system_type")
-                })
+                vulnerabilities.append(
+                    {
+                        "system": result.get("system_name", result.get("endpoint", "unknown")),
+                        "severity": "critical",
+                        "message": "No encryption enabled",
+                        "type": result.get("system_type"),
+                    }
+                )
 
         return vulnerabilities
 
     def _generate_remediation_plan(
-        self,
-        vulnerabilities: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, vulnerabilities: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Generate prioritized remediation plan."""
         # Sort by severity
         severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
         sorted_vulns = sorted(
-            vulnerabilities,
-            key=lambda v: severity_order.get(v.get("severity", "low"), 999)
+            vulnerabilities, key=lambda v: severity_order.get(v.get("severity", "low"), 999)
         )
 
         plan = []
@@ -539,13 +536,13 @@ class EncryptionValidatorAgent(BaseAgent):
                 "system": vuln.get("system", vuln.get("certificate", "unknown")),
                 "issue": vuln.get("message", vuln.get("issue")),
                 "action": self._get_remediation_action(vuln),
-                "deadline": self._get_remediation_deadline(vuln.get("severity"))
+                "deadline": self._get_remediation_deadline(vuln.get("severity")),
             }
             plan.append(plan_item)
 
         return plan
 
-    def _get_remediation_action(self, vulnerability: Dict[str, Any]) -> str:
+    def _get_remediation_action(self, vulnerability: dict[str, Any]) -> str:
         """Get specific remediation action for vulnerability."""
         if "deprecated algorithm" in vulnerability.get("message", "").lower():
             return "Upgrade to AES-256-GCM or approved algorithm"
@@ -564,7 +561,7 @@ class EncryptionValidatorAgent(BaseAgent):
             "critical": timedelta(days=1),
             "high": timedelta(days=7),
             "medium": timedelta(days=30),
-            "low": timedelta(days=90)
+            "low": timedelta(days=90),
         }
         deadline = datetime.now(UTC) + deadlines.get(severity, timedelta(days=30))
         return deadline.isoformat()
@@ -572,10 +569,10 @@ class EncryptionValidatorAgent(BaseAgent):
     def _generate_recommendations(
         self,
         coverage_score: float,
-        vulnerabilities: List[Dict[str, Any]],
-        deprecated_usage: List[Dict[str, Any]],
-        certificate_issues: List[Dict[str, Any]]
-    ) -> List[str]:
+        vulnerabilities: list[dict[str, Any]],
+        deprecated_usage: list[dict[str, Any]],
+        certificate_issues: list[dict[str, Any]],
+    ) -> list[str]:
         """Generate encryption recommendations."""
         recommendations = []
 
@@ -608,27 +605,23 @@ class EncryptionValidatorAgent(BaseAgent):
             "Implement automated certificate renewal (Let's Encrypt, AWS Certificate Manager)"
         )
 
-        recommendations.append(
-            "Enforce TLS 1.2+ minimum across all endpoints"
-        )
+        recommendations.append("Enforce TLS 1.2+ minimum across all endpoints")
 
-        recommendations.append(
-            "Implement automated key rotation per policy"
-        )
+        recommendations.append("Implement automated key rotation per policy")
 
         return recommendations
 
     def _format_validation_report(
         self,
         validation_scope: str,
-        rest_results: List[Dict[str, Any]],
-        transit_results: List[Dict[str, Any]],
-        key_management_results: List[Dict[str, Any]],
+        rest_results: list[dict[str, Any]],
+        transit_results: list[dict[str, Any]],
+        key_management_results: list[dict[str, Any]],
         coverage_score: float,
-        vulnerabilities: List[Dict[str, Any]],
-        certificate_issues: List[Dict[str, Any]],
-        remediation_plan: List[Dict[str, Any]],
-        recommendations: List[str]
+        vulnerabilities: list[dict[str, Any]],
+        certificate_issues: list[dict[str, Any]],
+        remediation_plan: list[dict[str, Any]],
+        recommendations: list[str],
     ) -> str:
         """Format encryption validation report."""
         coverage_icon = "✅" if coverage_score == 100 else "⚠️" if coverage_score >= 80 else "❌"
@@ -656,15 +649,21 @@ class EncryptionValidatorAgent(BaseAgent):
 
         # Top vulnerabilities
         if vulnerabilities:
-            report += f"\n**Top Vulnerabilities:**\n"
+            report += "\n**Top Vulnerabilities:**\n"
             for vuln in vulnerabilities[:5]:
-                severity_icon = "🔴" if vuln["severity"] == "critical" else "⚠️" if vuln["severity"] == "high" else "📋"
+                severity_icon = (
+                    "🔴"
+                    if vuln["severity"] == "critical"
+                    else "⚠️"
+                    if vuln["severity"] == "high"
+                    else "📋"
+                )
                 report += f"{severity_icon} [{vuln['severity'].upper()}] {vuln.get('system', 'unknown')}\n"
                 report += f"   {vuln.get('message', vuln.get('issue', 'Unknown issue'))}\n"
 
         # Remediation plan
         if remediation_plan:
-            report += f"\n**Remediation Plan (Top 3):**\n"
+            report += "\n**Remediation Plan (Top 3):**\n"
             for item in remediation_plan[:3]:
                 report += f"{item['priority']}. [{item['severity'].upper()}] {item['system']}\n"
                 report += f"   {item['action']}\n"
@@ -672,11 +671,11 @@ class EncryptionValidatorAgent(BaseAgent):
 
         # Recommendations
         if recommendations:
-            report += f"\n**Recommendations:**\n"
+            report += "\n**Recommendations:**\n"
             for rec in recommendations:
                 report += f"- {rec}\n"
 
         report += f"\n*Encryption validation completed at {datetime.now(UTC).isoformat()}*"
-        report += f"\n*Standards: TLS 1.2+, AES-256, RSA 2048+*"
+        report += "\n*Standards: TLS 1.2+, AES-256, RSA 2048+*"
 
         return report
