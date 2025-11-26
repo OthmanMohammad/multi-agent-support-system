@@ -6,13 +6,11 @@ Uses Claude Sonnet for better synthesis quality.
 
 """
 
-from typing import List, Dict
-
-from src.agents.base.base_agent import BaseAgent
-from src.agents.base.agent_types import AgentType, AgentCapability
 from src.agents.base import AgentConfig
-from src.workflow.state import AgentState
+from src.agents.base.agent_types import AgentCapability, AgentType
+from src.agents.base.base_agent import BaseAgent
 from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 class KBSynthesizer(BaseAgent):
@@ -28,11 +26,11 @@ class KBSynthesizer(BaseAgent):
         config = AgentConfig(
             name="kb_synthesizer",
             type=AgentType.SPECIALIST,
-             # Better synthesis quality
+            # Better synthesis quality
             temperature=0.3,  # Some creativity but mostly factual
             max_tokens=2048,
             capabilities=[AgentCapability.KB_SEARCH],
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -56,10 +54,7 @@ class KBSynthesizer(BaseAgent):
             # No KB results to synthesize
             self.logger.info("kb_synthesizer_no_results")
             state = self.update_state(
-                state,
-                synthesized_answer=None,
-                synthesis_confidence=0.0,
-                sources_used=[]
+                state, synthesized_answer=None, synthesis_confidence=0.0, sources_used=[]
             )
             return state
 
@@ -68,9 +63,7 @@ class KBSynthesizer(BaseAgent):
         kb_results = kb_results[:max_articles]
 
         self.logger.info(
-            "kb_synthesis_started",
-            query_preview=user_message[:100],
-            articles_count=len(kb_results)
+            "kb_synthesis_started", query_preview=user_message[:100], articles_count=len(kb_results)
         )
 
         # Synthesize answer
@@ -82,23 +75,19 @@ class KBSynthesizer(BaseAgent):
             synthesized_answer=result["synthesized_answer"],
             sources_used=result["sources_used"],
             synthesis_confidence=result["synthesis_confidence"],
-            synthesis_tokens_used=result.get("tokens_used", 0)
+            synthesis_tokens_used=result.get("tokens_used", 0),
         )
 
         self.logger.info(
             "kb_synthesis_completed",
             answer_length=len(result["synthesized_answer"]),
             sources_count=len(result["sources_used"]),
-            confidence=result["synthesis_confidence"]
+            confidence=result["synthesis_confidence"],
         )
 
         return state
 
-    async def synthesize(
-        self,
-        user_message: str,
-        kb_articles: List[Dict]
-    ) -> Dict:
+    async def synthesize(self, user_message: str, kb_articles: list[dict]) -> dict:
         """
         Synthesize KB articles into coherent answer.
 
@@ -120,7 +109,7 @@ class KBSynthesizer(BaseAgent):
             system_prompt=system_prompt,
             user_message=user_prompt,
             max_tokens=2048,
-            conversation_history=[]  # Synthesis uses KB articles, no conversation context needed
+            conversation_history=[],  # Synthesis uses KB articles, no conversation context needed
         )
 
         # Parse response
@@ -135,7 +124,7 @@ class KBSynthesizer(BaseAgent):
                 "article_id": article["article_id"],
                 "title": article["title"],
                 "url": article.get("url", ""),
-                "final_score": article.get("final_score", article.get("similarity_score", 0))
+                "final_score": article.get("final_score", article.get("similarity_score", 0)),
             }
             for article in kb_articles
         ]
@@ -147,7 +136,7 @@ class KBSynthesizer(BaseAgent):
             "synthesized_answer": synthesized_answer,
             "sources_used": sources_used,
             "synthesis_confidence": round(confidence, 2),
-            "tokens_used": tokens_used
+            "tokens_used": tokens_used,
         }
 
     def _build_system_prompt(self) -> str:
@@ -179,11 +168,7 @@ TONE:
 - Empathetic when needed
 - Direct and actionable"""
 
-    def _build_user_prompt(
-        self,
-        user_message: str,
-        kb_articles: List[Dict]
-    ) -> str:
+    def _build_user_prompt(self, user_message: str, kb_articles: list[dict]) -> str:
         """Build user prompt with question and articles."""
         prompt = f"**User Question:**\n{user_message}\n\n"
         prompt += "**Knowledge Base Articles:**\n\n"
@@ -194,15 +179,13 @@ TONE:
 
         prompt += "**Instructions:**\n"
         prompt += "Synthesize the above articles to answer the user's question. "
-        prompt += "Cite all sources at the end using the citation format specified in the system prompt."
+        prompt += (
+            "Cite all sources at the end using the citation format specified in the system prompt."
+        )
 
         return prompt
 
-    def _calculate_confidence(
-        self,
-        kb_articles: List[Dict],
-        synthesized_answer: str
-    ) -> float:
+    def _calculate_confidence(self, kb_articles: list[dict], synthesized_answer: str) -> float:
         """
         Calculate confidence in synthesis.
 
@@ -223,8 +206,7 @@ TONE:
 
         # Average final scores of articles used
         avg_score = sum(
-            a.get("final_score", a.get("similarity_score", 0))
-            for a in kb_articles
+            a.get("final_score", a.get("similarity_score", 0)) for a in kb_articles
         ) / len(kb_articles)
 
         # Penalize very short answers
@@ -235,7 +217,7 @@ TONE:
         source_bonus = min(len(kb_articles) * 0.05, 0.15)
 
         # Combined confidence
-        confidence = (avg_score * 0.7 + source_bonus + length_penalty * 0.2)
+        confidence = avg_score * 0.7 + source_bonus + length_penalty * 0.2
 
         return min(max(confidence, 0.0), 1.0)
 
@@ -243,6 +225,7 @@ TONE:
 if __name__ == "__main__":
     # Test KB Synthesizer
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -267,7 +250,7 @@ To upgrade your plan:
 You'll be charged a prorated amount for the remaining days in your current billing cycle.
                 """,
                 "url": "/kb/upgrade",
-                "final_score": 0.92
+                "final_score": 0.92,
             },
             {
                 "article_id": "kb_pricing",
@@ -279,14 +262,14 @@ Our plans:
 - Enterprise: Custom pricing - Dedicated support, SLA, custom solutions
                 """,
                 "url": "/kb/pricing",
-                "final_score": 0.85
-            }
+                "final_score": 0.85,
+            },
         ]
 
         print("\nTest 1: Synthesize answer")
         result = await synthesizer.synthesize(
             user_message="How do I upgrade to Premium and how much does it cost?",
-            kb_articles=test_articles
+            kb_articles=test_articles,
         )
 
         print("\nSynthesized Answer:")
@@ -295,10 +278,7 @@ Our plans:
         print(f"Sources used: {len(result['sources_used'])}")
 
         print("\nTest 2: Process with state")
-        state = create_initial_state(
-            message="What are the pricing options?",
-            context={}
-        )
+        state = create_initial_state(message="What are the pricing options?", context={})
         state["kb_ranked_results"] = test_articles
         state = await synthesizer.process(state)
 
