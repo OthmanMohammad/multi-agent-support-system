@@ -5,14 +5,14 @@ Auto-schedules demos, QBRs, and customer calls in Google Calendar, Outlook, or C
 Handles timezone conversion, availability checking, and automatic meeting setup.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta, UTC
 import json
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("calendar_scheduler", tier="operational", category="automation")
@@ -36,18 +36,18 @@ class CalendarSchedulerAgent(BaseAgent):
         "google": {
             "api_endpoint": "https://www.googleapis.com/calendar/v3",
             "supports_video": ["meet"],
-            "max_attendees": 100
+            "max_attendees": 100,
         },
         "outlook": {
             "api_endpoint": "https://graph.microsoft.com/v1.0/me/calendar",
             "supports_video": ["teams"],
-            "max_attendees": 250
+            "max_attendees": 250,
         },
         "calendly": {
             "api_endpoint": "https://api.calendly.com",
             "supports_video": ["zoom", "meet", "teams"],
-            "max_attendees": 50
-        }
+            "max_attendees": 50,
+        },
     }
 
     # Meeting types and default durations
@@ -56,32 +56,32 @@ class CalendarSchedulerAgent(BaseAgent):
             "duration_minutes": 30,
             "buffer_before": 5,
             "buffer_after": 5,
-            "default_title": "Product Demo"
+            "default_title": "Product Demo",
         },
         "qbr": {
             "duration_minutes": 60,
             "buffer_before": 10,
             "buffer_after": 10,
-            "default_title": "Quarterly Business Review"
+            "default_title": "Quarterly Business Review",
         },
         "call": {
             "duration_minutes": 30,
             "buffer_before": 5,
             "buffer_after": 0,
-            "default_title": "Customer Call"
+            "default_title": "Customer Call",
         },
         "onboarding": {
             "duration_minutes": 45,
             "buffer_before": 5,
             "buffer_after": 5,
-            "default_title": "Onboarding Session"
+            "default_title": "Onboarding Session",
         },
         "training": {
             "duration_minutes": 60,
             "buffer_before": 5,
             "buffer_after": 10,
-            "default_title": "Training Session"
-        }
+            "default_title": "Training Session",
+        },
     }
 
     # Timezone mappings
@@ -94,7 +94,7 @@ class CalendarSchedulerAgent(BaseAgent):
         "CET": "Europe/Paris",
         "IST": "Asia/Kolkata",
         "JST": "Asia/Tokyo",
-        "AEST": "Australia/Sydney"
+        "AEST": "Australia/Sydney",
     }
 
     def __init__(self):
@@ -104,7 +104,7 @@ class CalendarSchedulerAgent(BaseAgent):
             temperature=0.1,
             max_tokens=800,
             capabilities=[AgentCapability.DATABASE_WRITE],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -128,52 +128,37 @@ class CalendarSchedulerAgent(BaseAgent):
         entities = state.get("entities", {})
 
         # Extract scheduling parameters
-        calendar_system = entities.get("calendar_system", customer_metadata.get("default_calendar", "google"))
+        calendar_system = entities.get(
+            "calendar_system", customer_metadata.get("default_calendar", "google")
+        )
         meeting_type = entities.get("meeting_type", "call")
 
         self.logger.debug(
-            "scheduling_details",
-            calendar_system=calendar_system,
-            meeting_type=meeting_type
+            "scheduling_details", calendar_system=calendar_system, meeting_type=meeting_type
         )
 
         # Parse meeting details from message
         meeting_details = await self._parse_meeting_request(message, customer_metadata)
 
         # Detect and convert timezones
-        timezone_info = self._detect_and_convert_timezone(
-            meeting_details,
-            customer_metadata
-        )
+        timezone_info = self._detect_and_convert_timezone(meeting_details, customer_metadata)
 
         # Find available time slots
-        availability = self._check_availability(
-            meeting_details,
-            timezone_info,
-            customer_metadata
-        )
+        availability = self._check_availability(meeting_details, timezone_info, customer_metadata)
 
         # Check for scheduling conflicts
         conflict_check = self._check_conflicts(
-            meeting_details,
-            availability,
-            customer_metadata.get("existing_meetings", [])
+            meeting_details, availability, customer_metadata.get("existing_meetings", [])
         )
 
         # Prepare meeting data
         meeting_data = self._prepare_meeting_data(
-            calendar_system,
-            meeting_type,
-            meeting_details,
-            timezone_info,
-            customer_metadata
+            calendar_system, meeting_type, meeting_details, timezone_info, customer_metadata
         )
 
         # Schedule meeting in external system
         scheduled_meeting = await self._schedule_meeting_external(
-            calendar_system,
-            meeting_data,
-            conflict_check
+            calendar_system, meeting_data, conflict_check
         )
 
         # Setup automatic reminders
@@ -181,18 +166,12 @@ class CalendarSchedulerAgent(BaseAgent):
 
         # Log automation action
         automation_log = self._log_automation_action(
-            "meeting_scheduled",
-            calendar_system,
-            scheduled_meeting,
-            customer_metadata
+            "meeting_scheduled", calendar_system, scheduled_meeting, customer_metadata
         )
 
         # Generate response
         response = self._format_scheduling_response(
-            scheduled_meeting,
-            conflict_check,
-            timezone_info,
-            reminders
+            scheduled_meeting, conflict_check, timezone_info, reminders
         )
 
         state["agent_response"] = response
@@ -211,16 +190,12 @@ class CalendarSchedulerAgent(BaseAgent):
             meeting_id=scheduled_meeting.get("id"),
             meeting_type=meeting_type,
             calendar_system=calendar_system,
-            start_time=scheduled_meeting.get("start_time")
+            start_time=scheduled_meeting.get("start_time"),
         )
 
         return state
 
-    async def _parse_meeting_request(
-        self,
-        message: str,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+    async def _parse_meeting_request(self, message: str, customer_metadata: dict) -> dict[str, Any]:
         """
         Parse meeting request from message using LLM.
 
@@ -249,21 +224,22 @@ Be precise with dates and times."""
 
 Message: {message}
 
-Customer: {customer_metadata.get('customer_name', 'Unknown')}
-Default timezone: {customer_metadata.get('timezone', 'America/New_York')}
+Customer: {customer_metadata.get("customer_name", "Unknown")}
+Default timezone: {customer_metadata.get("timezone", "America/New_York")}
 
 Return JSON with title, date, time, duration_minutes, attendees (array), meeting_type, timezone, video_platform, and notes."""
 
         response = await self.call_llm(
             system_prompt=system_prompt,
             user_message=user_prompt,
-            conversation_history=[]  # Meeting request parsing uses message context
+            conversation_history=[],  # Meeting request parsing uses message context
         )
 
         # Parse LLM response
         try:
             import re
-            json_match = re.search(r'\{.*\}', response, re.DOTALL)
+
+            json_match = re.search(r"\{.*\}", response, re.DOTALL)
             if json_match:
                 details = json.loads(json_match.group())
             else:
@@ -272,24 +248,22 @@ Return JSON with title, date, time, duration_minutes, attendees (array), meeting
                     "date": (datetime.now(UTC) + timedelta(days=1)).strftime("%Y-%m-%d"),
                     "time": "14:00",
                     "duration_minutes": 30,
-                    "meeting_type": "call"
+                    "meeting_type": "call",
                 }
-        except:
+        except Exception:
             details = {
                 "title": "Customer Meeting",
                 "date": (datetime.now(UTC) + timedelta(days=1)).strftime("%Y-%m-%d"),
                 "time": "14:00",
                 "duration_minutes": 30,
-                "meeting_type": "call"
+                "meeting_type": "call",
             }
 
         return details
 
     def _detect_and_convert_timezone(
-        self,
-        meeting_details: Dict,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, meeting_details: dict, customer_metadata: dict
+    ) -> dict[str, Any]:
         """
         Detect and convert timezones for meeting scheduling.
 
@@ -301,7 +275,9 @@ Return JSON with title, date, time, duration_minutes, attendees (array), meeting
             Timezone conversion information
         """
         # Get timezone from details or customer metadata
-        source_tz = meeting_details.get("timezone", customer_metadata.get("timezone", "America/New_York"))
+        source_tz = meeting_details.get(
+            "timezone", customer_metadata.get("timezone", "America/New_York")
+        )
 
         # Convert abbreviation to full timezone name
         if source_tz in self.COMMON_TIMEZONES:
@@ -317,15 +293,12 @@ Return JSON with title, date, time, duration_minutes, attendees (array), meeting
             "source_timezone_full": source_tz_full,
             "target_timezone": target_tz,
             "customer_timezone": customer_metadata.get("timezone", source_tz),
-            "conversion_applied": True
+            "conversion_applied": True,
         }
 
     def _check_availability(
-        self,
-        meeting_details: Dict,
-        timezone_info: Dict,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, meeting_details: dict, timezone_info: dict, customer_metadata: dict
+    ) -> dict[str, Any]:
         """
         Check availability for requested time slot.
 
@@ -355,17 +328,14 @@ Return JSON with title, date, time, duration_minutes, attendees (array), meeting
             "alternative_slots": [
                 {"date": requested_date, "time": "10:00", "available": True},
                 {"date": requested_date, "time": "14:00", "available": is_business_hours},
-                {"date": requested_date, "time": "15:30", "available": True}
+                {"date": requested_date, "time": "15:30", "available": True},
             ],
-            "checked_at": datetime.now(UTC).isoformat()
+            "checked_at": datetime.now(UTC).isoformat(),
         }
 
     def _check_conflicts(
-        self,
-        meeting_details: Dict,
-        availability: Dict,
-        existing_meetings: List[Dict]
-    ) -> Dict[str, Any]:
+        self, meeting_details: dict, availability: dict, existing_meetings: list[dict]
+    ) -> dict[str, Any]:
         """
         Check for scheduling conflicts.
 
@@ -381,7 +351,7 @@ Return JSON with title, date, time, duration_minutes, attendees (array), meeting
 
         requested_date = meeting_details.get("date")
         requested_time = meeting_details.get("time", "14:00")
-        duration = meeting_details.get("duration_minutes", 30)
+        meeting_details.get("duration_minutes", 30)
 
         # Check against existing meetings with proper time validation
         if requested_time and isinstance(requested_time, str) and ":" in requested_time:
@@ -394,12 +364,14 @@ Return JSON with title, date, time, duration_minutes, attendees (array), meeting
                             req_hour = int(requested_time.split(":")[0])
                             exist_hour = int(existing_time.split(":")[0])
                             if abs(req_hour - exist_hour) < 2:
-                                conflicts.append({
-                                    "meeting_id": meeting.get("id"),
-                                    "title": meeting.get("title"),
-                                    "time": existing_time,
-                                    "type": "time_overlap"
-                                })
+                                conflicts.append(
+                                    {
+                                        "meeting_id": meeting.get("id"),
+                                        "title": meeting.get("title"),
+                                        "time": existing_time,
+                                        "type": "time_overlap",
+                                    }
+                                )
                         except (ValueError, IndexError):
                             # Skip invalid time formats
                             continue
@@ -408,17 +380,18 @@ Return JSON with title, date, time, duration_minutes, attendees (array), meeting
             "has_conflicts": len(conflicts) > 0,
             "conflict_count": len(conflicts),
             "conflicts": conflicts,
-            "should_proceed": len(conflicts) == 0 or availability.get("requested_time_available", True)
+            "should_proceed": len(conflicts) == 0
+            or availability.get("requested_time_available", True),
         }
 
     def _prepare_meeting_data(
         self,
         calendar_system: str,
         meeting_type: str,
-        meeting_details: Dict,
-        timezone_info: Dict,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        meeting_details: dict,
+        timezone_info: dict,
+        customer_metadata: dict,
+    ) -> dict[str, Any]:
         """
         Prepare meeting data for external calendar system.
 
@@ -444,24 +417,42 @@ Return JSON with title, date, time, duration_minutes, attendees (array), meeting
             date_str = (datetime.now(UTC) + timedelta(days=1)).strftime("%Y-%m-%d")
 
         # Handle missing or invalid time
-        if not time_str or not isinstance(time_str, str) or ":" not in time_str or time_str == "RECURRING":
+        if (
+            not time_str
+            or not isinstance(time_str, str)
+            or ":" not in time_str
+            or time_str == "RECURRING"
+        ):
             time_str = "14:00"
 
         try:
             start_datetime = datetime.fromisoformat(f"{date_str}T{time_str}:00")
         except (ValueError, TypeError, AttributeError):
             # Fallback to tomorrow at 2pm if date parsing fails
-            start_datetime = datetime.now(UTC).replace(hour=14, minute=0, second=0, microsecond=0) + timedelta(days=1)
+            start_datetime = datetime.now(UTC).replace(
+                hour=14, minute=0, second=0, microsecond=0
+            ) + timedelta(days=1)
 
         end_datetime = start_datetime + timedelta(minutes=duration)
 
         # Prepare meeting data with None-safe defaults
         default_platform = "meet" if calendar_system == "google" else "teams"
-        video_platform = (meeting_details.get("video_platform") or default_platform) if meeting_details else default_platform
+        video_platform = (
+            (meeting_details.get("video_platform") or default_platform)
+            if meeting_details
+            else default_platform
+        )
 
         meeting_data = {
-            "title": (meeting_details.get("title") or meeting_config["default_title"]) if meeting_details else meeting_config["default_title"],
-            "description": (meeting_details.get("notes") or f"Scheduled via automation for {customer_metadata.get('customer_name', 'customer')}") if meeting_details else f"Scheduled via automation for {customer_metadata.get('customer_name', 'customer')}",
+            "title": (meeting_details.get("title") or meeting_config["default_title"])
+            if meeting_details
+            else meeting_config["default_title"],
+            "description": (
+                meeting_details.get("notes")
+                or f"Scheduled via automation for {customer_metadata.get('customer_name', 'customer')}"
+            )
+            if meeting_details
+            else f"Scheduled via automation for {customer_metadata.get('customer_name', 'customer')}",
             "start_time": start_datetime.isoformat(),
             "end_time": end_datetime.isoformat(),
             "timezone": timezone_info["source_timezone_full"],
@@ -471,33 +462,32 @@ Return JSON with title, date, time, duration_minutes, attendees (array), meeting
             "video_platform": video_platform,
             "reminders": [
                 {"type": "email", "minutes_before": 60},
-                {"type": "popup", "minutes_before": 10}
+                {"type": "popup", "minutes_before": 10},
             ],
             "metadata": {
                 "customer_id": customer_metadata.get("customer_id"),
                 "customer_name": customer_metadata.get("customer_name"),
                 "meeting_type": meeting_type,
-                "created_by": "automation"
-            }
+                "created_by": "automation",
+            },
         }
 
         # Add customer email as attendee
         if customer_metadata.get("email"):
-            meeting_data["attendees"].append({
-                "email": customer_metadata["email"],
-                "name": customer_metadata.get("customer_name"),
-                "role": "attendee",
-                "required": True
-            })
+            meeting_data["attendees"].append(
+                {
+                    "email": customer_metadata["email"],
+                    "name": customer_metadata.get("customer_name"),
+                    "role": "attendee",
+                    "required": True,
+                }
+            )
 
         return meeting_data
 
     async def _schedule_meeting_external(
-        self,
-        calendar_system: str,
-        meeting_data: Dict,
-        conflict_check: Dict
-    ) -> Dict[str, Any]:
+        self, calendar_system: str, meeting_data: dict, conflict_check: dict
+    ) -> dict[str, Any]:
         """
         Schedule meeting in external calendar system (mocked).
 
@@ -513,6 +503,7 @@ Return JSON with title, date, time, duration_minutes, attendees (array), meeting
         # For now, return mock scheduled meeting
 
         import hashlib
+
         meeting_id = hashlib.md5(
             f"{meeting_data['title']}{meeting_data['start_time']}".encode()
         ).hexdigest()[:12]
@@ -536,23 +527,21 @@ Return JSON with title, date, time, duration_minutes, attendees (array), meeting
             "status": "scheduled",
             "created_at": datetime.now(UTC).isoformat(),
             "calendar_link": f"https://{calendar_system}.example.com/event/{meeting_id}",
-            "has_conflicts": conflict_check.get("has_conflicts", False)
+            "has_conflicts": conflict_check.get("has_conflicts", False),
         }
 
         self.logger.info(
             "meeting_scheduled_in_external_system",
             system=calendar_system,
             meeting_id=meeting_id,
-            start_time=meeting_data["start_time"]
+            start_time=meeting_data["start_time"],
         )
 
         return scheduled_meeting
 
     def _setup_meeting_reminders(
-        self,
-        scheduled_meeting: Dict,
-        meeting_type: str
-    ) -> List[Dict[str, Any]]:
+        self, scheduled_meeting: dict, meeting_type: str
+    ) -> list[dict[str, Any]]:
         """
         Setup automatic reminders for meeting.
 
@@ -566,22 +555,28 @@ Return JSON with title, date, time, duration_minutes, attendees (array), meeting
         reminders = [
             {
                 "type": "email",
-                "send_at": (datetime.fromisoformat(scheduled_meeting["start_time"]) - timedelta(hours=24)).isoformat(),
+                "send_at": (
+                    datetime.fromisoformat(scheduled_meeting["start_time"]) - timedelta(hours=24)
+                ).isoformat(),
                 "subject": f"Reminder: {scheduled_meeting['title']} tomorrow",
-                "enabled": True
+                "enabled": True,
             },
             {
                 "type": "email",
-                "send_at": (datetime.fromisoformat(scheduled_meeting["start_time"]) - timedelta(hours=1)).isoformat(),
+                "send_at": (
+                    datetime.fromisoformat(scheduled_meeting["start_time"]) - timedelta(hours=1)
+                ).isoformat(),
                 "subject": f"Starting soon: {scheduled_meeting['title']}",
-                "enabled": True
+                "enabled": True,
             },
             {
                 "type": "notification",
-                "send_at": (datetime.fromisoformat(scheduled_meeting["start_time"]) - timedelta(minutes=10)).isoformat(),
-                "message": f"Meeting starts in 10 minutes",
-                "enabled": True
-            }
+                "send_at": (
+                    datetime.fromisoformat(scheduled_meeting["start_time"]) - timedelta(minutes=10)
+                ).isoformat(),
+                "message": "Meeting starts in 10 minutes",
+                "enabled": True,
+            },
         ]
 
         return reminders
@@ -590,9 +585,9 @@ Return JSON with title, date, time, duration_minutes, attendees (array), meeting
         self,
         action_type: str,
         calendar_system: str,
-        scheduled_meeting: Dict,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        scheduled_meeting: dict,
+        customer_metadata: dict,
+    ) -> dict[str, Any]:
         """Log automated action for audit trail."""
         return {
             "action_type": action_type,
@@ -604,34 +599,34 @@ Return JSON with title, date, time, duration_minutes, attendees (array), meeting
             "details": {
                 "meeting_title": scheduled_meeting.get("title"),
                 "start_time": scheduled_meeting.get("start_time"),
-                "attendee_count": len(scheduled_meeting.get("attendees", []))
-            }
+                "attendee_count": len(scheduled_meeting.get("attendees", [])),
+            },
         }
 
     def _format_scheduling_response(
         self,
-        scheduled_meeting: Dict,
-        conflict_check: Dict,
-        timezone_info: Dict,
-        reminders: List[Dict]
+        scheduled_meeting: dict,
+        conflict_check: dict,
+        timezone_info: dict,
+        reminders: list[dict],
     ) -> str:
         """Format meeting scheduling response."""
         response = f"""**Meeting Scheduled Successfully**
 
-Title: {scheduled_meeting['title']}
-Meeting ID: {scheduled_meeting['id']}
+Title: {scheduled_meeting["title"]}
+Meeting ID: {scheduled_meeting["id"]}
 
 **When:**
-Start: {scheduled_meeting['start_time']}
-End: {scheduled_meeting['end_time']}
-Duration: {scheduled_meeting['duration_minutes']} minutes
-Timezone: {scheduled_meeting['timezone']}
+Start: {scheduled_meeting["start_time"]}
+End: {scheduled_meeting["end_time"]}
+Duration: {scheduled_meeting["duration_minutes"]} minutes
+Timezone: {scheduled_meeting["timezone"]}
 
 **How to Join:**
-Video Link: {scheduled_meeting['video_link']}
-Platform: {(scheduled_meeting.get('video_platform') or 'meet').title()}
+Video Link: {scheduled_meeting["video_link"]}
+Platform: {(scheduled_meeting.get("video_platform") or "meet").title()}
 
-**Attendees:** {len(scheduled_meeting.get('attendees', []))} person(s)
+**Attendees:** {len(scheduled_meeting.get("attendees", []))} person(s)
 
 **Reminders Configured:**
 """
