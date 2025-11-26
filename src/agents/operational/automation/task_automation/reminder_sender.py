@@ -5,14 +5,14 @@ Auto-sends reminders for upcoming deadlines, renewals, meetings,
 and action items via email or notifications.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta, UTC
 import json
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("reminder_sender", tier="operational", category="automation")
@@ -36,33 +36,33 @@ class ReminderSenderAgent(BaseAgent):
         "renewal": {
             "advance_days": [30, 14, 7, 1],
             "channels": ["email", "slack"],
-            "escalate_if_overdue": True
+            "escalate_if_overdue": True,
         },
         "meeting": {
             "advance_hours": [24, 1, 0.25],  # 24h, 1h, 15min
             "channels": ["email", "notification"],
-            "escalate_if_overdue": False
+            "escalate_if_overdue": False,
         },
         "deadline": {
             "advance_days": [7, 3, 1],
             "channels": ["email", "slack", "notification"],
-            "escalate_if_overdue": True
+            "escalate_if_overdue": True,
         },
         "followup": {
             "advance_hours": [0],  # Send immediately
             "channels": ["email"],
-            "escalate_if_overdue": False
+            "escalate_if_overdue": False,
         },
         "payment": {
             "advance_days": [7, 3, 0],  # 7d, 3d, day-of
             "channels": ["email", "sms"],
-            "escalate_if_overdue": True
+            "escalate_if_overdue": True,
         },
         "action_item": {
             "advance_hours": [24, 4],
             "channels": ["notification", "slack"],
-            "escalate_if_overdue": True
-        }
+            "escalate_if_overdue": True,
+        },
     }
 
     # Reminder urgency levels
@@ -70,23 +70,11 @@ class ReminderSenderAgent(BaseAgent):
         "critical": {
             "max_reminders": 5,
             "escalate_after": 1,  # days
-            "repeat_interval": 4  # hours
+            "repeat_interval": 4,  # hours
         },
-        "high": {
-            "max_reminders": 3,
-            "escalate_after": 3,
-            "repeat_interval": 24
-        },
-        "medium": {
-            "max_reminders": 2,
-            "escalate_after": 7,
-            "repeat_interval": 72
-        },
-        "low": {
-            "max_reminders": 1,
-            "escalate_after": 14,
-            "repeat_interval": 168
-        }
+        "high": {"max_reminders": 3, "escalate_after": 3, "repeat_interval": 24},
+        "medium": {"max_reminders": 2, "escalate_after": 7, "repeat_interval": 72},
+        "low": {"max_reminders": 1, "escalate_after": 14, "repeat_interval": 168},
     }
 
     def __init__(self):
@@ -96,7 +84,7 @@ class ReminderSenderAgent(BaseAgent):
             temperature=0.1,
             max_tokens=800,
             capabilities=[AgentCapability.DATABASE_WRITE],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -128,63 +116,45 @@ class ReminderSenderAgent(BaseAgent):
             "reminder_sending_details",
             reminder_type=reminder_type,
             urgency=urgency,
-            deadline=deadline
+            deadline=deadline,
         )
 
         # Parse reminder details
         reminder_details = await self._parse_reminder_request(
-            message,
-            reminder_type,
-            customer_metadata
+            message, reminder_type, customer_metadata
         )
 
         # Calculate reminder schedule
         reminder_schedule = self._calculate_reminder_schedule(
-            reminder_type,
-            reminder_details,
-            urgency
+            reminder_type, reminder_details, urgency
         )
 
         # Check for duplicate reminders
         duplicate_check = self._check_duplicate_reminders(
-            reminder_details,
-            customer_metadata.get("active_reminders", [])
+            reminder_details, customer_metadata.get("active_reminders", [])
         )
 
         # Prepare reminder messages
         reminder_messages = self._prepare_reminder_messages(
-            reminder_type,
-            reminder_details,
-            reminder_schedule,
-            customer_metadata
+            reminder_type, reminder_details, reminder_schedule, customer_metadata
         )
 
         # Send or schedule reminders
         sent_reminders = await self._send_reminders(
-            reminder_messages,
-            reminder_schedule,
-            duplicate_check
+            reminder_messages, reminder_schedule, duplicate_check
         )
 
         # Setup escalation if needed
-        escalation_config = self._setup_escalation(
-            reminder_type,
-            reminder_details,
-            urgency
-        )
+        escalation_config = self._setup_escalation(reminder_type, reminder_details, urgency)
 
         # Log automation action
         automation_log = self._log_automation_action(
-            "reminder_sent",
-            sent_reminders,
-            customer_metadata
+            "reminder_sent", sent_reminders, customer_metadata
         )
 
         # Generate response
         response = self._format_reminder_response(
-            sent_reminders,
-            reminder_schedule,
-            escalation_config
+            sent_reminders, reminder_schedule, escalation_config
         )
 
         state["agent_response"] = response
@@ -201,17 +171,14 @@ class ReminderSenderAgent(BaseAgent):
             "reminders_sent_successfully",
             reminder_count=len(sent_reminders),
             reminder_type=reminder_type,
-            urgency=urgency
+            urgency=urgency,
         )
 
         return state
 
     async def _parse_reminder_request(
-        self,
-        message: str,
-        reminder_type: str,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, message: str, reminder_type: str, customer_metadata: dict
+    ) -> dict[str, Any]:
         """
         Parse reminder request from message.
 
@@ -239,43 +206,41 @@ Be precise with dates and times."""
 Message: {message}
 
 Reminder Type: {reminder_type}
-Customer: {customer_metadata.get('customer_name', 'Unknown')}
+Customer: {customer_metadata.get("customer_name", "Unknown")}
 
 Return JSON with subject, deadline, urgency_level, preferred_channels, and additional_context."""
 
         response = await self.call_llm(
             system_prompt=system_prompt,
             user_message=user_prompt,
-            conversation_history=[]  # Reminder parsing uses message context
+            conversation_history=[],  # Reminder parsing uses message context
         )
 
         # Parse LLM response
         try:
             import re
-            json_match = re.search(r'\{.*\}', response, re.DOTALL)
+
+            json_match = re.search(r"\{.*\}", response, re.DOTALL)
             if json_match:
                 details = json.loads(json_match.group())
             else:
                 details = {
                     "subject": message[:100],
                     "deadline": (datetime.now(UTC) + timedelta(days=7)).isoformat(),
-                    "urgency_level": "medium"
+                    "urgency_level": "medium",
                 }
-        except:
+        except Exception:
             details = {
                 "subject": message[:100],
                 "deadline": (datetime.now(UTC) + timedelta(days=7)).isoformat(),
-                "urgency_level": "medium"
+                "urgency_level": "medium",
             }
 
         return details
 
     def _calculate_reminder_schedule(
-        self,
-        reminder_type: str,
-        reminder_details: Dict,
-        urgency: str
-    ) -> List[Dict[str, Any]]:
+        self, reminder_type: str, reminder_details: dict, urgency: str
+    ) -> list[dict[str, Any]]:
         """
         Calculate when reminders should be sent.
 
@@ -287,14 +252,11 @@ Return JSON with subject, deadline, urgency_level, preferred_channels, and addit
         Returns:
             List of scheduled reminder times
         """
-        reminder_config = self.REMINDER_TYPES.get(
-            reminder_type,
-            self.REMINDER_TYPES["deadline"]
-        )
+        reminder_config = self.REMINDER_TYPES.get(reminder_type, self.REMINDER_TYPES["deadline"])
 
         deadline_str = reminder_details.get("deadline")
         if deadline_str:
-            deadline = datetime.fromisoformat(deadline_str.replace('Z', '+00:00').split('+')[0])
+            deadline = datetime.fromisoformat(deadline_str.replace("Z", "+00:00").split("+")[0])
         else:
             deadline = datetime.now(UTC) + timedelta(days=7)
 
@@ -305,23 +267,27 @@ Return JSON with subject, deadline, urgency_level, preferred_channels, and addit
             for days in reminder_config["advance_days"]:
                 send_time = deadline - timedelta(days=days)
                 if send_time > datetime.now(UTC):
-                    schedule.append({
-                        "send_at": send_time.isoformat(),
-                        "advance_days": days,
-                        "channels": reminder_config["channels"],
-                        "type": "scheduled"
-                    })
+                    schedule.append(
+                        {
+                            "send_at": send_time.isoformat(),
+                            "advance_days": days,
+                            "channels": reminder_config["channels"],
+                            "type": "scheduled",
+                        }
+                    )
 
         if "advance_hours" in reminder_config:
             for hours in reminder_config["advance_hours"]:
                 send_time = deadline - timedelta(hours=hours)
                 if send_time > datetime.now(UTC):
-                    schedule.append({
-                        "send_at": send_time.isoformat(),
-                        "advance_hours": hours,
-                        "channels": reminder_config["channels"],
-                        "type": "scheduled"
-                    })
+                    schedule.append(
+                        {
+                            "send_at": send_time.isoformat(),
+                            "advance_hours": hours,
+                            "channels": reminder_config["channels"],
+                            "type": "scheduled",
+                        }
+                    )
 
         # Sort by send time
         schedule.sort(key=lambda x: x["send_at"])
@@ -329,10 +295,8 @@ Return JSON with subject, deadline, urgency_level, preferred_channels, and addit
         return schedule
 
     def _check_duplicate_reminders(
-        self,
-        reminder_details: Dict,
-        active_reminders: List[Dict]
-    ) -> Dict[str, Any]:
+        self, reminder_details: dict, active_reminders: list[dict]
+    ) -> dict[str, Any]:
         """
         Check for duplicate active reminders.
 
@@ -354,26 +318,28 @@ Return JSON with subject, deadline, urgency_level, preferred_channels, and addit
 
             # Check for same subject and deadline
             if subject == active_subject and deadline == active_deadline:
-                duplicates.append({
-                    "reminder_id": active.get("id"),
-                    "subject": active.get("subject"),
-                    "status": active.get("status")
-                })
+                duplicates.append(
+                    {
+                        "reminder_id": active.get("id"),
+                        "subject": active.get("subject"),
+                        "status": active.get("status"),
+                    }
+                )
 
         return {
             "has_duplicates": len(duplicates) > 0,
             "duplicate_count": len(duplicates),
             "duplicates": duplicates,
-            "should_proceed": len(duplicates) == 0
+            "should_proceed": len(duplicates) == 0,
         }
 
     def _prepare_reminder_messages(
         self,
         reminder_type: str,
-        reminder_details: Dict,
-        reminder_schedule: List[Dict],
-        customer_metadata: Dict
-    ) -> List[Dict[str, Any]]:
+        reminder_details: dict,
+        reminder_schedule: list[dict],
+        customer_metadata: dict,
+    ) -> list[dict[str, Any]]:
         """
         Prepare reminder messages for each scheduled time.
 
@@ -406,16 +372,12 @@ Return JSON with subject, deadline, urgency_level, preferred_channels, and addit
                 "id": f"reminder_{idx}_{reminder_type}",
                 "subject": f"{urgency_prefix}Reminder: {subject}",
                 "body": self._generate_reminder_body(
-                    reminder_type,
-                    subject,
-                    deadline,
-                    advance,
-                    customer_metadata
+                    reminder_type, subject, deadline, advance, customer_metadata
                 ),
                 "send_at": schedule_item["send_at"],
                 "channels": schedule_item["channels"],
                 "type": reminder_type,
-                "urgency": "high" if advance <= 1 else "normal"
+                "urgency": "high" if advance <= 1 else "normal",
             }
 
             messages.append(message)
@@ -428,7 +390,7 @@ Return JSON with subject, deadline, urgency_level, preferred_channels, and addit
         subject: str,
         deadline: str,
         advance: float,
-        customer_metadata: Dict
+        customer_metadata: dict,
     ) -> str:
         """Generate reminder message body."""
         customer_name = customer_metadata.get("customer_name", "there")
@@ -495,11 +457,8 @@ The Team"""
         return body
 
     async def _send_reminders(
-        self,
-        reminder_messages: List[Dict],
-        reminder_schedule: List[Dict],
-        duplicate_check: Dict
-    ) -> List[Dict[str, Any]]:
+        self, reminder_messages: list[dict], reminder_schedule: list[dict], duplicate_check: dict
+    ) -> list[dict[str, Any]]:
         """
         Send or schedule reminders (mocked).
 
@@ -526,7 +485,7 @@ The Team"""
                 "status": "sent" if is_immediate else "scheduled",
                 "type": message["type"],
                 "urgency": message["urgency"],
-                "created_at": datetime.now(UTC).isoformat()
+                "created_at": datetime.now(UTC).isoformat(),
             }
 
             sent_reminders.append(reminder_record)
@@ -535,17 +494,14 @@ The Team"""
                 "reminder_processed",
                 reminder_id=message["id"],
                 status=reminder_record["status"],
-                channels=message["channels"]
+                channels=message["channels"],
             )
 
         return sent_reminders
 
     def _setup_escalation(
-        self,
-        reminder_type: str,
-        reminder_details: Dict,
-        urgency: str
-    ) -> Dict[str, Any]:
+        self, reminder_type: str, reminder_details: dict, urgency: str
+    ) -> dict[str, Any]:
         """
         Setup escalation policy for overdue items.
 
@@ -569,15 +525,12 @@ The Team"""
             "max_reminders": urgency_config["max_reminders"],
             "repeat_interval_hours": urgency_config["repeat_interval"],
             "escalation_channels": ["email", "slack", "sms"],
-            "escalation_recipients": ["manager@acme-corp.com"]
+            "escalation_recipients": ["manager@acme-corp.com"],
         }
 
     def _log_automation_action(
-        self,
-        action_type: str,
-        sent_reminders: List[Dict],
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, action_type: str, sent_reminders: list[dict], customer_metadata: dict
+    ) -> dict[str, Any]:
         """Log automated action for audit trail."""
         return {
             "action_type": action_type,
@@ -587,21 +540,14 @@ The Team"""
             "success": True,
             "details": {
                 "reminders": [
-                    {
-                        "id": r["id"],
-                        "status": r["status"],
-                        "send_at": r["send_at"]
-                    }
+                    {"id": r["id"], "status": r["status"], "send_at": r["send_at"]}
                     for r in sent_reminders
                 ]
-            }
+            },
         }
 
     def _format_reminder_response(
-        self,
-        sent_reminders: List[Dict],
-        reminder_schedule: List[Dict],
-        escalation_config: Dict
+        self, sent_reminders: list[dict], reminder_schedule: list[dict], escalation_config: dict
     ) -> str:
         """Format reminder sending response."""
         response = f"""**Reminders Configured Successfully**
@@ -620,9 +566,9 @@ Total Reminders: {len(sent_reminders)}
 
         if escalation_config.get("enabled"):
             response += f"""**Escalation Policy:**
-- Escalate if overdue after: {escalation_config['escalate_after_days']} days
-- Max reminder attempts: {escalation_config['max_reminders']}
-- Repeat interval: {escalation_config['repeat_interval_hours']} hours
+- Escalate if overdue after: {escalation_config["escalate_after_days"]} days
+- Max reminder attempts: {escalation_config["max_reminders"]}
+- Repeat interval: {escalation_config["repeat_interval_hours"]} hours
 """
 
         return response
