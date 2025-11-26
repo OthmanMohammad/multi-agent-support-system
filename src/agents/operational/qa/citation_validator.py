@@ -6,14 +6,14 @@ Validates documentation references and source attribution.
 Uses Claude Sonnet for nuanced citation validation.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, UTC
 import re
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("citation_validator", tier="operational", category="qa")
@@ -36,36 +36,17 @@ class CitationValidatorAgent(BaseAgent):
     # Citation formats
     CITATION_FORMATS = {
         "inline_link": r"\[([^\]]+)\]\(([^)]+)\)",  # [text](url)
-        "footnote": r"\[(\d+)\]",                    # [1]
-        "parenthetical": r"\(see: ([^)]+)\)",        # (see: reference)
-        "documentation": r"documentation|docs?|guide|reference"
+        "footnote": r"\[(\d+)\]",  # [1]
+        "parenthetical": r"\(see: ([^)]+)\)",  # (see: reference)
+        "documentation": r"documentation|docs?|guide|reference",
     }
 
     # Claims that require citations
     REQUIRES_CITATION = {
-        "statistics": [
-            r"\d+%",
-            r"\d+(\.\d+)?[x×]",
-            r"\d+ (users|customers|companies)"
-        ],
-        "research_claims": [
-            "studies show",
-            "research indicates",
-            "according to",
-            "data shows"
-        ],
-        "third_party": [
-            "industry standard",
-            "best practice",
-            "recommended by",
-            "certified by"
-        ],
-        "performance_claims": [
-            "fastest",
-            "most efficient",
-            "industry-leading",
-            "award-winning"
-        ]
+        "statistics": [r"\d+%", r"\d+(\.\d+)?[x×]", r"\d+ (users|customers|companies)"],
+        "research_claims": ["studies show", "research indicates", "according to", "data shows"],
+        "third_party": ["industry standard", "best practice", "recommended by", "certified by"],
+        "performance_claims": ["fastest", "most efficient", "industry-leading", "award-winning"],
     }
 
     # Valid documentation sources
@@ -74,7 +55,7 @@ class CitationValidatorAgent(BaseAgent):
         "knowledge_base": ["kb.", "/kb/", "knowledge", "help."],
         "api_reference": ["api.", "/api/", "reference"],
         "changelog": ["changelog", "release-notes", "whatsnew"],
-        "blog": ["blog.", "/blog/"]
+        "blog": ["blog.", "/blog/"],
     }
 
     def __init__(self):
@@ -85,7 +66,7 @@ class CitationValidatorAgent(BaseAgent):
             temperature=0.1,
             max_tokens=2000,
             capabilities=[AgentCapability.DATABASE_READ],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -105,14 +86,16 @@ class CitationValidatorAgent(BaseAgent):
         state = self.update_state(state)
 
         # Extract parameters
-        response_text = state.get("entities", {}).get("response_text", state.get("agent_response", ""))
+        response_text = state.get("entities", {}).get(
+            "response_text", state.get("agent_response", "")
+        )
         require_citations = state.get("entities", {}).get("require_citations", True)
         knowledge_base = state.get("entities", {}).get("knowledge_base", {})
 
         self.logger.debug(
             "citation_validation_details",
             response_length=len(response_text),
-            require_citations=require_citations
+            require_citations=require_citations,
         )
 
         # Extract citations
@@ -132,32 +115,21 @@ class CitationValidatorAgent(BaseAgent):
 
         # Aggregate issues
         all_issues = self._aggregate_issues(
-            uncited_claims,
-            format_issues,
-            source_issues,
-            consistency_issues
+            uncited_claims, format_issues, source_issues, consistency_issues
         )
 
         # Generate recommendations
         recommendations = self._generate_recommendations(all_issues, citations)
 
         # Calculate citation score
-        citation_score = self._calculate_citation_score(
-            citations,
-            uncited_claims,
-            all_issues
-        )
+        citation_score = self._calculate_citation_score(citations, uncited_claims, all_issues)
 
         # Determine pass/fail
         passed = self._determine_pass_fail(all_issues, require_citations)
 
         # Format response
         response = self._format_citation_report(
-            citations,
-            all_issues,
-            recommendations,
-            citation_score,
-            passed
+            citations, all_issues, recommendations, citation_score, passed
         )
 
         state["agent_response"] = response
@@ -175,12 +147,12 @@ class CitationValidatorAgent(BaseAgent):
             citations_found=len(citations),
             issues_found=len(all_issues),
             citation_score=citation_score,
-            passed=passed
+            passed=passed,
         )
 
         return state
 
-    def _extract_citations(self, response_text: str) -> List[Dict[str, Any]]:
+    def _extract_citations(self, response_text: str) -> list[dict[str, Any]]:
         """Extract all citations from response."""
         citations = []
 
@@ -192,14 +164,16 @@ class CitationValidatorAgent(BaseAgent):
             link_text = match.group(1)
             url = match.group(2)
 
-            citations.append({
-                "citation_id": f"inline_{i}",
-                "type": "inline_link",
-                "text": link_text,
-                "url": url,
-                "position": match.start(),
-                "format": "markdown"
-            })
+            citations.append(
+                {
+                    "citation_id": f"inline_{i}",
+                    "type": "inline_link",
+                    "text": link_text,
+                    "url": url,
+                    "position": match.start(),
+                    "format": "markdown",
+                }
+            )
 
         # Extract footnote references
         footnote_pattern = self.CITATION_FORMATS["footnote"]
@@ -207,34 +181,36 @@ class CitationValidatorAgent(BaseAgent):
 
         for match in footnote_matches:
             ref_num = match.group(1)
-            citations.append({
-                "citation_id": f"footnote_{ref_num}",
-                "type": "footnote",
-                "reference_number": ref_num,
-                "position": match.start(),
-                "format": "footnote"
-            })
+            citations.append(
+                {
+                    "citation_id": f"footnote_{ref_num}",
+                    "type": "footnote",
+                    "reference_number": ref_num,
+                    "position": match.start(),
+                    "format": "footnote",
+                }
+            )
 
         # Extract documentation references
         doc_pattern = self.CITATION_FORMATS["documentation"]
         doc_matches = re.finditer(doc_pattern, response_text, re.IGNORECASE)
 
         for i, match in enumerate(doc_matches):
-            citations.append({
-                "citation_id": f"doc_ref_{i}",
-                "type": "documentation_reference",
-                "text": match.group(0),
-                "position": match.start(),
-                "format": "textual"
-            })
+            citations.append(
+                {
+                    "citation_id": f"doc_ref_{i}",
+                    "type": "documentation_reference",
+                    "text": match.group(0),
+                    "position": match.start(),
+                    "format": "textual",
+                }
+            )
 
         return citations
 
     def _identify_uncited_claims(
-        self,
-        response_text: str,
-        citations: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, response_text: str, citations: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Identify claims that require but lack citations."""
         uncited = []
 
@@ -248,18 +224,21 @@ class CitationValidatorAgent(BaseAgent):
 
                 # Check if there's a citation nearby (within 100 chars)
                 has_nearby_citation = any(
-                    abs(citation["position"] - claim_position) < 100
-                    for citation in citations
+                    abs(citation["position"] - claim_position) < 100 for citation in citations
                 )
 
                 if not has_nearby_citation:
-                    uncited.append({
-                        "type": "uncited_statistic",
-                        "severity": "high",
-                        "claim": claim_text,
-                        "message": f"Statistic '{claim_text}' lacks citation",
-                        "context": self._extract_context_at_position(response_text, claim_position)
-                    })
+                    uncited.append(
+                        {
+                            "type": "uncited_statistic",
+                            "severity": "high",
+                            "claim": claim_text,
+                            "message": f"Statistic '{claim_text}' lacks citation",
+                            "context": self._extract_context_at_position(
+                                response_text, claim_position
+                            ),
+                        }
+                    )
 
         # Check for research claims
         for phrase in self.REQUIRES_CITATION["research_claims"]:
@@ -268,18 +247,19 @@ class CitationValidatorAgent(BaseAgent):
 
                 # Check for nearby citation
                 has_nearby_citation = any(
-                    abs(citation["position"] - position) < 150
-                    for citation in citations
+                    abs(citation["position"] - position) < 150 for citation in citations
                 )
 
                 if not has_nearby_citation:
-                    uncited.append({
-                        "type": "uncited_research",
-                        "severity": "high",
-                        "claim": phrase,
-                        "message": f"Research claim '{phrase}' requires citation",
-                        "context": self._extract_context_at_position(response_text, position)
-                    })
+                    uncited.append(
+                        {
+                            "type": "uncited_research",
+                            "severity": "high",
+                            "claim": phrase,
+                            "message": f"Research claim '{phrase}' requires citation",
+                            "context": self._extract_context_at_position(response_text, position),
+                        }
+                    )
 
         # Check for superlative claims
         for phrase in self.REQUIRES_CITATION["performance_claims"]:
@@ -287,22 +267,23 @@ class CitationValidatorAgent(BaseAgent):
                 position = response_text.lower().find(phrase)
 
                 has_nearby_citation = any(
-                    abs(citation["position"] - position) < 100
-                    for citation in citations
+                    abs(citation["position"] - position) < 100 for citation in citations
                 )
 
                 if not has_nearby_citation:
-                    uncited.append({
-                        "type": "uncited_performance_claim",
-                        "severity": "medium",
-                        "claim": phrase,
-                        "message": f"Performance claim '{phrase}' should be cited or softened",
-                        "context": self._extract_context_at_position(response_text, position)
-                    })
+                    uncited.append(
+                        {
+                            "type": "uncited_performance_claim",
+                            "severity": "medium",
+                            "claim": phrase,
+                            "message": f"Performance claim '{phrase}' should be cited or softened",
+                            "context": self._extract_context_at_position(response_text, position),
+                        }
+                    )
 
         return uncited
 
-    def _validate_citation_format(self, citations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _validate_citation_format(self, citations: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Validate citation formatting."""
         issues = []
 
@@ -313,23 +294,27 @@ class CitationValidatorAgent(BaseAgent):
 
                 # Check for incomplete URLs
                 if not url.startswith(("http://", "https://", "/")):
-                    issues.append({
-                        "type": "invalid_url_format",
-                        "severity": "high",
-                        "citation_id": citation["citation_id"],
-                        "message": "Citation URL is not properly formatted",
-                        "url": url
-                    })
+                    issues.append(
+                        {
+                            "type": "invalid_url_format",
+                            "severity": "high",
+                            "citation_id": citation["citation_id"],
+                            "message": "Citation URL is not properly formatted",
+                            "url": url,
+                        }
+                    )
 
                 # Check for placeholder text
                 if citation.get("text", "").lower() in ["link", "click here", "here"]:
-                    issues.append({
-                        "type": "vague_link_text",
-                        "severity": "low",
-                        "citation_id": citation["citation_id"],
-                        "message": "Link text is vague - use descriptive text",
-                        "suggestion": "Use descriptive link text (e.g., 'API Documentation')"
-                    })
+                    issues.append(
+                        {
+                            "type": "vague_link_text",
+                            "severity": "low",
+                            "citation_id": citation["citation_id"],
+                            "message": "Link text is vague - use descriptive text",
+                            "suggestion": "Use descriptive link text (e.g., 'API Documentation')",
+                        }
+                    )
 
             # Check footnotes have corresponding reference list
             if citation["type"] == "footnote":
@@ -339,10 +324,8 @@ class CitationValidatorAgent(BaseAgent):
         return issues
 
     def _validate_sources(
-        self,
-        citations: List[Dict[str, Any]],
-        knowledge_base: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        self, citations: list[dict[str, Any]], knowledge_base: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Validate citation sources."""
         issues = []
 
@@ -352,79 +335,80 @@ class CitationValidatorAgent(BaseAgent):
 
                 # Check if source is from valid/official source
                 is_valid_source = False
-                source_type = "unknown"
 
-                for src_type, patterns in self.VALID_SOURCES.items():
+                for _src_type, patterns in self.VALID_SOURCES.items():
                     if any(pattern in url.lower() for pattern in patterns):
                         is_valid_source = True
-                        source_type = src_type
                         break
 
                 # Warn about external sources
                 if not is_valid_source and url.startswith("http"):
-                    issues.append({
-                        "type": "external_source",
-                        "severity": "medium",
-                        "citation_id": citation["citation_id"],
-                        "message": "Citation links to external source - verify reliability",
-                        "url": url
-                    })
+                    issues.append(
+                        {
+                            "type": "external_source",
+                            "severity": "medium",
+                            "citation_id": citation["citation_id"],
+                            "message": "Citation links to external source - verify reliability",
+                            "url": url,
+                        }
+                    )
 
                 # Check for broken link patterns
                 if "example.com" in url or "localhost" in url:
-                    issues.append({
-                        "type": "invalid_source",
-                        "severity": "critical",
-                        "citation_id": citation["citation_id"],
-                        "message": "Citation contains placeholder/invalid URL",
-                        "url": url
-                    })
+                    issues.append(
+                        {
+                            "type": "invalid_source",
+                            "severity": "critical",
+                            "citation_id": citation["citation_id"],
+                            "message": "Citation contains placeholder/invalid URL",
+                            "url": url,
+                        }
+                    )
 
         return issues
 
-    def _check_citation_consistency(self, citations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _check_citation_consistency(self, citations: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Check for citation consistency."""
         issues = []
 
         # Check if multiple citation formats are mixed
-        formats = set(c.get("format") for c in citations)
+        formats = {c.get("format") for c in citations}
 
         if len(formats) > 2:
-            issues.append({
-                "type": "inconsistent_format",
-                "severity": "low",
-                "message": f"Multiple citation formats used: {', '.join(formats)}",
-                "suggestion": "Use consistent citation format throughout response"
-            })
+            issues.append(
+                {
+                    "type": "inconsistent_format",
+                    "severity": "low",
+                    "message": f"Multiple citation formats used: {', '.join(formats)}",
+                    "suggestion": "Use consistent citation format throughout response",
+                }
+            )
 
         # Check for duplicate citations
         urls = [c.get("url") for c in citations if "url" in c]
         duplicates = [url for url in urls if urls.count(url) > 1]
 
         if duplicates:
-            issues.append({
-                "type": "duplicate_citations",
-                "severity": "low",
-                "message": f"Same source cited multiple times: {len(set(duplicates))} sources",
-                "suggestion": "Consider consolidating duplicate citations"
-            })
+            issues.append(
+                {
+                    "type": "duplicate_citations",
+                    "severity": "low",
+                    "message": f"Same source cited multiple times: {len(set(duplicates))} sources",
+                    "suggestion": "Consider consolidating duplicate citations",
+                }
+            )
 
         return issues
 
     def _aggregate_issues(
         self,
-        uncited_claims: List[Dict[str, Any]],
-        format_issues: List[Dict[str, Any]],
-        source_issues: List[Dict[str, Any]],
-        consistency_issues: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        uncited_claims: list[dict[str, Any]],
+        format_issues: list[dict[str, Any]],
+        source_issues: list[dict[str, Any]],
+        consistency_issues: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
         """Aggregate all citation issues."""
-        all_issues = (
-            uncited_claims +
-            format_issues +
-            source_issues +
-            consistency_issues
-        )
+        all_issues = uncited_claims + format_issues + source_issues + consistency_issues
 
         # Add timestamps
         for issue in all_issues:
@@ -437,10 +421,8 @@ class CitationValidatorAgent(BaseAgent):
         return all_issues
 
     def _generate_recommendations(
-        self,
-        issues: List[Dict[str, Any]],
-        citations: List[Dict[str, Any]]
-    ) -> List[str]:
+        self, issues: list[dict[str, Any]], citations: list[dict[str, Any]]
+    ) -> list[str]:
         """Generate citation recommendations."""
         recommendations = []
 
@@ -448,18 +430,18 @@ class CitationValidatorAgent(BaseAgent):
             recommendations.append("Citations are properly formatted and sourced")
             return recommendations
         elif not issues and not citations:
-            recommendations.append("No citations found - add citations for claims and statistics if applicable")
+            recommendations.append(
+                "No citations found - add citations for claims and statistics if applicable"
+            )
             return recommendations
 
         # Count by severity
         critical = [i for i in issues if i.get("severity") == "critical"]
         high = [i for i in issues if i.get("severity") == "high"]
-        medium = [i for i in issues if i.get("severity") == "medium"]
+        [i for i in issues if i.get("severity") == "medium"]
 
         if critical:
-            recommendations.append(
-                f"CRITICAL: Fix {len(critical)} critical citation issues"
-            )
+            recommendations.append(f"CRITICAL: Fix {len(critical)} critical citation issues")
 
         if high:
             recommendations.append(
@@ -473,32 +455,24 @@ class CitationValidatorAgent(BaseAgent):
             issue_types[issue_type] = issue_types.get(issue_type, 0) + 1
 
         if "uncited_statistic" in issue_types:
-            recommendations.append(
-                "Add citations for all statistics and numerical claims"
-            )
+            recommendations.append("Add citations for all statistics and numerical claims")
 
         if "uncited_research" in issue_types:
-            recommendations.append(
-                "Cite sources for research claims and studies"
-            )
+            recommendations.append("Cite sources for research claims and studies")
 
         if "external_source" in issue_types:
-            recommendations.append(
-                "Prefer official documentation over external sources"
-            )
+            recommendations.append("Prefer official documentation over external sources")
 
         if "vague_link_text" in issue_types:
-            recommendations.append(
-                "Use descriptive link text instead of 'click here' or 'link'"
-            )
+            recommendations.append("Use descriptive link text instead of 'click here' or 'link'")
 
         return recommendations
 
     def _calculate_citation_score(
         self,
-        citations: List[Dict[str, Any]],
-        uncited_claims: List[Dict[str, Any]],
-        all_issues: List[Dict[str, Any]]
+        citations: list[dict[str, Any]],
+        uncited_claims: list[dict[str, Any]],
+        all_issues: list[dict[str, Any]],
     ) -> float:
         """Calculate citation quality score (0-100)."""
         score = 100.0
@@ -509,12 +483,7 @@ class CitationValidatorAgent(BaseAgent):
         # Deduct for issues
         for issue in all_issues:
             severity = issue.get("severity", "low")
-            deductions = {
-                "critical": 20.0,
-                "high": 10.0,
-                "medium": 5.0,
-                "low": 2.0
-            }
+            deductions = {"critical": 20.0, "high": 10.0, "medium": 5.0, "low": 2.0}
             score -= deductions.get(severity, 0)
 
         # Bonus for having citations
@@ -523,11 +492,7 @@ class CitationValidatorAgent(BaseAgent):
 
         return max(0.0, round(score, 1))
 
-    def _determine_pass_fail(
-        self,
-        issues: List[Dict[str, Any]],
-        require_citations: bool
-    ) -> bool:
+    def _determine_pass_fail(self, issues: list[dict[str, Any]], require_citations: bool) -> bool:
         """Determine if citation check passes."""
         critical = [i for i in issues if i.get("severity") == "critical"]
         high = [i for i in issues if i.get("severity") == "high"]
@@ -554,11 +519,11 @@ class CitationValidatorAgent(BaseAgent):
 
     def _format_citation_report(
         self,
-        citations: List[Dict[str, Any]],
-        issues: List[Dict[str, Any]],
-        recommendations: List[str],
+        citations: list[dict[str, Any]],
+        issues: list[dict[str, Any]],
+        recommendations: list[str],
         citation_score: float,
-        passed: bool
+        passed: bool,
     ) -> str:
         """Format citation validation report."""
         status_icon = "✅" if passed else "❌"
@@ -584,13 +549,21 @@ class CitationValidatorAgent(BaseAgent):
 
         # Issues
         if issues:
-            report += f"\n**Issues Detected:**\n"
+            report += "\n**Issues Detected:**\n"
 
             for issue in issues[:5]:  # Top 5
-                icon = "🔴" if issue.get("severity") == "critical" else "⚠️" if issue.get("severity") == "high" else "ℹ️"
-                report += f"{icon} [{issue.get('severity', 'unknown').upper()}] {issue['message']}\n"
+                icon = (
+                    "🔴"
+                    if issue.get("severity") == "critical"
+                    else "⚠️"
+                    if issue.get("severity") == "high"
+                    else "ℹ️"
+                )
+                report += (
+                    f"{icon} [{issue.get('severity', 'unknown').upper()}] {issue['message']}\n"
+                )
                 if "context" in issue:
-                    report += f"   Context: \"{issue['context']}\"\n"
+                    report += f'   Context: "{issue["context"]}"\n'
                 if "suggestion" in issue:
                     report += f"   Suggestion: {issue['suggestion']}\n"
 
@@ -599,7 +572,7 @@ class CitationValidatorAgent(BaseAgent):
 
         # Recommendations
         if recommendations:
-            report += f"\n**Recommendations:**\n"
+            report += "\n**Recommendations:**\n"
             for rec in recommendations:
                 report += f"- {rec}\n"
 
