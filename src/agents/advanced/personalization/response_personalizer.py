@@ -33,6 +33,10 @@ class ResponsePersonalizerAgent(BaseAgent):
         user_message = f"Original: {response}\n\nPersonalize this response."
         
         try:
-            return await self.call_llm(system_prompt, user_message)
+            return await self.call_llm(
+                system_prompt=system_prompt,
+                user_message=user_message,
+                conversation_history=[]  # Personalization uses response context
+            )
         except:
             return response
