@@ -6,9 +6,9 @@ from uuid import uuid4
 from datetime import datetime, UTC
 from unittest.mock import AsyncMock, MagicMock
 
-from services.infrastructure.customer_service import CustomerInfrastructureService
-from core.result import Result
-from core.errors import NotFoundError, InternalError
+from src.services.infrastructure.customer_service import CustomerInfrastructureService
+from src.core.result import Result
+from src.core.errors import NotFoundError, InternalError
 
 
 @pytest.fixture
