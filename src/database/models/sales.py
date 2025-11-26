@@ -1,10 +1,22 @@
 """
 Sales, leads, and deals models
 """
-from sqlalchemy import Column, String, Integer, DECIMAL, Boolean, Text, ForeignKey, CheckConstraint, DateTime
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.orm import relationship
+
 import uuid
+
+from sqlalchemy import (
+    DECIMAL,
+    Boolean,
+    CheckConstraint,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import relationship
 
 from src.database.models.base import BaseModel
 
@@ -24,19 +36,13 @@ class Employee(BaseModel):
 
     # Relationships
     assigned_leads = relationship(
-        "Lead",
-        back_populates="assigned_employee",
-        foreign_keys="Lead.assigned_to"
+        "Lead", back_populates="assigned_employee", foreign_keys="Lead.assigned_to"
     )
     assigned_deals = relationship(
-        "Deal",
-        back_populates="assigned_employee",
-        foreign_keys="Deal.assigned_to"
+        "Deal", back_populates="assigned_employee", foreign_keys="Deal.assigned_to"
     )
     sales_activities = relationship(
-        "SalesActivity",
-        back_populates="performer",
-        foreign_keys="SalesActivity.performed_by"
+        "SalesActivity", back_populates="performer", foreign_keys="SalesActivity.performed_by"
     )
 
     def __repr__(self) -> str:
@@ -65,34 +71,32 @@ class Lead(BaseModel):
         UUID(as_uuid=True),
         ForeignKey("employees.id", ondelete="SET NULL"),
         nullable=True,
-        index=True
+        index=True,
     )
     converted_to_customer_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("customers.id", ondelete="SET NULL"),
-        nullable=True
+        UUID(as_uuid=True), ForeignKey("customers.id", ondelete="SET NULL"), nullable=True
     )
     converted_at = Column(DateTime(timezone=True), nullable=True)
     extra_metadata = Column(JSONB, default=dict, nullable=False)
 
     # Relationships
-    assigned_employee = relationship("Employee", back_populates="assigned_leads", foreign_keys=[assigned_to])
-    converted_customer = relationship("Customer", back_populates="converted_from_lead", foreign_keys=[converted_to_customer_id])
+    assigned_employee = relationship(
+        "Employee", back_populates="assigned_leads", foreign_keys=[assigned_to]
+    )
+    converted_customer = relationship(
+        "Customer", back_populates="converted_from_lead", foreign_keys=[converted_to_customer_id]
+    )
     deals = relationship("Deal", back_populates="lead", cascade="all, delete-orphan")
     activities = relationship("SalesActivity", back_populates="lead", cascade="all, delete-orphan")
 
     __table_args__ = (
         CheckConstraint(
             "qualification_status IN ('new', 'mql', 'sql', 'qualified', 'disqualified', 'converted')",
-            name="check_lead_qualification_status"
+            name="check_lead_qualification_status",
         ),
+        CheckConstraint("lead_score BETWEEN 0 AND 100", name="check_lead_score_range"),
         CheckConstraint(
-            "lead_score BETWEEN 0 AND 100",
-            name="check_lead_score_range"
-        ),
-        CheckConstraint(
-            "need_score IS NULL OR (need_score BETWEEN 0 AND 1)",
-            name="check_need_score_range"
+            "need_score IS NULL OR (need_score BETWEEN 0 AND 1)", name="check_need_score_range"
         ),
     )
 
@@ -104,7 +108,9 @@ class Lead(BaseModel):
     @property
     def is_converted(self) -> bool:
         """Check if lead is converted to customer"""
-        return self.qualification_status == "converted" and self.converted_to_customer_id is not None
+        return (
+            self.qualification_status == "converted" and self.converted_to_customer_id is not None
+        )
 
     def __repr__(self) -> str:
         return f"<Lead(id={self.id}, email={self.email}, score={self.lead_score}, status={self.qualification_status})>"
@@ -117,16 +123,13 @@ class Deal(BaseModel):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     lead_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("leads.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True
+        UUID(as_uuid=True), ForeignKey("leads.id", ondelete="SET NULL"), nullable=True, index=True
     )
     customer_id = Column(
         UUID(as_uuid=True),
         ForeignKey("customers.id", ondelete="SET NULL"),
         nullable=True,
-        index=True
+        index=True,
     )
     name = Column(String(255), nullable=False)
     value = Column(DECIMAL(precision=10, scale=2), nullable=False)
@@ -140,26 +143,25 @@ class Deal(BaseModel):
         UUID(as_uuid=True),
         ForeignKey("employees.id", ondelete="SET NULL"),
         nullable=True,
-        index=True
+        index=True,
     )
     extra_metadata = Column(JSONB, default=dict, nullable=False)
 
     # Relationships
     lead = relationship("Lead", back_populates="deals")
     customer = relationship("Customer", back_populates="deals")
-    assigned_employee = relationship("Employee", back_populates="assigned_deals", foreign_keys=[assigned_to])
+    assigned_employee = relationship(
+        "Employee", back_populates="assigned_deals", foreign_keys=[assigned_to]
+    )
     activities = relationship("SalesActivity", back_populates="deal", cascade="all, delete-orphan")
     quotes = relationship("Quote", back_populates="deal", cascade="all, delete-orphan")
 
     __table_args__ = (
         CheckConstraint(
             "stage IN ('prospecting', 'qualification', 'proposal', 'negotiation', 'closed_won', 'closed_lost')",
-            name="check_deal_stage"
+            name="check_deal_stage",
         ),
-        CheckConstraint(
-            "probability BETWEEN 0 AND 100",
-            name="check_deal_probability"
-        ),
+        CheckConstraint("probability BETWEEN 0 AND 100", name="check_deal_probability"),
     )
 
     @property
@@ -193,16 +195,10 @@ class SalesActivity(BaseModel):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     deal_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("deals.id", ondelete="CASCADE"),
-        nullable=True,
-        index=True
+        UUID(as_uuid=True), ForeignKey("deals.id", ondelete="CASCADE"), nullable=True, index=True
     )
     lead_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("leads.id", ondelete="CASCADE"),
-        nullable=True,
-        index=True
+        UUID(as_uuid=True), ForeignKey("leads.id", ondelete="CASCADE"), nullable=True, index=True
     )
     activity_type = Column(String(50), nullable=False, index=True)
     subject = Column(String(255), nullable=False)
@@ -211,21 +207,21 @@ class SalesActivity(BaseModel):
     scheduled_at = Column(DateTime(timezone=True), nullable=True)
     completed_at = Column(DateTime(timezone=True), nullable=True)
     performed_by = Column(
-        UUID(as_uuid=True),
-        ForeignKey("employees.id", ondelete="SET NULL"),
-        nullable=True
+        UUID(as_uuid=True), ForeignKey("employees.id", ondelete="SET NULL"), nullable=True
     )
     extra_metadata = Column(JSONB, default=dict, nullable=False)
 
     # Relationships
     deal = relationship("Deal", back_populates="activities")
     lead = relationship("Lead", back_populates="activities")
-    performer = relationship("Employee", back_populates="sales_activities", foreign_keys=[performed_by])
+    performer = relationship(
+        "Employee", back_populates="sales_activities", foreign_keys=[performed_by]
+    )
 
     __table_args__ = (
         CheckConstraint(
             "activity_type IN ('call', 'email', 'meeting', 'demo', 'proposal', 'follow_up')",
-            name="check_activity_type"
+            name="check_activity_type",
         ),
     )
 
@@ -245,16 +241,13 @@ class Quote(BaseModel):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     deal_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("deals.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True
+        UUID(as_uuid=True), ForeignKey("deals.id", ondelete="SET NULL"), nullable=True, index=True
     )
     customer_id = Column(
         UUID(as_uuid=True),
         ForeignKey("customers.id", ondelete="SET NULL"),
         nullable=True,
-        index=True
+        index=True,
     )
     quote_number = Column(String(50), nullable=False, unique=True, index=True)
     total_amount = Column(DECIMAL(precision=10, scale=2), nullable=False)
@@ -272,7 +265,7 @@ class Quote(BaseModel):
     __table_args__ = (
         CheckConstraint(
             "status IN ('draft', 'sent', 'accepted', 'declined', 'expired')",
-            name="check_quote_status"
+            name="check_quote_status",
         ),
     )
 
