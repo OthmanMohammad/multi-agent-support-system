@@ -5,12 +5,12 @@ Specialist for crash investigation, log analysis, and bug ticket creation.
 """
 
 import random
-from typing import Dict, Optional, Any
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("crash_investigator", tier="essential", category="technical")
@@ -31,12 +31,9 @@ class CrashInvestigator(BaseAgent):
             name="crash_investigator",
             type=AgentType.SPECIALIST,
             temperature=0.3,
-            capabilities=[
-                AgentCapability.KB_SEARCH,
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="technical",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -54,7 +51,7 @@ class CrashInvestigator(BaseAgent):
             "crash_investigation_started",
             message_preview=message[:100],
             has_crash_data=bool(crash_data),
-            turn_count=state["turn_count"]
+            turn_count=state["turn_count"],
         )
 
         # Check if we have crash logs collected
@@ -67,10 +64,7 @@ class CrashInvestigator(BaseAgent):
             state["next_agent"] = None
             state["status"] = "pending_info"
 
-            self.logger.info(
-                "crash_info_requested",
-                status="awaiting_logs"
-            )
+            self.logger.info("crash_info_requested", status="awaiting_logs")
         else:
             # Analyze crash
             analysis = self._analyze_crash(crash_data)
@@ -78,7 +72,7 @@ class CrashInvestigator(BaseAgent):
             self.logger.info(
                 "crash_analysis_completed",
                 crash_type=analysis["type"],
-                severity=analysis["severity"]
+                severity=analysis["severity"],
             )
 
             # Create bug ticket if needed
@@ -87,24 +81,15 @@ class CrashInvestigator(BaseAgent):
                 ticket = self._create_bug_ticket(analysis, state.get("customer_metadata", {}))
 
                 self.logger.info(
-                    "bug_ticket_created",
-                    ticket_id=ticket["id"],
-                    severity=ticket["severity"]
+                    "bug_ticket_created", ticket_id=ticket["id"], severity=ticket["severity"]
                 )
 
             # Search KB for crash solutions
-            kb_results = await self.search_knowledge_base(
-                message,
-                category="technical",
-                limit=2
-            )
+            kb_results = await self.search_knowledge_base(message, category="technical", limit=2)
             state["kb_results"] = kb_results
 
             if kb_results:
-                self.logger.info(
-                    "crash_kb_articles_found",
-                    count=len(kb_results)
-                )
+                self.logger.info("crash_kb_articles_found", count=len(kb_results))
 
             response = self._format_response(analysis, ticket, kb_results)
 
@@ -118,9 +103,7 @@ class CrashInvestigator(BaseAgent):
             state["status"] = "resolved"
 
             self.logger.info(
-                "crash_investigation_completed",
-                response_length=len(response),
-                status="resolved"
+                "crash_investigation_completed", response_length=len(response), status="resolved"
             )
 
         return state
@@ -142,34 +125,31 @@ class CrashInvestigator(BaseAgent):
 
 Once I have this info, I can investigate and likely fix the issue quickly."""
 
-    def _analyze_crash(self, crash_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_crash(self, crash_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze crash data"""
         error_msg = crash_data.get("error_message", "")
         browser = crash_data.get("browser", "unknown")
         browser_version = crash_data.get("browser_version", "unknown")
-        reproduction_steps = crash_data.get("reproduction_steps", "")
+        crash_data.get("reproduction_steps", "")
 
         self.logger.debug(
             "analyzing_crash_data",
             browser=browser,
             browser_version=browser_version,
-            has_error=bool(error_msg)
+            has_error=bool(error_msg),
         )
 
         # Check for known issues
         known_issue = self._check_known_issues(error_msg, browser)
 
         if known_issue:
-            self.logger.info(
-                "known_issue_detected",
-                solution=known_issue["solution"]
-            )
+            self.logger.info("known_issue_detected", solution=known_issue["solution"])
             return {
                 "type": "known_issue",
                 "severity": "medium",
                 "solution": known_issue["solution"],
                 "workaround": known_issue["workaround"],
-                "browser": browser
+                "browser": browser,
             }
 
         # Check for browser-specific issues
@@ -179,7 +159,7 @@ Once I have this info, I can investigate and likely fix the issue quickly."""
                 "severity": "high",
                 "solution": "Memory issue detected - clear browser cache and cookies",
                 "workaround": "Use incognito mode temporarily",
-                "browser": browser
+                "browser": browser,
             }
 
         if "script" in error_msg.lower() and "timeout" in error_msg.lower():
@@ -188,7 +168,7 @@ Once I have this info, I can investigate and likely fix the issue quickly."""
                 "severity": "medium",
                 "solution": "Script execution timeout - likely due to slow connection or large data",
                 "workaround": "Refresh the page and try again",
-                "browser": browser
+                "browser": browser,
             }
 
         # Unknown crash - needs engineering
@@ -197,41 +177,40 @@ Once I have this info, I can investigate and likely fix the issue quickly."""
             "severity": "high",
             "solution": "Escalating to engineering team",
             "workaround": None,
-            "browser": browser
+            "browser": browser,
         }
 
-    def _check_known_issues(self, error_msg: str, browser: str) -> Optional[Dict[str, str]]:
+    def _check_known_issues(self, error_msg: str, browser: str) -> dict[str, str] | None:
         """Check against known crash patterns"""
         known_issues = {
             "TypeError: Cannot read": {
                 "solution": "This is a known issue in v2.5.1, fixed in v2.5.2",
-                "workaround": "Refresh the page or clear cache"
+                "workaround": "Refresh the page or clear cache",
             },
             "RangeError: Maximum call": {
                 "solution": "Stack overflow - likely infinite loop in custom script",
-                "workaround": "Disable custom scripts temporarily"
+                "workaround": "Disable custom scripts temporarily",
             },
             "QuotaExceededError": {
                 "solution": "Local storage quota exceeded",
-                "workaround": "Clear browser data or use incognito mode"
+                "workaround": "Clear browser data or use incognito mode",
             },
             "NetworkError": {
                 "solution": "Network connectivity issue or CORS error",
-                "workaround": "Check internet connection and try again"
-            }
+                "workaround": "Check internet connection and try again",
+            },
         }
 
         for pattern, issue in known_issues.items():
             if pattern in error_msg:
-                self.logger.debug(
-                    "known_issue_pattern_matched",
-                    pattern=pattern
-                )
+                self.logger.debug("known_issue_pattern_matched", pattern=pattern)
                 return issue
 
         return None
 
-    def _create_bug_ticket(self, analysis: Dict[str, Any], customer_context: Dict[str, Any]) -> Dict[str, Any]:
+    def _create_bug_ticket(
+        self, analysis: dict[str, Any], customer_context: dict[str, Any]
+    ) -> dict[str, Any]:
         """Create bug ticket in issue tracker"""
         # In production: Call Jira/Linear/GitHub API
         ticket_id = f"BUG-{random.randint(1000, 9999)}"
@@ -240,7 +219,7 @@ Once I have this info, I can investigate and likely fix the issue quickly."""
             "creating_bug_ticket",
             ticket_id=ticket_id,
             crash_type=analysis["type"],
-            severity=analysis["severity"]
+            severity=analysis["severity"],
         )
 
         return {
@@ -249,14 +228,11 @@ Once I have this info, I can investigate and likely fix the issue quickly."""
             "severity": analysis["severity"],
             "customer_id": customer_context.get("customer_id"),
             "browser": analysis.get("browser", "unknown"),
-            "url": f"https://issues.example.com/{ticket_id}"
+            "url": f"https://issues.example.com/{ticket_id}",
         }
 
     def _format_response(
-        self,
-        analysis: Dict[str, Any],
-        ticket: Optional[Dict[str, Any]],
-        kb_results: list
+        self, analysis: dict[str, Any], ticket: dict[str, Any] | None, kb_results: list
     ) -> str:
         """Format response to customer"""
         kb_context = ""
@@ -268,16 +244,16 @@ Once I have this info, I can investigate and likely fix the issue quickly."""
         if analysis["type"] == "known_issue":
             return f"""Good news! This is a known issue we've already fixed.
 
-**Solution:** {analysis['solution']}
+**Solution:** {analysis["solution"]}
 
-**Quick fix:** {analysis['workaround']}
+**Quick fix:** {analysis["workaround"]}
 
 Try this and let me know if the crash still happens!{kb_context}"""
 
         elif analysis["type"] == "memory_leak":
-            return f"""I've identified the issue - it's a memory problem in {analysis['browser']}.
+            return f"""I've identified the issue - it's a memory problem in {analysis["browser"]}.
 
-**Solution:** {analysis['solution']}
+**Solution:** {analysis["solution"]}
 
 **Steps to fix:**
 1. Clear browser cache (Ctrl+Shift+Delete)
@@ -285,21 +261,21 @@ Try this and let me know if the crash still happens!{kb_context}"""
 3. Restart browser
 4. Try again
 
-**Temporary workaround:** {analysis['workaround']}
+**Temporary workaround:** {analysis["workaround"]}
 
 This should resolve the crashes. Let me know if you need more help!{kb_context}"""
 
         elif analysis["type"] == "script_timeout":
             return f"""I've identified the issue - script execution timeout.
 
-**Solution:** {analysis['solution']}
+**Solution:** {analysis["solution"]}
 
 **Steps to fix:**
 1. Check your internet connection
 2. Refresh the page
 3. If you have large amounts of data, try filtering to smaller datasets
 
-**Temporary workaround:** {analysis['workaround']}
+**Temporary workaround:** {analysis["workaround"]}
 
 Let me know if this helps!{kb_context}"""
 
@@ -307,13 +283,13 @@ Let me know if this helps!{kb_context}"""
             ticket_info = ""
             if ticket:
                 ticket_info = f"""
-**Ticket:** {ticket['id']}
-**Severity:** {ticket['severity'].title()}
+**Ticket:** {ticket["id"]}
+**Severity:** {ticket["severity"].title()}
 
 """
 
             workaround_info = ""
-            if analysis['workaround']:
+            if analysis["workaround"]:
                 workaround_info = f"\n**Temporary workaround:** {analysis['workaround']}"
 
             return f"""I've identified the crash issue and created a bug report for our engineering team.
@@ -326,6 +302,7 @@ I'll keep you updated on the progress.{kb_context}"""
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -353,7 +330,7 @@ if __name__ == "__main__":
         state2["crash_data"] = {
             "error_message": "TypeError: Cannot read property 'value' of null",
             "browser": "Chrome",
-            "browser_version": "120"
+            "browser_version": "120",
         }
 
         result2 = await agent.process(state2)
