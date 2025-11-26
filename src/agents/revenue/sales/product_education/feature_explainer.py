@@ -115,7 +115,8 @@ class FeatureExplainer(BaseAgent):
             demo_materials,
             competitor_comparison,
             kb_results,
-            customer_metadata
+            customer_metadata,
+            state
         )
 
         # Update state
@@ -233,9 +234,13 @@ class FeatureExplainer(BaseAgent):
         demo_materials: Dict,
         competitor_comparison: Dict,
         kb_results: List[Dict],
-        customer_metadata: Dict
+        customer_metadata: Dict,
+        state: AgentState
     ) -> str:
         """Generate tailored feature explanation"""
+
+        # Get conversation history for context continuity
+        conversation_history = self.get_conversation_context(state)
 
         # Build KB context
         kb_context = ""
@@ -289,7 +294,11 @@ Tailor your explanation to:
 
 Generate a clear, tailored feature explanation that addresses their question."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt,
+            user_prompt,
+            conversation_history=conversation_history
+        )
         return response
 
 
