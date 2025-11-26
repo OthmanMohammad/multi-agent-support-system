@@ -266,7 +266,8 @@ class ProposalGenerator(BaseAgent):
             timeline,
             terms,
             kb_results,
-            customer_metadata
+            customer_metadata,
+            state
         )
 
         # Update state
@@ -684,9 +685,13 @@ class ProposalGenerator(BaseAgent):
         timeline: Dict,
         terms: Dict,
         kb_results: List[Dict],
-        customer_metadata: Dict
+        customer_metadata: Dict,
+        state: AgentState
     ) -> str:
         """Generate proposal presentation response"""
+
+        # Get conversation history for context continuity
+        conversation_history = self.get_conversation_context(state)
 
         # Build line items summary
         line_items_text = "\n\nProposal Line Items:\n"
@@ -738,7 +743,11 @@ Timeline: {timeline['total_weeks']} weeks from contract to go-live
 
 Generate a professional proposal presentation."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt,
+            user_prompt,
+            conversation_history=conversation_history
+        )
         return response
 
 
