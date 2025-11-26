@@ -5,15 +5,13 @@ Analyzes WoW (Week-over-Week), MoM (Month-over-Month), YoY (Year-over-Year) tren
 Identifies seasonality patterns and growth trajectories.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta, UTC
-from decimal import Decimal
-import math
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("trend_analyzer", tier="operational", category="analytics")
@@ -34,15 +32,15 @@ class TrendAnalyzerAgent(BaseAgent):
     TREND_TYPES = {
         "wow": {"name": "Week-over-Week", "period_days": 7},
         "mom": {"name": "Month-over-Month", "period_days": 30},
-        "yoy": {"name": "Year-over-Year", "period_days": 365}
+        "yoy": {"name": "Year-over-Year", "period_days": 365},
     }
 
     # Seasonality patterns
     SEASONALITY_PATTERNS = [
-        "weekly",    # Day of week patterns
-        "monthly",   # Day of month patterns
-        "quarterly", # Quarterly patterns
-        "yearly"     # Annual patterns
+        "weekly",  # Day of week patterns
+        "monthly",  # Day of month patterns
+        "quarterly",  # Quarterly patterns
+        "yearly",  # Annual patterns
     ]
 
     def __init__(self):
@@ -52,7 +50,7 @@ class TrendAnalyzerAgent(BaseAgent):
             temperature=0.2,
             max_tokens=1500,
             capabilities=[AgentCapability.DATABASE_WRITE],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -81,17 +79,14 @@ class TrendAnalyzerAgent(BaseAgent):
             "trend_analysis_details",
             metric_name=metric_name,
             data_points=len(time_series_data),
-            analysis_types=analysis_types
+            analysis_types=analysis_types,
         )
 
         # Perform trend analyses
         trend_results = {}
         for analysis_type in analysis_types:
             if analysis_type in self.TREND_TYPES:
-                trend_results[analysis_type] = self._analyze_trend(
-                    time_series_data,
-                    analysis_type
-                )
+                trend_results[analysis_type] = self._analyze_trend(time_series_data, analysis_type)
 
         # Detect seasonality if requested
         seasonality = None
@@ -109,12 +104,7 @@ class TrendAnalyzerAgent(BaseAgent):
 
         # Format response
         response = self._format_trend_report(
-            metric_name,
-            trend_results,
-            seasonality,
-            growth_trajectory,
-            forecast,
-            significant_trends
+            metric_name, trend_results, seasonality, growth_trajectory, forecast, significant_trends
         )
 
         state["agent_response"] = response
@@ -131,16 +121,14 @@ class TrendAnalyzerAgent(BaseAgent):
             "trend_analysis_completed",
             metric_name=metric_name,
             analyses_performed=len(trend_results),
-            seasonality_detected=seasonality is not None
+            seasonality_detected=seasonality is not None,
         )
 
         return state
 
     def _analyze_trend(
-        self,
-        time_series_data: List[Dict[str, Any]],
-        analysis_type: str
-    ) -> Dict[str, Any]:
+        self, time_series_data: list[dict[str, Any]], analysis_type: str
+    ) -> dict[str, Any]:
         """
         Analyze trend for a specific period.
 
@@ -155,21 +143,26 @@ class TrendAnalyzerAgent(BaseAgent):
             return {
                 "type": analysis_type,
                 "status": "insufficient_data",
-                "message": "Not enough data for analysis"
+                "message": "Not enough data for analysis",
             }
 
         # Get period configuration
         period_config = self.TREND_TYPES[analysis_type]
-        period_days = period_config["period_days"]
+        period_config["period_days"]
 
         # Extract latest values
-        latest_values = [p.get("value", 0) for p in time_series_data[-7:] if isinstance(p.get("value"), (int, float))]
+        latest_values = [
+            p.get("value", 0)
+            for p in time_series_data[-7:]
+            if isinstance(p.get("value"), (int, float))
+        ]
 
         # For mock data, simulate period comparison
         current_avg = sum(latest_values) / len(latest_values) if latest_values else 0
 
         # Simulate previous period (in production, query historical data)
         import random
+
         change_pct = random.uniform(-20, 30)  # Mock change
         previous_avg = current_avg / (1 + change_pct / 100) if current_avg != 0 else 0
 
@@ -198,13 +191,14 @@ class TrendAnalyzerAgent(BaseAgent):
             "total_change_pct": round(percent_change, 2),  # Alias for compatibility
             "direction": direction,
             "strength": strength,
-            "trend": "positive" if percent_change > 0 else "negative" if percent_change < 0 else "neutral"
+            "trend": "positive"
+            if percent_change > 0
+            else "negative"
+            if percent_change < 0
+            else "neutral",
         }
 
-    def _detect_seasonality(
-        self,
-        time_series_data: List[Dict[str, Any]]
-    ) -> Optional[Dict[str, Any]]:
+    def _detect_seasonality(self, time_series_data: list[dict[str, Any]]) -> dict[str, Any] | None:
         """
         Detect seasonality patterns in data.
 
@@ -223,10 +217,7 @@ class TrendAnalyzerAgent(BaseAgent):
         has_seasonality = random.choice([True, False])
 
         if not has_seasonality:
-            return {
-                "detected": False,
-                "message": "No significant seasonality detected"
-            }
+            return {"detected": False, "message": "No significant seasonality detected"}
 
         # Mock detected pattern
         pattern_type = random.choice(self.SEASONALITY_PATTERNS)
@@ -238,33 +229,32 @@ class TrendAnalyzerAgent(BaseAgent):
             "strength": round(strength, 2),
             "confidence": "high" if strength > 0.6 else "medium",
             "peak_periods": self._get_mock_peak_periods(pattern_type),
-            "trough_periods": self._get_mock_trough_periods(pattern_type)
+            "trough_periods": self._get_mock_trough_periods(pattern_type),
         }
 
-    def _get_mock_peak_periods(self, pattern_type: str) -> List[str]:
+    def _get_mock_peak_periods(self, pattern_type: str) -> list[str]:
         """Get mock peak periods for pattern type."""
         patterns = {
             "weekly": ["Tuesday", "Wednesday", "Thursday"],
             "monthly": ["Mid-month", "End of month"],
             "quarterly": ["Q2", "Q4"],
-            "yearly": ["March", "November", "December"]
+            "yearly": ["March", "November", "December"],
         }
         return patterns.get(pattern_type, [])
 
-    def _get_mock_trough_periods(self, pattern_type: str) -> List[str]:
+    def _get_mock_trough_periods(self, pattern_type: str) -> list[str]:
         """Get mock trough periods for pattern type."""
         patterns = {
             "weekly": ["Sunday", "Monday"],
             "monthly": ["Beginning of month"],
             "quarterly": ["Q1", "Q3"],
-            "yearly": ["January", "August"]
+            "yearly": ["January", "August"],
         }
         return patterns.get(pattern_type, [])
 
     def _calculate_growth_trajectory(
-        self,
-        time_series_data: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        self, time_series_data: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """
         Calculate overall growth trajectory.
 
@@ -281,11 +271,13 @@ class TrendAnalyzerAgent(BaseAgent):
                 "total_change_pct": 0,
                 "slope": 0,
                 "r_squared": 0,
-                "cagr": 0
+                "cagr": 0,
             }
 
         # Extract values
-        values = [p.get("value", 0) for p in time_series_data if isinstance(p.get("value"), (int, float))]
+        values = [
+            p.get("value", 0) for p in time_series_data if isinstance(p.get("value"), (int, float))
+        ]
 
         if not values:
             return {
@@ -294,7 +286,7 @@ class TrendAnalyzerAgent(BaseAgent):
                 "total_change_pct": 0,
                 "slope": 0,
                 "r_squared": 0,
-                "cagr": 0
+                "cagr": 0,
             }
 
         # Calculate simple linear regression
@@ -340,15 +332,15 @@ class TrendAnalyzerAgent(BaseAgent):
             "start_value": values[0],
             "end_value": values[-1],
             "total_change": round(values[-1] - values[0], 2),
-            "total_change_pct": round(((values[-1] - values[0]) / values[0] * 100) if values[0] != 0 else 0, 2),
-            "fit_quality": "good" if r_squared > 0.7 else "moderate" if r_squared > 0.4 else "poor"
+            "total_change_pct": round(
+                ((values[-1] - values[0]) / values[0] * 100) if values[0] != 0 else 0, 2
+            ),
+            "fit_quality": "good" if r_squared > 0.7 else "moderate" if r_squared > 0.4 else "poor",
         }
 
     def _generate_forecast(
-        self,
-        time_series_data: List[Dict[str, Any]],
-        growth_trajectory: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, time_series_data: list[dict[str, Any]], growth_trajectory: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Generate simple trend-based forecast.
 
@@ -360,13 +352,12 @@ class TrendAnalyzerAgent(BaseAgent):
             Forecast data
         """
         if not time_series_data or growth_trajectory.get("status") == "insufficient_data":
-            return {
-                "status": "unavailable",
-                "message": "Insufficient data for forecasting"
-            }
+            return {"status": "unavailable", "message": "Insufficient data for forecasting"}
 
         # Get current value
-        values = [p.get("value", 0) for p in time_series_data if isinstance(p.get("value"), (int, float))]
+        values = [
+            p.get("value", 0) for p in time_series_data if isinstance(p.get("value"), (int, float))
+        ]
         if not values:
             return {"status": "no_data"}
 
@@ -379,11 +370,9 @@ class TrendAnalyzerAgent(BaseAgent):
 
         for i in range(1, forecast_periods + 1):
             forecast_value = current_value + (slope * i)
-            forecasts.append({
-                "period": i,
-                "value": round(forecast_value, 2),
-                "confidence": "medium"
-            })
+            forecasts.append(
+                {"period": i, "value": round(forecast_value, 2), "confidence": "medium"}
+            )
 
         return {
             "status": "available",
@@ -391,13 +380,10 @@ class TrendAnalyzerAgent(BaseAgent):
             "periods_ahead": forecast_periods,
             "forecasts": forecasts,
             "confidence_level": "medium",
-            "assumptions": "Assumes current trend continues"
+            "assumptions": "Assumes current trend continues",
         }
 
-    def _identify_significant_trends(
-        self,
-        trend_results: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+    def _identify_significant_trends(self, trend_results: dict[str, Any]) -> list[dict[str, Any]]:
         """
         Identify statistically significant trends.
 
@@ -418,25 +404,27 @@ class TrendAnalyzerAgent(BaseAgent):
 
             # Significant if strong change or notable direction
             if percent_change > 10 or strength == "strong":
-                significant.append({
-                    "analysis_type": analysis_type,
-                    "period_name": result.get("period_name"),
-                    "direction": result.get("direction"),
-                    "percent_change": result.get("percent_change"),
-                    "strength": strength,
-                    "significance": "high" if percent_change > 20 else "medium"
-                })
+                significant.append(
+                    {
+                        "analysis_type": analysis_type,
+                        "period_name": result.get("period_name"),
+                        "direction": result.get("direction"),
+                        "percent_change": result.get("percent_change"),
+                        "strength": strength,
+                        "significance": "high" if percent_change > 20 else "medium",
+                    }
+                )
 
         return significant
 
     def _format_trend_report(
         self,
         metric_name: str,
-        trend_results: Dict[str, Any],
-        seasonality: Optional[Dict[str, Any]],
-        growth_trajectory: Dict[str, Any],
-        forecast: Dict[str, Any],
-        significant_trends: List[Dict[str, Any]]
+        trend_results: dict[str, Any],
+        seasonality: dict[str, Any] | None,
+        growth_trajectory: dict[str, Any],
+        forecast: dict[str, Any],
+        significant_trends: list[dict[str, Any]],
     ) -> str:
         """Format trend analysis report."""
         report = f"""**Trend Analysis Report: {metric_name}**
@@ -445,14 +433,22 @@ class TrendAnalyzerAgent(BaseAgent):
 """
 
         # Add trend results
-        for analysis_type, result in trend_results.items():
+        for _analysis_type, result in trend_results.items():
             if result.get("status") == "insufficient_data":
                 continue
 
-            trend_icon = "📈" if result["direction"] == "increasing" else "📉" if result["direction"] == "decreasing" else "➡️"
+            trend_icon = (
+                "📈"
+                if result["direction"] == "increasing"
+                else "📉"
+                if result["direction"] == "decreasing"
+                else "➡️"
+            )
             report += f"\n**{result['period_name']} {trend_icon}**\n"
             report += f"- Current: {result['current_value']:.2f} | Previous: {result['previous_value']:.2f}\n"
-            report += f"- Change: {result['percent_change']:+.2f}% ({result['absolute_change']:+.2f})\n"
+            report += (
+                f"- Change: {result['percent_change']:+.2f}% ({result['absolute_change']:+.2f})\n"
+            )
             report += f"- Direction: {result['direction'].title()} ({result['strength']})\n"
 
         # Seasonality
@@ -466,9 +462,15 @@ class TrendAnalyzerAgent(BaseAgent):
             report += "- No significant seasonality detected\n"
 
         # Growth trajectory
-        report += f"\n**Growth Trajectory:**\n"
+        report += "\n**Growth Trajectory:**\n"
         if growth_trajectory.get("trajectory"):
-            traj_icon = "🚀" if growth_trajectory["trajectory"] == "growing" else "⬇️" if growth_trajectory["trajectory"] == "declining" else "➡️"
+            traj_icon = (
+                "🚀"
+                if growth_trajectory["trajectory"] == "growing"
+                else "⬇️"
+                if growth_trajectory["trajectory"] == "declining"
+                else "➡️"
+            )
             report += f"- Overall Trend: {growth_trajectory['trajectory'].title()} {traj_icon}\n"
             report += f"- CAGR: {growth_trajectory.get('cagr', 0):.2f}%\n"
             report += f"- Total Change: {growth_trajectory.get('total_change_pct', 0):+.2f}%\n"
