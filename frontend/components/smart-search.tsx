@@ -30,6 +30,7 @@ interface SearchFilter {
   values: Array<{ value: string; label: string }>;
 }
 
+// eslint-disable-next-line complexity -- Complex search component with filtering logic
 export function SmartSearch<T extends Record<string, unknown>>({
   data,
   keys,
