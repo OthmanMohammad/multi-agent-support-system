@@ -4,12 +4,12 @@
  * Provides message sending functionality.
  */
 
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import { conversationsAPI } from '../conversations';
-import type { ChatResponse } from '@/lib/types/api';
-import { toast } from 'sonner';
+import { useCallback, useState } from "react";
+import { conversationsAPI } from "../conversations";
+import type { ChatResponse } from "@/lib/types/api";
+import { toast } from "sonner";
 
 export function useSendMessage(conversationId: string | null) {
   const [isSending, setIsSending] = useState(false);
@@ -18,7 +18,7 @@ export function useSendMessage(conversationId: string | null) {
   const sendMessage = useCallback(
     async (message: string): Promise<ChatResponse | null> => {
       if (!conversationId) {
-        setError(new Error('No conversation ID provided'));
+        setError(new Error("No conversation ID provided"));
         return null;
       }
 
@@ -26,12 +26,17 @@ export function useSendMessage(conversationId: string | null) {
       setError(null);
 
       try {
-        const result = await conversationsAPI.addMessage(conversationId, message);
+        const result = await conversationsAPI.addMessage(
+          conversationId,
+          message
+        );
 
         if (!result.success) {
-          const err = new Error(result.error.message || 'Failed to send message');
+          const err = new Error(
+            result.error.message || "Failed to send message"
+          );
           setError(err);
-          toast.error('Failed to send message');
+          toast.error("Failed to send message");
           return null;
         }
 
@@ -39,7 +44,7 @@ export function useSendMessage(conversationId: string | null) {
       } catch (err) {
         const error = err as Error;
         setError(error);
-        toast.error('An unexpected error occurred');
+        toast.error("An unexpected error occurred");
         return null;
       } finally {
         setIsSending(false);
@@ -69,7 +74,10 @@ export function useCreateMessage() {
       setError(null);
 
       try {
-        const result = await conversationsAPI.addMessage(conversationId, message);
+        const result = await conversationsAPI.addMessage(
+          conversationId,
+          message
+        );
 
         if (!result.success) {
           setError(result.error);
