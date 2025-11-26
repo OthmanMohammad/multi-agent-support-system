@@ -5,13 +5,13 @@ Tracks competitor mentions and activities, monitors wins and losses,
 identifies competitive threats, and alerts on competitive deals.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("competitor_tracker", tier="revenue", category="sales")
@@ -36,7 +36,7 @@ class CompetitorTracker(BaseAgent):
             "threat_level": "high",
             "typical_deal_size": "enterprise",
             "win_rate_against_us": 0.35,
-            "common_battle_grounds": ["enterprise", "financial_services", "healthcare"]
+            "common_battle_grounds": ["enterprise", "financial_services", "healthcare"],
         },
         "hubspot": {
             "name": "HubSpot",
@@ -45,7 +45,7 @@ class CompetitorTracker(BaseAgent):
             "threat_level": "high",
             "typical_deal_size": "smb_mid_market",
             "win_rate_against_us": 0.42,
-            "common_battle_grounds": ["smb", "marketing_teams", "saas"]
+            "common_battle_grounds": ["smb", "marketing_teams", "saas"],
         },
         "zendesk": {
             "name": "Zendesk",
@@ -54,7 +54,7 @@ class CompetitorTracker(BaseAgent):
             "threat_level": "medium",
             "typical_deal_size": "mid_market",
             "win_rate_against_us": 0.28,
-            "common_battle_grounds": ["customer_support", "mid_market", "ecommerce"]
+            "common_battle_grounds": ["customer_support", "mid_market", "ecommerce"],
         },
         "intercom": {
             "name": "Intercom",
@@ -63,7 +63,7 @@ class CompetitorTracker(BaseAgent):
             "threat_level": "medium",
             "typical_deal_size": "smb_mid_market",
             "win_rate_against_us": 0.31,
-            "common_battle_grounds": ["product_teams", "saas", "startups"]
+            "common_battle_grounds": ["product_teams", "saas", "startups"],
         },
         "freshdesk": {
             "name": "Freshdesk",
@@ -72,7 +72,7 @@ class CompetitorTracker(BaseAgent):
             "threat_level": "low",
             "typical_deal_size": "smb",
             "win_rate_against_us": 0.18,
-            "common_battle_grounds": ["price_sensitive", "smb", "basic_support"]
+            "common_battle_grounds": ["price_sensitive", "smb", "basic_support"],
         },
         "zoho": {
             "name": "Zoho CRM",
@@ -81,7 +81,7 @@ class CompetitorTracker(BaseAgent):
             "threat_level": "low",
             "typical_deal_size": "smb",
             "win_rate_against_us": 0.15,
-            "common_battle_grounds": ["price_sensitive", "smb", "india_apac"]
+            "common_battle_grounds": ["price_sensitive", "smb", "india_apac"],
         },
         "pipedrive": {
             "name": "Pipedrive",
@@ -90,8 +90,8 @@ class CompetitorTracker(BaseAgent):
             "threat_level": "low",
             "typical_deal_size": "smb",
             "win_rate_against_us": 0.22,
-            "common_battle_grounds": ["sales_teams", "smb", "simple_crm"]
-        }
+            "common_battle_grounds": ["sales_teams", "smb", "simple_crm"],
+        },
     }
 
     # Competitive activity types
@@ -99,33 +99,25 @@ class CompetitorTracker(BaseAgent):
         "mention": {
             "weight": 1,
             "alert_threshold": 3,
-            "description": "Competitor mentioned in conversation"
+            "description": "Competitor mentioned in conversation",
         },
         "evaluation": {
             "weight": 3,
             "alert_threshold": 2,
-            "description": "Customer actively evaluating competitor"
+            "description": "Customer actively evaluating competitor",
         },
         "current_user": {
             "weight": 5,
             "alert_threshold": 1,
-            "description": "Customer currently using competitor"
+            "description": "Customer currently using competitor",
         },
-        "win": {
-            "weight": -10,
-            "alert_threshold": 1,
-            "description": "We won against competitor"
-        },
-        "loss": {
-            "weight": 10,
-            "alert_threshold": 1,
-            "description": "We lost to competitor"
-        },
+        "win": {"weight": -10, "alert_threshold": 1, "description": "We won against competitor"},
+        "loss": {"weight": 10, "alert_threshold": 1, "description": "We lost to competitor"},
         "churn_to_competitor": {
             "weight": 15,
             "alert_threshold": 1,
-            "description": "Customer churned to competitor"
-        }
+            "description": "Customer churned to competitor",
+        },
     }
 
     # Alert severity levels
@@ -133,7 +125,7 @@ class CompetitorTracker(BaseAgent):
         "critical": {"min_score": 15, "action": "immediate_sales_escalation"},
         "high": {"min_score": 10, "action": "sales_team_notification"},
         "medium": {"min_score": 5, "action": "flag_for_review"},
-        "low": {"min_score": 0, "action": "track_only"}
+        "low": {"min_score": 0, "action": "track_only"},
     }
 
     # Deal stage threat multipliers
@@ -144,7 +136,7 @@ class CompetitorTracker(BaseAgent):
         "proposal": 2.0,
         "negotiation": 2.5,
         "closed_won": 0.0,
-        "closed_lost": 3.0
+        "closed_lost": 3.0,
     }
 
     def __init__(self):
@@ -156,9 +148,9 @@ class CompetitorTracker(BaseAgent):
             capabilities=[
                 AgentCapability.CONTEXT_AWARE,
                 AgentCapability.DATABASE_WRITE,
-                AgentCapability.ENTITY_EXTRACTION
+                AgentCapability.ENTITY_EXTRACTION,
             ],
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -171,7 +163,7 @@ class CompetitorTracker(BaseAgent):
 
         message = state["current_message"]
         customer_metadata = state.get("customer_metadata", {})
-        entities = state.get("entities", {})
+        state.get("entities", {})
 
         # Identify competitor mentions
         mentioned_competitors = self._identify_competitors(message)
@@ -181,10 +173,7 @@ class CompetitorTracker(BaseAgent):
 
         # Calculate threat score
         threat_score = self._calculate_threat_score(
-            mentioned_competitors,
-            activity_type,
-            customer_metadata,
-            state
+            mentioned_competitors, activity_type, customer_metadata, state
         )
 
         # Determine alert level
@@ -192,18 +181,12 @@ class CompetitorTracker(BaseAgent):
 
         # Track competitive activities
         competitive_activities = self._track_activities(
-            mentioned_competitors,
-            activity_type,
-            message,
-            customer_metadata
+            mentioned_competitors, activity_type, message, customer_metadata
         )
 
         # Generate insights
         insights = self._generate_insights(
-            mentioned_competitors,
-            activity_type,
-            threat_score,
-            customer_metadata
+            mentioned_competitors, activity_type, threat_score, customer_metadata
         )
 
         # Determine if escalation is needed
@@ -213,11 +196,7 @@ class CompetitorTracker(BaseAgent):
         alert = None
         if needs_escalation:
             alert = self._generate_alert(
-                mentioned_competitors,
-                activity_type,
-                threat_score,
-                alert_level,
-                customer_metadata
+                mentioned_competitors, activity_type, threat_score, alert_level, customer_metadata
             )
 
         # Update state
@@ -237,12 +216,12 @@ class CompetitorTracker(BaseAgent):
             competitors_count=len(mentioned_competitors),
             activity_type=activity_type,
             threat_score=threat_score,
-            alert_level=alert_level
+            alert_level=alert_level,
         )
 
         return state
 
-    def _identify_competitors(self, message: str) -> List[str]:
+    def _identify_competitors(self, message: str) -> list[str]:
         """Identify which competitors are mentioned"""
         message_lower = message.lower()
         mentioned = []
@@ -262,21 +241,26 @@ class CompetitorTracker(BaseAgent):
             return "loss"
         elif any(phrase in message_lower for phrase in ["we won", "chose us", "selected us"]):
             return "win"
-        elif any(phrase in message_lower for phrase in ["switched to", "moving to", "migrating to", "churned to"]):
+        elif any(
+            phrase in message_lower
+            for phrase in ["switched to", "moving to", "migrating to", "churned to"]
+        ):
             return "churn_to_competitor"
-        elif any(phrase in message_lower for phrase in ["currently using", "been using", "have been with"]):
+        elif any(
+            phrase in message_lower
+            for phrase in ["currently using", "been using", "have been with"]
+        ):
             return "current_user"
-        elif any(phrase in message_lower for phrase in ["evaluating", "comparing", "looking at", "considering"]):
+        elif any(
+            phrase in message_lower
+            for phrase in ["evaluating", "comparing", "looking at", "considering"]
+        ):
             return "evaluation"
         else:
             return "mention"
 
     def _calculate_threat_score(
-        self,
-        competitors: List[str],
-        activity_type: str,
-        customer_metadata: Dict,
-        state: AgentState
+        self, competitors: list[str], activity_type: str, customer_metadata: dict, state: AgentState
     ) -> int:
         """Calculate competitive threat score"""
         base_score = 0
@@ -318,12 +302,8 @@ class CompetitorTracker(BaseAgent):
         return "low"
 
     def _track_activities(
-        self,
-        competitors: List[str],
-        activity_type: str,
-        message: str,
-        customer_metadata: Dict
-    ) -> List[Dict[str, Any]]:
+        self, competitors: list[str], activity_type: str, message: str, customer_metadata: dict
+    ) -> list[dict[str, Any]]:
         """Track competitive activities"""
         activities = []
 
@@ -334,7 +314,9 @@ class CompetitorTracker(BaseAgent):
                 "competitor": competitor,
                 "competitor_name": competitor_data.get("name", competitor.title()),
                 "activity_type": activity_type,
-                "activity_description": self.ACTIVITY_TYPES.get(activity_type, {}).get("description", "Unknown activity"),
+                "activity_description": self.ACTIVITY_TYPES.get(activity_type, {}).get(
+                    "description", "Unknown activity"
+                ),
                 "timestamp": datetime.now(UTC).isoformat(),
                 "customer_id": customer_metadata.get("customer_id"),
                 "company": customer_metadata.get("company"),
@@ -342,7 +324,7 @@ class CompetitorTracker(BaseAgent):
                 "deal_stage": customer_metadata.get("deal_stage", "unknown"),
                 "industry": customer_metadata.get("industry"),
                 "company_size": customer_metadata.get("company_size"),
-                "message_snippet": message[:200]
+                "message_snippet": message[:200],
             }
 
             activities.append(activity)
@@ -350,18 +332,16 @@ class CompetitorTracker(BaseAgent):
         return activities
 
     def _generate_insights(
-        self,
-        competitors: List[str],
-        activity_type: str,
-        threat_score: int,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, competitors: list[str], activity_type: str, threat_score: int, customer_metadata: dict
+    ) -> dict[str, Any]:
         """Generate competitive insights"""
         insights = {
             "summary": self._generate_summary(competitors, activity_type, threat_score),
-            "recommendations": self._generate_recommendations(competitors, activity_type, threat_score),
+            "recommendations": self._generate_recommendations(
+                competitors, activity_type, threat_score
+            ),
             "competitor_profiles": [],
-            "win_rate_context": self._get_win_rate_context(competitors)
+            "win_rate_context": self._get_win_rate_context(competitors),
         }
 
         # Add competitor profiles
@@ -373,7 +353,9 @@ class CompetitorTracker(BaseAgent):
 
         return insights
 
-    def _generate_summary(self, competitors: List[str], activity_type: str, threat_score: int) -> str:
+    def _generate_summary(
+        self, competitors: list[str], activity_type: str, threat_score: int
+    ) -> str:
         """Generate summary of competitive situation"""
         if not competitors:
             return "No specific competitors mentioned"
@@ -381,24 +363,27 @@ class CompetitorTracker(BaseAgent):
         competitor_names = [self.COMPETITORS.get(c, {}).get("name", c.title()) for c in competitors]
 
         if activity_type == "loss":
-            return f"Deal lost to {', '.join(competitor_names)}. High priority for win/loss analysis."
+            return (
+                f"Deal lost to {', '.join(competitor_names)}. High priority for win/loss analysis."
+            )
         elif activity_type == "win":
             return f"Deal won against {', '.join(competitor_names)}. Capture success factors."
         elif activity_type == "churn_to_competitor":
             return f"Customer churned to {', '.join(competitor_names)}. Critical for retention analysis."
         elif activity_type == "current_user":
-            return f"Customer currently using {', '.join(competitor_names)}. Displacement opportunity."
+            return (
+                f"Customer currently using {', '.join(competitor_names)}. Displacement opportunity."
+            )
         elif activity_type == "evaluation":
-            return f"Customer evaluating {', '.join(competitor_names)}. Active competitive situation."
+            return (
+                f"Customer evaluating {', '.join(competitor_names)}. Active competitive situation."
+            )
         else:
             return f"Competitors mentioned: {', '.join(competitor_names)}"
 
     def _generate_recommendations(
-        self,
-        competitors: List[str],
-        activity_type: str,
-        threat_score: int
-    ) -> List[str]:
+        self, competitors: list[str], activity_type: str, threat_score: int
+    ) -> list[str]:
         """Generate action recommendations"""
         recommendations = []
 
@@ -432,7 +417,7 @@ class CompetitorTracker(BaseAgent):
 
         return recommendations
 
-    def _get_win_rate_context(self, competitors: List[str]) -> Dict[str, Any]:
+    def _get_win_rate_context(self, competitors: list[str]) -> dict[str, Any]:
         """Get win rate context for mentioned competitors"""
         if not competitors:
             return {}
@@ -443,19 +428,19 @@ class CompetitorTracker(BaseAgent):
                 win_rates[competitor] = {
                     "name": self.COMPETITORS[competitor]["name"],
                     "our_win_rate": 1.0 - self.COMPETITORS[competitor]["win_rate_against_us"],
-                    "their_win_rate": self.COMPETITORS[competitor]["win_rate_against_us"]
+                    "their_win_rate": self.COMPETITORS[competitor]["win_rate_against_us"],
                 }
 
         return win_rates
 
     def _generate_alert(
         self,
-        competitors: List[str],
+        competitors: list[str],
         activity_type: str,
         threat_score: int,
         alert_level: str,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        customer_metadata: dict,
+    ) -> dict[str, Any]:
         """Generate competitive alert"""
         competitor_names = [self.COMPETITORS.get(c, {}).get("name", c.title()) for c in competitors]
 
@@ -470,17 +455,15 @@ class CompetitorTracker(BaseAgent):
             "deal_stage": customer_metadata.get("deal_stage", "unknown"),
             "action_required": self.ALERT_LEVELS[alert_level]["action"],
             "timestamp": datetime.now(UTC).isoformat(),
-            "message": self._format_alert_message(competitors, activity_type, alert_level, customer_metadata)
+            "message": self._format_alert_message(
+                competitors, activity_type, alert_level, customer_metadata
+            ),
         }
 
         return alert
 
     def _format_alert_message(
-        self,
-        competitors: List[str],
-        activity_type: str,
-        alert_level: str,
-        customer_metadata: Dict
+        self, competitors: list[str], activity_type: str, alert_level: str, customer_metadata: dict
     ) -> str:
         """Format alert message"""
         competitor_names = [self.COMPETITORS.get(c, {}).get("name", c.title()) for c in competitors]
@@ -493,10 +476,12 @@ class CompetitorTracker(BaseAgent):
             "current_user": f"⚠️ DISPLACEMENT OPPORTUNITY: {company} currently using {', '.join(competitor_names)}",
             "evaluation": f"⚠️ ACTIVE EVALUATION: {company} comparing us to {', '.join(competitor_names)}",
             "win": f"✅ COMPETITIVE WIN: {company} chose us over {', '.join(competitor_names)}",
-            "mention": f"ℹ️ COMPETITOR MENTIONED: {', '.join(competitor_names)} in {company} conversation"
+            "mention": f"ℹ️ COMPETITOR MENTIONED: {', '.join(competitor_names)} in {company} conversation",
         }
 
-        return messages.get(activity_type, f"Competitive activity detected: {', '.join(competitor_names)}")
+        return messages.get(
+            activity_type, f"Competitive activity detected: {', '.join(competitor_names)}"
+        )
 
 
 if __name__ == "__main__":
@@ -520,15 +505,15 @@ if __name__ == "__main__":
                     "company_size": 500,
                     "industry": "technology",
                     "deal_value": 75000,
-                    "deal_stage": "qualification"
+                    "deal_stage": "qualification",
                 }
-            }
+            },
         )
 
         agent = CompetitorTracker()
         result1 = await agent.process(state1)
 
-        print(f"\nTest 1 - Current Salesforce User")
+        print("\nTest 1 - Current Salesforce User")
         print(f"Competitors: {result1['mentioned_competitors']}")
         print(f"Activity Type: {result1['competitor_activity_type']}")
         print(f"Threat Score: {result1['competitive_threat_score']}")
@@ -536,7 +521,7 @@ if __name__ == "__main__":
         print(f"Needs Escalation: {result1['needs_escalation']}")
         print(f"Summary: {result1['competitive_insights']['summary']}")
         print(f"Recommendations: {result1['competitive_insights']['recommendations']}")
-        if result1.get('competitive_alert'):
+        if result1.get("competitive_alert"):
             print(f"Alert: {result1['competitive_alert']['message']}\n")
 
         # Test case 2: Lost deal
@@ -549,14 +534,14 @@ if __name__ == "__main__":
                     "company_size": 150,
                     "industry": "saas",
                     "deal_value": 45000,
-                    "deal_stage": "closed_lost"
+                    "deal_stage": "closed_lost",
                 }
-            }
+            },
         )
 
         result2 = await agent.process(state2)
 
-        print(f"\nTest 2 - Lost Deal to HubSpot")
+        print("\nTest 2 - Lost Deal to HubSpot")
         print(f"Competitors: {result2['mentioned_competitors']}")
         print(f"Activity Type: {result2['competitor_activity_type']}")
         print(f"Threat Score: {result2['competitive_threat_score']}")
@@ -564,7 +549,7 @@ if __name__ == "__main__":
         print(f"Needs Escalation: {result2['needs_escalation']}")
         print(f"Summary: {result2['competitive_insights']['summary']}")
         print(f"Recommendations: {result2['competitive_insights']['recommendations']}")
-        if result2.get('competitive_alert'):
+        if result2.get("competitive_alert"):
             print(f"Alert: {result2['competitive_alert']['message']}\n")
 
         # Test case 3: Active evaluation (multiple competitors)
@@ -577,14 +562,14 @@ if __name__ == "__main__":
                     "company_size": 200,
                     "industry": "ecommerce",
                     "deal_value": 60000,
-                    "deal_stage": "demo"
+                    "deal_stage": "demo",
                 }
-            }
+            },
         )
 
         result3 = await agent.process(state3)
 
-        print(f"\nTest 3 - Active Evaluation (Multiple Competitors)")
+        print("\nTest 3 - Active Evaluation (Multiple Competitors)")
         print(f"Competitors: {result3['mentioned_competitors']}")
         print(f"Activity Type: {result3['competitor_activity_type']}")
         print(f"Threat Score: {result3['competitive_threat_score']}")
