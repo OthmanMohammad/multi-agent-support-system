@@ -5,14 +5,14 @@ Detects anomalies in metrics using statistical methods (Z-score).
 Generates warnings for >2σ and critical alerts for >3σ deviations.
 """
 
-from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime, timedelta, UTC
 import math
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("anomaly_detector", tier="operational", category="analytics")
@@ -38,12 +38,12 @@ class AnomalyDetectorAgent(BaseAgent):
 
     # Anomaly types
     ANOMALY_TYPES = [
-        "spike",           # Sudden increase
-        "drop",            # Sudden decrease
-        "trend_change",    # Direction change
-        "missing_data",    # Data gaps
-        "flatline",        # No variation
-        "outlier"          # Statistical outlier
+        "spike",  # Sudden increase
+        "drop",  # Sudden decrease
+        "trend_change",  # Direction change
+        "missing_data",  # Data gaps
+        "flatline",  # No variation
+        "outlier",  # Statistical outlier
     ]
 
     def __init__(self):
@@ -53,7 +53,7 @@ class AnomalyDetectorAgent(BaseAgent):
             temperature=0.2,
             max_tokens=1200,
             capabilities=[AgentCapability.DATABASE_WRITE],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -76,13 +76,13 @@ class AnomalyDetectorAgent(BaseAgent):
         metric_name = state.get("entities", {}).get("metric_name", "unknown")
         time_series_data = state.get("entities", {}).get("time_series_data", [])
         sensitivity = state.get("entities", {}).get("sensitivity", "medium")
-        check_seasonality = state.get("entities", {}).get("check_seasonality", True)
+        state.get("entities", {}).get("check_seasonality", True)
 
         self.logger.debug(
             "anomaly_detection_details",
             metric_name=metric_name,
             data_points=len(time_series_data),
-            sensitivity=sensitivity
+            sensitivity=sensitivity,
         )
 
         # Adjust thresholds based on sensitivity
@@ -93,10 +93,7 @@ class AnomalyDetectorAgent(BaseAgent):
 
         # Detect anomalies using Z-score
         z_score_anomalies = self._detect_z_score_anomalies(
-            time_series_data,
-            statistics,
-            z_warning,
-            z_critical
+            time_series_data, statistics, z_warning, z_critical
         )
 
         # Detect rate of change anomalies
@@ -107,9 +104,7 @@ class AnomalyDetectorAgent(BaseAgent):
 
         # Combine all anomalies
         all_anomalies = self._combine_anomalies(
-            z_score_anomalies,
-            rate_anomalies,
-            pattern_anomalies
+            z_score_anomalies, rate_anomalies, pattern_anomalies
         )
 
         # Classify anomaly severity
@@ -117,17 +112,12 @@ class AnomalyDetectorAgent(BaseAgent):
 
         # Generate recommendations
         recommendations = self._generate_recommendations(
-            classified_anomalies,
-            metric_name,
-            statistics
+            classified_anomalies, metric_name, statistics
         )
 
         # Format response
         response = self._format_anomaly_report(
-            metric_name,
-            statistics,
-            classified_anomalies,
-            recommendations
+            metric_name, statistics, classified_anomalies, recommendations
         )
 
         state["agent_response"] = response
@@ -135,7 +125,9 @@ class AnomalyDetectorAgent(BaseAgent):
         state["statistics"] = statistics
         state["recommendations"] = recommendations
         state["anomaly_count"] = len(classified_anomalies)
-        state["critical_anomalies"] = len([a for a in classified_anomalies if a["severity"] == "critical"])
+        state["critical_anomalies"] = len(
+            [a for a in classified_anomalies if a["severity"] == "critical"]
+        )
         state["response_confidence"] = 0.88
         state["status"] = "resolved"
         state["next_agent"] = None
@@ -144,12 +136,12 @@ class AnomalyDetectorAgent(BaseAgent):
             "anomaly_detection_completed",
             metric_name=metric_name,
             anomalies_detected=len(classified_anomalies),
-            critical_count=state["critical_anomalies"]
+            critical_count=state["critical_anomalies"],
         )
 
         return state
 
-    def _get_thresholds(self, sensitivity: str) -> Tuple[float, float]:
+    def _get_thresholds(self, sensitivity: str) -> tuple[float, float]:
         """
         Get Z-score thresholds based on sensitivity.
 
@@ -166,7 +158,7 @@ class AnomalyDetectorAgent(BaseAgent):
         else:  # medium (default)
             return self.Z_SCORE_WARNING, self.Z_SCORE_CRITICAL
 
-    def _calculate_statistics(self, time_series_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _calculate_statistics(self, time_series_data: list[dict[str, Any]]) -> dict[str, Any]:
         """
         Calculate statistical baselines for anomaly detection.
 
@@ -177,17 +169,14 @@ class AnomalyDetectorAgent(BaseAgent):
             Statistical measures
         """
         if not time_series_data:
-            return {
-                "count": 0,
-                "mean": 0,
-                "std_dev": 0,
-                "min": 0,
-                "max": 0,
-                "median": 0
-            }
+            return {"count": 0, "mean": 0, "std_dev": 0, "min": 0, "max": 0, "median": 0}
 
         # Extract values
-        values = [point.get("value", 0) for point in time_series_data if isinstance(point.get("value"), (int, float))]
+        values = [
+            point.get("value", 0)
+            for point in time_series_data
+            if isinstance(point.get("value"), (int, float))
+        ]
 
         if not values:
             return {"count": 0, "mean": 0, "std_dev": 0}
@@ -201,7 +190,9 @@ class AnomalyDetectorAgent(BaseAgent):
         # Calculate median
         sorted_values = sorted(values)
         mid = count // 2
-        median = sorted_values[mid] if count % 2 else (sorted_values[mid - 1] + sorted_values[mid]) / 2
+        median = (
+            sorted_values[mid] if count % 2 else (sorted_values[mid - 1] + sorted_values[mid]) / 2
+        )
 
         # Calculate percentiles
         p25_idx = int(count * 0.25)
@@ -219,16 +210,16 @@ class AnomalyDetectorAgent(BaseAgent):
             "median": round(median, 2),
             "p25": round(p25, 2),
             "p75": round(p75, 2),
-            "iqr": round(iqr, 2)
+            "iqr": round(iqr, 2),
         }
 
     def _detect_z_score_anomalies(
         self,
-        time_series_data: List[Dict[str, Any]],
-        statistics: Dict[str, Any],
+        time_series_data: list[dict[str, Any]],
+        statistics: dict[str, Any],
         z_warning: float,
-        z_critical: float
-    ) -> List[Dict[str, Any]]:
+        z_critical: float,
+    ) -> list[dict[str, Any]]:
         """
         Detect anomalies using Z-score method.
 
@@ -260,25 +251,25 @@ class AnomalyDetectorAgent(BaseAgent):
                 severity = "critical" if z_score >= z_critical else "warning"
                 anomaly_type = "spike" if value > mean else "drop"
 
-                anomalies.append({
-                    "index": i,
-                    "timestamp": point.get("timestamp", "unknown"),
-                    "value": value,
-                    "expected_value": mean,
-                    "deviation": round(value - mean, 2),
-                    "z_score": round(z_score, 2),
-                    "severity": severity,
-                    "type": anomaly_type,
-                    "method": "z_score"
-                })
+                anomalies.append(
+                    {
+                        "index": i,
+                        "timestamp": point.get("timestamp", "unknown"),
+                        "value": value,
+                        "expected_value": mean,
+                        "deviation": round(value - mean, 2),
+                        "z_score": round(z_score, 2),
+                        "severity": severity,
+                        "type": anomaly_type,
+                        "method": "z_score",
+                    }
+                )
 
         return anomalies
 
     def _detect_rate_anomalies(
-        self,
-        time_series_data: List[Dict[str, Any]],
-        statistics: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        self, time_series_data: list[dict[str, Any]], statistics: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """
         Detect anomalies in rate of change.
 
@@ -300,7 +291,11 @@ class AnomalyDetectorAgent(BaseAgent):
             prev_val = time_series_data[i - 1].get("value", 0)
             curr_val = time_series_data[i].get("value", 0)
 
-            if isinstance(prev_val, (int, float)) and isinstance(curr_val, (int, float)) and prev_val != 0:
+            if (
+                isinstance(prev_val, (int, float))
+                and isinstance(curr_val, (int, float))
+                and prev_val != 0
+            ):
                 rate = ((curr_val - prev_val) / abs(prev_val)) * 100
                 rates.append(rate)
             else:
@@ -325,24 +320,25 @@ class AnomalyDetectorAgent(BaseAgent):
                 point_idx = i + 1
                 point = time_series_data[point_idx]
 
-                anomalies.append({
-                    "index": point_idx,
-                    "timestamp": point.get("timestamp", "unknown"),
-                    "value": point.get("value"),
-                    "rate_of_change": round(rate, 2),
-                    "expected_rate": round(mean_rate, 2),
-                    "z_score": round(z_score, 2),
-                    "severity": "warning",
-                    "type": "trend_change",
-                    "method": "rate_of_change"
-                })
+                anomalies.append(
+                    {
+                        "index": point_idx,
+                        "timestamp": point.get("timestamp", "unknown"),
+                        "value": point.get("value"),
+                        "rate_of_change": round(rate, 2),
+                        "expected_rate": round(mean_rate, 2),
+                        "z_score": round(z_score, 2),
+                        "severity": "warning",
+                        "type": "trend_change",
+                        "method": "rate_of_change",
+                    }
+                )
 
         return anomalies
 
     def _detect_pattern_anomalies(
-        self,
-        time_series_data: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, time_series_data: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """
         Detect pattern-based anomalies.
 
@@ -357,42 +353,48 @@ class AnomalyDetectorAgent(BaseAgent):
         # Check for flatlines (no variation over period)
         if len(time_series_data) >= 5:
             for i in range(len(time_series_data) - 4):
-                window = time_series_data[i:i + 5]
-                values = [p.get("value") for p in window if isinstance(p.get("value"), (int, float))]
+                window = time_series_data[i : i + 5]
+                values = [
+                    p.get("value") for p in window if isinstance(p.get("value"), (int, float))
+                ]
 
                 if len(values) == 5 and len(set(values)) == 1:
                     # All values are identical
-                    anomalies.append({
-                        "index": i,
-                        "timestamp": window[0].get("timestamp", "unknown"),
-                        "value": values[0],
-                        "severity": "warning",
-                        "type": "flatline",
-                        "method": "pattern",
-                        "message": "No variation detected over 5 consecutive points"
-                    })
+                    anomalies.append(
+                        {
+                            "index": i,
+                            "timestamp": window[0].get("timestamp", "unknown"),
+                            "value": values[0],
+                            "severity": "warning",
+                            "type": "flatline",
+                            "method": "pattern",
+                            "message": "No variation detected over 5 consecutive points",
+                        }
+                    )
 
         # Check for missing data patterns
         if len(time_series_data) >= 2:
             for i, point in enumerate(time_series_data):
                 if point.get("value") is None or point.get("value") == "":
-                    anomalies.append({
-                        "index": i,
-                        "timestamp": point.get("timestamp", "unknown"),
-                        "value": None,
-                        "severity": "warning",
-                        "type": "missing_data",
-                        "method": "pattern"
-                    })
+                    anomalies.append(
+                        {
+                            "index": i,
+                            "timestamp": point.get("timestamp", "unknown"),
+                            "value": None,
+                            "severity": "warning",
+                            "type": "missing_data",
+                            "method": "pattern",
+                        }
+                    )
 
         return anomalies
 
     def _combine_anomalies(
         self,
-        z_score_anomalies: List[Dict[str, Any]],
-        rate_anomalies: List[Dict[str, Any]],
-        pattern_anomalies: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        z_score_anomalies: list[dict[str, Any]],
+        rate_anomalies: list[dict[str, Any]],
+        pattern_anomalies: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
         """
         Combine anomalies from different detection methods.
 
@@ -423,10 +425,8 @@ class AnomalyDetectorAgent(BaseAgent):
         return unique_anomalies
 
     def _classify_anomalies(
-        self,
-        anomalies: List[Dict[str, Any]],
-        z_critical: float
-    ) -> List[Dict[str, Any]]:
+        self, anomalies: list[dict[str, Any]], z_critical: float
+    ) -> list[dict[str, Any]]:
         """
         Classify anomalies and add metadata.
 
@@ -456,11 +456,8 @@ class AnomalyDetectorAgent(BaseAgent):
         return anomalies
 
     def _generate_recommendations(
-        self,
-        anomalies: List[Dict[str, Any]],
-        metric_name: str,
-        statistics: Dict[str, Any]
-    ) -> List[str]:
+        self, anomalies: list[dict[str, Any]], metric_name: str, statistics: dict[str, Any]
+    ) -> list[str]:
         """
         Generate recommendations based on detected anomalies.
 
@@ -488,10 +485,12 @@ class AnomalyDetectorAgent(BaseAgent):
             )
 
         # Type-specific recommendations
-        anomaly_types = set(a.get("type") for a in anomalies)
+        anomaly_types = {a.get("type") for a in anomalies}
 
         if "spike" in anomaly_types:
-            recommendations.append("Investigate sudden spikes - may indicate traffic surge or system issue")
+            recommendations.append(
+                "Investigate sudden spikes - may indicate traffic surge or system issue"
+            )
 
         if "drop" in anomaly_types:
             recommendations.append("Investigate sudden drops - may indicate service degradation")
@@ -503,16 +502,18 @@ class AnomalyDetectorAgent(BaseAgent):
             recommendations.append("Data gaps detected - check data pipeline integrity")
 
         if not anomalies:
-            recommendations.append(f"No anomalies detected in {metric_name}. Metrics within normal range.")
+            recommendations.append(
+                f"No anomalies detected in {metric_name}. Metrics within normal range."
+            )
 
         return recommendations
 
     def _format_anomaly_report(
         self,
         metric_name: str,
-        statistics: Dict[str, Any],
-        anomalies: List[Dict[str, Any]],
-        recommendations: List[str]
+        statistics: dict[str, Any],
+        anomalies: list[dict[str, Any]],
+        recommendations: list[str],
     ) -> str:
         """Format anomaly detection report."""
         critical_count = len([a for a in anomalies if a.get("severity") == "critical"])
@@ -521,11 +522,11 @@ class AnomalyDetectorAgent(BaseAgent):
         report = f"""**Anomaly Detection Report: {metric_name}**
 
 **Statistical Baseline:**
-- Mean: {statistics['mean']:.2f}
-- Std Dev: {statistics['std_dev']:.2f}
-- Min: {statistics['min']:.2f} | Max: {statistics['max']:.2f}
-- Median: {statistics['median']:.2f}
-- Data Points: {statistics['count']}
+- Mean: {statistics["mean"]:.2f}
+- Std Dev: {statistics["std_dev"]:.2f}
+- Min: {statistics["min"]:.2f} | Max: {statistics["max"]:.2f}
+- Median: {statistics["median"]:.2f}
+- Data Points: {statistics["count"]}
 
 **Anomaly Summary:**
 - Total Anomalies: {len(anomalies)}
