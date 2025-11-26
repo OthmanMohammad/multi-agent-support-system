@@ -119,7 +119,8 @@ class KBSynthesizer(BaseAgent):
         response = await self.call_llm(
             system_prompt=system_prompt,
             user_message=user_prompt,
-            max_tokens=2048
+            max_tokens=2048,
+            conversation_history=[]  # Synthesis uses KB articles, no conversation context needed
         )
 
         # Parse response
