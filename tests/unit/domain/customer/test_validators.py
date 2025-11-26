@@ -4,7 +4,7 @@ Tests for Customer Domain Validators
 These tests verify pure validation functions with no side effects.
 """
 import pytest
-from services.domain.customer.validators import CustomerValidators
+from src.services.domain.customer.validators import CustomerValidators
 
 
 class TestValidateEmail:
