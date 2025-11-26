@@ -1,4 +1,4 @@
-import { http, HttpResponse, delay } from "msw";
+import { delay, http, HttpResponse } from "msw";
 import type { components } from "@/types/api";
 
 /**
@@ -49,7 +49,8 @@ const mockMessages: Message[] = [
     conversationId: "conv-1",
     userId: "assistant",
     role: "ASSISTANT",
-    content: "To implement authentication in Next.js, you can use NextAuth.js. Here's a step-by-step guide:\n\n1. Install NextAuth.js\n```bash\npnpm add next-auth\n```\n\n2. Create an auth configuration file...",
+    content:
+      "To implement authentication in Next.js, you can use NextAuth.js. Here's a step-by-step guide:\n\n1. Install NextAuth.js\n```bash\npnpm add next-auth\n```\n\n2. Create an auth configuration file...",
     metadata: null,
     createdAt: new Date(Date.now() - 3500000).toISOString(),
   },
@@ -145,16 +146,21 @@ export const handlers = [
     return HttpResponse.json(newConversation, { status: 201 });
   }),
 
-  http.patch(`${API_BASE_URL}/api/conversations/:id`, async ({ params, request }) => {
-    await delay(300);
-    const body = await request.json();
-    const conversation = mockConversations.find((c) => c.id === params.id);
-    if (!conversation) {
-      return new HttpResponse(null, { status: 404 });
+  http.patch(
+    `${API_BASE_URL}/api/conversations/:id`,
+    async ({ params, request }) => {
+      await delay(300);
+      const body = await request.json();
+      const conversation = mockConversations.find((c) => c.id === params.id);
+      if (!conversation) {
+        return new HttpResponse(null, { status: 404 });
+      }
+      Object.assign(conversation, body, {
+        updatedAt: new Date().toISOString(),
+      });
+      return HttpResponse.json(conversation);
     }
-    Object.assign(conversation, body, { updatedAt: new Date().toISOString() });
-    return HttpResponse.json(conversation);
-  }),
+  ),
 
   http.delete(`${API_BASE_URL}/api/conversations/:id`, async ({ params }) => {
     await delay(200);
@@ -169,31 +175,39 @@ export const handlers = [
   // ========================================
   // Messages
   // ========================================
-  http.get(`${API_BASE_URL}/api/conversations/:conversationId/messages`, async ({ params }) => {
-    await delay(200);
-    const messages = mockMessages.filter((m) => m.conversationId === params.conversationId);
-    return HttpResponse.json({
-      messages,
-      hasMore: false,
-      nextCursor: null,
-    });
-  }),
+  http.get(
+    `${API_BASE_URL}/api/conversations/:conversationId/messages`,
+    async ({ params }) => {
+      await delay(200);
+      const messages = mockMessages.filter(
+        (m) => m.conversationId === params.conversationId
+      );
+      return HttpResponse.json({
+        messages,
+        hasMore: false,
+        nextCursor: null,
+      });
+    }
+  ),
 
-  http.post(`${API_BASE_URL}/api/conversations/:conversationId/messages`, async ({ params, request }) => {
-    await delay(500);
-    const body = await request.json();
-    const newMessage: Message = {
-      id: `msg-${Date.now()}`,
-      conversationId: params.conversationId as string,
-      userId: "user-1",
-      role: (body as { role: Message["role"] }).role,
-      content: (body as { content: string }).content,
-      metadata: null,
-      createdAt: new Date().toISOString(),
-    };
-    mockMessages.push(newMessage);
-    return HttpResponse.json(newMessage, { status: 201 });
-  }),
+  http.post(
+    `${API_BASE_URL}/api/conversations/:conversationId/messages`,
+    async ({ params, request }) => {
+      await delay(500);
+      const body = await request.json();
+      const newMessage: Message = {
+        id: `msg-${Date.now()}`,
+        conversationId: params.conversationId as string,
+        userId: "user-1",
+        role: (body as { role: Message["role"] }).role,
+        content: (body as { content: string }).content,
+        metadata: null,
+        createdAt: new Date().toISOString(),
+      };
+      mockMessages.push(newMessage);
+      return HttpResponse.json(newMessage, { status: 201 });
+    }
+  ),
 
   // ========================================
   // Analytics
@@ -281,16 +295,19 @@ export const handlers = [
     return HttpResponse.json(customer);
   }),
 
-  http.get(`${API_BASE_URL}/api/customers/:id/interactions`, async ({ params }) => {
-    await delay(300);
-    return HttpResponse.json({
-      customerId: params.id,
-      conversations: mockConversations,
-      totalInteractions: 15,
-      avgResponseTime: 2.3,
-      satisfactionScore: 4.6,
-    });
-  }),
+  http.get(
+    `${API_BASE_URL}/api/customers/:id/interactions`,
+    async ({ params }) => {
+      await delay(300);
+      return HttpResponse.json({
+        customerId: params.id,
+        conversations: mockConversations,
+        totalInteractions: 15,
+        avgResponseTime: 2.3,
+        satisfactionScore: 4.6,
+      });
+    }
+  ),
 
   // ========================================
   // Agents
