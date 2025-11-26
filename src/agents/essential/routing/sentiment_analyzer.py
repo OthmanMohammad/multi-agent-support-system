@@ -7,16 +7,16 @@ and customer satisfaction to inform routing and response strategy.
 Part of: STORY-01 Routing & Orchestration Swarm (TASK-104)
 """
 
-from typing import Dict, Any, Optional
 import json
-import re
 from datetime import datetime
+from typing import Any
+
 import structlog
 
-from src.agents.base.base_agent import BaseAgent, AgentConfig
-from src.agents.base.agent_types import AgentType, AgentCapability
-from src.workflow.state import AgentState
+from src.agents.base.agent_types import AgentCapability, AgentType
+from src.agents.base.base_agent import AgentConfig, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.workflow.state import AgentState
 
 logger = structlog.get_logger(__name__)
 
@@ -42,13 +42,13 @@ class SentimentAnalyzer(BaseAgent):
 
     # Emotion categories
     EMOTIONS = [
-        "angry",        # Hostile, aggressive language
-        "frustrated",   # Annoyed, impatient
-        "concerned",    # Worried, anxious
-        "neutral",      # Factual, no strong emotion
-        "satisfied",    # Content, pleased
-        "happy",        # Positive, delighted
-        "excited"       # Enthusiastic, eager
+        "angry",  # Hostile, aggressive language
+        "frustrated",  # Annoyed, impatient
+        "concerned",  # Worried, anxious
+        "neutral",  # Factual, no strong emotion
+        "satisfied",  # Content, pleased
+        "happy",  # Positive, delighted
+        "excited",  # Enthusiastic, eager
     ]
 
     # Urgency levels
@@ -59,15 +59,13 @@ class SentimentAnalyzer(BaseAgent):
         config = AgentConfig(
             name="sentiment_analyzer",
             type=AgentType.ANALYZER,
-             # Fast and accurate
+            # Fast and accurate
             temperature=0.2,  # Low but allows nuance
             max_tokens=250,  # Moderate for detailed analysis
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE],
             system_prompt_template=self._get_system_prompt(),
             tier="essential",
-            role="sentiment_analyzer"
+            role="sentiment_analyzer",
         )
         super().__init__(config=config, **kwargs)
         self.logger = logger.bind(agent="sentiment_analyzer", agent_type="analyzer")
@@ -191,7 +189,7 @@ Provide sentiment analysis in JSON format."""
             response = await self.call_llm(
                 system_prompt=self._get_system_prompt(),
                 user_message=prompt,
-                conversation_history=conversation_history
+                conversation_history=conversation_history,
             )
 
             # Parse response
@@ -220,7 +218,7 @@ Provide sentiment analysis in JSON format."""
                 "latency_ms": latency_ms,
                 "timestamp": datetime.now().isoformat(),
                 "model": self.config.model,
-                "context_used": bool(context_str)
+                "context_used": bool(context_str),
             }
 
             self.logger.info(
@@ -229,23 +227,21 @@ Provide sentiment analysis in JSON format."""
                 emotion=analysis["emotion"],
                 urgency=analysis["urgency"],
                 satisfaction=analysis["satisfaction"],
-                latency_ms=latency_ms
+                latency_ms=latency_ms,
             )
 
             return state
 
         except Exception as e:
             self.logger.error(
-                "sentiment_analysis_failed",
-                error=str(e),
-                error_type=type(e).__name__
+                "sentiment_analysis_failed", error=str(e), error_type=type(e).__name__
             )
 
             # Fallback to neutral sentiment
             state.update(self._get_default_sentiment())
             return state
 
-    def _parse_response(self, response: str) -> Dict[str, Any]:
+    def _parse_response(self, response: str) -> dict[str, Any]:
         """
         Parse LLM response into sentiment analysis.
 
@@ -261,8 +257,7 @@ Provide sentiment analysis in JSON format."""
             if cleaned_response.startswith("```"):
                 lines = cleaned_response.split("\n")
                 cleaned_response = "\n".join(
-                    line for line in lines
-                    if not line.strip().startswith("```")
+                    line for line in lines if not line.strip().startswith("```")
                 )
 
             # Parse JSON
@@ -270,23 +265,18 @@ Provide sentiment analysis in JSON format."""
 
             # Ensure it's a dict
             if not isinstance(analysis, dict):
-                self.logger.warning(
-                    "sentiment_analyzer_invalid_type",
-                    type=type(analysis).__name__
-                )
+                self.logger.warning("sentiment_analyzer_invalid_type", type=type(analysis).__name__)
                 return self._get_default_sentiment()
 
             return analysis
 
         except json.JSONDecodeError as e:
             self.logger.warning(
-                "sentiment_analyzer_invalid_json",
-                response_preview=response[:100],
-                error=str(e)
+                "sentiment_analyzer_invalid_json", response_preview=response[:100], error=str(e)
             )
             return self._get_default_sentiment()
 
-    def _validate_analysis(self, analysis: Dict[str, Any]) -> Dict[str, Any]:
+    def _validate_analysis(self, analysis: dict[str, Any]) -> dict[str, Any]:
         """
         Validate and normalize sentiment analysis.
 
@@ -310,16 +300,15 @@ Provide sentiment analysis in JSON format."""
         emotion = str(analysis.get("emotion", "neutral")).lower()
         if emotion in self.EMOTIONS:
             validated["emotion"] = emotion
+        # Default based on sentiment score
+        elif validated["sentiment_score"] < -0.5:
+            validated["emotion"] = "angry"
+        elif validated["sentiment_score"] < -0.2:
+            validated["emotion"] = "frustrated"
+        elif validated["sentiment_score"] > 0.5:
+            validated["emotion"] = "happy"
         else:
-            # Default based on sentiment score
-            if validated["sentiment_score"] < -0.5:
-                validated["emotion"] = "angry"
-            elif validated["sentiment_score"] < -0.2:
-                validated["emotion"] = "frustrated"
-            elif validated["sentiment_score"] > 0.5:
-                validated["emotion"] = "happy"
-            else:
-                validated["emotion"] = "neutral"
+            validated["emotion"] = "neutral"
 
         # Validate urgency
         urgency = str(analysis.get("urgency", "medium")).lower()
@@ -351,10 +340,8 @@ Provide sentiment analysis in JSON format."""
         return validated
 
     def _adjust_for_context(
-        self,
-        analysis: Dict[str, Any],
-        customer_context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, analysis: dict[str, Any], customer_context: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Adjust sentiment analysis based on customer context.
 
@@ -393,15 +380,10 @@ Provide sentiment analysis in JSON format."""
         Returns:
             Escalated urgency level
         """
-        escalation = {
-            "low": "medium",
-            "medium": "high",
-            "high": "critical",
-            "critical": "critical"
-        }
+        escalation = {"low": "medium", "medium": "high", "high": "critical", "critical": "critical"}
         return escalation.get(current_urgency, "medium")
 
-    def _format_customer_context(self, context: Dict[str, Any]) -> str:
+    def _format_customer_context(self, context: dict[str, Any]) -> str:
         """
         Format customer context for LLM prompt.
 
@@ -423,7 +405,7 @@ Provide sentiment analysis in JSON format."""
             parts.append(f"- Health Score: {context['health_score']}/100")
 
         if "churn_risk" in context:
-            risk_pct = int(context['churn_risk'] * 100)
+            risk_pct = int(context["churn_risk"] * 100)
             parts.append(f"- Churn Risk: {risk_pct}%")
 
         if "team_size" in context:
@@ -434,7 +416,7 @@ Provide sentiment analysis in JSON format."""
 
         return "\n".join(parts) if len(parts) > 1 else ""
 
-    def _get_default_sentiment(self) -> Dict[str, Any]:
+    def _get_default_sentiment(self) -> dict[str, Any]:
         """
         Get default neutral sentiment analysis.
 
@@ -453,8 +435,8 @@ Provide sentiment analysis in JSON format."""
                 "latency_ms": 0,
                 "timestamp": datetime.now().isoformat(),
                 "model": self.config.model,
-                "fallback": True
-            }
+                "fallback": True,
+            },
         }
 
 
@@ -475,6 +457,7 @@ def create_sentiment_analyzer(**kwargs) -> SentimentAnalyzer:
 # Example usage (for development/testing)
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test_sentiment_analyzer():
@@ -491,47 +474,46 @@ if __name__ == "__main__":
                 "message": "This is absolutely unacceptable! The app has been broken for 3 days and I can't work!",
                 "context": {"plan": "enterprise", "health_score": 25},
                 "expected_emotion": "angry",
-                "expected_urgency": "critical"
+                "expected_urgency": "critical",
             },
             {
                 "message": "The sync feature isn't working properly. Can you help?",
                 "context": {},
                 "expected_emotion": "neutral",
-                "expected_urgency": "medium"
+                "expected_urgency": "medium",
             },
             {
                 "message": "Thank you so much! The support team was amazing and fixed everything quickly!",
                 "context": {},
                 "expected_emotion": "happy",
-                "expected_urgency": "low"
+                "expected_urgency": "low",
             },
             {
                 "message": "I've been trying to export data for hours and it keeps failing. This is frustrating.",
                 "context": {"plan": "premium"},
                 "expected_emotion": "frustrated",
-                "expected_urgency": "high"
+                "expected_urgency": "high",
             },
             {
                 "message": "Just wanted to check if there are any updates to the API?",
                 "context": {},
                 "expected_emotion": "neutral",
-                "expected_urgency": "low"
+                "expected_urgency": "low",
             },
         ]
 
         for i, test in enumerate(test_cases, 1):
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"TEST CASE {i}: {test['message']}")
-            print(f"{'='*60}")
+            print(f"{'=' * 60}")
 
             state = create_initial_state(
-                message=test["message"],
-                context={"customer_metadata": test["context"]}
+                message=test["message"], context={"customer_metadata": test["context"]}
             )
 
             result = await analyzer.process(state)
 
-            print(f"\n✓ Sentiment Analysis:")
+            print("\n✓ Sentiment Analysis:")
             print(f"  Sentiment Score: {result['sentiment_score']:.2f}")
             print(f"  Emotion: {result['emotion']}")
             print(f"  Urgency: {result['urgency']}")
