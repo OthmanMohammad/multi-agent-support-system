@@ -5,10 +5,10 @@ Specialist for all billing-related inquiries including upgrades,
 downgrades, refunds, invoices, and pricing questions.
 """
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("billing_agent", tier="essential", category="billing")
@@ -28,12 +28,9 @@ class BillingAgent(BaseAgent):
             name="billing_agent",
             type=AgentType.SPECIALIST,
             temperature=0.3,
-            capabilities=[
-                AgentCapability.KB_SEARCH,
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="billing",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -61,28 +58,21 @@ class BillingAgent(BaseAgent):
             "billing_processing_message",
             message_preview=message[:100],
             intent=intent,
-            turn_count=state["turn_count"]
+            turn_count=state["turn_count"],
         )
 
         # Search KB for billing articles
-        kb_results = await self.search_knowledge_base(
-            message,
-            category="billing",
-            limit=3
-        )
+        kb_results = await self.search_knowledge_base(message, category="billing", limit=3)
         state["kb_results"] = kb_results
 
         if kb_results:
             self.logger.info(
                 "billing_kb_articles_found",
                 count=len(kb_results),
-                top_score=kb_results[0].get("similarity_score", 0) if kb_results else 0
+                top_score=kb_results[0].get("similarity_score", 0) if kb_results else 0,
             )
         else:
-            self.logger.warning(
-                "billing_no_kb_articles_found",
-                intent=intent
-            )
+            self.logger.warning("billing_no_kb_articles_found", intent=intent)
 
         # Generate response
         response = await self.generate_response(message, intent, kb_results, state)
@@ -98,19 +88,13 @@ class BillingAgent(BaseAgent):
         state["status"] = "active"
 
         self.logger.info(
-            "billing_response_generated",
-            response_length=len(response),
-            status="active"
+            "billing_response_generated", response_length=len(response), status="active"
         )
 
         return state
 
     async def generate_response(
-        self,
-        message: str,
-        intent: str,
-        kb_results: list,
-        state: AgentState
+        self, message: str, intent: str, kb_results: list, state: AgentState
     ) -> str:
         """
         Generate billing response using Claude.
@@ -125,9 +109,7 @@ class BillingAgent(BaseAgent):
             Response text
         """
         self.logger.debug(
-            "billing_response_generation_started",
-            intent=intent,
-            kb_articles_count=len(kb_results)
+            "billing_response_generation_started", intent=intent, kb_articles_count=len(kb_results)
         )
 
         # Build KB context
@@ -146,7 +128,7 @@ class BillingAgent(BaseAgent):
         self.logger.debug(
             "billing_conversation_context",
             history_length=len(conversation_history),
-            customer_plan=customer_plan
+            customer_plan=customer_plan,
         )
 
         system_prompt = f"""You are a billing specialist for a SaaS project management tool.
@@ -178,16 +160,10 @@ Provide a helpful response that takes into account any previous conversation con
 
         # CRITICAL: Pass conversation history for multi-turn context
         response = await self.call_llm(
-            system_prompt,
-            user_prompt,
-            max_tokens=500,
-            conversation_history=conversation_history
+            system_prompt, user_prompt, max_tokens=500, conversation_history=conversation_history
         )
 
-        self.logger.debug(
-            "billing_llm_response_received",
-            response_length=len(response)
-        )
+        self.logger.debug("billing_llm_response_received", response_length=len(response))
 
         return response
 
@@ -195,6 +171,7 @@ Provide a helpful response that takes into account any previous conversation con
 if __name__ == "__main__":
     # Test billing agent
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -212,9 +189,9 @@ if __name__ == "__main__":
         billing = BillingAgent()
         result = await billing.process(state)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("RESULT")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Response:\n{result['agent_response']}")
         print(f"\nStatus: {result['status']}")
         print(f"Next Agent: {result.get('next_agent', 'END')}")
