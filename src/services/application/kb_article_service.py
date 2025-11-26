@@ -13,24 +13,22 @@ Architecture:
 - Domain Layer: Business rules and validation
 """
 
-from typing import List, Dict, Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID, uuid4
-from datetime import datetime, timezone
-import asyncio
 
-from src.core.result import Result
 from src.core.errors import (
-    ValidationError,
-    NotFoundError,
-    BusinessRuleError,
+    ExternalServiceError,
     InternalError,
-    ExternalServiceError
+    NotFoundError,
+    ValidationError,
 )
-from src.database.unit_of_work import UnitOfWork, get_unit_of_work
-from src.database.models.kb_article import KBArticle, KBUsage, KBQualityReport
+from src.core.result import Result
+from src.database.models.kb_article import KBArticle, KBUsage
+from src.database.unit_of_work import get_unit_of_work
 from src.services.infrastructure.knowledge_base_service import KnowledgeBaseService
-from src.vector_store import VectorStore
 from src.utils.logging.setup import get_logger
+from src.vector_store import VectorStore
 
 
 class KBArticleService:
@@ -50,10 +48,7 @@ class KBArticleService:
     - Event-driven for analytics
     """
 
-    def __init__(
-        self,
-        kb_service: KnowledgeBaseService
-    ):
+    def __init__(self, kb_service: KnowledgeBaseService):
         """
         Initialize KB article service
 
@@ -74,16 +69,13 @@ class KBArticleService:
             self.vector_store_available = True
         except Exception as e:
             self.logger.warning(
-                "vector_store_initialization_failed",
-                error=str(e),
-                error_type=type(e).__name__
+                "vector_store_initialization_failed", error=str(e), error_type=type(e).__name__
             )
             self.vector_store = None
             self.vector_store_available = False
 
         self.logger.info(
-            "kb_article_service_initialized",
-            vector_store_available=self.vector_store_available
+            "kb_article_service_initialized", vector_store_available=self.vector_store_available
         )
 
     # ========================================================================
@@ -95,8 +87,8 @@ class KBArticleService:
         title: str,
         content: str,
         category: str,
-        tags: Optional[List[str]] = None,
-        url: Optional[str] = None
+        tags: list[str] | None = None,
+        url: str | None = None,
     ) -> Result[KBArticle]:
         """
         Create a new KB article
@@ -130,7 +122,7 @@ class KBArticleService:
                 "kb_article_creation_started",
                 title=title[:50],
                 category=category,
-                tags_count=len(tags)
+                tags_count=len(tags),
             )
 
             # Create article model
@@ -145,7 +137,7 @@ class KBArticleService:
                 view_count=0,
                 helpful_count=0,
                 not_helpful_count=0,
-                resolution_count=0
+                resolution_count=0,
             )
 
             # Save to database (transaction)
@@ -154,9 +146,7 @@ class KBArticleService:
                 await uow.flush()  # Get ID and ensure it's persisted
 
             self.logger.info(
-                "kb_article_saved_to_database",
-                article_id=str(article.id),
-                title=title[:50]
+                "kb_article_saved_to_database", article_id=str(article.id), title=title[:50]
             )
 
             # Index in Qdrant (async, best-effort)
@@ -167,19 +157,18 @@ class KBArticleService:
                     self.logger.warning(
                         "kb_article_vector_indexing_failed",
                         article_id=str(article.id),
-                        error=str(index_result.error)
+                        error=str(index_result.error),
                     )
             else:
                 self.logger.warning(
-                    "kb_article_not_indexed_vector_store_unavailable",
-                    article_id=str(article.id)
+                    "kb_article_not_indexed_vector_store_unavailable", article_id=str(article.id)
                 )
 
             self.logger.info(
                 "kb_article_created_successfully",
                 article_id=str(article.id),
                 title=title[:50],
-                indexed_in_qdrant=self.vector_store_available
+                indexed_in_qdrant=self.vector_store_available,
             )
 
             return Result.ok(article)
@@ -191,21 +180,23 @@ class KBArticleService:
                 category=category,
                 error=str(e),
                 error_type=type(e).__name__,
-                exc_info=True
+                exc_info=True,
             )
-            return Result.fail(InternalError(
-                message=f"Failed to create KB article: {str(e)}",
-                context={"title": title, "category": category}
-            ))
+            return Result.fail(
+                InternalError(
+                    message=f"Failed to create KB article: {e!s}",
+                    context={"title": title, "category": category},
+                )
+            )
 
     async def update_article(
         self,
         article_id: UUID,
-        title: Optional[str] = None,
-        content: Optional[str] = None,
-        category: Optional[str] = None,
-        tags: Optional[List[str]] = None,
-        url: Optional[str] = None
+        title: str | None = None,
+        content: str | None = None,
+        category: str | None = None,
+        tags: list[str] | None = None,
+        url: str | None = None,
     ) -> Result[KBArticle]:
         """
         Update an existing KB article
@@ -226,20 +217,16 @@ class KBArticleService:
             Result with updated article or error
         """
         try:
-            self.logger.info(
-                "kb_article_update_started",
-                article_id=str(article_id)
-            )
+            self.logger.info("kb_article_update_started", article_id=str(article_id))
 
             # Get existing article and update
             async with get_unit_of_work() as uow:
                 article = await uow.session.get(KBArticle, article_id)
 
                 if not article:
-                    return Result.fail(NotFoundError(
-                        resource="KBArticle",
-                        identifier=str(article_id)
-                    ))
+                    return Result.fail(
+                        NotFoundError(resource="KBArticle", identifier=str(article_id))
+                    )
 
                 # Update fields
                 if title is not None:
@@ -253,7 +240,7 @@ class KBArticleService:
                 if url is not None:
                     article.url = url
 
-                article.updated_at = datetime.now(timezone.utc)
+                article.updated_at = datetime.now(UTC)
                 await uow.flush()  # Ensure changes are persisted
 
             # Re-index in Qdrant
@@ -263,27 +250,18 @@ class KBArticleService:
             self.logger.info(
                 "kb_article_updated_successfully",
                 article_id=str(article_id),
-                title=article.title[:50]
+                title=article.title[:50],
             )
 
             return Result.ok(article)
 
         except Exception as e:
             self.logger.error(
-                "kb_article_update_failed",
-                article_id=str(article_id),
-                error=str(e),
-                exc_info=True
+                "kb_article_update_failed", article_id=str(article_id), error=str(e), exc_info=True
             )
-            return Result.fail(InternalError(
-                message=f"Failed to update article: {str(e)}"
-            ))
+            return Result.fail(InternalError(message=f"Failed to update article: {e!s}"))
 
-    async def delete_article(
-        self,
-        article_id: UUID,
-        soft_delete: bool = True
-    ) -> Result[None]:
+    async def delete_article(self, article_id: UUID, soft_delete: bool = True) -> Result[None]:
         """
         Delete a KB article
 
@@ -299,24 +277,21 @@ class KBArticleService:
         """
         try:
             self.logger.info(
-                "kb_article_deletion_started",
-                article_id=str(article_id),
-                soft_delete=soft_delete
+                "kb_article_deletion_started", article_id=str(article_id), soft_delete=soft_delete
             )
 
             async with get_unit_of_work() as uow:
                 article = await uow.session.get(KBArticle, article_id)
 
                 if not article:
-                    return Result.fail(NotFoundError(
-                        resource="KBArticle",
-                        identifier=str(article_id)
-                    ))
+                    return Result.fail(
+                        NotFoundError(resource="KBArticle", identifier=str(article_id))
+                    )
 
                 if soft_delete:
                     # Soft delete - mark as inactive
                     article.is_active = 0
-                    article.updated_at = datetime.now(timezone.utc)
+                    article.updated_at = datetime.now(UTC)
                 else:
                     # Hard delete - remove from DB
                     await uow.session.delete(article)
@@ -329,7 +304,7 @@ class KBArticleService:
             self.logger.info(
                 "kb_article_deleted_successfully",
                 article_id=str(article_id),
-                soft_delete=soft_delete
+                soft_delete=soft_delete,
             )
 
             return Result.ok(None)
@@ -339,11 +314,9 @@ class KBArticleService:
                 "kb_article_deletion_failed",
                 article_id=str(article_id),
                 error=str(e),
-                exc_info=True
+                exc_info=True,
             )
-            return Result.fail(InternalError(
-                message=f"Failed to delete article: {str(e)}"
-            ))
+            return Result.fail(InternalError(message=f"Failed to delete article: {e!s}"))
 
     async def get_article_by_id(self, article_id: UUID) -> Result[KBArticle]:
         """Get article by ID"""
@@ -352,34 +325,23 @@ class KBArticleService:
                 article = await uow.session.get(KBArticle, article_id)
 
                 if not article:
-                    return Result.fail(NotFoundError(
-                        resource="KBArticle",
-                        identifier=str(article_id)
-                    ))
+                    return Result.fail(
+                        NotFoundError(resource="KBArticle", identifier=str(article_id))
+                    )
 
                 return Result.ok(article)
 
         except Exception as e:
-            self.logger.error(
-                "kb_article_get_failed",
-                article_id=str(article_id),
-                error=str(e)
-            )
-            return Result.fail(InternalError(
-                message=f"Failed to get article: {str(e)}"
-            ))
+            self.logger.error("kb_article_get_failed", article_id=str(article_id), error=str(e))
+            return Result.fail(InternalError(message=f"Failed to get article: {e!s}"))
 
     # ========================================================================
     # SEARCH OPERATIONS
     # ========================================================================
 
     async def search_articles(
-        self,
-        query: str,
-        category: Optional[str] = None,
-        limit: int = 5,
-        score_threshold: float = 0.3
-    ) -> Result[List[Dict[str, Any]]]:
+        self, query: str, category: str | None = None, limit: int = 5, score_threshold: float = 0.3
+    ) -> Result[list[dict[str, Any]]]:
         """
         Search articles using semantic search
 
@@ -395,26 +357,18 @@ class KBArticleService:
             Result with list of article dicts
         """
         return await self.kb_service.search_articles(
-            query=query,
-            category=category,
-            limit=limit,
-            score_threshold=score_threshold
+            query=query, category=category, limit=limit, score_threshold=score_threshold
         )
 
     async def get_articles_by_category(
-        self,
-        category: str,
-        limit: int = 10,
-        include_inactive: bool = False
-    ) -> Result[List[KBArticle]]:
+        self, category: str, limit: int = 10, include_inactive: bool = False
+    ) -> Result[list[KBArticle]]:
         """Get all articles in a category"""
         try:
             from sqlalchemy import select
 
             async with get_unit_of_work() as uow:
-                query = select(KBArticle).where(
-                    KBArticle.category == category.lower()
-                )
+                query = select(KBArticle).where(KBArticle.category == category.lower())
 
                 if not include_inactive:
                     query = query.where(KBArticle.is_active == 1)
@@ -427,24 +381,15 @@ class KBArticleService:
                 return Result.ok(list(articles))
 
         except Exception as e:
-            self.logger.error(
-                "kb_get_by_category_failed",
-                category=category,
-                error=str(e)
-            )
-            return Result.fail(InternalError(
-                message=f"Failed to get articles by category: {str(e)}"
-            ))
+            self.logger.error("kb_get_by_category_failed", category=category, error=str(e))
+            return Result.fail(InternalError(message=f"Failed to get articles by category: {e!s}"))
 
     # ========================================================================
     # USAGE TRACKING
     # ========================================================================
 
     async def track_article_view(
-        self,
-        article_id: UUID,
-        conversation_id: Optional[UUID] = None,
-        customer_id: Optional[UUID] = None
+        self, article_id: UUID, conversation_id: UUID | None = None, customer_id: UUID | None = None
     ) -> Result[None]:
         """
         Track that an article was viewed
@@ -458,14 +403,13 @@ class KBArticleService:
             async with get_unit_of_work() as uow:
                 article = await uow.session.get(KBArticle, article_id)
                 if not article:
-                    return Result.fail(NotFoundError(
-                        resource="KBArticle",
-                        identifier=str(article_id)
-                    ))
+                    return Result.fail(
+                        NotFoundError(resource="KBArticle", identifier=str(article_id))
+                    )
 
                 # Update metrics
                 article.view_count += 1
-                article.last_used_at = datetime.now(timezone.utc)
+                article.last_used_at = datetime.now(UTC)
 
                 # Create usage record
                 usage = KBUsage(
@@ -473,7 +417,7 @@ class KBArticleService:
                     article_id=article_id,
                     event_type="viewed",
                     conversation_id=conversation_id,
-                    customer_id=customer_id
+                    customer_id=customer_id,
                 )
                 uow.session.add(usage)
 
@@ -482,16 +426,14 @@ class KBArticleService:
             self.logger.debug(
                 "kb_article_view_tracked",
                 article_id=str(article_id),
-                conversation_id=str(conversation_id) if conversation_id else None
+                conversation_id=str(conversation_id) if conversation_id else None,
             )
 
             return Result.ok(None)
 
         except Exception as e:
             self.logger.warning(
-                "kb_article_view_tracking_failed",
-                article_id=str(article_id),
-                error=str(e)
+                "kb_article_view_tracking_failed", article_id=str(article_id), error=str(e)
             )
             # Don't fail the main operation if tracking fails
             return Result.ok(None)
@@ -500,18 +442,17 @@ class KBArticleService:
         self,
         article_id: UUID,
         helpful: bool,
-        conversation_id: Optional[UUID] = None,
-        customer_id: Optional[UUID] = None
+        conversation_id: UUID | None = None,
+        customer_id: UUID | None = None,
     ) -> Result[None]:
         """Track article helpfulness vote"""
         try:
             async with get_unit_of_work() as uow:
                 article = await uow.session.get(KBArticle, article_id)
                 if not article:
-                    return Result.fail(NotFoundError(
-                        resource="KBArticle",
-                        identifier=str(article_id)
-                    ))
+                    return Result.fail(
+                        NotFoundError(resource="KBArticle", identifier=str(article_id))
+                    )
 
                 if helpful:
                     article.helpful_count += 1
@@ -524,7 +465,7 @@ class KBArticleService:
                     article_id=article_id,
                     event_type="helpful" if helpful else "not_helpful",
                     conversation_id=conversation_id,
-                    customer_id=customer_id
+                    customer_id=customer_id,
                 )
                 uow.session.add(usage)
 
@@ -534,9 +475,7 @@ class KBArticleService:
 
         except Exception as e:
             self.logger.warning(
-                "kb_article_helpful_tracking_failed",
-                article_id=str(article_id),
-                error=str(e)
+                "kb_article_helpful_tracking_failed", article_id=str(article_id), error=str(e)
             )
             return Result.ok(None)
 
@@ -546,17 +485,16 @@ class KBArticleService:
         conversation_id: UUID,
         customer_id: UUID,
         resolution_time_seconds: int,
-        csat_score: Optional[int] = None
+        csat_score: int | None = None,
     ) -> Result[None]:
         """Track that an article helped resolve an issue"""
         try:
             async with get_unit_of_work() as uow:
                 article = await uow.session.get(KBArticle, article_id)
                 if not article:
-                    return Result.fail(NotFoundError(
-                        resource="KBArticle",
-                        identifier=str(article_id)
-                    ))
+                    return Result.fail(
+                        NotFoundError(resource="KBArticle", identifier=str(article_id))
+                    )
 
                 # Update resolution metrics
                 article.resolution_count += 1
@@ -566,8 +504,12 @@ class KBArticleService:
                     article.avg_resolution_time_seconds = float(resolution_time_seconds)
                 else:
                     # Running average
-                    total_time = article.avg_resolution_time_seconds * (article.resolution_count - 1)
-                    article.avg_resolution_time_seconds = (total_time + resolution_time_seconds) / article.resolution_count
+                    total_time = article.avg_resolution_time_seconds * (
+                        article.resolution_count - 1
+                    )
+                    article.avg_resolution_time_seconds = (
+                        total_time + resolution_time_seconds
+                    ) / article.resolution_count
 
                 # Update CSAT
                 if csat_score is not None:
@@ -587,7 +529,7 @@ class KBArticleService:
                     conversation_id=conversation_id,
                     customer_id=customer_id,
                     resolution_time_seconds=resolution_time_seconds,
-                    csat_score=csat_score
+                    csat_score=csat_score,
                 )
                 uow.session.add(usage)
 
@@ -597,16 +539,14 @@ class KBArticleService:
                 "kb_article_resolution_tracked",
                 article_id=str(article_id),
                 resolution_time=resolution_time_seconds,
-                csat=csat_score
+                csat=csat_score,
             )
 
             return Result.ok(None)
 
         except Exception as e:
             self.logger.error(
-                "kb_article_resolution_tracking_failed",
-                article_id=str(article_id),
-                error=str(e)
+                "kb_article_resolution_tracking_failed", article_id=str(article_id), error=str(e)
             )
             return Result.ok(None)
 
@@ -614,10 +554,7 @@ class KBArticleService:
     # BULK OPERATIONS & SYNC
     # ========================================================================
 
-    async def bulk_import_articles(
-        self,
-        articles: List[Dict[str, Any]]
-    ) -> Result[Dict[str, Any]]:
+    async def bulk_import_articles(self, articles: list[dict[str, Any]]) -> Result[dict[str, Any]]:
         """
         Bulk import articles from list of dicts
 
@@ -630,10 +567,7 @@ class KBArticleService:
         failure_count = 0
         errors = []
 
-        self.logger.info(
-            "kb_bulk_import_started",
-            article_count=len(articles)
-        )
+        self.logger.info("kb_bulk_import_started", article_count=len(articles))
 
         for idx, article_data in enumerate(articles):
             try:
@@ -642,42 +576,48 @@ class KBArticleService:
                     content=article_data["content"],
                     category=article_data["category"],
                     tags=article_data.get("tags", []),
-                    url=article_data.get("url")
+                    url=article_data.get("url"),
                 )
 
                 if result.is_success:
                     success_count += 1
                 else:
                     failure_count += 1
-                    errors.append({
-                        "index": idx,
-                        "title": article_data["title"][:50],
-                        "error": str(result.error)
-                    })
+                    errors.append(
+                        {
+                            "index": idx,
+                            "title": article_data["title"][:50],
+                            "error": str(result.error),
+                        }
+                    )
 
             except Exception as e:
                 failure_count += 1
-                errors.append({
-                    "index": idx,
-                    "title": article_data.get("title", "Unknown")[:50],
-                    "error": str(e)
-                })
+                errors.append(
+                    {
+                        "index": idx,
+                        "title": article_data.get("title", "Unknown")[:50],
+                        "error": str(e),
+                    }
+                )
 
         self.logger.info(
             "kb_bulk_import_completed",
             total=len(articles),
             success=success_count,
-            failures=failure_count
+            failures=failure_count,
         )
 
-        return Result.ok({
-            "total": len(articles),
-            "success_count": success_count,
-            "failure_count": failure_count,
-            "errors": errors[:10]  # Limit error list
-        })
+        return Result.ok(
+            {
+                "total": len(articles),
+                "success_count": success_count,
+                "failure_count": failure_count,
+                "errors": errors[:10],  # Limit error list
+            }
+        )
 
-    async def sync_all_to_vector_store(self) -> Result[Dict[str, Any]]:
+    async def sync_all_to_vector_store(self) -> Result[dict[str, Any]]:
         """
         Sync all active articles from DB to Qdrant
 
@@ -687,12 +627,14 @@ class KBArticleService:
             Result with sync stats
         """
         if not self.vector_store_available:
-            return Result.fail(ExternalServiceError(
-                message="Vector store is not available",
-                service="Qdrant",
-                operation="sync",
-                is_retryable=True
-            ))
+            return Result.fail(
+                ExternalServiceError(
+                    message="Vector store is not available",
+                    service="Qdrant",
+                    operation="sync",
+                    is_retryable=True,
+                )
+            )
 
         try:
             self.logger.info("kb_vector_sync_started")
@@ -705,10 +647,7 @@ class KBArticleService:
                 result = await uow.session.execute(query)
                 articles = result.scalars().all()
 
-            self.logger.info(
-                "kb_vector_sync_articles_loaded",
-                count=len(articles)
-            )
+            self.logger.info("kb_vector_sync_articles_loaded", count=len(articles))
 
             # Prepare documents for Qdrant
             documents = []
@@ -718,64 +657,46 @@ class KBArticleService:
                     f"{article.title} {article.content}"
                 )
 
-                documents.append({
-                    "id": str(article.id),
-                    "doc_id": str(article.id),
-                    "embedding": embedding,
-                    "title": article.title,
-                    "content": article.content,
-                    "category": article.category,
-                    "tags": article.tags or []
-                })
+                documents.append(
+                    {
+                        "id": str(article.id),
+                        "doc_id": str(article.id),
+                        "embedding": embedding,
+                        "title": article.title,
+                        "content": article.content,
+                        "category": article.category,
+                        "tags": article.tags or [],
+                    }
+                )
 
             # Upsert to Qdrant
             self.vector_store.upsert_documents(documents)
 
-            self.logger.info(
-                "kb_vector_sync_completed",
-                synced_count=len(documents)
-            )
+            self.logger.info("kb_vector_sync_completed", synced_count=len(documents))
 
-            return Result.ok({
-                "synced_count": len(documents),
-                "total_articles": len(articles)
-            })
+            return Result.ok({"synced_count": len(documents), "total_articles": len(articles)})
 
         except Exception as e:
-            self.logger.error(
-                "kb_vector_sync_failed",
-                error=str(e),
-                exc_info=True
-            )
-            return Result.fail(InternalError(
-                message=f"Failed to sync to vector store: {str(e)}"
-            ))
+            self.logger.error("kb_vector_sync_failed", error=str(e), exc_info=True)
+            return Result.fail(InternalError(message=f"Failed to sync to vector store: {e!s}"))
 
     # ========================================================================
     # ANALYTICS & QUALITY
     # ========================================================================
 
-    async def get_article_stats(
-        self,
-        article_id: UUID
-    ) -> Result[Dict[str, Any]]:
+    async def get_article_stats(self, article_id: UUID) -> Result[dict[str, Any]]:
         """Get comprehensive stats for an article"""
         try:
             async with get_unit_of_work() as uow:
                 article = await uow.session.get(KBArticle, article_id)
                 if not article:
-                    return Result.fail(NotFoundError(
-                        resource="KBArticle",
-                        identifier=str(article_id)
-                    ))
+                    return Result.fail(
+                        NotFoundError(resource="KBArticle", identifier=str(article_id))
+                    )
 
                 # Calculate helpfulness ratio
                 total_votes = article.helpful_count + article.not_helpful_count
-                helpfulness_ratio = (
-                    article.helpful_count / total_votes
-                    if total_votes > 0
-                    else 0.0
-                )
+                helpfulness_ratio = article.helpful_count / total_votes if total_votes > 0 else 0.0
 
                 stats = {
                     "article_id": str(article.id),
@@ -789,34 +710,29 @@ class KBArticleService:
                     "avg_resolution_time_seconds": article.avg_resolution_time_seconds,
                     "avg_csat": article.avg_csat,
                     "quality_score": article.quality_score,
-                    "last_used_at": article.last_used_at.isoformat() if article.last_used_at else None,
+                    "last_used_at": article.last_used_at.isoformat()
+                    if article.last_used_at
+                    else None,
                     "created_at": article.created_at.isoformat(),
-                    "is_active": bool(article.is_active)
+                    "is_active": bool(article.is_active),
                 }
 
                 return Result.ok(stats)
 
         except Exception as e:
-            self.logger.error(
-                "kb_article_stats_failed",
-                article_id=str(article_id),
-                error=str(e)
-            )
-            return Result.fail(InternalError(
-                message=f"Failed to get article stats: {str(e)}"
-            ))
+            self.logger.error("kb_article_stats_failed", article_id=str(article_id), error=str(e))
+            return Result.fail(InternalError(message=f"Failed to get article stats: {e!s}"))
 
     async def get_popular_articles(
-        self,
-        limit: int = 10,
-        days: int = 30
-    ) -> Result[List[Dict[str, Any]]]:
+        self, limit: int = 10, days: int = 30
+    ) -> Result[list[dict[str, Any]]]:
         """Get most popular articles by view count"""
         try:
-            from sqlalchemy import select
             from datetime import timedelta
 
-            since_date = datetime.now(timezone.utc) - timedelta(days=days)
+            from sqlalchemy import select
+
+            since_date = datetime.now(UTC) - timedelta(days=days)
 
             async with get_unit_of_work() as uow:
                 query = (
@@ -830,33 +746,28 @@ class KBArticleService:
                 result = await uow.session.execute(query)
                 articles = result.scalars().all()
 
-                return Result.ok([
-                    {
-                        "id": str(a.id),
-                        "title": a.title,
-                        "category": a.category,
-                        "view_count": a.view_count,
-                        "helpful_count": a.helpful_count
-                    }
-                    for a in articles
-                ])
+                return Result.ok(
+                    [
+                        {
+                            "id": str(a.id),
+                            "title": a.title,
+                            "category": a.category,
+                            "view_count": a.view_count,
+                            "helpful_count": a.helpful_count,
+                        }
+                        for a in articles
+                    ]
+                )
 
         except Exception as e:
             self.logger.error("kb_popular_articles_failed", error=str(e))
-            return Result.fail(InternalError(
-                message=f"Failed to get popular articles: {str(e)}"
-            ))
+            return Result.fail(InternalError(message=f"Failed to get popular articles: {e!s}"))
 
     # ========================================================================
     # PRIVATE HELPERS
     # ========================================================================
 
-    def _validate_article(
-        self,
-        title: str,
-        content: str,
-        category: str
-    ) -> Result[None]:
+    def _validate_article(self, title: str, content: str, category: str) -> Result[None]:
         """Validate article data"""
         errors = []
 
@@ -869,33 +780,34 @@ class KBArticleService:
             errors.append("Content must be at least 20 characters")
 
         valid_categories = [
-            "billing", "technical", "usage", "api", "account",
-            "integration", "sales", "success", "general", "security",
-            "onboarding", "troubleshooting", "features", "pricing"
+            "billing",
+            "technical",
+            "usage",
+            "api",
+            "account",
+            "integration",
+            "sales",
+            "success",
+            "general",
+            "security",
+            "onboarding",
+            "troubleshooting",
+            "features",
+            "pricing",
         ]
         if category.lower() not in valid_categories:
-            errors.append(
-                f"Category must be one of: {', '.join(valid_categories)}"
-            )
+            errors.append(f"Category must be one of: {', '.join(valid_categories)}")
 
         if errors:
-            return Result.fail(ValidationError(
-                field="article",
-                message="; ".join(errors)
-            ))
+            return Result.fail(ValidationError(field="article", message="; ".join(errors)))
 
         return Result.ok(None)
 
-    async def _index_article_in_vector_store(
-        self,
-        article: KBArticle
-    ) -> Result[None]:
+    async def _index_article_in_vector_store(self, article: KBArticle) -> Result[None]:
         """Index a single article in Qdrant"""
         try:
             # Generate embedding
-            embedding = self.vector_store.generate_embedding(
-                f"{article.title} {article.content}"
-            )
+            embedding = self.vector_store.generate_embedding(f"{article.title} {article.content}")
 
             # Prepare document
             document = {
@@ -905,7 +817,7 @@ class KBArticleService:
                 "title": article.title,
                 "content": article.content,
                 "category": article.category,
-                "tags": article.tags or []
+                "tags": article.tags or [],
             }
 
             # Upsert to Qdrant
@@ -914,9 +826,11 @@ class KBArticleService:
             return Result.ok(None)
 
         except Exception as e:
-            return Result.fail(ExternalServiceError(
-                message=f"Failed to index article in vector store: {str(e)}",
-                service="Qdrant",
-                operation="upsert",
-                is_retryable=True
-            ))
+            return Result.fail(
+                ExternalServiceError(
+                    message=f"Failed to index article in vector store: {e!s}",
+                    service="Qdrant",
+                    operation="upsert",
+                    is_retryable=True,
+                )
+            )
