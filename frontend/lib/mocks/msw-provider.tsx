@@ -35,6 +35,7 @@ export function MSWProvider({ children }: MSWProviderProps): JSX.Element {
         });
       })
       .then(() => {
+        // eslint-disable-next-line no-console -- intentional MSW debug logging
         console.log("[MSW] Mock Service Worker started");
         setIsReady(true);
       })
