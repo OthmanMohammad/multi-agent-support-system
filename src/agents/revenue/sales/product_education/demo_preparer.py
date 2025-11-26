@@ -454,7 +454,11 @@ Your response should:
 
 Generate a professional demo preparation response."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # Demo prep uses prospect context
+        )
         return response
 
 
