@@ -5,14 +5,13 @@ Calculates comprehensive customer health scores (0-100) to predict churn and
 identify at-risk customers. Analyzes usage, engagement, support, and financial metrics.
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta, UTC
-from decimal import Decimal
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("health_score", tier="revenue", category="customer_success")
@@ -34,17 +33,11 @@ class HealthScoreAgent(BaseAgent):
         "healthy": (70, 84),
         "needs_attention": (55, 69),
         "at_risk": (40, 54),
-        "critical": (0, 39)
+        "critical": (0, 39),
     }
 
     # Scoring weights
-    WEIGHTS = {
-        "usage": 30,
-        "engagement": 25,
-        "financial": 20,
-        "support": 15,
-        "relationship": 10
-    }
+    WEIGHTS = {"usage": 30, "engagement": 25, "financial": 20, "support": 15, "relationship": 10}
 
     def __init__(self):
         config = AgentConfig(
@@ -52,12 +45,9 @@ class HealthScoreAgent(BaseAgent):
             type=AgentType.SPECIALIST,
             temperature=0.3,
             max_tokens=700,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.KB_SEARCH
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.KB_SEARCH],
             kb_category="customer_success",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -88,15 +78,12 @@ class HealthScoreAgent(BaseAgent):
             "health_score_calculation_details",
             customer_id=customer_id,
             has_usage_data=bool(usage_data),
-            has_engagement_data=bool(engagement_data)
+            has_engagement_data=bool(engagement_data),
         )
 
         # Calculate health score
         health_analysis = self._calculate_health_score(
-            usage_data,
-            engagement_data,
-            business_data,
-            customer_metadata
+            usage_data, engagement_data, business_data, customer_metadata
         )
 
         # Generate recommendations
@@ -118,18 +105,18 @@ class HealthScoreAgent(BaseAgent):
             "health_score_calculated",
             customer_id=customer_id,
             health_score=health_analysis["total_score"],
-            health_status=health_analysis["health_status"]
+            health_status=health_analysis["health_status"],
         )
 
         return state
 
     def _calculate_health_score(
         self,
-        usage_data: Dict[str, Any],
-        engagement_data: Dict[str, Any],
-        business_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        usage_data: dict[str, Any],
+        engagement_data: dict[str, Any],
+        business_data: dict[str, Any],
+        customer_metadata: dict[str, Any],
+    ) -> dict[str, Any]:
         """
         Calculate comprehensive health score.
 
@@ -189,10 +176,10 @@ class HealthScoreAgent(BaseAgent):
             "score_change": int(total_score - previous_score) if previous_score else 0,
             "risk_factors": risk_factors,
             "positive_signals": positive_signals,
-            "calculated_at": datetime.now(UTC).isoformat()
+            "calculated_at": datetime.now(UTC).isoformat(),
         }
 
-    def _calculate_usage_score(self, usage_data: Dict[str, Any]) -> float:
+    def _calculate_usage_score(self, usage_data: dict[str, Any]) -> float:
         """Calculate product usage score (0-30)."""
         score = 0.0
 
@@ -214,7 +201,7 @@ class HealthScoreAgent(BaseAgent):
 
         return min(score, 30)
 
-    def _calculate_engagement_score(self, engagement_data: Dict[str, Any]) -> float:
+    def _calculate_engagement_score(self, engagement_data: dict[str, Any]) -> float:
         """Calculate user engagement score (0-25)."""
         score = 0.0
 
@@ -232,8 +219,8 @@ class HealthScoreAgent(BaseAgent):
         if last_login:
             if isinstance(last_login, str):
                 try:
-                    last_login = datetime.fromisoformat(last_login.replace('Z', '+00:00'))
-                except:
+                    last_login = datetime.fromisoformat(last_login.replace("Z", "+00:00"))
+                except Exception:
                     last_login = datetime.now(UTC)
             days_since_login = (datetime.now(UTC) - last_login).days
             if days_since_login < 1:
@@ -246,9 +233,7 @@ class HealthScoreAgent(BaseAgent):
         return min(score, 25)
 
     def _calculate_financial_score(
-        self,
-        business_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
+        self, business_data: dict[str, Any], customer_metadata: dict[str, Any]
     ) -> float:
         """Calculate financial health score (0-20)."""
         score = 0.0
@@ -269,7 +254,7 @@ class HealthScoreAgent(BaseAgent):
 
         return min(score, 20)
 
-    def _calculate_support_score(self, engagement_data: Dict[str, Any]) -> float:
+    def _calculate_support_score(self, engagement_data: dict[str, Any]) -> float:
         """Calculate support health score (0-15)."""
         score = 15.0  # Start at max, deduct for issues
 
@@ -288,7 +273,7 @@ class HealthScoreAgent(BaseAgent):
 
         return max(score, 0)
 
-    def _calculate_relationship_score(self, engagement_data: Dict[str, Any]) -> float:
+    def _calculate_relationship_score(self, engagement_data: dict[str, Any]) -> float:
         """Calculate relationship health score (0-10)."""
         # This would be based on QBR completion, CSM touchpoints, etc.
         # For now, use a baseline
@@ -308,7 +293,7 @@ class HealthScoreAgent(BaseAgent):
                 return status
         return "needs_attention"
 
-    def _calculate_trend(self, current_score: float, previous_score: Optional[float]) -> str:
+    def _calculate_trend(self, current_score: float, previous_score: float | None) -> str:
         """Calculate health score trend."""
         if not previous_score:
             return "new"
@@ -324,55 +309,63 @@ class HealthScoreAgent(BaseAgent):
 
     def _identify_risk_factors(
         self,
-        breakdown: Dict[str, float],
-        usage_data: Dict[str, Any],
-        engagement_data: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        breakdown: dict[str, float],
+        usage_data: dict[str, Any],
+        engagement_data: dict[str, Any],
+    ) -> list[dict[str, Any]]:
         """Identify risk factors affecting health."""
         risk_factors = []
 
         if breakdown.get("product_usage", 0) < 15:
-            risk_factors.append({
-                "factor": "Low product usage",
-                "severity": "high",
-                "impact": -10,
-                "description": f"Usage score only {int(breakdown['product_usage'])}/30 - low DAU or feature adoption"
-            })
+            risk_factors.append(
+                {
+                    "factor": "Low product usage",
+                    "severity": "high",
+                    "impact": -10,
+                    "description": f"Usage score only {int(breakdown['product_usage'])}/30 - low DAU or feature adoption",
+                }
+            )
 
         if breakdown.get("support_health", 0) < 8:
-            risk_factors.append({
-                "factor": "High support ticket volume",
-                "severity": "medium",
-                "impact": -7,
-                "description": f"Support score {int(breakdown['support_health'])}/15 - indicates product issues"
-            })
+            risk_factors.append(
+                {
+                    "factor": "High support ticket volume",
+                    "severity": "medium",
+                    "impact": -7,
+                    "description": f"Support score {int(breakdown['support_health'])}/15 - indicates product issues",
+                }
+            )
 
         if breakdown.get("user_engagement", 0) < 12:
             nps = engagement_data.get("nps_score", 5)
             if nps < 7:
-                risk_factors.append({
-                    "factor": "Low NPS score",
-                    "severity": "high",
-                    "impact": -10,
-                    "description": f"NPS score {nps}/10 - customer dissatisfaction"
-                })
+                risk_factors.append(
+                    {
+                        "factor": "Low NPS score",
+                        "severity": "high",
+                        "impact": -10,
+                        "description": f"NPS score {nps}/10 - customer dissatisfaction",
+                    }
+                )
 
         if breakdown.get("relationship_health", 0) < 5:
-            risk_factors.append({
-                "factor": "Weak CSM relationship",
-                "severity": "medium",
-                "impact": -5,
-                "description": "Low engagement with CSM - schedule check-in"
-            })
+            risk_factors.append(
+                {
+                    "factor": "Weak CSM relationship",
+                    "severity": "medium",
+                    "impact": -5,
+                    "description": "Low engagement with CSM - schedule check-in",
+                }
+            )
 
         return risk_factors
 
     def _identify_positive_signals(
         self,
-        breakdown: Dict[str, float],
-        usage_data: Dict[str, Any],
-        engagement_data: Dict[str, Any]
-    ) -> List[str]:
+        breakdown: dict[str, float],
+        usage_data: dict[str, Any],
+        engagement_data: dict[str, Any],
+    ) -> list[str]:
         """Identify positive signals in customer health."""
         signals = []
 
@@ -399,74 +392,86 @@ class HealthScoreAgent(BaseAgent):
 
         return signals
 
-    def _generate_recommendations(self, health_analysis: Dict[str, Any]) -> List[Dict[str, str]]:
+    def _generate_recommendations(self, health_analysis: dict[str, Any]) -> list[dict[str, str]]:
         """Generate action recommendations based on health score."""
         recommendations = []
 
-        score = health_analysis["total_score"]
+        health_analysis["total_score"]
         status = health_analysis["health_status"]
         risk_factors = health_analysis.get("risk_factors", [])
 
         if status == "critical":
-            recommendations.append({
-                "action": "Immediate executive intervention required",
-                "priority": "critical",
-                "owner": "VP Customer Success",
-                "timeline": "Within 24 hours"
-            })
-            recommendations.append({
-                "action": "Schedule emergency call to understand issues",
-                "priority": "critical",
-                "owner": "CSM",
-                "timeline": "Within 24 hours"
-            })
+            recommendations.append(
+                {
+                    "action": "Immediate executive intervention required",
+                    "priority": "critical",
+                    "owner": "VP Customer Success",
+                    "timeline": "Within 24 hours",
+                }
+            )
+            recommendations.append(
+                {
+                    "action": "Schedule emergency call to understand issues",
+                    "priority": "critical",
+                    "owner": "CSM",
+                    "timeline": "Within 24 hours",
+                }
+            )
 
         elif status == "at_risk":
-            recommendations.append({
-                "action": "CSM to conduct urgent check-in call",
-                "priority": "high",
-                "owner": "CSM",
-                "timeline": "Within 48 hours"
-            })
-            recommendations.append({
-                "action": "Review support ticket history for systemic issues",
-                "priority": "high",
-                "owner": "CSM + Support",
-                "timeline": "Within 1 week"
-            })
+            recommendations.append(
+                {
+                    "action": "CSM to conduct urgent check-in call",
+                    "priority": "high",
+                    "owner": "CSM",
+                    "timeline": "Within 48 hours",
+                }
+            )
+            recommendations.append(
+                {
+                    "action": "Review support ticket history for systemic issues",
+                    "priority": "high",
+                    "owner": "CSM + Support",
+                    "timeline": "Within 1 week",
+                }
+            )
 
         elif status == "needs_attention":
-            recommendations.append({
-                "action": "Schedule quarterly business review (QBR)",
-                "priority": "medium",
-                "owner": "CSM",
-                "timeline": "Within 2 weeks"
-            })
+            recommendations.append(
+                {
+                    "action": "Schedule quarterly business review (QBR)",
+                    "priority": "medium",
+                    "owner": "CSM",
+                    "timeline": "Within 2 weeks",
+                }
+            )
 
         # Specific recommendations based on risk factors
         for risk in risk_factors:
             if "Low product usage" in risk["factor"]:
-                recommendations.append({
-                    "action": "Launch feature adoption campaign",
-                    "priority": "high",
-                    "owner": "CSM",
-                    "timeline": "This week"
-                })
+                recommendations.append(
+                    {
+                        "action": "Launch feature adoption campaign",
+                        "priority": "high",
+                        "owner": "CSM",
+                        "timeline": "This week",
+                    }
+                )
 
             if "High support ticket" in risk["factor"]:
-                recommendations.append({
-                    "action": "Analyze support tickets for patterns",
-                    "priority": "high",
-                    "owner": "Support + Product",
-                    "timeline": "Within 3 days"
-                })
+                recommendations.append(
+                    {
+                        "action": "Analyze support tickets for patterns",
+                        "priority": "high",
+                        "owner": "Support + Product",
+                        "timeline": "Within 3 days",
+                    }
+                )
 
         return recommendations
 
     def _format_health_report(
-        self,
-        health_analysis: Dict[str, Any],
-        recommendations: List[Dict[str, str]]
+        self, health_analysis: dict[str, Any], recommendations: list[dict[str, str]]
     ) -> str:
         """Format health score report."""
         score = health_analysis["total_score"]
@@ -480,22 +485,24 @@ class HealthScoreAgent(BaseAgent):
             "healthy": "???",
             "needs_attention": "??????",
             "at_risk": "????",
-            "critical": "????"
+            "critical": "????",
         }
 
-        report = f"""**{status_emoji.get(status, '????')} Customer Health Score: {score}/100**
+        report = f"""**{status_emoji.get(status, "????")} Customer Health Score: {score}/100**
 
-**Status:** {status.replace('_', ' ').title()}
+**Status:** {status.replace("_", " ").title()}
 **Trend:** {trend.capitalize()} {self._trend_arrow(trend)}
 
 **Score Breakdown:**
 """
 
         for component, component_score in breakdown.items():
-            max_score = self.WEIGHTS.get(component.split('_')[0], 10)
+            max_score = self.WEIGHTS.get(component.split("_")[0], 10)
             percentage = int((component_score / max_score) * 100)
             bar = self._generate_bar(percentage)
-            report += f"- {component.replace('_', ' ').title()}: {component_score}/{max_score} {bar}\n"
+            report += (
+                f"- {component.replace('_', ' ').title()}: {component_score}/{max_score} {bar}\n"
+            )
 
         # Risk factors
         if health_analysis.get("risk_factors"):
@@ -523,12 +530,7 @@ class HealthScoreAgent(BaseAgent):
 
     def _trend_arrow(self, trend: str) -> str:
         """Get arrow for trend."""
-        arrows = {
-            "improving": "????",
-            "stable": "??????",
-            "declining": "????",
-            "new": "????"
-        }
+        arrows = {"improving": "????", "stable": "??????", "declining": "????", "new": "????"}
         return arrows.get(trend, "")
 
     def _generate_bar(self, percentage: int) -> str:
@@ -540,6 +542,7 @@ class HealthScoreAgent(BaseAgent):
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -557,30 +560,24 @@ if __name__ == "__main__":
             "Calculate health score for this customer",
             context={
                 "customer_id": "cust_123",
-                "customer_metadata": {
-                    "plan": "premium",
-                    "previous_health_score": 80
-                }
-            }
+                "customer_metadata": {"plan": "premium", "previous_health_score": 80},
+            },
         )
         state1["entities"] = {
             "usage_data": {
                 "daily_active_users": 12,
                 "total_users": 15,
                 "features_used": 8,
-                "automation_rules_active": 5
+                "automation_rules_active": 5,
             },
             "engagement_data": {
                 "nps_score": 9,
                 "support_tickets_last_30d": 1,
                 "feature_requests": 3,
                 "last_login": datetime.now(UTC).isoformat(),
-                "qbr_attended_last_quarter": True
+                "qbr_attended_last_quarter": True,
             },
-            "business_data": {
-                "payment_status": "current",
-                "contract_value": 45000
-            }
+            "business_data": {"payment_status": "current", "contract_value": 45000},
         }
 
         result1 = await agent.process(state1)
@@ -599,29 +596,24 @@ if __name__ == "__main__":
             "Calculate health score",
             context={
                 "customer_id": "cust_456",
-                "customer_metadata": {
-                    "plan": "basic",
-                    "previous_health_score": 70
-                }
-            }
+                "customer_metadata": {"plan": "basic", "previous_health_score": 70},
+            },
         )
         state2["entities"] = {
             "usage_data": {
                 "daily_active_users": 2,
                 "total_users": 10,
                 "features_used": 2,
-                "automation_rules_active": 0
+                "automation_rules_active": 0,
             },
             "engagement_data": {
                 "nps_score": 4,
                 "support_tickets_last_30d": 12,
                 "feature_requests": 0,
                 "last_login": (datetime.now(UTC) - timedelta(days=10)).isoformat(),
-                "qbr_attended_last_quarter": False
+                "qbr_attended_last_quarter": False,
             },
-            "business_data": {
-                "payment_status": "past_due_7"
-            }
+            "business_data": {"payment_status": "past_due_7"},
         }
 
         result2 = await agent.process(state2)
