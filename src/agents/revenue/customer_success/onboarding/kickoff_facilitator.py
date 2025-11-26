@@ -5,13 +5,13 @@ Facilitates kickoff calls, sets clear expectations, and creates comprehensive su
 Ensures alignment on goals, timelines, and success criteria.
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("kickoff_facilitator", tier="revenue", category="customer_success")
@@ -33,7 +33,7 @@ class KickoffFacilitatorAgent(BaseAgent):
         "feature_utilization",
         "business_outcomes",
         "technical_integration",
-        "team_proficiency"
+        "team_proficiency",
     ]
 
     # Kickoff readiness checklist
@@ -42,7 +42,7 @@ class KickoffFacilitatorAgent(BaseAgent):
         "technical_contacts_confirmed",
         "goals_documented",
         "current_process_mapped",
-        "timeline_agreed"
+        "timeline_agreed",
     ]
 
     def __init__(self):
@@ -51,12 +51,9 @@ class KickoffFacilitatorAgent(BaseAgent):
             type=AgentType.SPECIALIST,
             temperature=0.3,
             max_tokens=500,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.KB_SEARCH
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.KB_SEARCH],
             kb_category="customer_success",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -83,7 +80,7 @@ class KickoffFacilitatorAgent(BaseAgent):
             "kickoff_facilitation_details",
             customer_id=customer_id,
             kickoff_status=kickoff_data.get("status"),
-            stakeholders_count=len(kickoff_data.get("stakeholders", []))
+            stakeholders_count=len(kickoff_data.get("stakeholders", [])),
         )
 
         # Analyze kickoff readiness or status
@@ -96,11 +93,7 @@ class KickoffFacilitatorAgent(BaseAgent):
         action_items = self._create_action_items(kickoff_analysis, success_plan)
 
         # Build response
-        response = self._format_kickoff_report(
-            kickoff_analysis,
-            success_plan,
-            action_items
-        )
+        response = self._format_kickoff_report(kickoff_analysis, success_plan, action_items)
 
         state["agent_response"] = response
         state["kickoff_status"] = kickoff_analysis["status"]
@@ -115,16 +108,14 @@ class KickoffFacilitatorAgent(BaseAgent):
             "kickoff_facilitation_completed",
             customer_id=customer_id,
             kickoff_status=kickoff_analysis["status"],
-            readiness_score=kickoff_analysis.get("readiness_score", 0)
+            readiness_score=kickoff_analysis.get("readiness_score", 0),
         )
 
         return state
 
     def _analyze_kickoff_status(
-        self,
-        kickoff_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, kickoff_data: dict[str, Any], customer_metadata: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Analyze kickoff readiness or completion status.
 
@@ -142,27 +133,34 @@ class KickoffFacilitatorAgent(BaseAgent):
 
         # Check readiness checklist
         checklist_items = kickoff_data.get("readiness_checklist", {})
-        completed_items = sum(1 for item in self.READINESS_CHECKLIST
-                            if checklist_items.get(item, False))
+        completed_items = sum(
+            1 for item in self.READINESS_CHECKLIST if checklist_items.get(item, False)
+        )
         readiness_score = int((completed_items / len(self.READINESS_CHECKLIST)) * 100)
 
         # Identify gaps
         gaps = []
         if not stakeholders or len(stakeholders) < 2:
-            gaps.append({
-                "gap": "Insufficient stakeholder engagement",
-                "impact": "May lack executive sponsorship"
-            })
+            gaps.append(
+                {
+                    "gap": "Insufficient stakeholder engagement",
+                    "impact": "May lack executive sponsorship",
+                }
+            )
         if not technical_contacts:
-            gaps.append({
-                "gap": "No technical contacts identified",
-                "impact": "Integration and migration will be delayed"
-            })
+            gaps.append(
+                {
+                    "gap": "No technical contacts identified",
+                    "impact": "Integration and migration will be delayed",
+                }
+            )
         if not goals_defined:
-            gaps.append({
-                "gap": "Business goals not documented",
-                "impact": "Cannot measure success or demonstrate value"
-            })
+            gaps.append(
+                {
+                    "gap": "Business goals not documented",
+                    "impact": "Cannot measure success or demonstrate value",
+                }
+            )
 
         # Determine overall status
         if kickoff_status == "completed" and readiness_score >= 80:
@@ -185,17 +183,15 @@ class KickoffFacilitatorAgent(BaseAgent):
             "goals_defined": goals_defined,
             "gaps": gaps,
             "checklist_completion": f"{completed_items}/{len(self.READINESS_CHECKLIST)}",
-            "analyzed_at": datetime.now(UTC).isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat(),
         }
 
     def _generate_success_plan(
-        self,
-        kickoff_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, kickoff_data: dict[str, Any], customer_metadata: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate comprehensive success plan."""
-        plan = customer_metadata.get("plan", "premium")
-        industry = customer_metadata.get("industry", "general")
+        customer_metadata.get("plan", "premium")
+        customer_metadata.get("industry", "general")
 
         # Define success criteria by category
         success_criteria = {}
@@ -204,14 +200,14 @@ class KickoffFacilitatorAgent(BaseAgent):
         success_criteria["user_adoption"] = {
             "target": "80% of licensed users active within 30 days",
             "measurement": "DAU/MAU ratio",
-            "timeline_days": 30
+            "timeline_days": 30,
         }
 
         # Feature Utilization
         success_criteria["feature_utilization"] = {
             "target": "5+ core features actively used",
             "measurement": "Feature adoption tracking",
-            "timeline_days": 45
+            "timeline_days": 45,
         }
 
         # Business Outcomes
@@ -220,27 +216,27 @@ class KickoffFacilitatorAgent(BaseAgent):
             success_criteria["business_outcomes"] = {
                 "target": goals[0] if goals else "Achieve primary business objective",
                 "measurement": "Customer-defined KPIs",
-                "timeline_days": 60
+                "timeline_days": 60,
             }
         else:
             success_criteria["business_outcomes"] = {
                 "target": "20% efficiency improvement in key workflow",
                 "measurement": "Time-to-completion metrics",
-                "timeline_days": 60
+                "timeline_days": 60,
             }
 
         # Technical Integration
         success_criteria["technical_integration"] = {
             "target": "Complete integration with existing systems",
             "measurement": "API connections and data sync",
-            "timeline_days": 35
+            "timeline_days": 35,
         }
 
         # Team Proficiency
         success_criteria["team_proficiency"] = {
             "target": "All users complete core training",
             "measurement": "Training completion rate",
-            "timeline_days": 21
+            "timeline_days": 21,
         }
 
         # Define milestones
@@ -250,21 +246,19 @@ class KickoffFacilitatorAgent(BaseAgent):
             {"name": "Initial training completed", "day": 21, "owner": "Training Scheduler"},
             {"name": "Data migration completed", "day": 35, "owner": "Data Migration Specialist"},
             {"name": "Success criteria validated", "day": 45, "owner": "Success Validator"},
-            {"name": "Handoff to CSM", "day": 50, "owner": "Onboarding Coordinator"}
+            {"name": "Handoff to CSM", "day": 50, "owner": "Onboarding Coordinator"},
         ]
 
         return {
             "success_criteria": success_criteria,
             "milestones": milestones,
             "target_completion_days": 50,
-            "created_at": datetime.now(UTC).isoformat()
+            "created_at": datetime.now(UTC).isoformat(),
         }
 
     def _create_action_items(
-        self,
-        kickoff_analysis: Dict[str, Any],
-        success_plan: Dict[str, Any]
-    ) -> List[Dict[str, str]]:
+        self, kickoff_analysis: dict[str, Any], success_plan: dict[str, Any]
+    ) -> list[dict[str, str]]:
         """Create action items based on kickoff analysis."""
         action_items = []
 
@@ -273,67 +267,81 @@ class KickoffFacilitatorAgent(BaseAgent):
 
         # Status-based actions
         if status == "not_ready":
-            action_items.append({
-                "action": "Schedule kickoff call with key stakeholders",
-                "priority": "high",
-                "owner": "Kickoff Facilitator",
-                "due": "Within 3 days"
-            })
+            action_items.append(
+                {
+                    "action": "Schedule kickoff call with key stakeholders",
+                    "priority": "high",
+                    "owner": "Kickoff Facilitator",
+                    "due": "Within 3 days",
+                }
+            )
 
         if status == "needs_preparation":
-            action_items.append({
-                "action": "Complete pre-kickoff preparation checklist",
-                "priority": "high",
-                "owner": "Kickoff Facilitator",
-                "due": "Before kickoff meeting"
-            })
+            action_items.append(
+                {
+                    "action": "Complete pre-kickoff preparation checklist",
+                    "priority": "high",
+                    "owner": "Kickoff Facilitator",
+                    "due": "Before kickoff meeting",
+                }
+            )
 
         # Gap-based actions
         for gap in gaps:
             if "stakeholder" in gap["gap"].lower():
-                action_items.append({
-                    "action": "Identify and engage executive sponsor",
-                    "priority": "high",
-                    "owner": "Account Executive",
-                    "due": "Before kickoff"
-                })
+                action_items.append(
+                    {
+                        "action": "Identify and engage executive sponsor",
+                        "priority": "high",
+                        "owner": "Account Executive",
+                        "due": "Before kickoff",
+                    }
+                )
             elif "technical" in gap["gap"].lower():
-                action_items.append({
-                    "action": "Connect with IT team and identify technical contacts",
-                    "priority": "high",
-                    "owner": "Solutions Engineer",
-                    "due": "Within 5 days"
-                })
+                action_items.append(
+                    {
+                        "action": "Connect with IT team and identify technical contacts",
+                        "priority": "high",
+                        "owner": "Solutions Engineer",
+                        "due": "Within 5 days",
+                    }
+                )
             elif "goals" in gap["gap"].lower():
-                action_items.append({
-                    "action": "Document business goals and success metrics",
-                    "priority": "critical",
-                    "owner": "Kickoff Facilitator",
-                    "due": "Before training phase"
-                })
+                action_items.append(
+                    {
+                        "action": "Document business goals and success metrics",
+                        "priority": "critical",
+                        "owner": "Kickoff Facilitator",
+                        "due": "Before training phase",
+                    }
+                )
 
         # Standard post-kickoff actions
         if status in ["completed_with_gaps", "excellent"]:
-            action_items.append({
-                "action": "Distribute success plan to all stakeholders",
-                "priority": "medium",
-                "owner": "Kickoff Facilitator",
-                "due": "Within 24 hours"
-            })
-            action_items.append({
-                "action": "Transition to Training Scheduler for next phase",
-                "priority": "medium",
-                "owner": "Onboarding Coordinator",
-                "due": "Immediately"
-            })
+            action_items.append(
+                {
+                    "action": "Distribute success plan to all stakeholders",
+                    "priority": "medium",
+                    "owner": "Kickoff Facilitator",
+                    "due": "Within 24 hours",
+                }
+            )
+            action_items.append(
+                {
+                    "action": "Transition to Training Scheduler for next phase",
+                    "priority": "medium",
+                    "owner": "Onboarding Coordinator",
+                    "due": "Immediately",
+                }
+            )
 
         return action_items[:5]
 
     def _format_kickoff_report(
         self,
-        kickoff_analysis: Dict[str, Any],
-        success_plan: Dict[str, Any],
-        action_items: List[Dict[str, str]]
+        kickoff_analysis: dict[str, Any],
+        success_plan: dict[str, Any],
+        action_items: list[dict[str, str]],
     ) -> str:
         """Format kickoff facilitation report."""
         status = kickoff_analysis["status"]
@@ -343,21 +351,21 @@ class KickoffFacilitatorAgent(BaseAgent):
             "completed_with_gaps": "???",
             "ready": "????",
             "needs_preparation": "??????",
-            "not_ready": "????"
+            "not_ready": "????",
         }
 
-        report = f"""**{status_emoji.get(status, '????')} Kickoff Facilitation Report**
+        report = f"""**{status_emoji.get(status, "????")} Kickoff Facilitation Report**
 
-**Status:** {status.replace('_', ' ').title()}
-**Kickoff Meeting:** {kickoff_analysis['kickoff_meeting_status'].replace('_', ' ').title()}
-**Readiness Score:** {kickoff_analysis['readiness_score']}%
+**Status:** {status.replace("_", " ").title()}
+**Kickoff Meeting:** {kickoff_analysis["kickoff_meeting_status"].replace("_", " ").title()}
+**Readiness Score:** {kickoff_analysis["readiness_score"]}%
 
 **Stakeholder Engagement:**
-- Stakeholders Identified: {kickoff_analysis['stakeholders_count']}
-- Technical Contacts: {kickoff_analysis['technical_contacts_count']}
-- Business Goals Defined: {'Yes' if kickoff_analysis['goals_defined'] else 'No'}
+- Stakeholders Identified: {kickoff_analysis["stakeholders_count"]}
+- Technical Contacts: {kickoff_analysis["technical_contacts_count"]}
+- Business Goals Defined: {"Yes" if kickoff_analysis["goals_defined"] else "No"}
 
-**Readiness Checklist:** {kickoff_analysis['checklist_completion']} items completed
+**Readiness Checklist:** {kickoff_analysis["checklist_completion"]} items completed
 """
 
         # Gaps
@@ -374,12 +382,12 @@ class KickoffFacilitatorAgent(BaseAgent):
         report += f"- Milestones: {len(success_plan['milestones'])}\n"
 
         report += "\n**Key Success Criteria:**\n"
-        for category, criteria in list(success_plan['success_criteria'].items())[:3]:
+        for category, criteria in list(success_plan["success_criteria"].items())[:3]:
             report += f"- {category.replace('_', ' ').title()}: {criteria['target']}\n"
 
         # Milestones
         report += "\n**???? Key Milestones:**\n"
-        for milestone in success_plan['milestones'][:4]:
+        for milestone in success_plan["milestones"][:4]:
             report += f"- Day {milestone['day']}: {milestone['name']} ({milestone['owner']})\n"
 
         # Action Items
@@ -396,6 +404,7 @@ class KickoffFacilitatorAgent(BaseAgent):
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -413,11 +422,8 @@ if __name__ == "__main__":
             "Facilitate kickoff for new customer",
             context={
                 "customer_id": "cust_123",
-                "customer_metadata": {
-                    "plan": "enterprise",
-                    "industry": "fintech"
-                }
-            }
+                "customer_metadata": {"plan": "enterprise", "industry": "fintech"},
+            },
         )
         state1["entities"] = {
             "kickoff_data": {
@@ -431,8 +437,8 @@ if __name__ == "__main__":
                     "technical_contacts_confirmed": True,
                     "goals_documented": True,
                     "current_process_mapped": True,
-                    "timeline_agreed": False
-                }
+                    "timeline_agreed": False,
+                },
             }
         }
 
@@ -449,10 +455,7 @@ if __name__ == "__main__":
 
         state2 = create_initial_state(
             "Assess kickoff readiness",
-            context={
-                "customer_id": "cust_456",
-                "customer_metadata": {"plan": "premium"}
-            }
+            context={"customer_id": "cust_456", "customer_metadata": {"plan": "premium"}},
         )
         state2["entities"] = {
             "kickoff_data": {
@@ -465,8 +468,8 @@ if __name__ == "__main__":
                     "technical_contacts_confirmed": False,
                     "goals_documented": False,
                     "current_process_mapped": False,
-                    "timeline_agreed": False
-                }
+                    "timeline_agreed": False,
+                },
             }
         }
 
