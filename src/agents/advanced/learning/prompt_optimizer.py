@@ -167,6 +167,7 @@ Provide actionable, testable prompt improvements."""
             optimization_state = state.copy()
             optimization_state["user_message"] = analysis_prompt
             optimization_state["performance_summary"] = performance_summary
+            optimization_state["conversation_history"] = []  # Prompt optimization is standalone analysis
 
             llm_response = await self.call_llm(optimization_state)
 
