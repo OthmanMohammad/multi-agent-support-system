@@ -5,14 +5,13 @@ Analyzes customer cohorts, retention curves, and lifetime value (LTV).
 Provides insights into customer behavior patterns by cohort.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta, UTC
-from decimal import Decimal
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("cohort_analyzer", tier="operational", category="analytics")
@@ -35,7 +34,7 @@ class CohortAnalyzerAgent(BaseAgent):
         "product": "Grouped by product/plan tier",
         "geographic": "Grouped by location",
         "industry": "Grouped by industry vertical",
-        "size": "Grouped by company size"
+        "size": "Grouped by company size",
     }
 
     # Retention periods
@@ -48,7 +47,7 @@ class CohortAnalyzerAgent(BaseAgent):
             temperature=0.2,
             max_tokens=1500,
             capabilities=[AgentCapability.DATABASE_WRITE],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -77,7 +76,7 @@ class CohortAnalyzerAgent(BaseAgent):
             "cohort_analysis_details",
             cohort_type=cohort_type,
             cohort_period=cohort_period,
-            include_ltv=include_ltv
+            include_ltv=include_ltv,
         )
 
         # Define cohorts
@@ -101,10 +100,7 @@ class CohortAnalyzerAgent(BaseAgent):
 
         # Generate insights
         insights = self._generate_cohort_insights(
-            cohorts,
-            retention_analysis,
-            ltv_analysis,
-            churn_analysis
+            cohorts, retention_analysis, ltv_analysis, churn_analysis
         )
 
         # Format response
@@ -115,7 +111,7 @@ class CohortAnalyzerAgent(BaseAgent):
             ltv_analysis,
             churn_analysis,
             cohort_comparison,
-            insights
+            insights,
         )
 
         state["agent_response"] = response
@@ -132,16 +128,12 @@ class CohortAnalyzerAgent(BaseAgent):
             "cohort_analysis_completed",
             cohort_type=cohort_type,
             cohorts_analyzed=len(cohorts),
-            insights_generated=len(insights)
+            insights_generated=len(insights),
         )
 
         return state
 
-    def _define_cohorts(
-        self,
-        cohort_type: str,
-        cohort_period: str
-    ) -> List[Dict[str, Any]]:
+    def _define_cohorts(self, cohort_type: str, cohort_period: str) -> list[dict[str, Any]]:
         """
         Define cohorts based on type and period.
 
@@ -162,14 +154,16 @@ class CohortAnalyzerAgent(BaseAgent):
                 cohort_date = current_date - timedelta(days=30 * i)
                 cohort_name = cohort_date.strftime("%Y-%m")
 
-                cohorts.append({
-                    "cohort_id": f"acq_{cohort_name}",
-                    "cohort_name": cohort_name,
-                    "cohort_type": cohort_type,
-                    "customer_count": 450 - (i * 50),  # Mock declining acquisition
-                    "signup_date": cohort_date.strftime("%Y-%m-%d"),
-                    "age_days": 30 * i
-                })
+                cohorts.append(
+                    {
+                        "cohort_id": f"acq_{cohort_name}",
+                        "cohort_name": cohort_name,
+                        "cohort_type": cohort_type,
+                        "customer_count": 450 - (i * 50),  # Mock declining acquisition
+                        "signup_date": cohort_date.strftime("%Y-%m-%d"),
+                        "age_days": 30 * i,
+                    }
+                )
 
             return cohorts
 
@@ -181,22 +175,22 @@ class CohortAnalyzerAgent(BaseAgent):
                     "cohort_name": "Basic Plan",
                     "cohort_type": cohort_type,
                     "customer_count": 1250,
-                    "avg_revenue": 29
+                    "avg_revenue": 29,
                 },
                 {
                     "cohort_id": "product_pro",
                     "cohort_name": "Professional Plan",
                     "cohort_type": cohort_type,
                     "customer_count": 820,
-                    "avg_revenue": 99
+                    "avg_revenue": 99,
                 },
                 {
                     "cohort_id": "product_enterprise",
                     "cohort_name": "Enterprise Plan",
                     "cohort_type": cohort_type,
                     "customer_count": 145,
-                    "avg_revenue": 499
-                }
+                    "avg_revenue": 499,
+                },
             ]
 
         else:
@@ -206,14 +200,11 @@ class CohortAnalyzerAgent(BaseAgent):
                     "cohort_id": "cohort_1",
                     "cohort_name": "Cohort 1",
                     "cohort_type": cohort_type,
-                    "customer_count": 500
+                    "customer_count": 500,
                 }
             ]
 
-    def _analyze_retention(
-        self,
-        cohorts: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def _analyze_retention(self, cohorts: list[dict[str, Any]]) -> dict[str, Any]:
         """
         Analyze retention curves for cohorts.
 
@@ -223,10 +214,7 @@ class CohortAnalyzerAgent(BaseAgent):
         Returns:
             Retention analysis
         """
-        retention_data = {
-            "periods": self.RETENTION_PERIODS,
-            "cohorts": {}
-        }
+        retention_data = {"periods": self.RETENTION_PERIODS, "cohorts": {}}
 
         for cohort in cohorts:
             cohort_id = cohort["cohort_id"]
@@ -242,13 +230,13 @@ class CohortAnalyzerAgent(BaseAgent):
                 retention_rates[period] = {
                     "retention_rate": round(retention_rate * 100, 2),
                     "retained_customers": int(customer_count * retention_rate),
-                    "churned_customers": int(customer_count * (1 - retention_rate))
+                    "churned_customers": int(customer_count * (1 - retention_rate)),
                 }
 
             retention_data["cohorts"][cohort_id] = {
                 "cohort_name": cohort["cohort_name"],
                 "initial_size": customer_count,
-                "retention_by_period": retention_rates
+                "retention_by_period": retention_rates,
             }
 
         # Calculate average retention curve
@@ -264,10 +252,7 @@ class CohortAnalyzerAgent(BaseAgent):
 
         return retention_data
 
-    def _calculate_cohort_ltv(
-        self,
-        cohorts: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def _calculate_cohort_ltv(self, cohorts: list[dict[str, Any]]) -> dict[str, Any]:
         """
         Calculate lifetime value for each cohort.
 
@@ -302,15 +287,14 @@ class CohortAnalyzerAgent(BaseAgent):
                 "avg_lifetime_months": avg_customer_lifetime_months,
                 "cac": avg_acquisition_cost,
                 "ltv_cac_ratio": round(ltv_cac_ratio, 2),
-                "payback_period_months": round(avg_acquisition_cost / avg_revenue_per_month, 1) if avg_revenue_per_month > 0 else 0
+                "payback_period_months": round(avg_acquisition_cost / avg_revenue_per_month, 1)
+                if avg_revenue_per_month > 0
+                else 0,
             }
 
         return ltv_data
 
-    def _analyze_churn_patterns(
-        self,
-        cohorts: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def _analyze_churn_patterns(self, cohorts: list[dict[str, Any]]) -> dict[str, Any]:
         """
         Analyze churn patterns by cohort.
 
@@ -328,6 +312,7 @@ class CohortAnalyzerAgent(BaseAgent):
 
             # Mock churn data
             import random
+
             monthly_churn_rate = random.uniform(2, 8)  # 2-8% monthly churn
             churned_customers = int(customer_count * (monthly_churn_rate / 100))
 
@@ -341,18 +326,18 @@ class CohortAnalyzerAgent(BaseAgent):
                     "lack_of_use": 25,
                     "competitor": 20,
                     "product_fit": 15,
-                    "other": 5
-                }
+                    "other": 5,
+                },
             }
 
         return churn_data
 
     def _compare_cohorts(
         self,
-        cohorts: List[Dict[str, Any]],
-        retention_analysis: Optional[Dict[str, Any]],
-        ltv_analysis: Optional[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        cohorts: list[dict[str, Any]],
+        retention_analysis: dict[str, Any] | None,
+        ltv_analysis: dict[str, Any] | None,
+    ) -> dict[str, Any]:
         """
         Compare cohorts across key metrics.
 
@@ -364,20 +349,14 @@ class CohortAnalyzerAgent(BaseAgent):
         Returns:
             Cohort comparison
         """
-        comparison = {
-            "best_performing": {},
-            "worst_performing": {},
-            "insights": []
-        }
+        comparison = {"best_performing": {}, "worst_performing": {}, "insights": []}
 
         if ltv_analysis:
             # Find highest and lowest LTV cohorts
             ltv_cohorts = ltv_analysis.get("cohorts", {})
             if ltv_cohorts:
                 sorted_by_ltv = sorted(
-                    ltv_cohorts.items(),
-                    key=lambda x: x[1].get("ltv", 0),
-                    reverse=True
+                    ltv_cohorts.items(), key=lambda x: x[1].get("ltv", 0), reverse=True
                 )
 
                 comparison["best_performing"]["ltv"] = sorted_by_ltv[0][1]["cohort_name"]
@@ -390,21 +369,25 @@ class CohortAnalyzerAgent(BaseAgent):
                 sorted_by_retention = sorted(
                     retention_cohorts.items(),
                     key=lambda x: x[1]["retention_by_period"].get(90, {}).get("retention_rate", 0),
-                    reverse=True
+                    reverse=True,
                 )
 
-                comparison["best_performing"]["retention"] = sorted_by_retention[0][1]["cohort_name"]
-                comparison["worst_performing"]["retention"] = sorted_by_retention[-1][1]["cohort_name"]
+                comparison["best_performing"]["retention"] = sorted_by_retention[0][1][
+                    "cohort_name"
+                ]
+                comparison["worst_performing"]["retention"] = sorted_by_retention[-1][1][
+                    "cohort_name"
+                ]
 
         return comparison
 
     def _generate_cohort_insights(
         self,
-        cohorts: List[Dict[str, Any]],
-        retention_analysis: Optional[Dict[str, Any]],
-        ltv_analysis: Optional[Dict[str, Any]],
-        churn_analysis: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        cohorts: list[dict[str, Any]],
+        retention_analysis: dict[str, Any] | None,
+        ltv_analysis: dict[str, Any] | None,
+        churn_analysis: dict[str, Any],
+    ) -> list[dict[str, Any]]:
         """
         Generate insights from cohort analysis.
 
@@ -422,18 +405,17 @@ class CohortAnalyzerAgent(BaseAgent):
         # LTV insights
         if ltv_analysis:
             ltv_cohorts = ltv_analysis.get("cohorts", {})
-            high_ltv_cohorts = [
-                c for c in ltv_cohorts.values()
-                if c.get("ltv_cac_ratio", 0) > 3
-            ]
+            high_ltv_cohorts = [c for c in ltv_cohorts.values() if c.get("ltv_cac_ratio", 0) > 3]
 
             if high_ltv_cohorts:
-                insights.append({
-                    "type": "positive",
-                    "category": "ltv",
-                    "message": f"{len(high_ltv_cohorts)} cohorts have LTV:CAC ratio >3:1 (healthy)",
-                    "priority": "high"
-                })
+                insights.append(
+                    {
+                        "type": "positive",
+                        "category": "ltv",
+                        "message": f"{len(high_ltv_cohorts)} cohorts have LTV:CAC ratio >3:1 (healthy)",
+                        "priority": "high",
+                    }
+                )
 
         # Retention insights
         if retention_analysis:
@@ -441,44 +423,52 @@ class CohortAnalyzerAgent(BaseAgent):
             retention_90d = avg_curve.get(90, 0)
 
             if retention_90d > 75:
-                insights.append({
-                    "type": "positive",
-                    "category": "retention",
-                    "message": f"Strong 90-day retention: {retention_90d}%",
-                    "priority": "high"
-                })
+                insights.append(
+                    {
+                        "type": "positive",
+                        "category": "retention",
+                        "message": f"Strong 90-day retention: {retention_90d}%",
+                        "priority": "high",
+                    }
+                )
             elif retention_90d < 50:
-                insights.append({
-                    "type": "alert",
-                    "category": "retention",
-                    "message": f"Low 90-day retention: {retention_90d}% - needs improvement",
-                    "priority": "critical"
-                })
+                insights.append(
+                    {
+                        "type": "alert",
+                        "category": "retention",
+                        "message": f"Low 90-day retention: {retention_90d}% - needs improvement",
+                        "priority": "critical",
+                    }
+                )
 
         # Churn insights
         churn_cohorts = churn_analysis.get("cohorts", {})
         if churn_cohorts:
-            avg_churn = sum(c.get("monthly_churn_rate", 0) for c in churn_cohorts.values()) / len(churn_cohorts)
+            avg_churn = sum(c.get("monthly_churn_rate", 0) for c in churn_cohorts.values()) / len(
+                churn_cohorts
+            )
 
             if avg_churn > 5:
-                insights.append({
-                    "type": "alert",
-                    "category": "churn",
-                    "message": f"High average monthly churn: {avg_churn:.1f}%",
-                    "priority": "high"
-                })
+                insights.append(
+                    {
+                        "type": "alert",
+                        "category": "churn",
+                        "message": f"High average monthly churn: {avg_churn:.1f}%",
+                        "priority": "high",
+                    }
+                )
 
         return insights
 
     def _format_cohort_report(
         self,
         cohort_type: str,
-        cohorts: List[Dict[str, Any]],
-        retention_analysis: Optional[Dict[str, Any]],
-        ltv_analysis: Optional[Dict[str, Any]],
-        churn_analysis: Dict[str, Any],
-        cohort_comparison: Dict[str, Any],
-        insights: List[Dict[str, Any]]
+        cohorts: list[dict[str, Any]],
+        retention_analysis: dict[str, Any] | None,
+        ltv_analysis: dict[str, Any] | None,
+        churn_analysis: dict[str, Any],
+        cohort_comparison: dict[str, Any],
+        insights: list[dict[str, Any]],
     ) -> str:
         """Format cohort analysis report."""
         report = f"""**Cohort Analysis Report**
@@ -496,7 +486,7 @@ class CohortAnalyzerAgent(BaseAgent):
         # LTV Analysis
         if ltv_analysis:
             report += "\n**Lifetime Value by Cohort:**\n"
-            for cohort_id, ltv_data in list(ltv_analysis.get("cohorts", {}).items())[:5]:
+            for _cohort_id, ltv_data in list(ltv_analysis.get("cohorts", {}).items())[:5]:
                 report += f"- {ltv_data['cohort_name']}: ${ltv_data['ltv']:,.2f} LTV (LTV:CAC {ltv_data['ltv_cac_ratio']:.1f}:1)\n"
 
         # Retention Analysis
@@ -510,7 +500,7 @@ class CohortAnalyzerAgent(BaseAgent):
 
         # Churn Analysis
         report += "\n**Churn Analysis:**\n"
-        for cohort_id, churn_data in list(churn_analysis.get("cohorts", {}).items())[:3]:
+        for _cohort_id, churn_data in list(churn_analysis.get("cohorts", {}).items())[:3]:
             report += f"- {churn_data['cohort_name']}: {churn_data['monthly_churn_rate']:.2f}% monthly churn\n"
 
         # Comparison
@@ -523,7 +513,13 @@ class CohortAnalyzerAgent(BaseAgent):
         if insights:
             report += "\n**Key Insights:**\n"
             for insight in insights:
-                icon = "🔴" if insight.get("type") == "alert" else "✅" if insight.get("type") == "positive" else "ℹ️"
+                icon = (
+                    "🔴"
+                    if insight.get("type") == "alert"
+                    else "✅"
+                    if insight.get("type") == "positive"
+                    else "ℹ️"
+                )
                 report += f"{icon} {insight['message']}\n"
 
         report += f"\n*Analysis completed at {datetime.now(UTC).isoformat()}*"
