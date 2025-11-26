@@ -12,7 +12,7 @@ Tests cover:
 import pytest
 from dataclasses import dataclass
 
-from core.specifications import (
+from src.core.specifications import (
     Specification,
     AndSpecification,
     OrSpecification,
