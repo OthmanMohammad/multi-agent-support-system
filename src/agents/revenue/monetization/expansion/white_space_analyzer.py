@@ -5,13 +5,12 @@ Analyzes untapped potential within accounts to identify expansion white space.
 Maps product fit across company divisions and identifies growth opportunities.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("white_space_analyzer", tier="revenue", category="monetization")
@@ -35,23 +34,23 @@ class WhiteSpaceAnalyzer(BaseAgent):
         "departmental": {
             "description": "Departments not currently using product",
             "opportunity_score_weight": 0.35,
-            "typical_conversion_rate": 0.60
+            "typical_conversion_rate": 0.60,
         },
         "functional": {
             "description": "Functions/roles that would benefit",
             "opportunity_score_weight": 0.25,
-            "typical_conversion_rate": 0.50
+            "typical_conversion_rate": 0.50,
         },
         "geographic": {
             "description": "Locations/regions not deployed",
             "opportunity_score_weight": 0.20,
-            "typical_conversion_rate": 0.55
+            "typical_conversion_rate": 0.55,
         },
         "use_case": {
             "description": "Additional workflows and use cases",
             "opportunity_score_weight": 0.20,
-            "typical_conversion_rate": 0.45
-        }
+            "typical_conversion_rate": 0.45,
+        },
     }
 
     # Department product-fit scoring
@@ -64,30 +63,27 @@ class WhiteSpaceAnalyzer(BaseAgent):
         "operations": {"fit_score": 0.85, "avg_seats": 15, "avg_arr_per_seat": 40},
         "hr": {"fit_score": 0.70, "avg_seats": 8, "avg_arr_per_seat": 35},
         "finance": {"fit_score": 0.65, "avg_seats": 10, "avg_arr_per_seat": 45},
-        "legal": {"fit_score": 0.60, "avg_seats": 5, "avg_arr_per_seat": 50}
+        "legal": {"fit_score": 0.60, "avg_seats": 5, "avg_arr_per_seat": 50},
     }
 
     # Penetration maturity levels
     PENETRATION_LEVELS = {
-        "land": (0, 15),      # 0-15% penetration
+        "land": (0, 15),  # 0-15% penetration
         "emerging": (15, 40),  # 15-40% penetration
-        "growing": (40, 75),   # 40-75% penetration
-        "mature": (75, 100)    # 75-100% penetration
+        "growing": (40, 75),  # 40-75% penetration
+        "mature": (75, 100),  # 75-100% penetration
     }
 
     def __init__(self):
         config = AgentConfig(
             name="white_space_analyzer",
             type=AgentType.SPECIALIST,
-             # Sonnet for strategic analysis
+            # Sonnet for strategic analysis
             temperature=0.3,
             max_tokens=700,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.KB_SEARCH
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.KB_SEARCH],
             kb_category="monetization",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -113,47 +109,30 @@ class WhiteSpaceAnalyzer(BaseAgent):
         coverage_map = self._map_current_coverage(customer_metadata)
 
         # Identify white space
-        white_space = self._identify_white_space(
-            coverage_map,
-            customer_metadata
-        )
+        white_space = self._identify_white_space(coverage_map, customer_metadata)
 
         # Score white space opportunities
-        scored_opportunities = self._score_opportunities(
-            white_space,
-            customer_metadata
-        )
+        scored_opportunities = self._score_opportunities(white_space, customer_metadata)
 
         # Prioritize targets
-        prioritized_targets = self._prioritize_targets(
-            scored_opportunities
-        )
+        prioritized_targets = self._prioritize_targets(scored_opportunities)
 
         # Calculate white space value
         white_space_value = self._calculate_white_space_value(
-            prioritized_targets,
-            customer_metadata
+            prioritized_targets, customer_metadata
         )
 
         # Generate penetration strategy
         penetration_strategy = self._generate_penetration_strategy(
-            prioritized_targets,
-            coverage_map,
-            customer_metadata
+            prioritized_targets, coverage_map, customer_metadata
         )
 
         # Build account map
-        account_map = self._build_account_map(
-            coverage_map,
-            white_space,
-            customer_metadata
-        )
+        account_map = self._build_account_map(coverage_map, white_space, customer_metadata)
 
         # Search KB for white space resources
         kb_results = await self.search_knowledge_base(
-            "white space analysis account mapping expansion",
-            category="monetization",
-            limit=2
+            "white space analysis account mapping expansion", category="monetization", limit=2
         )
         state["kb_results"] = kb_results
 
@@ -167,7 +146,7 @@ class WhiteSpaceAnalyzer(BaseAgent):
             penetration_strategy,
             account_map,
             kb_results,
-            customer_metadata
+            customer_metadata,
         )
 
         # Update state
@@ -184,12 +163,12 @@ class WhiteSpaceAnalyzer(BaseAgent):
         self.logger.info(
             "white_space_analyzer_completed",
             white_space_opportunities=len(prioritized_targets),
-            total_white_space_value=white_space_value.get("total_white_space_arr", 0)
+            total_white_space_value=white_space_value.get("total_white_space_arr", 0),
         )
 
         return state
 
-    def _map_current_coverage(self, customer_metadata: Dict) -> Dict[str, Any]:
+    def _map_current_coverage(self, customer_metadata: dict) -> dict[str, Any]:
         """Map current product coverage across account"""
         current_departments = customer_metadata.get("departments_using_product", [])
         current_locations = customer_metadata.get("locations_deployed", [])
@@ -201,9 +180,13 @@ class WhiteSpaceAnalyzer(BaseAgent):
         total_departments = customer_metadata.get("total_departments", 1)
         total_locations = customer_metadata.get("total_locations", 1)
 
-        dept_penetration = (len(current_departments) / total_departments * 100) if total_departments > 0 else 0
+        dept_penetration = (
+            (len(current_departments) / total_departments * 100) if total_departments > 0 else 0
+        )
         user_penetration = (current_users / total_employees * 100) if total_employees > 0 else 0
-        location_penetration = (len(current_locations) / total_locations * 100) if total_locations > 0 else 0
+        location_penetration = (
+            (len(current_locations) / total_locations * 100) if total_locations > 0 else 0
+        )
 
         return {
             "departments_covered": current_departments,
@@ -216,7 +199,7 @@ class WhiteSpaceAnalyzer(BaseAgent):
             "total_users": total_employees,
             "user_penetration": round(user_penetration, 2),
             "use_cases_active": current_use_cases,
-            "penetration_level": self._determine_penetration_level(user_penetration)
+            "penetration_level": self._determine_penetration_level(user_penetration),
         }
 
     def _determine_penetration_level(self, penetration: float) -> str:
@@ -227,37 +210,34 @@ class WhiteSpaceAnalyzer(BaseAgent):
         return "mature"
 
     def _identify_white_space(
-        self,
-        coverage_map: Dict,
-        customer_metadata: Dict
-    ) -> Dict[str, List[Dict[str, Any]]]:
+        self, coverage_map: dict, customer_metadata: dict
+    ) -> dict[str, list[dict[str, Any]]]:
         """Identify white space across different dimensions"""
-        white_space = {
-            "departmental": [],
-            "geographic": [],
-            "functional": [],
-            "use_case": []
-        }
+        white_space = {"departmental": [], "geographic": [], "functional": [], "use_case": []}
 
         # Departmental white space
         covered_depts = [d.lower() for d in coverage_map["departments_covered"]]
         for dept, fit_data in self.DEPARTMENT_FIT_MATRIX.items():
             if dept not in covered_depts:
-                white_space["departmental"].append({
-                    "department": dept,
-                    "fit_score": fit_data["fit_score"],
-                    "estimated_seats": fit_data["avg_seats"],
-                    "estimated_arr_per_seat": fit_data["avg_arr_per_seat"]
-                })
+                white_space["departmental"].append(
+                    {
+                        "department": dept,
+                        "fit_score": fit_data["fit_score"],
+                        "estimated_seats": fit_data["avg_seats"],
+                        "estimated_arr_per_seat": fit_data["avg_arr_per_seat"],
+                    }
+                )
 
         # Geographic white space
         total_locations = coverage_map["total_locations"]
         covered_locations = len(coverage_map["locations_covered"])
         if covered_locations < total_locations:
-            white_space["geographic"].append({
-                "uncovered_locations": total_locations - covered_locations,
-                "opportunity": "Multi-location rollout"
-            })
+            white_space["geographic"].append(
+                {
+                    "uncovered_locations": total_locations - covered_locations,
+                    "opportunity": "Multi-location rollout",
+                }
+            )
 
         # Use case white space
         potential_use_cases = [
@@ -265,23 +245,20 @@ class WhiteSpaceAnalyzer(BaseAgent):
             "Sales Pipeline Tracking",
             "Project Management",
             "Knowledge Base",
-            "Reporting & Analytics"
+            "Reporting & Analytics",
         ]
         active_use_cases = coverage_map["use_cases_active"]
         for use_case in potential_use_cases:
             if use_case not in active_use_cases:
-                white_space["use_case"].append({
-                    "use_case": use_case,
-                    "opportunity": f"Expand to {use_case}"
-                })
+                white_space["use_case"].append(
+                    {"use_case": use_case, "opportunity": f"Expand to {use_case}"}
+                )
 
         return white_space
 
     def _score_opportunities(
-        self,
-        white_space: Dict,
-        customer_metadata: Dict
-    ) -> List[Dict[str, Any]]:
+        self, white_space: dict, customer_metadata: dict
+    ) -> list[dict[str, Any]]:
         """Score each white space opportunity"""
         scored = []
 
@@ -301,17 +278,18 @@ class WhiteSpaceAnalyzer(BaseAgent):
 
             final_score = base_score * context_multiplier
 
-            scored.append({
-                "category": category,
-                "target": dept_opp["department"],
-                "opportunity_score": round(final_score, 2),
-                "estimated_arr": round(
-                    dept_opp["estimated_seats"] * dept_opp["estimated_arr_per_seat"] * 12,
-                    2
-                ),
-                "estimated_seats": dept_opp["estimated_seats"],
-                "confidence": self.WHITE_SPACE_CATEGORIES[category]["typical_conversion_rate"]
-            })
+            scored.append(
+                {
+                    "category": category,
+                    "target": dept_opp["department"],
+                    "opportunity_score": round(final_score, 2),
+                    "estimated_arr": round(
+                        dept_opp["estimated_seats"] * dept_opp["estimated_arr_per_seat"] * 12, 2
+                    ),
+                    "estimated_seats": dept_opp["estimated_seats"],
+                    "confidence": self.WHITE_SPACE_CATEGORIES[category]["typical_conversion_rate"],
+                }
+            )
 
         # Score geographic opportunities
         for geo_opp in white_space["geographic"]:
@@ -319,40 +297,41 @@ class WhiteSpaceAnalyzer(BaseAgent):
             current_arr = customer_metadata.get("current_arr", 0)
             locations_multiplier = geo_opp["uncovered_locations"]
 
-            scored.append({
-                "category": category,
-                "target": f"{geo_opp['uncovered_locations']} locations",
-                "opportunity_score": 70.0,  # Base score for geographic
-                "estimated_arr": round(current_arr * locations_multiplier * 0.8, 2),
-                "confidence": self.WHITE_SPACE_CATEGORIES[category]["typical_conversion_rate"]
-            })
+            scored.append(
+                {
+                    "category": category,
+                    "target": f"{geo_opp['uncovered_locations']} locations",
+                    "opportunity_score": 70.0,  # Base score for geographic
+                    "estimated_arr": round(current_arr * locations_multiplier * 0.8, 2),
+                    "confidence": self.WHITE_SPACE_CATEGORIES[category]["typical_conversion_rate"],
+                }
+            )
 
         # Score use case opportunities
         for uc_opp in white_space["use_case"]:
             category = "use_case"
             current_arr = customer_metadata.get("current_arr", 0)
 
-            scored.append({
-                "category": category,
-                "target": uc_opp["use_case"],
-                "opportunity_score": 60.0,  # Base score for use cases
-                "estimated_arr": round(current_arr * 0.3, 2),  # 30% of current ARR
-                "confidence": self.WHITE_SPACE_CATEGORIES[category]["typical_conversion_rate"]
-            })
+            scored.append(
+                {
+                    "category": category,
+                    "target": uc_opp["use_case"],
+                    "opportunity_score": 60.0,  # Base score for use cases
+                    "estimated_arr": round(current_arr * 0.3, 2),  # 30% of current ARR
+                    "confidence": self.WHITE_SPACE_CATEGORIES[category]["typical_conversion_rate"],
+                }
+            )
 
         return scored
 
-    def _prioritize_targets(
-        self,
-        opportunities: List[Dict]
-    ) -> List[Dict[str, Any]]:
+    def _prioritize_targets(self, opportunities: list[dict]) -> list[dict[str, Any]]:
         """Prioritize white space targets"""
         # Calculate priority score
         for opp in opportunities:
             priority_score = (
-                opp["opportunity_score"] * 0.5 +
-                (opp["estimated_arr"] / 1000) * 0.3 +  # ARR impact
-                opp["confidence"] * 100 * 0.2  # Confidence
+                opp["opportunity_score"] * 0.5
+                + (opp["estimated_arr"] / 1000) * 0.3  # ARR impact
+                + opp["confidence"] * 100 * 0.2  # Confidence
             )
             opp["priority_score"] = round(priority_score, 2)
 
@@ -360,10 +339,8 @@ class WhiteSpaceAnalyzer(BaseAgent):
         return sorted(opportunities, key=lambda x: x["priority_score"], reverse=True)
 
     def _calculate_white_space_value(
-        self,
-        targets: List[Dict],
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, targets: list[dict], customer_metadata: dict
+    ) -> dict[str, Any]:
         """Calculate total white space opportunity value"""
         total_arr = 0
         weighted_arr = 0
@@ -392,17 +369,16 @@ class WhiteSpaceAnalyzer(BaseAgent):
             "total_white_space_arr": round(total_arr, 2),
             "weighted_white_space_arr": round(weighted_arr, 2),
             "potential_total_arr": round(potential_total_arr, 2),
-            "expansion_multiple": round(potential_total_arr / current_arr, 2) if current_arr > 0 else 0,
+            "expansion_multiple": round(potential_total_arr / current_arr, 2)
+            if current_arr > 0
+            else 0,
             "by_category": by_category,
-            "top_opportunities_count": len(targets)
+            "top_opportunities_count": len(targets),
         }
 
     def _generate_penetration_strategy(
-        self,
-        targets: List[Dict],
-        coverage_map: Dict,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, targets: list[dict], coverage_map: dict, customer_metadata: dict
+    ) -> dict[str, Any]:
         """Generate strategy to penetrate white space"""
         # Get top 3 targets
         top_targets = targets[:3]
@@ -418,8 +394,8 @@ class WhiteSpaceAnalyzer(BaseAgent):
                         f"Identify {target['target']} pain points",
                         "Leverage adjacent department success stories",
                         "Offer pilot with 5-10 users",
-                        "Demonstrate ROI within 30 days"
-                    ]
+                        "Demonstrate ROI within 30 days",
+                    ],
                 }
             elif target["category"] == "geographic":
                 strategy = {
@@ -430,8 +406,8 @@ class WhiteSpaceAnalyzer(BaseAgent):
                         "Replicate successful location setup",
                         "Train local champions",
                         "Provide regional support",
-                        "Phase rollout by location"
-                    ]
+                        "Phase rollout by location",
+                    ],
                 }
             else:
                 strategy = {
@@ -442,8 +418,8 @@ class WhiteSpaceAnalyzer(BaseAgent):
                         "Demo additional capabilities",
                         "Provide use case templates",
                         "Train on new workflows",
-                        "Show quick wins"
-                    ]
+                        "Show quick wins",
+                    ],
                 }
 
             strategies.append(strategy)
@@ -454,16 +430,13 @@ class WhiteSpaceAnalyzer(BaseAgent):
             "success_metrics": [
                 "Increase department penetration by 25%",
                 "Add 50+ new users in 90 days",
-                f"Grow ARR by ${sum(t['estimated_arr'] for t in top_targets[:3]):,.0f}"
-            ]
+                f"Grow ARR by ${sum(t['estimated_arr'] for t in top_targets[:3]):,.0f}",
+            ],
         }
 
     def _build_account_map(
-        self,
-        coverage_map: Dict,
-        white_space: Dict,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, coverage_map: dict, white_space: dict, customer_metadata: dict
+    ) -> dict[str, Any]:
         """Build visual account map"""
         return {
             "company": customer_metadata.get("company", "Customer"),
@@ -473,45 +446,45 @@ class WhiteSpaceAnalyzer(BaseAgent):
             "covered_areas": {
                 "departments": coverage_map["departments_covered"],
                 "locations": coverage_map["locations_covered"],
-                "use_cases": coverage_map["use_cases_active"]
+                "use_cases": coverage_map["use_cases_active"],
             },
             "white_space_areas": {
                 "departments": len(white_space["departmental"]),
                 "locations": len(white_space["geographic"]),
-                "use_cases": len(white_space["use_case"])
-            }
+                "use_cases": len(white_space["use_case"]),
+            },
         }
 
     async def _generate_analysis_response(
         self,
         message: str,
-        coverage_map: Dict,
-        white_space: Dict,
-        targets: List[Dict],
-        white_space_value: Dict,
-        strategy: Dict,
-        account_map: Dict,
-        kb_results: List[Dict],
-        customer_metadata: Dict
+        coverage_map: dict,
+        white_space: dict,
+        targets: list[dict],
+        white_space_value: dict,
+        strategy: dict,
+        account_map: dict,
+        kb_results: list[dict],
+        customer_metadata: dict,
     ) -> str:
         """Generate white space analysis response"""
 
         # Build coverage context
         coverage_context = f"""
 Current Coverage:
-- Department Penetration: {coverage_map['department_penetration']:.0f}%
-- User Penetration: {coverage_map['user_penetration']:.0f}%
-- Location Penetration: {coverage_map['location_penetration']:.0f}%
-- Maturity Level: {coverage_map['penetration_level']}
+- Department Penetration: {coverage_map["department_penetration"]:.0f}%
+- User Penetration: {coverage_map["user_penetration"]:.0f}%
+- Location Penetration: {coverage_map["location_penetration"]:.0f}%
+- Maturity Level: {coverage_map["penetration_level"]}
 """
 
         # Build white space context
         white_space_context = f"""
 White Space Opportunity:
-- Current ARR: ${white_space_value['current_arr']:,.0f}
-- White Space Potential: ${white_space_value['weighted_white_space_arr']:,.0f}
-- Potential Total ARR: ${white_space_value['potential_total_arr']:,.0f}
-- Expansion Multiple: {white_space_value['expansion_multiple']:.1f}x
+- Current ARR: ${white_space_value["current_arr"]:,.0f}
+- White Space Potential: ${white_space_value["weighted_white_space_arr"]:,.0f}
+- Potential Total ARR: ${white_space_value["potential_total_arr"]:,.0f}
+- Expansion Multiple: {white_space_value["expansion_multiple"]:.1f}x
 - Top Opportunities: {len(targets[:5])}
 """
 
@@ -520,7 +493,7 @@ White Space Opportunity:
         if targets:
             targets_context = "\n\nTop White Space Targets:\n"
             for target in targets[:3]:
-                targets_context += f"- {target['target']}: ${target['estimated_arr']:,.0f} potential ({target['confidence']*100:.0f}% confidence)\n"
+                targets_context += f"- {target['target']}: ${target['estimated_arr']:,.0f} potential ({target['confidence'] * 100:.0f}% confidence)\n"
 
         # Build KB context
         kb_context = ""
@@ -531,7 +504,7 @@ White Space Opportunity:
 
         system_prompt = f"""You are a White Space Analyzer identifying untapped potential within accounts.
 
-Customer: {customer_metadata.get('company', 'Customer')}
+Customer: {customer_metadata.get("company", "Customer")}
 {coverage_context}
 {white_space_context}
 
@@ -554,10 +527,10 @@ Tone: Strategic, data-driven, opportunity-focused"""
 {targets_context}
 
 Penetration Strategy:
-{chr(10).join(f"- {s['target']}: {s['approach']}" for s in strategy['strategies'])}
+{chr(10).join(f"- {s['target']}: {s['approach']}" for s in strategy["strategies"])}
 
 Success Metrics:
-{chr(10).join(f'- {metric}' for metric in strategy['success_metrics'])}
+{chr(10).join(f"- {metric}" for metric in strategy["success_metrics"])}
 
 {kb_context}
 
@@ -566,6 +539,6 @@ Generate a comprehensive white space analysis."""
         response = await self.call_llm(
             system_prompt=system_prompt,
             user_message=user_prompt,
-            conversation_history=[]  # White space analysis uses account data
+            conversation_history=[],  # White space analysis uses account data
         )
         return response
