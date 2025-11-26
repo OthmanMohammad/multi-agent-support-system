@@ -5,13 +5,13 @@ Alerts customers approaching or exceeding plan limits to prevent surprise bills.
 Provides proactive notifications with upgrade recommendations.
 """
 
-from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("overage_alert", tier="revenue", category="monetization")
@@ -35,31 +35,27 @@ class OverageAlert(BaseAgent):
         {"level": "warning", "percentage": 80, "priority": "medium"},
         {"level": "urgent", "percentage": 90, "priority": "high"},
         {"level": "critical", "percentage": 100, "priority": "critical"},
-        {"level": "overage", "percentage": 110, "priority": "critical"}
+        {"level": "overage", "percentage": 110, "priority": "critical"},
     ]
 
     # Recommended actions by usage level
     RECOMMENDED_ACTIONS = {
-        "warning": [
-            "Monitor usage closely",
-            "Optimize usage patterns",
-            "Consider upgrading plan"
-        ],
+        "warning": ["Monitor usage closely", "Optimize usage patterns", "Consider upgrading plan"],
         "urgent": [
             "Upgrade plan immediately to avoid overages",
             "Purchase usage add-on",
-            "Optimize usage to stay within limits"
+            "Optimize usage to stay within limits",
         ],
         "critical": [
             "Immediate plan upgrade recommended",
             "Overage charges will apply",
-            "Contact billing team for assistance"
+            "Contact billing team for assistance",
         ],
         "overage": [
             "Upgrade plan to prevent future overages",
             "Review usage optimization opportunities",
-            "Consider annual plan with higher limits"
-        ]
+            "Consider annual plan with higher limits",
+        ],
     }
 
     # Usage optimization tips by metric
@@ -68,41 +64,38 @@ class OverageAlert(BaseAgent):
             "Implement API call caching",
             "Use batch API endpoints",
             "Optimize polling frequency",
-            "Review unnecessary API calls"
+            "Review unnecessary API calls",
         ],
         "storage_gb": [
             "Archive old data",
             "Delete unnecessary files",
             "Compress large files",
-            "Review storage usage policies"
+            "Review storage usage policies",
         ],
         "seats_active": [
             "Remove inactive users",
             "Share accounts where appropriate",
             "Audit user list regularly",
-            "Optimize team structure"
+            "Optimize team structure",
         ],
         "tickets_created": [
             "Consolidate related tickets",
             "Use self-service resources",
             "Batch similar requests",
-            "Optimize ticket creation workflow"
-        ]
+            "Optimize ticket creation workflow",
+        ],
     }
 
     def __init__(self):
         config = AgentConfig(
             name="overage_alert",
             type=AgentType.SPECIALIST,
-             # Fast for real-time alerts
+            # Fast for real-time alerts
             temperature=0.3,
             max_tokens=400,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.KB_SEARCH
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.KB_SEARCH],
             kb_category="monetization",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -126,29 +119,19 @@ class OverageAlert(BaseAgent):
         usage_data = state.get("current_usage", customer_metadata.get("usage_data", {}))
 
         # Check which metrics are approaching or exceeding limits
-        alerts_needed = self._check_usage_thresholds(
-            usage_data,
-            customer_metadata
-        )
+        alerts_needed = self._check_usage_thresholds(usage_data, customer_metadata)
 
         # Predict if overage likely before period end
-        overage_predictions = self._predict_period_end_overages(
-            usage_data,
-            customer_metadata
-        )
+        overage_predictions = self._predict_period_end_overages(usage_data, customer_metadata)
 
         # Calculate potential overage costs
         overage_costs = self._calculate_overage_costs(
-            usage_data,
-            customer_metadata,
-            overage_predictions
+            usage_data, customer_metadata, overage_predictions
         )
 
         # Generate upgrade recommendations
         upgrade_recommendations = self._generate_upgrade_recommendations(
-            alerts_needed,
-            overage_costs,
-            customer_metadata
+            alerts_needed, overage_costs, customer_metadata
         )
 
         # Get optimization tips
@@ -163,9 +146,7 @@ class OverageAlert(BaseAgent):
 
         # Search KB for usage optimization
         kb_results = await self.search_knowledge_base(
-            "usage optimization plan limits",
-            category="monetization",
-            limit=2
+            "usage optimization plan limits", category="monetization", limit=2
         )
         state["kb_results"] = kb_results
 
@@ -180,7 +161,7 @@ class OverageAlert(BaseAgent):
             alert_priority,
             is_repeat_offender,
             kb_results,
-            customer_metadata
+            customer_metadata,
         )
 
         # Update state
@@ -197,22 +178,24 @@ class OverageAlert(BaseAgent):
         # Escalate if critical
         if alert_priority == "critical" or is_repeat_offender:
             state["should_escalate"] = True
-            state["escalation_reason"] = "Critical usage overage" if alert_priority == "critical" else "Repeat overage offender"
+            state["escalation_reason"] = (
+                "Critical usage overage"
+                if alert_priority == "critical"
+                else "Repeat overage offender"
+            )
 
         self.logger.info(
             "overage_alert_completed",
             alerts_count=len(alerts_needed),
             alert_priority=alert_priority,
-            predicted_overages=len(overage_predictions)
+            predicted_overages=len(overage_predictions),
         )
 
         return state
 
     def _check_usage_thresholds(
-        self,
-        usage_data: Dict,
-        customer_metadata: Dict
-    ) -> List[Dict[str, Any]]:
+        self, usage_data: dict, customer_metadata: dict
+    ) -> list[dict[str, Any]]:
         """Check which metrics have crossed alert thresholds"""
         alerts = []
         plan_limits = customer_metadata.get("plan_limits", {})
@@ -221,7 +204,7 @@ class OverageAlert(BaseAgent):
             limit_key = f"{metric}_limit"
             limit = plan_limits.get(limit_key)
 
-            if not limit or limit == float('inf'):
+            if not limit or limit == float("inf"):
                 continue
 
             usage_percentage = (usage_value / limit) * 100 if limit > 0 else 0
@@ -229,25 +212,25 @@ class OverageAlert(BaseAgent):
             # Check against thresholds in reverse order to match highest threshold first
             for threshold in reversed(self.ALERT_THRESHOLDS):
                 if usage_percentage >= threshold["percentage"]:
-                    alerts.append({
-                        "metric": metric,
-                        "current_usage": usage_value,
-                        "limit": limit,
-                        "usage_percentage": round(usage_percentage, 2),
-                        "threshold_level": threshold["level"],
-                        "priority": threshold["priority"],
-                        "remaining": max(0, limit - usage_value),
-                        "overage_amount": max(0, usage_value - limit)
-                    })
+                    alerts.append(
+                        {
+                            "metric": metric,
+                            "current_usage": usage_value,
+                            "limit": limit,
+                            "usage_percentage": round(usage_percentage, 2),
+                            "threshold_level": threshold["level"],
+                            "priority": threshold["priority"],
+                            "remaining": max(0, limit - usage_value),
+                            "overage_amount": max(0, usage_value - limit),
+                        }
+                    )
                     break  # Only trigger highest threshold crossed
 
         return sorted(alerts, key=lambda x: x["usage_percentage"], reverse=True)
 
     def _predict_period_end_overages(
-        self,
-        usage_data: Dict,
-        customer_metadata: Dict
-    ) -> List[Dict[str, Any]]:
+        self, usage_data: dict, customer_metadata: dict
+    ) -> list[dict[str, Any]]:
         """Predict which metrics will exceed limits by period end"""
         predictions = []
         plan_limits = customer_metadata.get("plan_limits", {})
@@ -257,9 +240,11 @@ class OverageAlert(BaseAgent):
             customer_metadata.get("current_period_start", datetime.now().isoformat())
         )
         period_end = datetime.fromisoformat(
-            customer_metadata.get("current_period_end", (datetime.now() + timedelta(days=30)).isoformat())
+            customer_metadata.get(
+                "current_period_end", (datetime.now() + timedelta(days=30)).isoformat()
+            )
         )
-        days_in_period = (period_end - period_start).days
+        (period_end - period_start).days
         days_elapsed = (datetime.now() - period_start).days
         days_remaining = max(0, (period_end - datetime.now()).days)
 
@@ -270,7 +255,7 @@ class OverageAlert(BaseAgent):
             limit_key = f"{metric}_limit"
             limit = plan_limits.get(limit_key)
 
-            if not limit or limit == float('inf'):
+            if not limit or limit == float("inf"):
                 continue
 
             # Project usage to period end based on current rate
@@ -279,31 +264,26 @@ class OverageAlert(BaseAgent):
             projected_percentage = (projected_usage / limit) * 100 if limit > 0 else 0
 
             if projected_usage > limit:
-                predictions.append({
-                    "metric": metric,
-                    "current_usage": usage_value,
-                    "projected_usage": round(projected_usage, 2),
-                    "limit": limit,
-                    "projected_overage": round(projected_usage - limit, 2),
-                    "projected_percentage": round(projected_percentage, 2),
-                    "days_remaining": days_remaining,
-                    "confidence": "high" if days_remaining <= 7 else "medium"
-                })
+                predictions.append(
+                    {
+                        "metric": metric,
+                        "current_usage": usage_value,
+                        "projected_usage": round(projected_usage, 2),
+                        "limit": limit,
+                        "projected_overage": round(projected_usage - limit, 2),
+                        "projected_percentage": round(projected_percentage, 2),
+                        "days_remaining": days_remaining,
+                        "confidence": "high" if days_remaining <= 7 else "medium",
+                    }
+                )
 
         return predictions
 
     def _calculate_overage_costs(
-        self,
-        usage_data: Dict,
-        customer_metadata: Dict,
-        predictions: List[Dict]
-    ) -> Dict[str, Any]:
+        self, usage_data: dict, customer_metadata: dict, predictions: list[dict]
+    ) -> dict[str, Any]:
         """Calculate estimated overage costs"""
-        costs = {
-            "current_overage_cost": 0.0,
-            "projected_overage_cost": 0.0,
-            "by_metric": {}
-        }
+        costs = {"current_overage_cost": 0.0, "projected_overage_cost": 0.0, "by_metric": {}}
 
         overage_pricing = customer_metadata.get("overage_pricing", {})
 
@@ -315,9 +295,7 @@ class OverageAlert(BaseAgent):
                 rate = overage_pricing.get(metric, {}).get("rate", 0)
                 cost = overage_amount * rate
                 costs["current_overage_cost"] += cost
-                costs["by_metric"][metric] = {
-                    "current_cost": round(cost, 2)
-                }
+                costs["by_metric"][metric] = {"current_cost": round(cost, 2)}
 
         # Projected overages
         for prediction in predictions:
@@ -337,11 +315,8 @@ class OverageAlert(BaseAgent):
         return costs
 
     def _generate_upgrade_recommendations(
-        self,
-        alerts: List[Dict],
-        overage_costs: Dict,
-        customer_metadata: Dict
-    ) -> List[Dict[str, Any]]:
+        self, alerts: list[dict], overage_costs: dict, customer_metadata: dict
+    ) -> list[dict[str, Any]]:
         """Generate plan upgrade recommendations"""
         recommendations = []
 
@@ -353,31 +328,34 @@ class OverageAlert(BaseAgent):
 
         # Recommend upgrade if projected overage cost > 50% of upgrade cost
         if overage_costs["projected_overage_cost"] > current_plan_cost * 0.5:
-            recommendations.append({
-                "type": "plan_upgrade",
-                "reason": "Overage costs exceed upgrade economics",
-                "current_plan": current_plan,
-                "recommended_plan": "Next tier up",
-                "potential_savings": round(
-                    overage_costs["projected_overage_cost"] - (current_plan_cost * 0.5),
-                    2
-                ),
-                "priority": "high"
-            })
+            recommendations.append(
+                {
+                    "type": "plan_upgrade",
+                    "reason": "Overage costs exceed upgrade economics",
+                    "current_plan": current_plan,
+                    "recommended_plan": "Next tier up",
+                    "potential_savings": round(
+                        overage_costs["projected_overage_cost"] - (current_plan_cost * 0.5), 2
+                    ),
+                    "priority": "high",
+                }
+            )
 
         # Recommend usage add-ons for specific metrics
         for alert in alerts:
             if alert["threshold_level"] in ["urgent", "critical", "overage"]:
-                recommendations.append({
-                    "type": "usage_add_on",
-                    "metric": alert["metric"],
-                    "reason": f"Approaching/exceeding {alert['metric']} limit",
-                    "priority": alert["priority"]
-                })
+                recommendations.append(
+                    {
+                        "type": "usage_add_on",
+                        "metric": alert["metric"],
+                        "reason": f"Approaching/exceeding {alert['metric']} limit",
+                        "priority": alert["priority"],
+                    }
+                )
 
         return recommendations
 
-    def _get_optimization_tips(self, alerts: List[Dict]) -> List[str]:
+    def _get_optimization_tips(self, alerts: list[dict]) -> list[str]:
         """Get usage optimization tips for alerting metrics"""
         tips = []
         seen_metrics = set()
@@ -390,7 +368,7 @@ class OverageAlert(BaseAgent):
 
         return tips
 
-    def _determine_alert_priority(self, alerts: List[Dict]) -> str:
+    def _determine_alert_priority(self, alerts: list[dict]) -> str:
         """Determine overall alert priority"""
         if not alerts:
             return "none"
@@ -409,15 +387,15 @@ class OverageAlert(BaseAgent):
     async def _generate_alert_response(
         self,
         message: str,
-        alerts: List[Dict],
-        predictions: List[Dict],
-        overage_costs: Dict,
-        recommendations: List[Dict],
-        optimization_tips: List[str],
+        alerts: list[dict],
+        predictions: list[dict],
+        overage_costs: dict,
+        recommendations: list[dict],
+        optimization_tips: list[str],
         alert_priority: str,
         is_repeat_offender: bool,
-        kb_results: List[Dict],
-        customer_metadata: Dict
+        kb_results: list[dict],
+        customer_metadata: dict,
     ) -> str:
         """Generate overage alert response"""
 
@@ -440,8 +418,8 @@ class OverageAlert(BaseAgent):
         if overage_costs["current_overage_cost"] > 0 or overage_costs["projected_overage_cost"] > 0:
             cost_context = f"""
 Overage Costs:
-- Current overage charges: ${overage_costs['current_overage_cost']:.2f}
-- Projected period-end charges: ${overage_costs['projected_overage_cost']:.2f}
+- Current overage charges: ${overage_costs["current_overage_cost"]:.2f}
+- Projected period-end charges: ${overage_costs["projected_overage_cost"]:.2f}
 """
 
         # Build recommendation context
@@ -460,10 +438,10 @@ Overage Costs:
 
         system_prompt = f"""You are an Overage Alert specialist helping customers avoid surprise bills.
 
-Customer: {customer_metadata.get('company', 'Customer')}
-Plan: {customer_metadata.get('plan_name', 'Unknown')}
+Customer: {customer_metadata.get("company", "Customer")}
+Plan: {customer_metadata.get("plan_name", "Unknown")}
 Alert Priority: {alert_priority.upper()}
-Repeat Offender: {'Yes' if is_repeat_offender else 'No'}
+Repeat Offender: {"Yes" if is_repeat_offender else "No"}
 {alert_context}
 {prediction_context}
 {cost_context}
@@ -482,7 +460,7 @@ Your response should:
         user_prompt = f"""Customer message: {message}
 
 Optimization Tips:
-{chr(10).join(f'- {tip}' for tip in optimization_tips[:4])}
+{chr(10).join(f"- {tip}" for tip in optimization_tips[:4])}
 
 {kb_context}
 
@@ -491,6 +469,6 @@ Generate an urgent but helpful overage alert."""
         response = await self.call_llm(
             system_prompt=system_prompt,
             user_message=user_prompt,
-            conversation_history=[]  # Overage alerts are standalone notifications
+            conversation_history=[],  # Overage alerts are standalone notifications
         )
         return response
