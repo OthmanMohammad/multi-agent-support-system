@@ -5,7 +5,7 @@ These tests verify pure validation functions with no side effects.
 No mocking needed - just input/output testing.
 """
 import pytest
-from services.domain.conversation.validators import ConversationValidators
+from src.services.domain.conversation.validators import ConversationValidators
 
 
 class TestValidateMessage:
