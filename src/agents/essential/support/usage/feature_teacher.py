@@ -4,12 +4,12 @@ Feature Teacher Agent - Teaches specific features in-depth.
 Specialist for feature learning with step-by-step guides, examples, and tutorials.
 """
 
-from typing import Dict, Any, Optional, List
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("feature_teacher", tier="essential", category="usage")
@@ -35,12 +35,12 @@ class FeatureTeacher(BaseAgent):
                 "Choose visualization type",
                 "Configure report parameters",
                 "Preview your report",
-                "Save and share"
+                "Save and share",
             ],
             "video_url": "/tutorials/reports",
             "kb_articles": ["kb_reports_101", "kb_custom_dashboards", "kb_advanced_analytics"],
             "difficulty": "intermediate",
-            "time_to_learn": "15 minutes"
+            "time_to_learn": "15 minutes",
         },
         "api": {
             "description": "Use API to integrate with other tools",
@@ -51,12 +51,12 @@ class FeatureTeacher(BaseAgent):
                 "Authenticate requests",
                 "Handle API responses",
                 "Implement error handling",
-                "Monitor API usage"
+                "Monitor API usage",
             ],
             "video_url": "/tutorials/api",
             "kb_articles": ["kb_api_quickstart", "kb_api_auth", "kb_api_best_practices"],
             "difficulty": "advanced",
-            "time_to_learn": "30 minutes"
+            "time_to_learn": "30 minutes",
         },
         "automation": {
             "description": "Automate repetitive tasks",
@@ -67,12 +67,12 @@ class FeatureTeacher(BaseAgent):
                 "Select actions to perform",
                 "Configure action parameters",
                 "Test automation",
-                "Activate and monitor"
+                "Activate and monitor",
             ],
             "video_url": "/tutorials/automation",
             "kb_articles": ["kb_automation_basics", "kb_automation_examples"],
             "difficulty": "intermediate",
-            "time_to_learn": "20 minutes"
+            "time_to_learn": "20 minutes",
         },
         "dashboards": {
             "description": "Build interactive dashboards",
@@ -83,12 +83,12 @@ class FeatureTeacher(BaseAgent):
                 "Configure refresh intervals",
                 "Set up filters",
                 "Share with team",
-                "Enable real-time updates"
+                "Enable real-time updates",
             ],
             "video_url": "/tutorials/dashboards",
             "kb_articles": ["kb_dashboard_guide", "kb_widget_library"],
             "difficulty": "beginner",
-            "time_to_learn": "10 minutes"
+            "time_to_learn": "10 minutes",
         },
         "workflows": {
             "description": "Design custom workflows",
@@ -99,13 +99,13 @@ class FeatureTeacher(BaseAgent):
                 "Add automation rules",
                 "Assign team members",
                 "Test workflow",
-                "Deploy and track"
+                "Deploy and track",
             ],
             "video_url": "/tutorials/workflows",
             "kb_articles": ["kb_workflow_design", "kb_workflow_templates"],
             "difficulty": "intermediate",
-            "time_to_learn": "25 minutes"
-        }
+            "time_to_learn": "25 minutes",
+        },
     }
 
     def __init__(self):
@@ -116,10 +116,10 @@ class FeatureTeacher(BaseAgent):
             capabilities=[
                 AgentCapability.KB_SEARCH,
                 AgentCapability.CONTEXT_AWARE,
-                AgentCapability.MULTI_TURN
+                AgentCapability.MULTI_TURN,
             ],
             kb_category="usage",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -136,29 +136,21 @@ class FeatureTeacher(BaseAgent):
         self.logger.debug(
             "feature_learning_processing_started",
             message_preview=message[:100],
-            turn_count=state["turn_count"]
+            turn_count=state["turn_count"],
         )
 
         # Extract feature to learn and user skill level
         feature_name = self._extract_feature_name(message)
         user_skill_level = customer_context.get("skill_level", "beginner")
 
-        self.logger.info(
-            "feature_detected",
-            feature=feature_name,
-            skill_level=user_skill_level
-        )
+        self.logger.info("feature_detected", feature=feature_name, skill_level=user_skill_level)
 
         # Generate lesson
         if feature_name and feature_name in self.FEATURES:
             lesson = self._create_lesson(feature_name, user_skill_level)
 
             # Search KB for additional resources
-            kb_results = await self.search_knowledge_base(
-                message,
-                category="usage",
-                limit=2
-            )
+            kb_results = await self.search_knowledge_base(message, category="usage", limit=2)
             state["kb_results"] = kb_results
 
             response = lesson["content"]
@@ -166,10 +158,7 @@ class FeatureTeacher(BaseAgent):
             state["tutorial_provided"] = True
 
             if kb_results:
-                self.logger.info(
-                    "feature_kb_articles_found",
-                    count=len(kb_results)
-                )
+                self.logger.info("feature_kb_articles_found", count=len(kb_results))
         else:
             # List available features
             response = self._list_available_features()
@@ -184,16 +173,16 @@ class FeatureTeacher(BaseAgent):
             "feature_teaching_completed",
             feature=feature_name,
             tutorial_provided=state["tutorial_provided"],
-            status="resolved"
+            status="resolved",
         )
 
         return state
 
-    def _extract_feature_name(self, message: str) -> Optional[str]:
+    def _extract_feature_name(self, message: str) -> str | None:
         """Extract feature name from user message"""
         message_lower = message.lower()
 
-        for feature in self.FEATURES.keys():
+        for feature in self.FEATURES:
             if feature in message_lower:
                 return feature
 
@@ -211,24 +200,24 @@ class FeatureTeacher(BaseAgent):
 
         return None
 
-    def _create_lesson(self, feature: str, skill_level: str) -> Dict[str, Any]:
+    def _create_lesson(self, feature: str, skill_level: str) -> dict[str, Any]:
         """Create personalized lesson for feature"""
         feature_info = self.FEATURES[feature]
 
         # Adjust complexity based on skill level
         if skill_level == "beginner":
             content = f"""
-# Learning: {feature_info['description']}
+# Learning: {feature_info["description"]}
 
-**What you'll learn:** {feature_info['description']}
+**What you'll learn:** {feature_info["description"]}
 
-**Difficulty:** {feature_info['difficulty'].title()}
-**Time needed:** {feature_info['time_to_learn']}
+**Difficulty:** {feature_info["difficulty"].title()}
+**Time needed:** {feature_info["time_to_learn"]}
 
 **Step-by-step guide:**
-{self._format_steps(feature_info['steps'], detailed=True)}
+{self._format_steps(feature_info["steps"], detailed=True)}
 
-**📹 Watch video tutorial:** {feature_info['video_url']} ({feature_info['time_to_learn']})
+**📹 Watch video tutorial:** {feature_info["video_url"]} ({feature_info["time_to_learn"]})
 
 **🎯 Practice exercise:**
 Try creating your first {feature} following the steps above. Take your time and don't worry about making mistakes - that's how you learn!
@@ -240,7 +229,7 @@ Try creating your first {feature} following the steps above. Take your time and 
 - Ask for help if you get stuck
 
 **📚 Helpful resources:**
-{self._format_kb_links(feature_info['kb_articles'])}
+{self._format_kb_links(feature_info["kb_articles"])}
 
 **Need help?** Let me know if you need clarification on any step!
 """
@@ -248,13 +237,13 @@ Try creating your first {feature} following the steps above. Take your time and 
             content = f"""
 # {feature.title()} - Intermediate Guide
 
-**Overview:** {feature_info['description']}
+**Overview:** {feature_info["description"]}
 
 **Steps:**
-{self._format_steps(feature_info['steps'], detailed=False)}
+{self._format_steps(feature_info["steps"], detailed=False)}
 
-**⏱️ Time to master:** {feature_info['time_to_learn']}
-**📹 Video:** {feature_info['video_url']}
+**⏱️ Time to master:** {feature_info["time_to_learn"]}
+**📹 Video:** {feature_info["video_url"]}
 
 **🔥 Pro tips:**
 - Use keyboard shortcuts to speed up your workflow (see Shortcuts guide)
@@ -263,7 +252,7 @@ Try creating your first {feature} following the steps above. Take your time and 
 - Bookmark your most-used configurations
 
 **📚 Advanced resources:**
-{self._format_kb_links(feature_info['kb_articles'])}
+{self._format_kb_links(feature_info["kb_articles"])}
 
 **Next level:** Once you master this, explore advanced {feature} features!
 """
@@ -271,10 +260,10 @@ Try creating your first {feature} following the steps above. Take your time and 
             content = f"""
 # {feature.title()} - Advanced Deep Dive
 
-**{feature_info['description']}**
+**{feature_info["description"]}**
 
 **Quick reference:**
-{self._format_steps(feature_info['steps'], detailed=False)}
+{self._format_steps(feature_info["steps"], detailed=False)}
 
 **🚀 Advanced techniques:**
 - API integration for programmatic control
@@ -282,8 +271,8 @@ Try creating your first {feature} following the steps above. Take your time and 
 - Performance optimization strategies
 - Enterprise-scale best practices
 
-**📹 Tutorial:** {feature_info['video_url']}
-**📚 Documentation:** {self._format_kb_links(feature_info['kb_articles'])}
+**📹 Tutorial:** {feature_info["video_url"]}
+**📚 Documentation:** {self._format_kb_links(feature_info["kb_articles"])}
 
 **Architecture considerations:**
 - Scalability patterns
@@ -296,27 +285,33 @@ Try creating your first {feature} following the steps above. Take your time and 
 
         return {"content": content, "feature": feature, "skill_level": skill_level}
 
-    def _format_steps(self, steps: List[str], detailed: bool) -> str:
+    def _format_steps(self, steps: list[str], detailed: bool) -> str:
         """Format steps with optional details"""
         if detailed:
-            return "\n".join([
-                f"{i+1}. **{step}**\n   Take your time with this step. Make sure you understand it before moving on."
-                for i, step in enumerate(steps)
-            ])
+            return "\n".join(
+                [
+                    f"{i + 1}. **{step}**\n   Take your time with this step. Make sure you understand it before moving on."
+                    for i, step in enumerate(steps)
+                ]
+            )
         else:
-            return "\n".join([f"{i+1}. {step}" for i, step in enumerate(steps)])
+            return "\n".join([f"{i + 1}. {step}" for i, step in enumerate(steps)])
 
-    def _format_kb_links(self, articles: List[str]) -> str:
+    def _format_kb_links(self, articles: list[str]) -> str:
         """Format KB article links"""
-        return "\n".join([f"- [{a.replace('kb_', '').replace('_', ' ').title()}](/kb/{a})" for a in articles])
+        return "\n".join(
+            [f"- [{a.replace('kb_', '').replace('_', ' ').title()}](/kb/{a})" for a in articles]
+        )
 
     def _list_available_features(self) -> str:
         """List all available features to learn"""
-        features = "\n".join([
-            f"**{name.title()}** - {info['description']}\n"
-            f"   Difficulty: {info['difficulty'].title()} | Time: {info['time_to_learn']}"
-            for name, info in self.FEATURES.items()
-        ])
+        features = "\n".join(
+            [
+                f"**{name.title()}** - {info['description']}\n"
+                f"   Difficulty: {info['difficulty'].title()} | Time: {info['time_to_learn']}"
+                for name, info in self.FEATURES.items()
+            ]
+        )
 
         return f"""
 I can teach you these features:
@@ -331,6 +326,7 @@ Just tell me which feature interests you, and I'll create a personalized tutoria
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
