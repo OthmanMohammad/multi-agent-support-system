@@ -37,6 +37,15 @@ export function useStreamResponse() {
       onDone?: (fullContent: string) => void,
       onAgentSwitch?: (fromAgent: string, toAgent: string) => void
     ) => {
+      // Cancel any existing stream before starting new one
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      // Create new AbortController for this stream
+      abortControllerRef.current = new AbortController();
+      const signal = abortControllerRef.current.signal;
+
       // Reset state
       setState({
         isStreaming: true,
@@ -87,7 +96,9 @@ export function useStreamResponse() {
               isStreaming: false,
             }));
             onDone?.(fullContent);
-          }
+          },
+          // Abort signal for cancellation
+          signal
         );
       } catch (error) {
         setState((prev) => ({

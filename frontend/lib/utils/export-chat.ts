@@ -271,24 +271,61 @@ function printConversation(
 }
 
 /**
+ * Escape HTML entities to prevent XSS attacks
+ */
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+/**
  * Simple markdown to HTML conversion for print
+ * Escapes HTML first to prevent XSS, then applies markdown formatting
  */
 function markdownToHTML(markdown: string): string {
-  return markdown
-    .replace(/^### (.+)$/gm, "<h3>$1</h3>")
-    .replace(/^## (.+)$/gm, "<h2>$1</h2>")
-    .replace(/^# (.+)$/gm, "<h1>$1</h1>")
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/^- (.+)$/gm, "<li>$1</li>")
-    .replace(/(<li>.*<\/li>\n?)+/g, "<ul>$&</ul>")
-    .replace(/\n\n/g, "</p><p>")
-    .replace(/^(.+)$/gm, (match) => {
-      if (match.startsWith("<")) {
-        return match;
-      }
-      return `<p>${match}</p>`;
-    })
-    .replace(/<p><\/p>/g, "");
+  // First escape HTML entities to prevent XSS
+  const escaped = escapeHtml(markdown);
+
+  return (
+    escaped
+      // Markdown headings (escaped versions)
+      .replace(/^### (.+)$/gm, "<h3>$1</h3>")
+      .replace(/^## (.+)$/gm, "<h2>$1</h2>")
+      .replace(/^# (.+)$/gm, "<h1>$1</h1>")
+      // Bold text (uses ** which are safe after escaping)
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      // List items
+      .replace(/^- (.+)$/gm, "<li>$1</li>")
+      .replace(/(&lt;li&gt;.*&lt;\/li&gt;\n?)+/g, (match) => {
+        // Convert our escaped li tags back
+        const converted = match
+          .replace(/&lt;li&gt;/g, "<li>")
+          .replace(/&lt;\/li&gt;/g, "</li>");
+        return `<ul>${converted}</ul>`;
+      })
+      // Fix our own tags that got escaped
+      .replace(/&lt;h([123])&gt;/g, "<h$1>")
+      .replace(/&lt;\/h([123])&gt;/g, "</h$1>")
+      .replace(/&lt;strong&gt;/g, "<strong>")
+      .replace(/&lt;\/strong&gt;/g, "</strong>")
+      .replace(/&lt;li&gt;/g, "<li>")
+      .replace(/&lt;\/li&gt;/g, "</li>")
+      .replace(/&lt;ul&gt;/g, "<ul>")
+      .replace(/&lt;\/ul&gt;/g, "</ul>")
+      // Paragraphs
+      .replace(/\n\n/g, "</p><p>")
+      .replace(/^(.+)$/gm, (match) => {
+        if (match.startsWith("<")) {
+          return match;
+        }
+        return `<p>${match}</p>`;
+      })
+      .replace(/<p><\/p>/g, "")
+  );
 }
 
 /**

@@ -123,8 +123,11 @@ export const conversationsAPI = {
     message: string,
     onChunk: (event: StreamEvent) => void,
     onError?: (error: Error) => void,
-    onComplete?: () => void
+    onComplete?: () => void,
+    signal?: AbortSignal
   ): Promise<void> {
+    let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+
     try {
       const baseURL = apiClient.getRawClient().defaults.baseURL;
       const token =
@@ -141,6 +144,7 @@ export const conversationsAPI = {
             ...(token && { Authorization: `Bearer ${token}` }),
           },
           body: JSON.stringify({ message }),
+          signal: signal ?? null, // Pass abort signal to fetch (convert undefined to null)
         }
       );
 
@@ -153,7 +157,7 @@ export const conversationsAPI = {
       }
 
       // Read SSE stream
-      const reader = response.body.getReader();
+      reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
 
@@ -199,7 +203,20 @@ export const conversationsAPI = {
         }
       }
     } catch (error) {
+      // Don't report abort errors as they're intentional
+      if (error instanceof Error && error.name === "AbortError") {
+        return;
+      }
       onError?.(error as Error);
+    } finally {
+      // Always release the reader to prevent memory leaks
+      if (reader) {
+        try {
+          reader.releaseLock();
+        } catch {
+          // Reader may already be released, ignore
+        }
+      }
     }
   },
 

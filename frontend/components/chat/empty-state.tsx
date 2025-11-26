@@ -3,6 +3,7 @@ import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useConversations } from "@/lib/hooks/useConversations";
 import { useChatStore } from "@/stores/chat-store";
+import { toast } from "@/lib/utils/toast";
 
 /**
  * Empty State Component
@@ -22,6 +23,10 @@ export function EmptyState(): JSX.Element {
       }
     } catch (error) {
       console.error("Failed to create conversation:", error);
+      toast.error("Failed to create conversation", {
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+      });
     }
   };
 
