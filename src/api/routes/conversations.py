@@ -3,16 +3,17 @@ Conversation routes - HTTP endpoints for conversations
 
 All endpoints require authentication via JWT token or API key.
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
-from uuid import UUID
-from typing import Optional, List
 
-from src.api.models import ChatRequest, ChatResponse, EscalateRequest
-from src.database.schemas.conversation import ConversationWithMessages, ConversationInDB
-from src.database.models.user import User, UserRole
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+
 from src.api.dependencies import get_conversation_application_service
 from src.api.dependencies.auth_dependencies import get_current_user_or_api_key
 from src.api.error_handlers import map_error_to_http
+from src.api.models import ChatRequest, ChatResponse, EscalateRequest
+from src.database.models.user import User, UserRole
+from src.database.schemas.conversation import ConversationInDB, ConversationWithMessages
 from src.services.application.conversation_service import ConversationApplicationService
 from src.utils.logging.setup import get_logger
 
@@ -21,9 +22,7 @@ logger = get_logger(__name__)
 
 
 async def verify_conversation_access(
-    conversation_id: UUID,
-    current_user: User,
-    service: ConversationApplicationService
+    conversation_id: UUID, current_user: User, service: ConversationApplicationService
 ) -> None:
     """
     Verify that the current user has access to the specified conversation.
@@ -55,11 +54,10 @@ async def verify_conversation_access(
                 "conversation_access_denied",
                 conversation_id=str(conversation_id),
                 user_email=current_user.email,
-                customer_email=customer_email
+                customer_email=customer_email,
             )
             raise HTTPException(
-                status_code=403,
-                detail="You don't have permission to access this conversation"
+                status_code=403, detail="You don't have permission to access this conversation"
             )
 
 
@@ -67,25 +65,24 @@ async def verify_conversation_access(
 async def create_conversation(
     request: ChatRequest,
     current_user: User = Depends(get_current_user_or_api_key),
-    service: ConversationApplicationService = Depends(get_conversation_application_service)
+    service: ConversationApplicationService = Depends(get_conversation_application_service),
 ):
     """Create new conversation with initial message
 
     Requires authentication via JWT token or API key.
     """
     # Use customer_email if provided, otherwise use authenticated user's email
-    customer_email = getattr(request, 'customer_email', None) or current_user.email
+    customer_email = getattr(request, "customer_email", None) or current_user.email
 
     logger.info(
         "create_conversation_endpoint_called",
         customer_email=customer_email,
         user_id=str(current_user.id),
-        message_length=len(request.message)
+        message_length=len(request.message),
     )
 
     result = await service.create_conversation(
-        customer_email=customer_email,
-        message=request.message
+        customer_email=customer_email, message=request.message
     )
 
     if result.is_failure:
@@ -93,7 +90,7 @@ async def create_conversation(
             "create_conversation_failed",
             customer_email=customer_email,
             user_id=str(current_user.id),
-            error_type=type(result.error).__name__
+            error_type=type(result.error).__name__,
         )
         raise map_error_to_http(result.error)
 
@@ -102,7 +99,7 @@ async def create_conversation(
         conversation_id=result.value.get("conversation_id"),
         customer_email=customer_email,
         user_id=str(current_user.id),
-        status=result.value.get("status")
+        status=result.value.get("status"),
     )
 
     return ChatResponse(**result.value)
@@ -112,12 +109,12 @@ async def create_conversation(
     "/conversations/{conversation_id}",
     response_model=ConversationWithMessages,
     summary="Get conversation details",
-    description="Retrieve a conversation with all its messages and metadata. Requires authentication."
+    description="Retrieve a conversation with all its messages and metadata. Requires authentication.",
 )
 async def get_conversation(
     conversation_id: UUID,
     current_user: User = Depends(get_current_user_or_api_key),
-    service: ConversationApplicationService = Depends(get_conversation_application_service)
+    service: ConversationApplicationService = Depends(get_conversation_application_service),
 ) -> ConversationWithMessages:
     """Get conversation details with messages
 
@@ -133,7 +130,7 @@ async def get_conversation(
     logger.debug(
         "get_conversation_endpoint_called",
         conversation_id=str(conversation_id),
-        user_id=str(current_user.id)
+        user_id=str(current_user.id),
     )
 
     # Authorization check
@@ -146,7 +143,7 @@ async def get_conversation(
             "get_conversation_failed",
             conversation_id=str(conversation_id),
             user_id=str(current_user.id),
-            error_type=type(result.error).__name__
+            error_type=type(result.error).__name__,
         )
         raise map_error_to_http(result.error)
 
@@ -154,7 +151,7 @@ async def get_conversation(
         "get_conversation_success",
         conversation_id=str(conversation_id),
         user_id=str(current_user.id),
-        message_count=len(result.value.messages)
+        message_count=len(result.value.messages),
     )
 
     # Service returns ConversationWithMessages schema object
@@ -167,7 +164,7 @@ async def add_message(
     conversation_id: UUID,
     request: ChatRequest,
     current_user: User = Depends(get_current_user_or_api_key),
-    service: ConversationApplicationService = Depends(get_conversation_application_service)
+    service: ConversationApplicationService = Depends(get_conversation_application_service),
 ):
     """Add message to existing conversation
 
@@ -177,23 +174,20 @@ async def add_message(
         "add_message_endpoint_called",
         conversation_id=str(conversation_id),
         user_id=str(current_user.id),
-        message_length=len(request.message)
+        message_length=len(request.message),
     )
 
     # Authorization check
     await verify_conversation_access(conversation_id, current_user, service)
 
-    result = await service.add_message(
-        conversation_id=conversation_id,
-        message=request.message
-    )
+    result = await service.add_message(conversation_id=conversation_id, message=request.message)
 
     if result.is_failure:
         logger.warning(
             "add_message_failed",
             conversation_id=str(conversation_id),
             user_id=str(current_user.id),
-            error_type=type(result.error).__name__
+            error_type=type(result.error).__name__,
         )
         raise map_error_to_http(result.error)
 
@@ -201,7 +195,7 @@ async def add_message(
         "add_message_success",
         conversation_id=str(conversation_id),
         user_id=str(current_user.id),
-        status=result.value.get("status")
+        status=result.value.get("status"),
     )
 
     return ChatResponse(**result.value)
@@ -211,7 +205,7 @@ async def add_message(
 async def resolve_conversation(
     conversation_id: UUID,
     current_user: User = Depends(get_current_user_or_api_key),
-    service: ConversationApplicationService = Depends(get_conversation_application_service)
+    service: ConversationApplicationService = Depends(get_conversation_application_service),
 ):
     """Mark conversation as resolved
 
@@ -220,7 +214,7 @@ async def resolve_conversation(
     logger.info(
         "resolve_conversation_endpoint_called",
         conversation_id=str(conversation_id),
-        user_id=str(current_user.id)
+        user_id=str(current_user.id),
     )
 
     # Authorization check
@@ -233,14 +227,14 @@ async def resolve_conversation(
             "resolve_conversation_failed",
             conversation_id=str(conversation_id),
             user_id=str(current_user.id),
-            error_type=type(result.error).__name__
+            error_type=type(result.error).__name__,
         )
         raise map_error_to_http(result.error)
 
     logger.info(
         "resolve_conversation_success",
         conversation_id=str(conversation_id),
-        user_id=str(current_user.id)
+        user_id=str(current_user.id),
     )
 
     return {"status": "resolved", "conversation_id": str(conversation_id)}
@@ -250,7 +244,7 @@ async def resolve_conversation(
 async def reopen_conversation(
     conversation_id: UUID,
     current_user: User = Depends(get_current_user_or_api_key),
-    service: ConversationApplicationService = Depends(get_conversation_application_service)
+    service: ConversationApplicationService = Depends(get_conversation_application_service),
 ):
     """Reopen a resolved or escalated conversation
 
@@ -259,7 +253,7 @@ async def reopen_conversation(
     logger.info(
         "reopen_conversation_endpoint_called",
         conversation_id=str(conversation_id),
-        user_id=str(current_user.id)
+        user_id=str(current_user.id),
     )
 
     # Authorization check
@@ -272,14 +266,14 @@ async def reopen_conversation(
             "reopen_conversation_failed",
             conversation_id=str(conversation_id),
             user_id=str(current_user.id),
-            error_type=type(result.error).__name__
+            error_type=type(result.error).__name__,
         )
         raise map_error_to_http(result.error)
 
     logger.info(
         "reopen_conversation_success",
         conversation_id=str(conversation_id),
-        user_id=str(current_user.id)
+        user_id=str(current_user.id),
     )
 
     return {"status": "active", "conversation_id": str(conversation_id)}
@@ -290,7 +284,7 @@ async def escalate_conversation(
     conversation_id: UUID,
     request: EscalateRequest,
     current_user: User = Depends(get_current_user_or_api_key),
-    service: ConversationApplicationService = Depends(get_conversation_application_service)
+    service: ConversationApplicationService = Depends(get_conversation_application_service),
 ):
     """Escalate conversation to human
 
@@ -300,7 +294,7 @@ async def escalate_conversation(
         "escalate_conversation_endpoint_called",
         conversation_id=str(conversation_id),
         user_id=str(current_user.id),
-        reason=request.reason
+        reason=request.reason,
     )
 
     # Authorization check
@@ -314,7 +308,7 @@ async def escalate_conversation(
             conversation_id=str(conversation_id),
             user_id=str(current_user.id),
             reason=request.reason,
-            error_type=type(result.error).__name__
+            error_type=type(result.error).__name__,
         )
         raise map_error_to_http(result.error)
 
@@ -322,7 +316,7 @@ async def escalate_conversation(
         "escalate_conversation_success",
         conversation_id=str(conversation_id),
         user_id=str(current_user.id),
-        reason=request.reason
+        reason=request.reason,
     )
 
     return {"status": "escalated", "conversation_id": str(conversation_id)}
@@ -330,17 +324,17 @@ async def escalate_conversation(
 
 @router.get(
     "/conversations",
-    response_model=List[ConversationInDB],
+    response_model=list[ConversationInDB],
     summary="List conversations",
-    description="Retrieve a list of conversations with optional filtering. Requires authentication."
+    description="Retrieve a list of conversations with optional filtering. Requires authentication.",
 )
 async def list_conversations(
-    customer_email: Optional[str] = Query(None, description="Filter by customer email"),
-    status: Optional[str] = Query(None, description="Filter by status"),
+    customer_email: str | None = Query(None, description="Filter by customer email"),
+    status: str | None = Query(None, description="Filter by status"),
     limit: int = Query(50, ge=1, le=100, description="Max results"),
     current_user: User = Depends(get_current_user_or_api_key),
-    service: ConversationApplicationService = Depends(get_conversation_application_service)
-) -> List[ConversationInDB]:
+    service: ConversationApplicationService = Depends(get_conversation_application_service),
+) -> list[ConversationInDB]:
     """List conversations with optional filters
 
     Requires authentication via JWT token or API key.
@@ -374,14 +368,14 @@ async def list_conversations(
         status=status,
         limit=limit,
         user_id=str(current_user.id),
-        user_role=current_user.role.value if hasattr(current_user.role, 'value') else str(current_user.role),
-        is_admin=is_admin
+        user_role=current_user.role.value
+        if hasattr(current_user.role, "value")
+        else str(current_user.role),
+        is_admin=is_admin,
     )
 
     result = await service.list_conversations(
-        customer_email=effective_customer_email,
-        status=status,
-        limit=limit
+        customer_email=effective_customer_email, status=status, limit=limit
     )
 
     if result.is_failure:
@@ -389,7 +383,7 @@ async def list_conversations(
             "list_conversations_failed",
             customer_email=customer_email,
             user_id=str(current_user.id),
-            error_type=type(result.error).__name__
+            error_type=type(result.error).__name__,
         )
         raise map_error_to_http(result.error)
 
@@ -398,7 +392,7 @@ async def list_conversations(
         count=len(result.value),
         customer_email=customer_email,
         status=status,
-        user_id=str(current_user.id)
+        user_id=str(current_user.id),
     )
 
     # Service returns list of ConversationInDB schema objects
@@ -410,7 +404,7 @@ async def list_conversations(
 async def delete_conversation(
     conversation_id: UUID,
     current_user: User = Depends(get_current_user_or_api_key),
-    service: ConversationApplicationService = Depends(get_conversation_application_service)
+    service: ConversationApplicationService = Depends(get_conversation_application_service),
 ):
     """Delete a conversation and all its messages
 
@@ -419,7 +413,7 @@ async def delete_conversation(
     logger.warning(
         "delete_conversation_endpoint_called",
         conversation_id=str(conversation_id),
-        user_id=str(current_user.id)
+        user_id=str(current_user.id),
     )
 
     # Authorization check
@@ -432,14 +426,14 @@ async def delete_conversation(
             "delete_conversation_failed",
             conversation_id=str(conversation_id),
             user_id=str(current_user.id),
-            error_type=type(result.error).__name__
+            error_type=type(result.error).__name__,
         )
         raise map_error_to_http(result.error)
 
     logger.info(
         "delete_conversation_success",
         conversation_id=str(conversation_id),
-        user_id=str(current_user.id)
+        user_id=str(current_user.id),
     )
 
     return {"status": "deleted", "conversation_id": str(conversation_id)}
