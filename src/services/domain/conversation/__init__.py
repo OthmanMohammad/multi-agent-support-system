@@ -3,51 +3,51 @@ Conversation domain services package
 """
 
 from src.services.domain.conversation.domain_service import ConversationDomainService
-from src.services.domain.conversation.specifications import (
-    ConversationIsActive,
-    ConversationIsResolved,
-    ConversationIsEscalated,
-    HasMinimumMessages,
-    HasAgentInteraction,
-    HasValidSentiment,
-    IsWithinMaxTurns,
-    CanResolveConversation,
-    CanEscalateConversation,
-    CanReopenConversation,
-)
 from src.services.domain.conversation.events import (
     ConversationCreatedEvent,
-    ConversationResolvedEvent,
     ConversationEscalatedEvent,
     ConversationReopenedEvent,
-    MessageAddedEvent,
+    ConversationResolvedEvent,
     LowConfidenceDetectedEvent,
+    MessageAddedEvent,
     NegativeSentimentDetectedEvent,
+)
+from src.services.domain.conversation.specifications import (
+    CanEscalateConversation,
+    CanReopenConversation,
+    CanResolveConversation,
+    ConversationIsActive,
+    ConversationIsEscalated,
+    ConversationIsResolved,
+    HasAgentInteraction,
+    HasMinimumMessages,
+    HasValidSentiment,
+    IsWithinMaxTurns,
 )
 from src.services.domain.conversation.validators import ConversationValidators
 
 __all__ = [
-    # Service
-    "ConversationDomainService",
-    # Specifications
-    "ConversationIsActive",
-    "ConversationIsResolved",
-    "ConversationIsEscalated",
-    "HasMinimumMessages",
-    "HasAgentInteraction",
-    "HasValidSentiment",
-    "IsWithinMaxTurns",
-    "CanResolveConversation",
     "CanEscalateConversation",
     "CanReopenConversation",
+    "CanResolveConversation",
     # Events
     "ConversationCreatedEvent",
-    "ConversationResolvedEvent",
+    # Service
+    "ConversationDomainService",
     "ConversationEscalatedEvent",
+    # Specifications
+    "ConversationIsActive",
+    "ConversationIsEscalated",
+    "ConversationIsResolved",
     "ConversationReopenedEvent",
-    "MessageAddedEvent",
-    "LowConfidenceDetectedEvent",
-    "NegativeSentimentDetectedEvent",
+    "ConversationResolvedEvent",
     # Validators
     "ConversationValidators",
+    "HasAgentInteraction",
+    "HasMinimumMessages",
+    "HasValidSentiment",
+    "IsWithinMaxTurns",
+    "LowConfidenceDetectedEvent",
+    "MessageAddedEvent",
+    "NegativeSentimentDetectedEvent",
 ]
