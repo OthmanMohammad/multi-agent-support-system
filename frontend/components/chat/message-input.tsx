@@ -72,9 +72,6 @@ export function MessageInput({
   // Zustand store
   const addMessage = useChatStore((state) => state.addMessage);
   const setIsStreaming = useChatStore((state) => state.setIsStreaming);
-  const appendToStreamingMessage = useChatStore(
-    (state) => state.appendToStreamingMessage
-  );
   const clearStreamingMessage = useChatStore(
     (state) => state.clearStreamingMessage
   );
