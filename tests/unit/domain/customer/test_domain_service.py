@@ -7,7 +7,7 @@ All data is passed as parameters - no mocking needed.
 import pytest
 from uuid import uuid4
 
-from services.domain.customer.domain_service import CustomerDomainService
+from src.services.domain.customer.domain_service import CustomerDomainService
 
 
 class TestValidateEmail:
