@@ -6,22 +6,20 @@ including advanced capabilities for collaboration, context enrichment,
 and knowledge base integration.
 """
 
-from typing import Dict, Any, Optional, List
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from anthropic import Anthropic
-import structlog
+from typing import Any
 
-from src.core.config import get_settings
-from src.workflow.state import AgentState
-from src.agents.base.agent_types import AgentType, AgentCapability
+import structlog
+from anthropic import Anthropic
+
+from src.agents.base.agent_types import AgentCapability, AgentType
 from src.agents.base.exceptions import (
-    AgentError,
-    AgentProcessingError,
     AgentLLMError,
-    AgentKnowledgeBaseError
 )
+from src.core.config import get_settings
 from src.llm.client import llm_client
+from src.workflow.state import AgentState
 
 logger = structlog.get_logger(__name__)
 
@@ -43,16 +41,17 @@ class AgentConfig:
         tier: Agent tier (essential, revenue, operational, advanced)
         role: Specific role within the system
     """
+
     name: str
     type: AgentType
     model: str = "claude-3-haiku-20240307"
     temperature: float = 0.3
     max_tokens: int = 1000
-    capabilities: List[AgentCapability] = field(default_factory=list)
+    capabilities: list[AgentCapability] = field(default_factory=list)
     system_prompt_template: str = ""
-    kb_category: Optional[str] = None
+    kb_category: str | None = None
     tier: str = "essential"
-    role: Optional[str] = None
+    role: str | None = None
 
 
 class BaseAgent(ABC):
@@ -73,9 +72,9 @@ class BaseAgent(ABC):
     def __init__(
         self,
         config: AgentConfig,
-        anthropic_client: Optional[Anthropic] = None,
-        kb_service: Optional[Any] = None,
-        context_service: Optional[Any] = None
+        anthropic_client: Anthropic | None = None,
+        kb_service: Any | None = None,
+        context_service: Any | None = None,
     ):
         """
         Initialize base agent.
@@ -111,7 +110,7 @@ class BaseAgent(ABC):
         self.logger.info(
             "agent_initialized",
             model=config.model,
-            capabilities=[c.value for c in config.capabilities]
+            capabilities=[c.value for c in config.capabilities],
         )
 
     @abstractmethod
@@ -136,9 +135,9 @@ class BaseAgent(ABC):
         self,
         system_prompt: str,
         user_message: str,
-        temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None,
-        conversation_history: Optional[List[Dict[str, Any]]] = None
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+        conversation_history: list[dict[str, Any]] | None = None,
     ) -> str:
         """
         Call LLM via unified client with error handling and logging.
@@ -176,12 +175,17 @@ class BaseAgent(ABC):
             if conversation_history and len(conversation_history) > 0:
                 # Build conversation context string for the system prompt
                 history_text = self._format_conversation_history(conversation_history)
-                system_context = f"{system_prompt}\n\n## Previous Conversation History:\n{history_text}"
+                system_context = (
+                    f"{system_prompt}\n\n## Previous Conversation History:\n{history_text}"
+                )
 
             # Format as single user message with system context
             # (LiteLLM/Anthropic work best with this format)
             messages = [
-                {"role": "user", "content": f"{system_context}\n\n## Current Message:\n{user_message}"}
+                {
+                    "role": "user",
+                    "content": f"{system_context}\n\n## Current Message:\n{user_message}",
+                }
             ]
 
             # Call unified LLM client (automatically uses current backend)
@@ -198,21 +202,15 @@ class BaseAgent(ABC):
             return content
 
         except Exception as e:
-            self.logger.error(
-                "llm_call_failed",
-                error=str(e),
-                error_type=type(e).__name__
-            )
+            self.logger.error("llm_call_failed", error=str(e), error_type=type(e).__name__)
             raise AgentLLMError(
-                message=f"LLM call failed: {str(e)}",
+                message=f"LLM call failed: {e!s}",
                 agent_name=self.config.name,
-                details={"error_type": type(e).__name__}
+                details={"error_type": type(e).__name__},
             ) from e
 
     def _format_conversation_history(
-        self,
-        history: List[Dict[str, Any]],
-        max_messages: int = 10
+        self, history: list[dict[str, Any]], max_messages: int = 10
     ) -> str:
         """
         Format conversation history for inclusion in LLM prompt.
@@ -252,7 +250,7 @@ class BaseAgent(ABC):
 
         return "\n\n".join(formatted_parts)
 
-    def get_conversation_context(self, state: AgentState) -> List[Dict[str, Any]]:
+    def get_conversation_context(self, state: AgentState) -> list[dict[str, Any]]:
         """
         Extract conversation history from agent state for LLM context.
 
@@ -270,20 +268,19 @@ class BaseAgent(ABC):
         # Convert Message TypedDicts to plain dicts
         history = []
         for msg in messages[:-1]:  # Exclude current message (it's handled separately)
-            history.append({
-                "role": msg.get("role", "user"),
-                "content": msg.get("content", ""),
-                "agent_name": msg.get("agent_name")
-            })
+            history.append(
+                {
+                    "role": msg.get("role", "user"),
+                    "content": msg.get("content", ""),
+                    "agent_name": msg.get("agent_name"),
+                }
+            )
 
         return history
 
     async def search_knowledge_base(
-        self,
-        query: str,
-        category: Optional[str] = None,
-        limit: int = 3
-    ) -> List[Dict[str, Any]]:
+        self, query: str, category: str | None = None, limit: int = 3
+    ) -> list[dict[str, Any]]:
         """
         Search knowledge base for relevant articles.
 
@@ -300,10 +297,7 @@ class BaseAgent(ABC):
         """
         # Check if capability is enabled
         if AgentCapability.KB_SEARCH not in self.config.capabilities:
-            self.logger.warning(
-                "kb_search_not_enabled",
-                agent=self.config.name
-            )
+            self.logger.warning("kb_search_not_enabled", agent=self.config.name)
             return []
 
         # Check if KB service is available
@@ -312,53 +306,38 @@ class BaseAgent(ABC):
             # Try using the legacy search_articles function
             try:
                 from src.knowledge_base import search_articles
+
                 category = category or self.config.kb_category
                 results = search_articles(query=query, category=category, limit=limit)
                 self.logger.info(
                     "kb_search_success_legacy",
                     query=query,
                     category=category,
-                    results_count=len(results)
+                    results_count=len(results),
                 )
                 return results
             except Exception as e:
-                self.logger.error(
-                    "kb_search_failed_legacy",
-                    error=str(e)
-                )
+                self.logger.error("kb_search_failed_legacy", error=str(e))
                 return []
 
         try:
             category = category or self.config.kb_category
-            results = await self.kb_service.search(
-                query=query,
-                category=category,
-                limit=limit
-            )
+            results = await self.kb_service.search(query=query, category=category, limit=limit)
 
             self.logger.info(
-                "kb_search_success",
-                query=query,
-                category=category,
-                results_count=len(results)
+                "kb_search_success", query=query, category=category, results_count=len(results)
             )
 
             return results
 
         except Exception as e:
-            self.logger.error(
-                "kb_search_failed",
-                error=str(e),
-                error_type=type(e).__name__
-            )
+            self.logger.error("kb_search_failed", error=str(e), error_type=type(e).__name__)
             # Don't raise - just return empty results
             return []
 
     async def get_enriched_context(
-        self,
-        customer_id: str,
-        conversation_id: Optional[str] = None
-    ) -> Optional[Any]:
+        self, customer_id: str, conversation_id: str | None = None
+    ) -> Any | None:
         """
         Get enriched customer context.
 
@@ -377,6 +356,7 @@ class BaseAgent(ABC):
             # Try to get context service from global singleton
             try:
                 from src.services.infrastructure.context_enrichment import get_context_service
+
                 self.context_service = get_context_service()
             except Exception as e:
                 self.logger.warning("context_service_not_available", error=str(e))
@@ -384,31 +364,25 @@ class BaseAgent(ABC):
 
         try:
             context = await self.context_service.enrich_context(
-                customer_id=customer_id,
-                conversation_id=conversation_id
+                customer_id=customer_id, conversation_id=conversation_id
             )
 
             self.logger.info(
                 "context_enrichment_success",
                 customer_id=customer_id,
                 latency_ms=context.enrichment_latency_ms,
-                cache_hit=context.cache_hit
+                cache_hit=context.cache_hit,
             )
             return context
 
         except Exception as e:
             self.logger.error(
-                "context_enrichment_failed",
-                error=str(e),
-                error_type=type(e).__name__
+                "context_enrichment_failed", error=str(e), error_type=type(e).__name__
             )
             return None
 
     async def inject_context_into_prompt(
-        self,
-        system_prompt: str,
-        customer_id: str,
-        conversation_id: Optional[str] = None
+        self, system_prompt: str, customer_id: str, conversation_id: str | None = None
     ) -> str:
         """
         Inject enriched context into system prompt.
@@ -454,10 +428,7 @@ class BaseAgent(ABC):
         try:
             return self.config.system_prompt_template.format(**kwargs)
         except KeyError as e:
-            self.logger.warning(
-                "system_prompt_template_missing_key",
-                missing_key=str(e)
-            )
+            self.logger.warning("system_prompt_template_missing_key", missing_key=str(e))
             return self.config.system_prompt_template
 
     def update_state(self, state: AgentState, **updates) -> AgentState:
@@ -503,7 +474,7 @@ class BaseAgent(ABC):
             self.logger.info(
                 "escalation_triggered",
                 reason="max_turns_exceeded",
-                turn_count=state.get("turn_count")
+                turn_count=state.get("turn_count"),
             )
             return True
 
@@ -512,7 +483,7 @@ class BaseAgent(ABC):
             self.logger.info(
                 "escalation_triggered",
                 reason="low_confidence",
-                confidence=state.get("response_confidence")
+                confidence=state.get("response_confidence"),
             )
             return True
 
@@ -521,7 +492,7 @@ class BaseAgent(ABC):
             self.logger.info(
                 "escalation_triggered",
                 reason="negative_sentiment",
-                sentiment=state.get("sentiment")
+                sentiment=state.get("sentiment"),
             )
             return True
 
@@ -530,7 +501,7 @@ class BaseAgent(ABC):
             self.logger.info(
                 "escalation_triggered",
                 reason="explicit_flag",
-                escalation_reason=state.get("escalation_reason", "unknown")
+                escalation_reason=state.get("escalation_reason", "unknown"),
             )
             return True
 
