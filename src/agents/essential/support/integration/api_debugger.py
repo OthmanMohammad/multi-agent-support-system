@@ -4,10 +4,10 @@ API Agent - Helps with API integration and webhooks.
 Specialist for API and webhook questions with code examples.
 """
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("api_agent", tier="essential", category="integration")
@@ -28,12 +28,9 @@ class APIAgent(BaseAgent):
             name="api_agent",
             type=AgentType.SPECIALIST,
             temperature=0.3,
-            capabilities=[
-                AgentCapability.KB_SEARCH,
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="api",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -51,7 +48,7 @@ class APIAgent(BaseAgent):
             "api_processing_message",
             message_preview=message[:100],
             intent=intent,
-            turn_count=state["turn_count"]
+            turn_count=state["turn_count"],
         )
 
         # Search API KB articles
@@ -62,28 +59,23 @@ class APIAgent(BaseAgent):
             self.logger.info(
                 "api_kb_articles_found",
                 count=len(kb_results),
-                top_score=kb_results[0].get("similarity_score", 0) if kb_results else 0
+                top_score=kb_results[0].get("similarity_score", 0) if kb_results else 0,
             )
             for article in kb_results:
                 self.logger.debug(
                     "api_kb_article",
                     title=article.get("title"),
-                    score=article.get("similarity_score", 0)
+                    score=article.get("similarity_score", 0),
                 )
         else:
             self.logger.warning(
-                "api_no_kb_articles_found",
-                intent=intent,
-                message_preview=message[:50]
+                "api_no_kb_articles_found", intent=intent, message_preview=message[:50]
             )
 
         # Detect programming language preference
         requested_lang = self._detect_language_preference(message)
         if requested_lang:
-            self.logger.info(
-                "api_language_detected",
-                language=requested_lang
-            )
+            self.logger.info("api_language_detected", language=requested_lang)
 
         # Generate technical response with code examples and conversation context
         response = await self.generate_response(message, intent, kb_results, requested_lang, state)
@@ -99,7 +91,7 @@ class APIAgent(BaseAgent):
             "api_response_generated",
             response_length=len(response),
             language=requested_lang,
-            status="active"
+            status="active",
         )
 
         return state
@@ -109,15 +101,15 @@ class APIAgent(BaseAgent):
         message: str,
         intent: str,
         kb_results: list,
-        language: str = None,
-        state: AgentState = None
+        language: str | None = None,
+        state: AgentState = None,
     ) -> str:
         """Generate API documentation response with code examples"""
         self.logger.debug(
             "api_response_generation_started",
             intent=intent,
             kb_articles_count=len(kb_results),
-            language=language
+            language=language,
         )
 
         kb_context = ""
@@ -134,10 +126,7 @@ class APIAgent(BaseAgent):
         conversation_history = []
         if state:
             conversation_history = self.get_conversation_context(state)
-            self.logger.debug(
-                "api_conversation_context",
-                history_length=len(conversation_history)
-            )
+            self.logger.debug("api_conversation_context", history_length=len(conversation_history))
 
         system_prompt = f"""You are an API integration specialist.
 
@@ -164,16 +153,10 @@ Provide API guidance with examples that takes into account any previous conversa
 
         # CRITICAL: Pass conversation history for multi-turn context
         response = await self.call_llm(
-            system_prompt,
-            user_prompt,
-            max_tokens=700,
-            conversation_history=conversation_history
+            system_prompt, user_prompt, max_tokens=700, conversation_history=conversation_history
         )
 
-        self.logger.debug(
-            "api_llm_response_received",
-            response_length=len(response)
-        )
+        self.logger.debug("api_llm_response_received", response_length=len(response))
 
         return response
 
@@ -189,7 +172,7 @@ Provide API guidance with examples that takes into account any previous conversa
             "ruby": ["ruby", "rails"],
             "java": ["java", "spring"],
             "go": ["golang", "go"],
-            "csharp": ["c#", "csharp", ".net", "dotnet"]
+            "csharp": ["c#", "csharp", ".net", "dotnet"],
         }
 
         for lang, keywords in language_keywords.items():
@@ -197,7 +180,7 @@ Provide API guidance with examples that takes into account any previous conversa
                 self.logger.debug(
                     "language_preference_detected",
                     language=lang,
-                    keywords_matched=[k for k in keywords if k in message_lower]
+                    keywords_matched=[k for k in keywords if k in message_lower],
                 )
                 return lang
 
