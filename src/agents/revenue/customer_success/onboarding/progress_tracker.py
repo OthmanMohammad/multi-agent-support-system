@@ -5,13 +5,13 @@ Tracks onboarding progress across all phases, identifies blockers, and forecasts
 Provides real-time visibility into onboarding health and milestone achievement.
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("progress_tracker", tier="revenue", category="customer_success")
@@ -38,15 +38,11 @@ class ProgressTrackerAgent(BaseAgent):
         {"name": "Data Migration Validated", "phase": "migration", "day": 35, "critical": True},
         {"name": "Success Criteria Met", "phase": "validation", "day": 42, "critical": True},
         {"name": "Customer Sign-off", "phase": "validation", "day": 45, "critical": True},
-        {"name": "Handoff to CSM", "phase": "handoff", "day": 48, "critical": True}
+        {"name": "Handoff to CSM", "phase": "handoff", "day": 48, "critical": True},
     ]
 
     # Health score thresholds
-    HEALTH_THRESHOLDS = {
-        "on_track": 80,
-        "caution": 60,
-        "at_risk": 40
-    }
+    HEALTH_THRESHOLDS = {"on_track": 80, "caution": 60, "at_risk": 40}
 
     def __init__(self):
         config = AgentConfig(
@@ -55,7 +51,7 @@ class ProgressTrackerAgent(BaseAgent):
             temperature=0.3,
             max_tokens=500,
             capabilities=[AgentCapability.CONTEXT_AWARE],
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -82,7 +78,7 @@ class ProgressTrackerAgent(BaseAgent):
             "progress_tracking_details",
             customer_id=customer_id,
             milestones_completed=len(progress_data.get("completed_milestones", [])),
-            blockers_active=len(progress_data.get("blockers", []))
+            blockers_active=len(progress_data.get("blockers", [])),
         )
 
         # Analyze progress
@@ -95,11 +91,7 @@ class ProgressTrackerAgent(BaseAgent):
         forecast = self._forecast_completion(progress_analysis, blockers)
 
         # Build response
-        response = self._format_progress_report(
-            progress_analysis,
-            blockers,
-            forecast
-        )
+        response = self._format_progress_report(progress_analysis, blockers, forecast)
 
         state["agent_response"] = response
         state["progress_status"] = progress_analysis["status"]
@@ -116,16 +108,14 @@ class ProgressTrackerAgent(BaseAgent):
             customer_id=customer_id,
             progress_status=progress_analysis["status"],
             health_score=progress_analysis["health_score"],
-            completion_pct=progress_analysis["completion_percentage"]
+            completion_pct=progress_analysis["completion_percentage"],
         )
 
         return state
 
     def _analyze_progress(
-        self,
-        progress_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, progress_data: dict[str, Any], customer_metadata: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Analyze onboarding progress against milestones.
 
@@ -138,7 +128,7 @@ class ProgressTrackerAgent(BaseAgent):
         """
         start_date_str = progress_data.get("onboarding_start_date")
         if start_date_str:
-            start_date = datetime.fromisoformat(start_date_str.replace('Z', '+00:00'))
+            start_date = datetime.fromisoformat(start_date_str.replace("Z", "+00:00"))
         else:
             start_date = datetime.now(UTC)
 
@@ -151,26 +141,18 @@ class ProgressTrackerAgent(BaseAgent):
         completion_percentage = int((len(completed_milestones) / total_milestones) * 100)
 
         # Analyze milestone timing
-        milestone_timing = self._analyze_milestone_timing(
-            completed_milestones,
-            days_elapsed
-        )
+        milestone_timing = self._analyze_milestone_timing(completed_milestones, days_elapsed)
 
         # Calculate health score
         health_score = self._calculate_health_score(
-            completion_percentage,
-            milestone_timing,
-            days_elapsed
+            completion_percentage, milestone_timing, days_elapsed
         )
 
         # Determine status
         status = self._determine_status(health_score, days_elapsed)
 
         # Identify overdue milestones
-        overdue_milestones = self._identify_overdue_milestones(
-            completed_milestones,
-            days_elapsed
-        )
+        overdue_milestones = self._identify_overdue_milestones(completed_milestones, days_elapsed)
 
         # Calculate velocity
         velocity = len(completed_milestones) / days_elapsed if days_elapsed > 0 else 0
@@ -185,14 +167,12 @@ class ProgressTrackerAgent(BaseAgent):
             "milestone_timing": milestone_timing,
             "overdue_milestones": overdue_milestones,
             "velocity": round(velocity, 2),
-            "analyzed_at": datetime.now(UTC).isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat(),
         }
 
     def _analyze_milestone_timing(
-        self,
-        completed_milestones: List[str],
-        days_elapsed: int
-    ) -> Dict[str, Any]:
+        self, completed_milestones: list[str], days_elapsed: int
+    ) -> dict[str, Any]:
         """Analyze whether milestones were completed on time."""
         on_time = 0
         late = 0
@@ -211,14 +191,13 @@ class ProgressTrackerAgent(BaseAgent):
             "on_time": on_time,
             "late": late,
             "critical_late": critical_late,
-            "on_time_percentage": int((on_time / len(completed_milestones)) * 100) if completed_milestones else 0
+            "on_time_percentage": int((on_time / len(completed_milestones)) * 100)
+            if completed_milestones
+            else 0,
         }
 
     def _calculate_health_score(
-        self,
-        completion_pct: int,
-        milestone_timing: Dict[str, Any],
-        days_elapsed: int
+        self, completion_pct: int, milestone_timing: dict[str, Any], days_elapsed: int
     ) -> int:
         """Calculate onboarding health score (0-100)."""
         score = 0
@@ -253,31 +232,29 @@ class ProgressTrackerAgent(BaseAgent):
             return "critical"
 
     def _identify_overdue_milestones(
-        self,
-        completed_milestones: List[str],
-        days_elapsed: int
-    ) -> List[Dict[str, Any]]:
+        self, completed_milestones: list[str], days_elapsed: int
+    ) -> list[dict[str, Any]]:
         """Identify overdue milestones."""
         overdue = []
 
         for milestone in self.STANDARD_MILESTONES:
             if milestone["name"] not in completed_milestones and days_elapsed > milestone["day"]:
                 days_overdue = days_elapsed - milestone["day"]
-                overdue.append({
-                    "name": milestone["name"],
-                    "phase": milestone["phase"],
-                    "due_day": milestone["day"],
-                    "days_overdue": days_overdue,
-                    "critical": milestone["critical"]
-                })
+                overdue.append(
+                    {
+                        "name": milestone["name"],
+                        "phase": milestone["phase"],
+                        "due_day": milestone["day"],
+                        "days_overdue": days_overdue,
+                        "critical": milestone["critical"],
+                    }
+                )
 
         return overdue
 
     def _identify_blockers(
-        self,
-        progress_data: Dict[str, Any],
-        progress_analysis: Dict[str, Any]
-    ) -> List[Dict[str, str]]:
+        self, progress_data: dict[str, Any], progress_analysis: dict[str, Any]
+    ) -> list[dict[str, str]]:
         """Identify blockers affecting progress."""
         blockers = []
 
@@ -291,32 +268,36 @@ class ProgressTrackerAgent(BaseAgent):
 
         if critical_overdue:
             for milestone in critical_overdue[:2]:
-                blockers.append({
-                    "blocker": f"Critical milestone overdue: {milestone['name']}",
-                    "severity": "high",
-                    "impact": f"{milestone['days_overdue']} days behind schedule",
-                    "phase": milestone["phase"]
-                })
+                blockers.append(
+                    {
+                        "blocker": f"Critical milestone overdue: {milestone['name']}",
+                        "severity": "high",
+                        "impact": f"{milestone['days_overdue']} days behind schedule",
+                        "phase": milestone["phase"],
+                    }
+                )
 
         # Low velocity blocker
         if progress_analysis["velocity"] < 0.15:  # Less than 1 milestone per week
-            blockers.append({
-                "blocker": "Low milestone completion velocity",
-                "severity": "medium",
-                "impact": "Progress slower than expected - investigate resource constraints",
-                "phase": "general"
-            })
+            blockers.append(
+                {
+                    "blocker": "Low milestone completion velocity",
+                    "severity": "medium",
+                    "impact": "Progress slower than expected - investigate resource constraints",
+                    "phase": "general",
+                }
+            )
 
         return blockers
 
     def _forecast_completion(
-        self,
-        progress_analysis: Dict[str, Any],
-        blockers: List[Dict[str, str]]
-    ) -> Dict[str, Any]:
+        self, progress_analysis: dict[str, Any], blockers: list[dict[str, str]]
+    ) -> dict[str, Any]:
         """Forecast onboarding completion date."""
         velocity = progress_analysis["velocity"]
-        milestones_remaining = progress_analysis["total_milestones"] - progress_analysis["milestones_completed"]
+        milestones_remaining = (
+            progress_analysis["total_milestones"] - progress_analysis["milestones_completed"]
+        )
 
         if velocity > 0:
             estimated_days_remaining = int(milestones_remaining / velocity)
@@ -329,7 +310,9 @@ class ProgressTrackerAgent(BaseAgent):
 
         total_days_remaining = estimated_days_remaining + buffer_days
 
-        forecasted_date = (datetime.now(UTC) + timedelta(days=total_days_remaining)).date().isoformat()
+        forecasted_date = (
+            (datetime.now(UTC) + timedelta(days=total_days_remaining)).date().isoformat()
+        )
 
         # Determine confidence level
         if progress_analysis["health_score"] >= 80:
@@ -343,14 +326,14 @@ class ProgressTrackerAgent(BaseAgent):
             "forecasted_date": forecasted_date,
             "days_remaining": total_days_remaining,
             "confidence": confidence,
-            "buffer_days": buffer_days
+            "buffer_days": buffer_days,
         }
 
     def _format_progress_report(
         self,
-        progress_analysis: Dict[str, Any],
-        blockers: List[Dict[str, str]],
-        forecast: Dict[str, Any]
+        progress_analysis: dict[str, Any],
+        blockers: list[dict[str, str]],
+        forecast: dict[str, Any],
     ) -> str:
         """Format progress tracking report."""
         status = progress_analysis["status"]
@@ -359,25 +342,31 @@ class ProgressTrackerAgent(BaseAgent):
             "on_track": "???",
             "caution": "??????",
             "at_risk": "????",
-            "critical": "????"
+            "critical": "????",
         }
 
-        health_color = "????" if progress_analysis["health_score"] >= 80 else "????" if progress_analysis["health_score"] >= 60 else "????"
+        health_color = (
+            "????"
+            if progress_analysis["health_score"] >= 80
+            else "????"
+            if progress_analysis["health_score"] >= 60
+            else "????"
+        )
 
-        report = f"""**{status_emoji.get(status, '????')} Onboarding Progress Tracker**
+        report = f"""**{status_emoji.get(status, "????")} Onboarding Progress Tracker**
 
-**Status:** {status.replace('_', ' ').title()}
-**Health Score:** {progress_analysis['health_score']}/100 {health_color}
+**Status:** {status.replace("_", " ").title()}
+**Health Score:** {progress_analysis["health_score"]}/100 {health_color}
 
 **Overall Progress:**
-- Completion: {progress_analysis['completion_percentage']}% ({progress_analysis['milestones_completed']}/{progress_analysis['total_milestones']} milestones)
-- Days Elapsed: {progress_analysis['days_elapsed']}
-- Velocity: {progress_analysis['velocity']} milestones/day
+- Completion: {progress_analysis["completion_percentage"]}% ({progress_analysis["milestones_completed"]}/{progress_analysis["total_milestones"]} milestones)
+- Days Elapsed: {progress_analysis["days_elapsed"]}
+- Velocity: {progress_analysis["velocity"]} milestones/day
 
 **Milestone Timing:**
-- On-Time Completion: {progress_analysis['milestone_timing']['on_time_percentage']}%
-- Late Milestones: {progress_analysis['milestone_timing']['late']}
-- Critical Milestones Late: {progress_analysis['milestone_timing']['critical_late']}
+- On-Time Completion: {progress_analysis["milestone_timing"]["on_time_percentage"]}%
+- Late Milestones: {progress_analysis["milestone_timing"]["late"]}
+- Critical Milestones Late: {progress_analysis["milestone_timing"]["critical_late"]}
 """
 
         # Overdue milestones
@@ -392,11 +381,13 @@ class ProgressTrackerAgent(BaseAgent):
         if blockers:
             report += "\n**???? Active Blockers:**\n"
             for blocker in blockers[:3]:
-                report += f"- **{blocker['blocker']}** ({blocker.get('severity', 'medium')} severity)\n"
+                report += (
+                    f"- **{blocker['blocker']}** ({blocker.get('severity', 'medium')} severity)\n"
+                )
                 report += f"  Impact: {blocker['impact']}\n"
 
         # Forecast
-        report += f"\n**???? Completion Forecast:**\n"
+        report += "\n**???? Completion Forecast:**\n"
         report += f"- Forecasted Completion: {forecast['forecasted_date']}\n"
         report += f"- Days Remaining: {forecast['days_remaining']}\n"
         report += f"- Confidence: {forecast['confidence'].title()}\n"
@@ -406,6 +397,7 @@ class ProgressTrackerAgent(BaseAgent):
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -421,10 +413,7 @@ if __name__ == "__main__":
 
         state1 = create_initial_state(
             "Track onboarding progress",
-            context={
-                "customer_id": "cust_123",
-                "customer_metadata": {"plan": "enterprise"}
-            }
+            context={"customer_id": "cust_123", "customer_metadata": {"plan": "enterprise"}},
         )
         state1["entities"] = {
             "progress_data": {
@@ -433,9 +422,9 @@ if __name__ == "__main__":
                     "Kickoff Call Completed",
                     "Success Plan Approved",
                     "Training Sessions Scheduled",
-                    "Admin Training Completed"
+                    "Admin Training Completed",
                 ],
-                "blockers": []
+                "blockers": [],
             }
         }
 
@@ -454,10 +443,7 @@ if __name__ == "__main__":
 
         state2 = create_initial_state(
             "Check progress issues",
-            context={
-                "customer_id": "cust_456",
-                "customer_metadata": {"plan": "premium"}
-            }
+            context={"customer_id": "cust_456", "customer_metadata": {"plan": "premium"}},
         )
         state2["entities"] = {
             "progress_data": {
@@ -465,16 +451,16 @@ if __name__ == "__main__":
                 "completed_milestones": [
                     "Kickoff Call Completed",
                     "Success Plan Approved",
-                    "Training Sessions Scheduled"
+                    "Training Sessions Scheduled",
                 ],
                 "blockers": [
                     {
                         "blocker": "Customer IT team unavailable",
                         "severity": "high",
                         "impact": "Cannot complete data migration",
-                        "phase": "migration"
+                        "phase": "migration",
                     }
-                ]
+                ],
             }
         }
 
