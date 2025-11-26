@@ -19,31 +19,30 @@ Agents:
 - CorrelationFinderAgent (TASK-2022): Find correlations between metrics (Pearson r>0.7)
 """
 
-from src.agents.operational.analytics.metrics_tracker import MetricsTrackerAgent
-from src.agents.operational.analytics.dashboard_generator import DashboardGeneratorAgent
-from src.agents.operational.analytics.anomaly_detector import AnomalyDetectorAgent
-from src.agents.operational.analytics.trend_analyzer import TrendAnalyzerAgent
-from src.agents.operational.analytics.cohort_analyzer import CohortAnalyzerAgent
-from src.agents.operational.analytics.funnel_analyzer import FunnelAnalyzerAgent
 from src.agents.operational.analytics.ab_test_analyzer import ABTestAnalyzerAgent
-from src.agents.operational.analytics.report_generator import ReportGeneratorAgent
+from src.agents.operational.analytics.anomaly_detector import AnomalyDetectorAgent
+from src.agents.operational.analytics.cohort_analyzer import CohortAnalyzerAgent
+from src.agents.operational.analytics.correlation_finder import CorrelationFinderAgent
+from src.agents.operational.analytics.dashboard_generator import DashboardGeneratorAgent
+from src.agents.operational.analytics.funnel_analyzer import FunnelAnalyzerAgent
 from src.agents.operational.analytics.insight_summarizer import InsightSummarizerAgent
+from src.agents.operational.analytics.metrics_tracker import MetricsTrackerAgent
 from src.agents.operational.analytics.prediction_explainer import PredictionExplainerAgent
 from src.agents.operational.analytics.query_builder import QueryBuilderAgent
-from src.agents.operational.analytics.correlation_finder import CorrelationFinderAgent
-
+from src.agents.operational.analytics.report_generator import ReportGeneratorAgent
+from src.agents.operational.analytics.trend_analyzer import TrendAnalyzerAgent
 
 __all__ = [
-    "MetricsTrackerAgent",
-    "DashboardGeneratorAgent",
-    "AnomalyDetectorAgent",
-    "TrendAnalyzerAgent",
-    "CohortAnalyzerAgent",
-    "FunnelAnalyzerAgent",
     "ABTestAnalyzerAgent",
-    "ReportGeneratorAgent",
+    "AnomalyDetectorAgent",
+    "CohortAnalyzerAgent",
+    "CorrelationFinderAgent",
+    "DashboardGeneratorAgent",
+    "FunnelAnalyzerAgent",
     "InsightSummarizerAgent",
+    "MetricsTrackerAgent",
     "PredictionExplainerAgent",
     "QueryBuilderAgent",
-    "CorrelationFinderAgent",
+    "ReportGeneratorAgent",
+    "TrendAnalyzerAgent",
 ]
