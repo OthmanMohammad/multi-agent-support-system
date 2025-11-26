@@ -5,13 +5,13 @@ Verifies all factual claims against knowledge base and product data.
 Uses Claude Sonnet for nuanced fact verification and claim extraction.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("fact_checker", tier="operational", category="qa")
@@ -39,16 +39,16 @@ class FactCheckerAgent(BaseAgent):
         "date_time",
         "numerical_stat",
         "process_workflow",
-        "limitation"
+        "limitation",
     ]
 
     # Verification confidence levels
     CONFIDENCE_LEVELS = {
-        "verified": 0.95,      # Claim confirmed with evidence
-        "likely_true": 0.75,   # Claim consistent with knowledge
-        "uncertain": 0.50,     # Cannot verify claim
+        "verified": 0.95,  # Claim confirmed with evidence
+        "likely_true": 0.75,  # Claim consistent with knowledge
+        "uncertain": 0.50,  # Cannot verify claim
         "likely_false": 0.25,  # Claim contradicts knowledge
-        "false": 0.05          # Claim definitively wrong
+        "false": 0.05,  # Claim definitively wrong
     }
 
     def __init__(self):
@@ -59,7 +59,7 @@ class FactCheckerAgent(BaseAgent):
             temperature=0.1,
             max_tokens=2500,
             capabilities=[AgentCapability.DATABASE_READ],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -79,15 +79,15 @@ class FactCheckerAgent(BaseAgent):
         state = self.update_state(state)
 
         # Extract parameters
-        response_text = state.get("entities", {}).get("response_text", state.get("agent_response", ""))
+        response_text = state.get("entities", {}).get(
+            "response_text", state.get("agent_response", "")
+        )
         knowledge_base = state.get("entities", {}).get("knowledge_base", {})
         product_data = state.get("entities", {}).get("product_data", {})
         strict_mode = state.get("entities", {}).get("strict_mode", False)
 
         self.logger.debug(
-            "fact_checking_details",
-            response_length=len(response_text),
-            strict_mode=strict_mode
+            "fact_checking_details", response_length=len(response_text), strict_mode=strict_mode
         )
 
         # Extract factual claims
@@ -110,12 +110,7 @@ class FactCheckerAgent(BaseAgent):
 
         # Format response
         response = self._format_fact_check_report(
-            claims,
-            verification_results,
-            issues,
-            recommendations,
-            verification_score,
-            passed
+            claims, verification_results, issues, recommendations, verification_score, passed
         )
 
         state["agent_response"] = response
@@ -133,12 +128,12 @@ class FactCheckerAgent(BaseAgent):
             claims_checked=len(claims),
             issues_found=len(issues),
             verification_score=verification_score,
-            passed=passed
+            passed=passed,
         )
 
         return state
 
-    def _extract_claims(self, response_text: str) -> List[Dict[str, Any]]:
+    def _extract_claims(self, response_text: str) -> list[dict[str, Any]]:
         """
         Extract factual claims from response.
 
@@ -154,7 +149,7 @@ class FactCheckerAgent(BaseAgent):
         claims = []
 
         # Look for common factual statement patterns
-        sentences = response_text.split('.')
+        sentences = response_text.split(".")
 
         for i, sentence in enumerate(sentences):
             sentence = sentence.strip()
@@ -173,33 +168,39 @@ class FactCheckerAgent(BaseAgent):
 
             for indicator, category in claim_indicators:
                 if indicator:
-                    claims.append({
-                        "claim_id": f"claim_{i}",
-                        "text": sentence,
-                        "category": category,
-                        "position": i,
-                        "extracted_at": datetime.now(UTC).isoformat()
-                    })
+                    claims.append(
+                        {
+                            "claim_id": f"claim_{i}",
+                            "text": sentence,
+                            "category": category,
+                            "position": i,
+                            "extracted_at": datetime.now(UTC).isoformat(),
+                        }
+                    )
                     break
 
         # If no specific claims found, mark response as having general claims
         if not claims and len(response_text) > 50:
-            claims.append({
-                "claim_id": "general_claim",
-                "text": response_text[:200] + "..." if len(response_text) > 200 else response_text,
-                "category": "general",
-                "position": 0,
-                "extracted_at": datetime.now(UTC).isoformat()
-            })
+            claims.append(
+                {
+                    "claim_id": "general_claim",
+                    "text": response_text[:200] + "..."
+                    if len(response_text) > 200
+                    else response_text,
+                    "category": "general",
+                    "position": 0,
+                    "extracted_at": datetime.now(UTC).isoformat(),
+                }
+            )
 
         return claims
 
     def _verify_claims(
         self,
-        claims: List[Dict[str, Any]],
-        knowledge_base: Dict[str, Any],
-        product_data: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        claims: list[dict[str, Any]],
+        knowledge_base: dict[str, Any],
+        product_data: dict[str, Any],
+    ) -> list[dict[str, Any]]:
         """
         Verify each claim against knowledge sources.
 
@@ -221,11 +222,8 @@ class FactCheckerAgent(BaseAgent):
         return verified_claims
 
     def _verify_single_claim(
-        self,
-        claim: Dict[str, Any],
-        knowledge_base: Dict[str, Any],
-        product_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, claim: dict[str, Any], knowledge_base: dict[str, Any], product_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Verify a single claim.
 
@@ -281,14 +279,12 @@ class FactCheckerAgent(BaseAgent):
             "evidence": evidence,
             "issues": issues_found,
             "verified_at": datetime.now(UTC).isoformat(),
-            "sources_checked": ["knowledge_base", "product_data"] if evidence else []
+            "sources_checked": ["knowledge_base", "product_data"] if evidence else [],
         }
 
     def _identify_issues(
-        self,
-        verification_results: List[Dict[str, Any]],
-        strict_mode: bool
-    ) -> List[Dict[str, Any]]:
+        self, verification_results: list[dict[str, Any]], strict_mode: bool
+    ) -> list[dict[str, Any]]:
         """
         Identify factual accuracy issues.
 
@@ -307,55 +303,61 @@ class FactCheckerAgent(BaseAgent):
 
             # Critical issues
             if verification_status == "false":
-                issues.append({
-                    "claim_id": result["claim"]["claim_id"],
-                    "claim_text": result["claim"]["text"],
-                    "severity": "critical",
-                    "type": "false_claim",
-                    "message": "Claim is factually incorrect",
-                    "confidence": confidence
-                })
+                issues.append(
+                    {
+                        "claim_id": result["claim"]["claim_id"],
+                        "claim_text": result["claim"]["text"],
+                        "severity": "critical",
+                        "type": "false_claim",
+                        "message": "Claim is factually incorrect",
+                        "confidence": confidence,
+                    }
+                )
 
             # High severity issues
             elif verification_status == "likely_false":
-                issues.append({
-                    "claim_id": result["claim"]["claim_id"],
-                    "claim_text": result["claim"]["text"],
-                    "severity": "high",
-                    "type": "likely_false",
-                    "message": "Claim likely contradicts known facts",
-                    "confidence": confidence
-                })
+                issues.append(
+                    {
+                        "claim_id": result["claim"]["claim_id"],
+                        "claim_text": result["claim"]["text"],
+                        "severity": "high",
+                        "type": "likely_false",
+                        "message": "Claim likely contradicts known facts",
+                        "confidence": confidence,
+                    }
+                )
 
             # Medium severity issues
             elif verification_status == "uncertain" and strict_mode:
-                issues.append({
-                    "claim_id": result["claim"]["claim_id"],
-                    "claim_text": result["claim"]["text"],
-                    "severity": "medium",
-                    "type": "unverified_claim",
-                    "message": "Cannot verify claim against knowledge base",
-                    "confidence": confidence
-                })
+                issues.append(
+                    {
+                        "claim_id": result["claim"]["claim_id"],
+                        "claim_text": result["claim"]["text"],
+                        "severity": "medium",
+                        "type": "unverified_claim",
+                        "message": "Cannot verify claim against knowledge base",
+                        "confidence": confidence,
+                    }
+                )
 
             # Check for specific claim issues
             for issue_text in result.get("issues", []):
-                issues.append({
-                    "claim_id": result["claim"]["claim_id"],
-                    "claim_text": result["claim"]["text"],
-                    "severity": "medium",
-                    "type": "claim_quality",
-                    "message": issue_text,
-                    "confidence": confidence
-                })
+                issues.append(
+                    {
+                        "claim_id": result["claim"]["claim_id"],
+                        "claim_text": result["claim"]["text"],
+                        "severity": "medium",
+                        "type": "claim_quality",
+                        "message": issue_text,
+                        "confidence": confidence,
+                    }
+                )
 
         return issues
 
     def _generate_recommendations(
-        self,
-        verification_results: List[Dict[str, Any]],
-        issues: List[Dict[str, Any]]
-    ) -> List[str]:
+        self, verification_results: list[dict[str, Any]], issues: list[dict[str, Any]]
+    ) -> list[str]:
         """
         Generate recommendations based on verification.
 
@@ -407,7 +409,7 @@ class FactCheckerAgent(BaseAgent):
 
         return recommendations
 
-    def _calculate_verification_score(self, verification_results: List[Dict[str, Any]]) -> float:
+    def _calculate_verification_score(self, verification_results: list[dict[str, Any]]) -> float:
         """
         Calculate overall verification score (0-100).
 
@@ -440,7 +442,7 @@ class FactCheckerAgent(BaseAgent):
         average_score = total_score / len(verification_results)
         return round(average_score, 1)
 
-    def _determine_pass_fail(self, issues: List[Dict[str, Any]], strict_mode: bool) -> bool:
+    def _determine_pass_fail(self, issues: list[dict[str, Any]], strict_mode: bool) -> bool:
         """
         Determine if fact check passes.
 
@@ -463,12 +465,12 @@ class FactCheckerAgent(BaseAgent):
 
     def _format_fact_check_report(
         self,
-        claims: List[Dict[str, Any]],
-        verification_results: List[Dict[str, Any]],
-        issues: List[Dict[str, Any]],
-        recommendations: List[str],
+        claims: list[dict[str, Any]],
+        verification_results: list[dict[str, Any]],
+        issues: list[dict[str, Any]],
+        recommendations: list[str],
         verification_score: float,
-        passed: bool
+        passed: bool,
     ) -> str:
         """Format fact check report."""
         status_icon = "✅" if passed else "❌"
@@ -494,18 +496,24 @@ class FactCheckerAgent(BaseAgent):
 
         # Issues section
         if issues:
-            report += f"\n**Issues Detected:**\n"
+            report += "\n**Issues Detected:**\n"
             for issue in issues[:5]:  # Top 5 issues
-                severity_icon = "🔴" if issue["severity"] == "critical" else "⚠️" if issue["severity"] == "high" else "ℹ️"
+                severity_icon = (
+                    "🔴"
+                    if issue["severity"] == "critical"
+                    else "⚠️"
+                    if issue["severity"] == "high"
+                    else "ℹ️"
+                )
                 report += f"{severity_icon} [{issue['severity'].upper()}] {issue['message']}\n"
-                report += f"   Claim: \"{issue['claim_text'][:80]}...\"\n"
+                report += f'   Claim: "{issue["claim_text"][:80]}..."\n'
 
             if len(issues) > 5:
                 report += f"... and {len(issues) - 5} more issues\n"
 
         # Recommendations
         if recommendations:
-            report += f"\n**Recommendations:**\n"
+            report += "\n**Recommendations:**\n"
             for rec in recommendations:
                 report += f"- {rec}\n"
 
