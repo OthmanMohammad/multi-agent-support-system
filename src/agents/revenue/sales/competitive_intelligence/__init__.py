@@ -12,20 +12,21 @@ This module contains 7 specialized agents for competitive intelligence:
 """
 
 from src.agents.revenue.sales.competitive_intelligence.competitor_tracker import CompetitorTracker
+from src.agents.revenue.sales.competitive_intelligence.feature_comparator import FeatureComparator
+from src.agents.revenue.sales.competitive_intelligence.migration_specialist import (
+    MigrationSpecialist,
+)
+from src.agents.revenue.sales.competitive_intelligence.positioning_advisor import PositioningAdvisor
+from src.agents.revenue.sales.competitive_intelligence.pricing_analyzer import PricingAnalyzer
 from src.agents.revenue.sales.competitive_intelligence.review_analyzer import ReviewAnalyzer
 from src.agents.revenue.sales.competitive_intelligence.sentiment_tracker import SentimentTracker
-from src.agents.revenue.sales.competitive_intelligence.feature_comparator import FeatureComparator
-from src.agents.revenue.sales.competitive_intelligence.pricing_analyzer import PricingAnalyzer
-from src.agents.revenue.sales.competitive_intelligence.positioning_advisor import PositioningAdvisor
-from src.agents.revenue.sales.competitive_intelligence.migration_specialist import MigrationSpecialist
-
 
 __all__ = [
     "CompetitorTracker",
+    "FeatureComparator",
+    "MigrationSpecialist",
+    "PositioningAdvisor",
+    "PricingAnalyzer",
     "ReviewAnalyzer",
     "SentimentTracker",
-    "FeatureComparator",
-    "PricingAnalyzer",
-    "PositioningAdvisor",
-    "MigrationSpecialist",
 ]
