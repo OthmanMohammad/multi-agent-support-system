@@ -3,9 +3,11 @@ Simple chat agent with conversation memory and vector-based knowledge base
 semantic search powered by Qdrant Cloud
 Uses centralized configuration for Anthropic API
 """
+
 from anthropic import Anthropic
-from src.knowledge_base import search_articles
+
 from src.core.config import get_settings
+from src.knowledge_base import search_articles
 
 SYSTEM_PROMPT = """You are a helpful customer support agent for a project management SaaS tool.
 
@@ -21,31 +23,31 @@ If you don't know something, say so clearly."""
 MAX_HISTORY_MESSAGES = 20
 
 
-def chat(message: str, conversation_history: list = None) -> tuple[str, list, list]:
+def chat(message: str, conversation_history: list | None = None) -> tuple[str, list, list]:
     """
     Send a message and get a response with knowledge base search
-    
+
     Args:
         message: User's message
         conversation_history: List of previous messages
-        
+
     Returns:
         (response_text, updated_history, kb_results)
     """
     # Get configuration
     settings = get_settings()
-    
+
     # Initialize Anthropic client
     client = Anthropic(api_key=settings.anthropic.api_key)
-    
+
     # Initialize history if none provided
     if conversation_history is None:
         conversation_history = []
-    
+
     # Search knowledge base with vector search
     print(f"🔍 Searching KB for: '{message[:50]}...'")
     kb_results = search_articles(message, limit=3, use_vector=True)
-    
+
     # Build context from KB
     kb_context = ""
     if kb_results:
@@ -56,37 +58,31 @@ def chat(message: str, conversation_history: list = None) -> tuple[str, list, li
         print(f"✓ Found {len(kb_results)} relevant articles")
     else:
         print("⚠ No relevant articles found")
-    
+
     # Add user message with KB context to history
     user_message = message
     if kb_context:
         user_message += kb_context
-    
-    conversation_history.append({
-        "role": "user",
-        "content": user_message
-    })
-    
+
+    conversation_history.append({"role": "user", "content": user_message})
+
     # Trim history if too long
     if len(conversation_history) > MAX_HISTORY_MESSAGES:
         conversation_history = conversation_history[-MAX_HISTORY_MESSAGES:]
-    
+
     # Get response from Claude
     response = client.messages.create(
         model=settings.anthropic.model,
         max_tokens=settings.anthropic.max_tokens,
         system=SYSTEM_PROMPT,
-        messages=conversation_history
+        messages=conversation_history,
     )
-    
+
     response_text = response.content[0].text
-    
+
     # Add assistant response to history
-    conversation_history.append({
-        "role": "assistant",
-        "content": response_text
-    })
-    
+    conversation_history.append({"role": "assistant", "content": response_text})
+
     return response_text, conversation_history, kb_results
 
 
@@ -97,14 +93,14 @@ def interactive_chat():
     print("=" * 60)
     print("Type 'quit' to exit")
     print("-" * 60)
-    
+
     conversation_history = []
     turn_count = 0
-    
+
     while True:
         user_input = input("\nYou: ").strip()
-        
-        if user_input.lower() in ['quit', 'exit', 'q']:
+
+        if user_input.lower() in ["quit", "exit", "q"]:
             # Show conversation stats
             print("\n" + "=" * 60)
             print("📊 Conversation Summary:")
@@ -113,30 +109,28 @@ def interactive_chat():
             print("=" * 60)
             print("Goodbye! 👋")
             break
-            
+
         if not user_input:
             continue
-            
+
         try:
-            response, conversation_history, kb_results = chat(
-                user_input, 
-                conversation_history
-            )
+            response, conversation_history, kb_results = chat(user_input, conversation_history)
             turn_count += 1
-            
+
             # Show which articles were used
             if kb_results:
                 print(f"\n📚 Using {len(kb_results)} KB articles:")
                 for i, article in enumerate(kb_results, 1):
-                    score_pct = article['similarity_score'] * 100
+                    score_pct = article["similarity_score"] * 100
                     print(f"   {i}. {article['title']} ({score_pct:.0f}% relevant)")
-            
+
             print(f"\nAgent: {response}")
             print(f"\n(Turn {turn_count})")
-            
+
         except Exception as e:
             print(f"\n❌ Error: {e}")
             import traceback
+
             traceback.print_exc()
 
 
