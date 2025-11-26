@@ -5,13 +5,12 @@ Matches prospect's needs to relevant use cases and customer stories.
 Recommends features and provides implementation approaches.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("use_case_matcher", tier="revenue", category="sales")
@@ -35,15 +34,15 @@ class UseCaseMatcher(BaseAgent):
                 "pain_points": ["manual_deployments", "slow_ci_cd", "integration_gaps"],
                 "features": ["api_integration", "webhooks", "automation", "ci_cd_tools"],
                 "roi_impact": "60% faster deployment cycles",
-                "customer_example": "TechCorp reduced deployment time by 65%"
+                "customer_example": "TechCorp reduced deployment time by 65%",
             },
             {
                 "name": "Customer Data Integration",
                 "pain_points": ["data_silos", "disconnected_tools", "reporting_delays"],
                 "features": ["data_sync", "real_time_analytics", "unified_dashboard"],
                 "roi_impact": "80% reduction in data consolidation time",
-                "customer_example": "DataCo unified 12 data sources into one platform"
-            }
+                "customer_example": "DataCo unified 12 data sources into one platform",
+            },
         ],
         "healthcare": [
             {
@@ -51,31 +50,36 @@ class UseCaseMatcher(BaseAgent):
                 "pain_points": ["compliance_burden", "manual_records", "security_concerns"],
                 "features": ["hipaa_compliance", "encryption", "audit_logs", "access_control"],
                 "roi_impact": "95% compliance accuracy, zero breaches",
-                "customer_example": "HealthPlus secured 500k patient records seamlessly"
+                "customer_example": "HealthPlus secured 500k patient records seamlessly",
             },
             {
                 "name": "Appointment Automation",
                 "pain_points": ["no_shows", "manual_scheduling", "staff_overhead"],
                 "features": ["automated_reminders", "smart_scheduling", "patient_portal"],
                 "roi_impact": "40% reduction in no-shows",
-                "customer_example": "CareClinic reduced no-shows by 45% in 3 months"
-            }
+                "customer_example": "CareClinic reduced no-shows by 45% in 3 months",
+            },
         ],
         "finance": [
             {
                 "name": "Regulatory Compliance Automation",
                 "pain_points": ["compliance_overhead", "audit_preparation", "reporting_burden"],
-                "features": ["sox_compliance", "audit_trails", "automated_reporting", "data_governance"],
+                "features": [
+                    "sox_compliance",
+                    "audit_trails",
+                    "automated_reporting",
+                    "data_governance",
+                ],
                 "roi_impact": "70% faster compliance reporting",
-                "customer_example": "FinanceFirst cut audit prep time from 2 weeks to 3 days"
+                "customer_example": "FinanceFirst cut audit prep time from 2 weeks to 3 days",
             },
             {
                 "name": "Fraud Detection & Prevention",
                 "pain_points": ["fraud_risk", "manual_review", "false_positives"],
                 "features": ["ai_detection", "real_time_alerts", "pattern_analysis"],
                 "roi_impact": "85% fraud detection rate with 50% fewer false positives",
-                "customer_example": "SecureBank prevented $2M in fraud in first quarter"
-            }
+                "customer_example": "SecureBank prevented $2M in fraud in first quarter",
+            },
         ],
         "retail": [
             {
@@ -83,7 +87,7 @@ class UseCaseMatcher(BaseAgent):
                 "pain_points": ["stockouts", "overstock", "manual_tracking", "shrinkage"],
                 "features": ["inventory_tracking", "predictive_analytics", "auto_reorder"],
                 "roi_impact": "30% reduction in carrying costs",
-                "customer_example": "RetailCo reduced stockouts by 75% and overstock by 40%"
+                "customer_example": "RetailCo reduced stockouts by 75% and overstock by 40%",
             }
         ],
         "manufacturing": [
@@ -92,9 +96,9 @@ class UseCaseMatcher(BaseAgent):
                 "pain_points": ["defect_rates", "manual_inspection", "recall_risk"],
                 "features": ["quality_tracking", "iot_sensors", "predictive_maintenance"],
                 "roi_impact": "50% reduction in defect rates",
-                "customer_example": "ManufacturePro reduced defects by 60% using AI inspection"
+                "customer_example": "ManufacturePro reduced defects by 60% using AI inspection",
             }
-        ]
+        ],
     }
 
     # Pain point keywords for matching
@@ -106,7 +110,7 @@ class UseCaseMatcher(BaseAgent):
         "fraud_risk": ["fraud", "security", "risk", "breach"],
         "slow_ci_cd": ["slow", "ci/cd", "pipeline", "build time"],
         "manual_scheduling": ["scheduling", "calendar", "appointments", "manual"],
-        "defect_rates": ["defects", "quality", "errors", "failures"]
+        "defect_rates": ["defects", "quality", "errors", "failures"],
     }
 
     # Match confidence thresholds
@@ -122,10 +126,10 @@ class UseCaseMatcher(BaseAgent):
             capabilities=[
                 AgentCapability.KB_SEARCH,
                 AgentCapability.CONTEXT_AWARE,
-                AgentCapability.MULTI_TURN
+                AgentCapability.MULTI_TURN,
             ],
             kb_category="sales",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -144,25 +148,21 @@ class UseCaseMatcher(BaseAgent):
         pain_points = self._extract_pain_points(message, conversation_history)
 
         # Find matching use cases
-        matched_use_cases = self._match_use_cases(
-            pain_points,
-            customer_metadata
-        )
+        matched_use_cases = self._match_use_cases(pain_points, customer_metadata)
 
         # Get recommended features
         recommended_features = self._get_recommended_features(matched_use_cases)
 
         # Generate implementation approach
         implementation_approach = self._generate_implementation_approach(
-            matched_use_cases,
-            customer_metadata
+            matched_use_cases, customer_metadata
         )
 
         # Search KB for case studies
         kb_results = await self.search_knowledge_base(
             f"case study {customer_metadata.get('industry', '')} {' '.join(pain_points)}",
             category="sales",
-            limit=5
+            limit=5,
         )
         state["kb_results"] = kb_results
 
@@ -174,7 +174,7 @@ class UseCaseMatcher(BaseAgent):
             recommended_features,
             implementation_approach,
             kb_results,
-            customer_metadata
+            customer_metadata,
         )
 
         # Update state
@@ -189,16 +189,12 @@ class UseCaseMatcher(BaseAgent):
         self.logger.info(
             "use_case_matcher_completed",
             pain_points_count=len(pain_points),
-            matches_count=len(matched_use_cases)
+            matches_count=len(matched_use_cases),
         )
 
         return state
 
-    def _extract_pain_points(
-        self,
-        message: str,
-        conversation_history: List[Dict]
-    ) -> List[str]:
+    def _extract_pain_points(self, message: str, conversation_history: list[dict]) -> list[str]:
         """Extract pain points from conversation"""
         pain_points = []
 
@@ -220,10 +216,8 @@ class UseCaseMatcher(BaseAgent):
         return pain_points
 
     def _match_use_cases(
-        self,
-        pain_points: List[str],
-        customer_metadata: Dict
-    ) -> List[Dict[str, Any]]:
+        self, pain_points: list[str], customer_metadata: dict
+    ) -> list[dict[str, Any]]:
         """Match prospect to relevant use cases"""
         matches = []
         industry = customer_metadata.get("industry", "other").lower()
@@ -246,18 +240,17 @@ class UseCaseMatcher(BaseAgent):
             overlap = len(use_case_pain_points & prospect_pain_points)
             total = len(use_case_pain_points | prospect_pain_points)
 
-            if total > 0:
-                match_score = overlap / total
-            else:
-                match_score = 0.0
+            match_score = overlap / total if total > 0 else 0.0
 
             if match_score >= self.MATCH_CONFIDENCE_MEDIUM:
-                matches.append({
-                    "use_case": use_case,
-                    "match_score": match_score,
-                    "matched_pain_points": list(use_case_pain_points & prospect_pain_points),
-                    "is_industry_match": use_case in industry_use_cases
-                })
+                matches.append(
+                    {
+                        "use_case": use_case,
+                        "match_score": match_score,
+                        "matched_pain_points": list(use_case_pain_points & prospect_pain_points),
+                        "is_industry_match": use_case in industry_use_cases,
+                    }
+                )
 
         # Sort by match score (highest first)
         matches.sort(key=lambda x: (x["is_industry_match"], x["match_score"]), reverse=True)
@@ -265,7 +258,7 @@ class UseCaseMatcher(BaseAgent):
         # Return top 3 matches
         return matches[:3]
 
-    def _get_recommended_features(self, matched_use_cases: List[Dict]) -> List[str]:
+    def _get_recommended_features(self, matched_use_cases: list[dict]) -> list[str]:
         """Extract recommended features from matched use cases"""
         features = set()
 
@@ -276,16 +269,14 @@ class UseCaseMatcher(BaseAgent):
         return list(features)
 
     def _generate_implementation_approach(
-        self,
-        matched_use_cases: List[Dict],
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, matched_use_cases: list[dict], customer_metadata: dict
+    ) -> dict[str, Any]:
         """Generate implementation approach based on matches"""
         if not matched_use_cases:
             return {
                 "timeline": "4-6 weeks",
                 "phases": ["Discovery", "Setup", "Training", "Go-live"],
-                "complexity": "Medium"
+                "complexity": "Medium",
             }
 
         # Use the highest-scoring match
@@ -299,7 +290,14 @@ class UseCaseMatcher(BaseAgent):
         if company_size > 500 or feature_count > 5:
             complexity = "High"
             timeline = "8-12 weeks"
-            phases = ["Discovery", "Architecture", "Phased Rollout", "Integration", "Training", "Go-live"]
+            phases = [
+                "Discovery",
+                "Architecture",
+                "Phased Rollout",
+                "Integration",
+                "Training",
+                "Go-live",
+            ]
         elif company_size > 100 or feature_count > 3:
             complexity = "Medium"
             timeline = "4-6 weeks"
@@ -313,18 +311,18 @@ class UseCaseMatcher(BaseAgent):
             "timeline": timeline,
             "phases": phases,
             "complexity": complexity,
-            "primary_use_case": use_case["name"]
+            "primary_use_case": use_case["name"],
         }
 
     async def _generate_use_case_response(
         self,
         message: str,
-        pain_points: List[str],
-        matched_use_cases: List[Dict],
-        recommended_features: List[str],
-        implementation_approach: Dict,
-        kb_results: List[Dict],
-        customer_metadata: Dict
+        pain_points: list[str],
+        matched_use_cases: list[dict],
+        recommended_features: list[str],
+        implementation_approach: dict,
+        kb_results: list[dict],
+        customer_metadata: dict,
     ) -> str:
         """Generate use case matching response"""
 
@@ -344,7 +342,7 @@ class UseCaseMatcher(BaseAgent):
                 kb_context += f"- {article.get('title', 'Case Study')}\n"
 
         # Build implementation context
-        impl_context = f"\n\nImplementation Approach:\n"
+        impl_context = "\n\nImplementation Approach:\n"
         impl_context += f"- Timeline: {implementation_approach['timeline']}\n"
         impl_context += f"- Complexity: {implementation_approach['complexity']}\n"
         impl_context += f"- Phases: {', '.join(implementation_approach['phases'])}\n"
@@ -352,11 +350,11 @@ class UseCaseMatcher(BaseAgent):
         system_prompt = f"""You are a Use Case Matcher specialist helping prospects see how our product solves their specific challenges.
 
 Prospect Profile:
-- Industry: {customer_metadata.get('industry', 'Unknown').title()}
-- Company Size: {customer_metadata.get('company_size', 'Unknown')}
-- Identified Pain Points: {', '.join(pain_points)}
+- Industry: {customer_metadata.get("industry", "Unknown").title()}
+- Company Size: {customer_metadata.get("company_size", "Unknown")}
+- Identified Pain Points: {", ".join(pain_points)}
 
-Recommended Features: {', '.join(recommended_features)}
+Recommended Features: {", ".join(recommended_features)}
 
 Your response should:
 1. Acknowledge their specific pain points
@@ -377,7 +375,7 @@ Generate a compelling response that matches their needs to our solutions."""
         response = await self.call_llm(
             system_prompt=system_prompt,
             user_message=user_prompt,
-            conversation_history=[]  # Use case matching uses prospect context
+            conversation_history=[],  # Use case matching uses prospect context
         )
         return response
 
@@ -385,6 +383,7 @@ Generate a compelling response that matches their needs to our solutions."""
 if __name__ == "__main__":
     """Test harness for UseCaseMatcher"""
     import asyncio
+
     from src.workflow.state import AgentState
 
     async def test_use_case_matcher():
@@ -396,10 +395,10 @@ if __name__ == "__main__":
             customer_metadata={
                 "title": "IT Director",
                 "industry": "healthcare",
-                "company_size": 300
+                "company_size": 300,
             },
             messages=[],
-            status="pending"
+            status="pending",
         )
 
         result1 = await agent.process(state1)
@@ -415,10 +414,10 @@ if __name__ == "__main__":
             customer_metadata={
                 "title": "Operations Manager",
                 "industry": "retail",
-                "company_size": 150
+                "company_size": 150,
             },
             messages=[],
-            status="pending"
+            status="pending",
         )
 
         result2 = await agent.process(state2)
