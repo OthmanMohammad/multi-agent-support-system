@@ -4,13 +4,13 @@ Data Recovery Specialist Agent - Recovers deleted/lost data from backups.
 Specialist for data recovery, backup restoration, deleted item retrieval.
 """
 
-from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("data_recovery_specialist", tier="essential", category="technical")
@@ -37,10 +37,10 @@ class DataRecoverySpecialist(BaseAgent):
             capabilities=[
                 AgentCapability.KB_SEARCH,
                 AgentCapability.CONTEXT_AWARE,
-                AgentCapability.DATABASE_WRITE
+                AgentCapability.DATABASE_WRITE,
             ],
             kb_category="account",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -58,7 +58,7 @@ class DataRecoverySpecialist(BaseAgent):
             "data_recovery_started",
             message_preview=message[:100],
             customer_id=state.get("customer_id"),
-            turn_count=state["turn_count"]
+            turn_count=state["turn_count"],
         )
 
         # Extract recovery details
@@ -68,9 +68,7 @@ class DataRecoverySpecialist(BaseAgent):
         deleted_when = recovery_details.get("deleted_when", "unknown")
 
         self.logger.info(
-            "recovery_details_extracted",
-            data_type=data_type,
-            deleted_when=deleted_when
+            "recovery_details_extracted", data_type=data_type, deleted_when=deleted_when
         )
 
         # Check if recoverable
@@ -79,16 +77,13 @@ class DataRecoverySpecialist(BaseAgent):
         self.logger.info(
             "recoverability_checked",
             can_recover=recoverable["can_recover"],
-            days_ago=recoverable["days_ago"]
+            days_ago=recoverable["days_ago"],
         )
 
         if recoverable["can_recover"]:
             # Initiate recovery
             recovery = await self._recover_data(
-                customer_context,
-                data_type,
-                deleted_when,
-                recovery_details
+                customer_context, data_type, deleted_when, recovery_details
             )
 
             state["agent_response"] = recovery["message"]
@@ -101,18 +96,11 @@ class DataRecoverySpecialist(BaseAgent):
             state["response_confidence"] = 1.0
 
         # Search KB for data recovery help
-        kb_results = await self.search_knowledge_base(
-            message,
-            category="account",
-            limit=2
-        )
+        kb_results = await self.search_knowledge_base(message, category="account", limit=2)
         state["kb_results"] = kb_results
 
         if kb_results:
-            self.logger.info(
-                "recovery_kb_articles_found",
-                count=len(kb_results)
-            )
+            self.logger.info("recovery_kb_articles_found", count=len(kb_results))
 
         # Add KB context to response
         if kb_results:
@@ -130,12 +118,12 @@ class DataRecoverySpecialist(BaseAgent):
             "data_recovery_completed",
             recovered=state["data_recovered"],
             data_type=data_type,
-            status="resolved"
+            status="resolved",
         )
 
         return state
 
-    def _extract_recovery_details(self, message: str, state: AgentState) -> Dict[str, Any]:
+    def _extract_recovery_details(self, message: str, state: AgentState) -> dict[str, Any]:
         """Extract data type and timeframe from message"""
         message_lower = message.lower()
 
@@ -171,12 +159,9 @@ class DataRecoverySpecialist(BaseAgent):
         data_type = state.get("data_type", data_type)
         deleted_when = state.get("deleted_when", deleted_when)
 
-        return {
-            "data_type": data_type,
-            "deleted_when": deleted_when
-        }
+        return {"data_type": data_type, "deleted_when": deleted_when}
 
-    def _check_if_recoverable(self, deleted_when: str, data_type: str) -> Dict[str, Any]:
+    def _check_if_recoverable(self, deleted_when: str, data_type: str) -> dict[str, Any]:
         """Check if data can be recovered"""
         # Parse timeframe
         days_ago = self._parse_timeframe(deleted_when)
@@ -185,7 +170,7 @@ class DataRecoverySpecialist(BaseAgent):
             "checking_recoverability",
             deleted_when=deleted_when,
             days_ago=days_ago,
-            retention_days=self.BACKUP_RETENTION_DAYS
+            retention_days=self.BACKUP_RETENTION_DAYS,
         )
 
         within_retention = days_ago <= self.BACKUP_RETENTION_DAYS
@@ -194,7 +179,7 @@ class DataRecoverySpecialist(BaseAgent):
             "can_recover": within_retention,
             "days_ago": days_ago,
             "retention_period": self.BACKUP_RETENTION_DAYS,
-            "data_type": data_type
+            "data_type": data_type,
         }
 
     def _parse_timeframe(self, timeframe: str) -> int:
@@ -206,17 +191,17 @@ class DataRecoverySpecialist(BaseAgent):
             "2_weeks_ago": 14,
             "1_month_ago": 30,
             "2_months_ago": 60,
-            "unknown": 0  # Assume recent if unknown
+            "unknown": 0,  # Assume recent if unknown
         }
         return timeframe_map.get(timeframe, 0)
 
     async def _recover_data(
         self,
-        customer_context: Dict[str, Any],
+        customer_context: dict[str, Any],
         data_type: str,
         deleted_when: str,
-        recovery_details: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        recovery_details: dict[str, Any],
+    ) -> dict[str, Any]:
         """Recover deleted data from backup"""
         customer_id = customer_context.get("customer_id", "unknown")
 
@@ -224,7 +209,7 @@ class DataRecoverySpecialist(BaseAgent):
             "initiating_data_recovery",
             customer_id=customer_id,
             data_type=data_type,
-            deleted_when=deleted_when
+            deleted_when=deleted_when,
         )
 
         # In production: Call backup API to restore data
@@ -237,7 +222,7 @@ class DataRecoverySpecialist(BaseAgent):
 
 **Recovery details:**
 - Data type: {data_type.title()}
-- Deleted: {deleted_when.replace('_', ' ')}
+- Deleted: {deleted_when.replace("_", " ")}
 - Recovery ID: {recovery_id}
 - Recovery location: Your account (refresh to see it)
 - Recovery time: Immediate
@@ -260,29 +245,18 @@ To prevent future data loss:
 **Need to recover more data?**
 Let me know and I can check for additional backups!"""
 
-        self.logger.info(
-            "data_recovery_successful",
-            recovery_id=recovery_id,
-            data_type=data_type
-        )
+        self.logger.info("data_recovery_successful", recovery_id=recovery_id, data_type=data_type)
 
-        return {
-            "message": message,
-            "success": True,
-            "recovery_id": recovery_id
-        }
+        return {"message": message, "success": True, "recovery_id": recovery_id}
 
-    def _explain_unrecoverable(self, recoverable: Dict[str, Any]) -> str:
+    def _explain_unrecoverable(self, recoverable: dict[str, Any]) -> str:
         """Explain why data cannot be recovered"""
         days_ago = recoverable["days_ago"]
         retention = recoverable["retention_period"]
         data_type = recoverable["data_type"]
 
         self.logger.warning(
-            "data_unrecoverable",
-            days_ago=days_ago,
-            retention_period=retention,
-            data_type=data_type
+            "data_unrecoverable", days_ago=days_ago, retention_period=retention, data_type=data_type
         )
 
         message = f"""I'm sorry, but I cannot recover your {data_type}.
@@ -339,6 +313,7 @@ I'm truly sorry we couldn't recover your data. Is there anything else I can help
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
