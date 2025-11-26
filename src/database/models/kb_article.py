@@ -5,11 +5,11 @@ This module defines the KB article and usage tracking tables for the
 Knowledge Base Swarm agents.
 """
 
-from sqlalchemy import Column, String, Integer, Float, DateTime, Text, JSON, ForeignKey, Index
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
-from sqlalchemy.orm import relationship
-from datetime import datetime
 import uuid
+
+from sqlalchemy import JSON, Column, DateTime, Float, ForeignKey, Index, Integer, String, Text
+from sqlalchemy.dialects.postgresql import ARRAY, UUID
+from sqlalchemy.orm import relationship
 
 from src.database.models.base import BaseModel
 
@@ -82,9 +82,15 @@ class KBUsage(BaseModel):
     __tablename__ = "kb_usage"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    article_id = Column(UUID(as_uuid=True), ForeignKey("kb_articles.id"), nullable=False, index=True)
-    event_type = Column(String(50), nullable=False, index=True)  # viewed, helpful, not_helpful, resolved_with
-    conversation_id = Column(UUID(as_uuid=True), ForeignKey("conversations.id"), nullable=True, index=True)
+    article_id = Column(
+        UUID(as_uuid=True), ForeignKey("kb_articles.id"), nullable=False, index=True
+    )
+    event_type = Column(
+        String(50), nullable=False, index=True
+    )  # viewed, helpful, not_helpful, resolved_with
+    conversation_id = Column(
+        UUID(as_uuid=True), ForeignKey("conversations.id"), nullable=True, index=True
+    )
     customer_id = Column(UUID(as_uuid=True), ForeignKey("customers.id"), nullable=True, index=True)
 
     # Resolution metrics (for resolved_with events)
@@ -106,7 +112,9 @@ class KBUsage(BaseModel):
     )
 
     def __repr__(self) -> str:
-        return f"<KBUsage(id={self.id}, article_id={self.article_id}, event_type={self.event_type})>"
+        return (
+            f"<KBUsage(id={self.id}, article_id={self.article_id}, event_type={self.event_type})>"
+        )
 
 
 class KBQualityReport(BaseModel):
@@ -119,7 +127,9 @@ class KBQualityReport(BaseModel):
     __tablename__ = "kb_quality_reports"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    article_id = Column(UUID(as_uuid=True), ForeignKey("kb_articles.id"), nullable=False, index=True)
+    article_id = Column(
+        UUID(as_uuid=True), ForeignKey("kb_articles.id"), nullable=False, index=True
+    )
 
     # Relationships
     article = relationship("KBArticle", back_populates="quality_checks")
