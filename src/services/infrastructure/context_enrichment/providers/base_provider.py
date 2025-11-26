@@ -6,10 +6,9 @@ common functionality for fetching, error handling, and fallbacks.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional
-import structlog
+from typing import Any
 
-from src.services.infrastructure.context_enrichment.exceptions import ProviderError
+import structlog
 
 logger = structlog.get_logger(__name__)
 
@@ -37,11 +36,8 @@ class BaseContextProvider(ABC):
 
     @abstractmethod
     async def fetch(
-        self,
-        customer_id: str,
-        conversation_id: Optional[str] = None,
-        **kwargs
-    ) -> Dict[str, Any]:
+        self, customer_id: str, conversation_id: str | None = None, **kwargs
+    ) -> dict[str, Any]:
         """
         Fetch context from this provider.
 
@@ -61,10 +57,10 @@ class BaseContextProvider(ABC):
     async def fetch_with_fallback(
         self,
         customer_id: str,
-        conversation_id: Optional[str] = None,
-        fallback: Optional[Dict[str, Any]] = None,
-        **kwargs
-    ) -> Dict[str, Any]:
+        conversation_id: str | None = None,
+        fallback: dict[str, Any] | None = None,
+        **kwargs,
+    ) -> dict[str, Any]:
         """
         Fetch with fallback on error.
 
@@ -82,28 +78,19 @@ class BaseContextProvider(ABC):
         """
         try:
             self.logger.debug(
-                "fetch_started",
-                customer_id=customer_id,
-                conversation_id=conversation_id
+                "fetch_started", customer_id=customer_id, conversation_id=conversation_id
             )
             result = await self.fetch(customer_id, conversation_id, **kwargs)
-            self.logger.debug(
-                "fetch_succeeded",
-                customer_id=customer_id,
-                keys=list(result.keys())
-            )
+            self.logger.debug("fetch_succeeded", customer_id=customer_id, keys=list(result.keys()))
             return result
 
         except Exception as e:
             self.logger.error(
-                "fetch_failed",
-                customer_id=customer_id,
-                error=str(e),
-                error_type=type(e).__name__
+                "fetch_failed", customer_id=customer_id, error=str(e), error_type=type(e).__name__
             )
             return fallback or {}
 
-    def _validate_data(self, data: Dict[str, Any], required_keys: list) -> bool:
+    def _validate_data(self, data: dict[str, Any], required_keys: list) -> bool:
         """
         Validate that fetched data contains required keys.
 
@@ -116,9 +103,6 @@ class BaseContextProvider(ABC):
         """
         missing_keys = [key for key in required_keys if key not in data]
         if missing_keys:
-            self.logger.warning(
-                "data_validation_failed",
-                missing_keys=missing_keys
-            )
+            self.logger.warning("data_validation_failed", missing_keys=missing_keys)
             return False
         return True
