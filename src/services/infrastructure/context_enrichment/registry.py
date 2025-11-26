@@ -4,17 +4,13 @@ Provider registry for dynamic context provider management.
 Manages registration, discovery, and lifecycle of context providers.
 """
 
-from typing import Dict, List, Optional, Type
 import structlog
 
 from src.services.infrastructure.context_enrichment.types import (
     AgentType,
-    ProviderPriority,
+    ContextProviderProtocol,
     ProviderMetadata,
-    ContextProviderProtocol
-)
-from src.services.infrastructure.context_enrichment.exceptions import (
-    ProviderNotConfiguredError
+    ProviderPriority,
 )
 
 logger = structlog.get_logger(__name__)
@@ -42,21 +38,21 @@ class ProviderRegistry:
 
     def __init__(self):
         """Initialize provider registry"""
-        self._providers: Dict[str, ContextProviderProtocol] = {}
-        self._metadata: Dict[str, ProviderMetadata] = {}
-        self._agent_mappings: Dict[AgentType, List[str]] = {
+        self._providers: dict[str, ContextProviderProtocol] = {}
+        self._metadata: dict[str, ProviderMetadata] = {}
+        self._agent_mappings: dict[AgentType, list[str]] = {
             agent_type: [] for agent_type in AgentType
         }
-        self._dependencies: Dict[str, List[str]] = {}
+        self._dependencies: dict[str, list[str]] = {}
         logger.info("provider_registry_initialized")
 
     def register(
         self,
         provider: ContextProviderProtocol,
-        agent_types: Optional[List[AgentType]] = None,
+        agent_types: list[AgentType] | None = None,
         priority: ProviderPriority = ProviderPriority.MEDIUM,
         enabled: bool = True,
-        dependencies: Optional[List[str]] = None
+        dependencies: list[str] | None = None,
     ) -> None:
         """
         Register a context provider.
@@ -81,10 +77,7 @@ class ProviderRegistry:
         provider_name = provider.provider_name
 
         if provider_name in self._providers:
-            logger.warning(
-                "provider_already_registered_replacing",
-                provider=provider_name
-            )
+            logger.warning("provider_already_registered_replacing", provider=provider_name)
 
         # Store provider instance
         self._providers[provider_name] = provider
@@ -97,7 +90,7 @@ class ProviderRegistry:
             agent_types=agent_types or list(AgentType),
             cache_ttl=provider.cache_ttl,
             timeout_ms=int(provider.timeout * 1000),
-            dependencies=dependencies or []
+            dependencies=dependencies or [],
         )
 
         # Store dependencies
@@ -114,7 +107,7 @@ class ProviderRegistry:
             provider=provider_name,
             agent_types=[at.value for at in target_agents],
             priority=priority.value,
-            enabled=enabled
+            enabled=enabled,
         )
 
     def unregister(self, provider_name: str) -> None:
@@ -146,7 +139,7 @@ class ProviderRegistry:
 
         logger.info("provider_unregistered", provider=provider_name)
 
-    def get_provider(self, provider_name: str) -> Optional[ContextProviderProtocol]:
+    def get_provider(self, provider_name: str) -> ContextProviderProtocol | None:
         """
         Get provider by name.
 
@@ -162,10 +155,8 @@ class ProviderRegistry:
         return self._providers.get(provider_name)
 
     def get_providers_for_agent(
-        self,
-        agent_type: AgentType,
-        include_disabled: bool = False
-    ) -> List[ContextProviderProtocol]:
+        self, agent_type: AgentType, include_disabled: bool = False
+    ) -> list[ContextProviderProtocol]:
         """
         Get all providers applicable to an agent type.
 
@@ -187,29 +178,17 @@ class ProviderRegistry:
 
         # Filter out disabled providers if requested
         if not include_disabled:
-            provider_names = [
-                name for name in provider_names
-                if self._metadata[name]["enabled"]
-            ]
+            provider_names = [name for name in provider_names if self._metadata[name]["enabled"]]
 
         # Get provider instances
-        providers = [
-            self._providers[name]
-            for name in provider_names
-            if name in self._providers
-        ]
+        providers = [self._providers[name] for name in provider_names if name in self._providers]
 
         # Sort by priority
-        providers.sort(
-            key=lambda p: self._metadata[p.provider_name]["priority"].value
-        )
+        providers.sort(key=lambda p: self._metadata[p.provider_name]["priority"].value)
 
         return providers
 
-    def get_all_providers(
-        self,
-        include_disabled: bool = False
-    ) -> List[ContextProviderProtocol]:
+    def get_all_providers(self, include_disabled: bool = False) -> list[ContextProviderProtocol]:
         """
         Get all registered providers.
 
@@ -225,10 +204,7 @@ class ProviderRegistry:
         providers = list(self._providers.values())
 
         if not include_disabled:
-            providers = [
-                p for p in providers
-                if self._metadata[p.provider_name]["enabled"]
-            ]
+            providers = [p for p in providers if self._metadata[p.provider_name]["enabled"]]
 
         return providers
 
@@ -282,7 +258,7 @@ class ProviderRegistry:
             return self._metadata[provider_name]["enabled"]
         return False
 
-    def get_metadata(self, provider_name: str) -> Optional[ProviderMetadata]:
+    def get_metadata(self, provider_name: str) -> ProviderMetadata | None:
         """
         Get provider metadata.
 
@@ -298,7 +274,7 @@ class ProviderRegistry:
         """
         return self._metadata.get(provider_name)
 
-    def get_dependencies(self, provider_name: str) -> List[str]:
+    def get_dependencies(self, provider_name: str) -> list[str]:
         """
         Get provider dependencies.
 
@@ -314,10 +290,7 @@ class ProviderRegistry:
         """
         return self._dependencies.get(provider_name, [])
 
-    def resolve_dependencies(
-        self,
-        provider_names: List[str]
-    ) -> List[str]:
+    def resolve_dependencies(self, provider_names: list[str]) -> list[str]:
         """
         Resolve provider dependencies in execution order.
 
@@ -342,18 +315,16 @@ class ProviderRegistry:
         resolved = []
         seen = set()
 
-        def resolve(name: str, path: List[str]) -> None:
+        def resolve(name: str, path: list[str]) -> None:
             """Recursive dependency resolution"""
             if name in path:
-                raise ValueError(
-                    f"Circular dependency detected: {' -> '.join(path + [name])}"
-                )
+                raise ValueError(f"Circular dependency detected: {' -> '.join([*path, name])}")
 
             if name in seen:
                 return
 
             seen.add(name)
-            path = path + [name]
+            path = [*path, name]
 
             # Resolve dependencies first
             for dep in self.get_dependencies(name):
@@ -390,12 +361,9 @@ class ProviderRegistry:
         Example:
             >>> enabled = registry.get_enabled_provider_count()
         """
-        return sum(
-            1 for meta in self._metadata.values()
-            if meta["enabled"]
-        )
+        return sum(1 for meta in self._metadata.values() if meta["enabled"])
 
-    def get_summary(self) -> Dict[str, any]:
+    def get_summary(self) -> dict[str, any]:
         """
         Get registry summary.
 
@@ -411,23 +379,27 @@ class ProviderRegistry:
             "enabled_providers": self.get_enabled_provider_count(),
             "providers_by_priority": {
                 priority.name: sum(
-                    1 for meta in self._metadata.values()
+                    1
+                    for meta in self._metadata.values()
                     if meta["priority"] == priority and meta["enabled"]
                 )
                 for priority in ProviderPriority
             },
             "providers_by_agent_type": {
-                agent_type.value: len([
-                    name for name in self._agent_mappings[agent_type]
-                    if self._metadata[name]["enabled"]
-                ])
+                agent_type.value: len(
+                    [
+                        name
+                        for name in self._agent_mappings[agent_type]
+                        if self._metadata[name]["enabled"]
+                    ]
+                )
                 for agent_type in AgentType
-            }
+            },
         }
 
 
 # Global registry instance
-_registry_instance: Optional[ProviderRegistry] = None
+_registry_instance: ProviderRegistry | None = None
 
 
 def get_provider_registry() -> ProviderRegistry:
