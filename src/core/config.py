@@ -6,8 +6,9 @@ Supports staging and production environments only.
 Integrates with Doppler for secrets management.
 """
 
-from typing import Literal, Optional
-from pydantic import Field, field_validator, PostgresDsn
+from typing import Literal
+
+from pydantic import Field, PostgresDsn, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,7 +18,7 @@ class DatabaseConfig(BaseSettings):
     url: PostgresDsn = Field(
         ...,
         description="PostgreSQL database URL",
-        examples=["postgresql+asyncpg://user:pass@host:5432/db"]
+        examples=["postgresql+asyncpg://user:pass@host:5432/db"],
     )
     pool_size: int = Field(default=5, ge=1, le=50)
     max_overflow: int = Field(default=10, ge=0, le=50)
@@ -30,7 +31,7 @@ class DatabaseConfig(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
-        extra="ignore"
+        extra="ignore",
     )
 
 
@@ -44,14 +45,9 @@ class APIConfig(BaseSettings):
     workers: int = Field(default=4, ge=1, le=32)
 
     # CORS configuration
-    cors_origins: list[str] = Field(
-        ...,
-        description="Allowed CORS origins (no wildcards allowed)"
-    )
+    cors_origins: list[str] = Field(..., description="Allowed CORS origins (no wildcards allowed)")
     cors_credentials: bool = Field(default=True)
-    cors_methods: list[str] = Field(
-        default=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
-    )
+    cors_methods: list[str] = Field(default=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
     cors_headers: list[str] = Field(default=["*"])
 
     # Rate limiting
@@ -65,14 +61,12 @@ class APIConfig(BaseSettings):
         """Ensure no wildcard origins"""
         if "*" in v:
             raise ValueError(
-                "Wildcard CORS origin '*' is not allowed. "
-                "Specify explicit origins for security."
+                "Wildcard CORS origin '*' is not allowed. Specify explicit origins for security."
             )
         for origin in v:
             if not origin.startswith(("http://", "https://")):
                 raise ValueError(
-                    f"Invalid CORS origin '{origin}'. "
-                    "Must start with http:// or https://"
+                    f"Invalid CORS origin '{origin}'. Must start with http:// or https://"
                 )
         return v
 
@@ -81,7 +75,7 @@ class APIConfig(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
-        extra="ignore"
+        extra="ignore",
     )
 
 
@@ -91,7 +85,7 @@ class AnthropicConfig(BaseSettings):
     api_key: str = Field(..., min_length=10)
     model: str = Field(
         default="claude-3-haiku-20240307",
-        description="Claude model to use (set via ANTHROPIC_MODEL env var)"
+        description="Claude model to use (set via ANTHROPIC_MODEL env var)",
     )
     max_tokens: int = Field(default=4096, ge=1, le=200000)
     temperature: float = Field(default=0.7, ge=0.0, le=1.0)
@@ -112,7 +106,7 @@ class AnthropicConfig(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
-        extra="ignore"
+        extra="ignore",
     )
 
 
@@ -120,7 +114,7 @@ class QdrantConfig(BaseSettings):
     """Qdrant vector database configuration"""
 
     url: str = Field(..., description="Qdrant server URL")
-    api_key: Optional[str] = Field(default=None)
+    api_key: str | None = Field(default=None)
     collection_name: str = Field(default="support_knowledge_base")
     vector_size: int = Field(default=384, ge=1)
     distance_metric: Literal["cosine", "euclid", "dot"] = Field(default="cosine")
@@ -140,19 +134,16 @@ class QdrantConfig(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
-        extra="ignore"
+        extra="ignore",
     )
 
 
 class LoggingConfig(BaseSettings):
     """Logging configuration"""
 
-    level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(
-        default="INFO"
-    )
+    level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(default="INFO")
     format: Literal["json", "pretty"] = Field(
-        default="json",
-        description="json for production, pretty for development"
+        default="json", description="json for production, pretty for development"
     )
     correlation_id: bool = Field(default=True)
     mask_pii: bool = Field(default=True)
@@ -164,14 +155,14 @@ class LoggingConfig(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
-        extra="ignore"
+        extra="ignore",
     )
 
 
 class SentryConfig(BaseSettings):
     """Sentry error tracking configuration"""
 
-    dsn: Optional[str] = Field(default=None)
+    dsn: str | None = Field(default=None)
     environment: str = Field(...)
     traces_sample_rate: float = Field(default=0.1, ge=0.0, le=1.0)
     profiles_sample_rate: float = Field(default=0.1, ge=0.0, le=1.0)
@@ -181,7 +172,7 @@ class SentryConfig(BaseSettings):
 
     @field_validator("dsn")
     @classmethod
-    def validate_dsn(cls, v: Optional[str]) -> Optional[str]:
+    def validate_dsn(cls, v: str | None) -> str | None:
         """Validate Sentry DSN format"""
         if v and not v.startswith("https://"):
             raise ValueError("Sentry DSN must start with https://")
@@ -192,7 +183,7 @@ class SentryConfig(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
-        extra="ignore"
+        extra="ignore",
     )
 
 
@@ -202,7 +193,7 @@ class NotificationConfig(BaseSettings):
     enabled: bool = Field(default=False)
     email_enabled: bool = Field(default=False)
     slack_enabled: bool = Field(default=False)
-    slack_webhook_url: Optional[str] = Field(default=None)
+    slack_webhook_url: str | None = Field(default=None)
     email_from: str = Field(default="noreply@example.com")
 
     model_config = SettingsConfigDict(
@@ -210,7 +201,7 @@ class NotificationConfig(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
-        extra="ignore"
+        extra="ignore",
     )
 
 
@@ -218,7 +209,7 @@ class CacheConfig(BaseSettings):
     """Cache configuration"""
 
     enabled: bool = Field(default=False)
-    redis_url: Optional[str] = Field(default=None)
+    redis_url: str | None = Field(default=None)
     ttl: int = Field(default=3600, ge=1)
     max_connections: int = Field(default=10, ge=1, le=100)
 
@@ -227,7 +218,7 @@ class CacheConfig(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
-        extra="ignore"
+        extra="ignore",
     )
 
 
@@ -235,9 +226,7 @@ class JWTConfig(BaseSettings):
     """JWT authentication configuration"""
 
     secret_key: str = Field(
-        ...,
-        min_length=32,
-        description="Secret key for JWT encoding (min 32 characters)"
+        ..., min_length=32, description="Secret key for JWT encoding (min 32 characters)"
     )
     algorithm: str = Field(default="HS256")
     access_token_expire_minutes: int = Field(default=60, ge=1, le=1440)
@@ -256,7 +245,7 @@ class JWTConfig(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
-        extra="ignore"
+        extra="ignore",
     )
 
 
@@ -264,14 +253,10 @@ class RedisConfig(BaseSettings):
     """Redis configuration for caching and rate limiting"""
 
     enabled: bool = Field(
-        default=True,
-        description="Enable Redis (set to False for development without Redis)"
+        default=True, description="Enable Redis (set to False for development without Redis)"
     )
-    url: str = Field(
-        default="redis://localhost:6379/0",
-        description="Redis connection URL"
-    )
-    password: Optional[str] = Field(default=None)
+    url: str = Field(default="redis://localhost:6379/0", description="Redis connection URL")
+    password: str | None = Field(default=None)
     max_connections: int = Field(default=50, ge=1, le=500)
     socket_timeout: int = Field(default=5, ge=1)
     socket_connect_timeout: int = Field(default=5, ge=1)
@@ -296,7 +281,7 @@ class RedisConfig(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
-        extra="ignore"
+        extra="ignore",
     )
 
 
@@ -315,12 +300,18 @@ class ContextEnrichmentConfig(BaseSettings):
     l1_max_size: int = Field(default=1000, ge=100, le=10000, description="L1 cache max entries")
 
     # Timeout settings
-    provider_timeout_ms: int = Field(default=500, ge=100, le=5000, description="Individual provider timeout (ms)")
-    orchestrator_timeout_ms: int = Field(default=200, ge=50, le=2000, description="Total enrichment timeout (ms)")
+    provider_timeout_ms: int = Field(
+        default=500, ge=100, le=5000, description="Individual provider timeout (ms)"
+    )
+    orchestrator_timeout_ms: int = Field(
+        default=200, ge=50, le=2000, description="Total enrichment timeout (ms)"
+    )
 
     # Parallel execution
     parallel_execution: bool = Field(default=True, description="Execute providers in parallel")
-    max_concurrent_providers: int = Field(default=10, ge=1, le=50, description="Max concurrent provider calls")
+    max_concurrent_providers: int = Field(
+        default=10, ge=1, le=50, description="Max concurrent provider calls"
+    )
 
     # PII filtering
     enable_pii_filtering: bool = Field(default=True, description="Enable PII masking")
@@ -338,14 +329,16 @@ class ContextEnrichmentConfig(BaseSettings):
     account_health_enabled: bool = Field(default=True)
     sales_pipeline_enabled: bool = Field(default=True)
     feature_usage_enabled: bool = Field(default=True)
-    security_context_enabled: bool = Field(default=False, description="Security context provider (opt-in)")
+    security_context_enabled: bool = Field(
+        default=False, description="Security context provider (opt-in)"
+    )
 
     model_config = SettingsConfigDict(
         env_prefix="CONTEXT_ENRICHMENT_",
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
-        extra="ignore"
+        extra="ignore",
     )
 
 
@@ -357,100 +350,65 @@ class VastAIConfig(BaseSettings):
     """
 
     # Vast.ai API configuration
-    api_key: Optional[str] = Field(
-        default=None,
-        description="Vast.ai API key (optional - vLLM backend requires this)"
+    api_key: str | None = Field(
+        default=None, description="Vast.ai API key (optional - vLLM backend requires this)"
     )
 
     # Budget and cost management
     budget_limit: float = Field(
-        default=15.0,
-        ge=0.0,
-        description="Maximum budget in USD for GPU rental"
+        default=15.0, ge=0.0, description="Maximum budget in USD for GPU rental"
     )
     session_budget_limit: float = Field(
-        default=2.0,
-        ge=0.0,
-        description="Maximum budget per GPU session in USD"
+        default=2.0, ge=0.0, description="Maximum budget per GPU session in USD"
     )
 
     # GPU instance settings
     default_keep_alive_minutes: int = Field(
-        default=45,
-        ge=5,
-        le=180,
-        description="Default keep-alive time for GPU instances (minutes)"
+        default=45, ge=5, le=180, description="Default keep-alive time for GPU instances (minutes)"
     )
     max_startup_time_minutes: int = Field(
-        default=10,
-        ge=1,
-        le=30,
-        description="Maximum time to wait for vLLM to start (minutes)"
+        default=10, ge=1, le=30, description="Maximum time to wait for vLLM to start (minutes)"
     )
 
     # Health check settings
     health_check_interval_seconds: int = Field(
-        default=60,
-        ge=10,
-        le=300,
-        description="Interval for GPU instance health checks (seconds)"
+        default=60, ge=10, le=300, description="Interval for GPU instance health checks (seconds)"
     )
     health_check_timeout_seconds: int = Field(
-        default=5,
-        ge=1,
-        le=30,
-        description="Timeout for individual health check requests (seconds)"
+        default=5, ge=1, le=30, description="Timeout for individual health check requests (seconds)"
     )
 
     # Search and retry settings
     max_search_retries: int = Field(
-        default=3,
-        ge=1,
-        le=10,
-        description="Maximum retries for GPU search/launch"
+        default=3, ge=1, le=10, description="Maximum retries for GPU search/launch"
     )
     search_timeout_seconds: int = Field(
-        default=30,
-        ge=10,
-        le=120,
-        description="Timeout for Vast.ai API search requests (seconds)"
+        default=30, ge=10, le=120, description="Timeout for Vast.ai API search requests (seconds)"
     )
 
     # vLLM configuration
-    vllm_model: str = Field(
-        default="Qwen/Qwen2.5-7B-Instruct",
-        description="Model to load in vLLM"
-    )
+    vllm_model: str = Field(default="Qwen/Qwen2.5-7B-Instruct", description="Model to load in vLLM")
     vllm_gpu_memory_utilization: float = Field(
-        default=0.95,
-        ge=0.1,
-        le=1.0,
-        description="GPU memory utilization for vLLM (0-1)"
+        default=0.95, ge=0.1, le=1.0, description="GPU memory utilization for vLLM (0-1)"
     )
     vllm_max_model_len: int = Field(
-        default=4096,
-        ge=512,
-        le=32768,
-        description="Maximum context length for vLLM model"
+        default=4096, ge=512, le=32768, description="Maximum context length for vLLM model"
     )
 
     # Safety settings
     auto_destroy_on_error: bool = Field(
-        default=True,
-        description="Automatically destroy GPU instance on errors"
+        default=True, description="Automatically destroy GPU instance on errors"
     )
     auto_destroy_on_shutdown: bool = Field(
-        default=True,
-        description="Automatically destroy GPU instance on application shutdown"
+        default=True, description="Automatically destroy GPU instance on application shutdown"
     )
     orphan_cleanup_enabled: bool = Field(
-        default=True,
-        description="Enable automatic cleanup of orphaned instances"
+        default=True, description="Enable automatic cleanup of orphaned instances"
     )
 
     @field_validator("api_key")
     @classmethod
-    def validate_api_key(cls, v: Optional[str]) -> Optional[str]:
+    def validate_api_key(cls, v: str | None) -> str | None:
         """Validate Vast.ai API key format if provided"""
         if v and not v.startswith(("sk_", "vastai_")):
             # Note: Vast.ai API keys may have different formats
@@ -463,7 +421,7 @@ class VastAIConfig(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
-        extra="ignore"
+        extra="ignore",
     )
 
 
@@ -481,72 +439,48 @@ class ModalConfig(BaseSettings):
     """
 
     # Modal API configuration
-    token_id: Optional[str] = Field(
-        default=None,
-        description="Modal API token ID (optional - only needed for deployment)"
+    token_id: str | None = Field(
+        default=None, description="Modal API token ID (optional - only needed for deployment)"
     )
-    token_secret: Optional[str] = Field(
-        default=None,
-        description="Modal API token secret (optional - only needed for deployment)"
+    token_secret: str | None = Field(
+        default=None, description="Modal API token secret (optional - only needed for deployment)"
     )
 
     # Modal deployment
-    web_url: Optional[str] = Field(
-        default=None,
-        description="Modal web URL (e.g., https://yourapp--modal-run.modal.run)"
+    web_url: str | None = Field(
+        default=None, description="Modal web URL (e.g., https://yourapp--modal-run.modal.run)"
     )
-    app_name: str = Field(
-        default="multi-agent-vllm-inference",
-        description="Modal app name"
-    )
+    app_name: str = Field(default="multi-agent-vllm-inference", description="Modal app name")
 
     # vLLM model configuration
-    model: str = Field(
-        default="Qwen/Qwen2.5-7B-Instruct",
-        description="Model to deploy on Modal"
-    )
+    model: str = Field(default="Qwen/Qwen2.5-7B-Instruct", description="Model to deploy on Modal")
     gpu_type: Literal["L4", "A100", "H100", "A10G"] = Field(
         default="L4",
-        description="GPU type (L4: $0.80/hr, A100: $3/hr, H100: $4.50/hr, A10G: $1/hr)"
+        description="GPU type (L4: $0.80/hr, A100: $3/hr, H100: $4.50/hr, A10G: $1/hr)",
     )
     scaledown_window_minutes: int = Field(
-        default=5,
-        ge=1,
-        le=60,
-        description="Keep GPU warm for N minutes after last request"
+        default=5, ge=1, le=60, description="Keep GPU warm for N minutes after last request"
     )
 
     # Health and timeout settings
     health_check_timeout_seconds: int = Field(
-        default=30,
-        ge=5,
-        le=120,
-        description="Timeout for health check requests (seconds)"
+        default=30, ge=5, le=120, description="Timeout for health check requests (seconds)"
     )
     startup_timeout_minutes: int = Field(
-        default=10,
-        ge=1,
-        le=30,
-        description="Maximum time to wait for Modal to start (minutes)"
+        default=10, ge=1, le=30, description="Maximum time to wait for Modal to start (minutes)"
     )
 
     # Request settings
     max_retries: int = Field(
-        default=3,
-        ge=1,
-        le=10,
-        description="Maximum retry attempts for failed requests"
+        default=3, ge=1, le=10, description="Maximum retry attempts for failed requests"
     )
     request_timeout_seconds: int = Field(
-        default=120,
-        ge=30,
-        le=600,
-        description="Timeout for chat completion requests (seconds)"
+        default=120, ge=30, le=600, description="Timeout for chat completion requests (seconds)"
     )
 
     @field_validator("web_url")
     @classmethod
-    def validate_web_url(cls, v: Optional[str]) -> Optional[str]:
+    def validate_web_url(cls, v: str | None) -> str | None:
         """Validate Modal web URL format if provided"""
         if v:
             if not v.startswith("https://"):
@@ -557,7 +491,7 @@ class ModalConfig(BaseSettings):
 
     @field_validator("token_id")
     @classmethod
-    def validate_token_id(cls, v: Optional[str]) -> Optional[str]:
+    def validate_token_id(cls, v: str | None) -> str | None:
         """Validate Modal token ID format if provided"""
         if v and not v.startswith("ak-"):
             raise ValueError("Modal token ID must start with 'ak-'")
@@ -568,7 +502,7 @@ class ModalConfig(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
-        extra="ignore"
+        extra="ignore",
     )
 
 
@@ -583,8 +517,7 @@ class Settings(BaseSettings):
 
     # Application environment
     environment: Literal["staging", "production"] = Field(
-        default="staging",
-        description="Application environment (staging or production only)"
+        default="staging", description="Application environment (staging or production only)"
     )
 
     # Application info
@@ -617,10 +550,7 @@ class Settings(BaseSettings):
         return v
 
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False,
-        extra="ignore"
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
     )
 
     def is_production(self) -> bool:
@@ -642,7 +572,7 @@ class Settings(BaseSettings):
 
 
 # Global settings instance
-_settings: Optional[Settings] = None
+_settings: Settings | None = None
 
 
 def get_settings() -> Settings:
@@ -664,7 +594,7 @@ def get_settings() -> Settings:
 def reload_settings() -> Settings:
     """
     Force reload settings (for testing).
-    
+
     Returns:
         New Settings instance
     """
