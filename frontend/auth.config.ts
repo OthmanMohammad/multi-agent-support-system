@@ -264,7 +264,7 @@ export default {
         // Add tokens to session (available client-side)
         session.accessToken = token.accessToken as string;
         session.refreshToken = token.refreshToken as string;
-        session.isNewUser = token.isNewUser as boolean | undefined;
+        session.isNewUser = (token.isNewUser as boolean | undefined) ?? false;
       }
 
       return session;
