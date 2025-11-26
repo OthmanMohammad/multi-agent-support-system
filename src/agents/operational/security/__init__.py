@@ -15,26 +15,26 @@ Compliance Coverage:
 - ISO 27001
 """
 
-from src.agents.operational.security.pii_detector import PIIDetectorAgent
 from src.agents.operational.security.access_controller import AccessControllerAgent
 from src.agents.operational.security.audit_logger import AuditLoggerAgent
 from src.agents.operational.security.compliance_checker import ComplianceCheckerAgent
-from src.agents.operational.security.vulnerability_scanner import VulnerabilityScannerAgent
-from src.agents.operational.security.incident_responder import IncidentResponderAgent
-from src.agents.operational.security.data_retention_enforcer import DataRetentionEnforcerAgent
 from src.agents.operational.security.consent_manager import ConsentManagerAgent
+from src.agents.operational.security.data_retention_enforcer import DataRetentionEnforcerAgent
 from src.agents.operational.security.encryption_validator import EncryptionValidatorAgent
+from src.agents.operational.security.incident_responder import IncidentResponderAgent
 from src.agents.operational.security.pen_test_coordinator import PenTestCoordinatorAgent
+from src.agents.operational.security.pii_detector import PIIDetectorAgent
+from src.agents.operational.security.vulnerability_scanner import VulnerabilityScannerAgent
 
 __all__ = [
-    "PIIDetectorAgent",
     "AccessControllerAgent",
     "AuditLoggerAgent",
     "ComplianceCheckerAgent",
-    "VulnerabilityScannerAgent",
-    "IncidentResponderAgent",
-    "DataRetentionEnforcerAgent",
     "ConsentManagerAgent",
+    "DataRetentionEnforcerAgent",
     "EncryptionValidatorAgent",
+    "IncidentResponderAgent",
+    "PIIDetectorAgent",
     "PenTestCoordinatorAgent",
+    "VulnerabilityScannerAgent",
 ]
