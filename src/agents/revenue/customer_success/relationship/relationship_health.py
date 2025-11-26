@@ -5,13 +5,13 @@ Assesses relationship strength with customers, identifies engagement gaps,
 and tracks relationship metrics to ensure strong customer partnerships.
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("relationship_health", tier="revenue", category="customer_success")
@@ -34,7 +34,7 @@ class RelationshipHealthAgent(BaseAgent):
         "stakeholder_coverage": {"weight": 25, "target": 75},
         "communication_quality": {"weight": 20, "target": 80},
         "relationship_depth": {"weight": 15, "target": 70},
-        "executive_alignment": {"weight": 15, "target": 65}
+        "executive_alignment": {"weight": 15, "target": 65},
     }
 
     # Engagement frequency targets (by tier)
@@ -42,7 +42,7 @@ class RelationshipHealthAgent(BaseAgent):
         "enterprise": {"touchpoints_per_month": 8, "exec_touchpoints_per_quarter": 3},
         "premium": {"touchpoints_per_month": 4, "exec_touchpoints_per_quarter": 2},
         "growth": {"touchpoints_per_month": 2, "exec_touchpoints_per_quarter": 1},
-        "standard": {"touchpoints_per_month": 1, "exec_touchpoints_per_quarter": 0}
+        "standard": {"touchpoints_per_month": 1, "exec_touchpoints_per_quarter": 0},
     }
 
     # Relationship health tiers
@@ -51,7 +51,7 @@ class RelationshipHealthAgent(BaseAgent):
         "good": {"score_min": 70, "description": "Solid relationship with room to deepen"},
         "fair": {"score_min": 55, "description": "Adequate relationship needing attention"},
         "at_risk": {"score_min": 40, "description": "Weak relationship requiring intervention"},
-        "critical": {"score_min": 0, "description": "Relationship in jeopardy"}
+        "critical": {"score_min": 0, "description": "Relationship in jeopardy"},
     }
 
     def __init__(self):
@@ -60,12 +60,9 @@ class RelationshipHealthAgent(BaseAgent):
             type=AgentType.SPECIALIST,
             temperature=0.3,
             max_tokens=700,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.KB_SEARCH
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.KB_SEARCH],
             kb_category="customer_success",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -93,50 +90,33 @@ class RelationshipHealthAgent(BaseAgent):
         self.logger.debug(
             "relationship_health_details",
             customer_id=customer_id,
-            tier=customer_metadata.get("tier", "standard")
+            tier=customer_metadata.get("tier", "standard"),
         )
 
         # Assess relationship health
         health_assessment = self._assess_relationship_health(
-            engagement_data,
-            contact_data,
-            communication_data,
-            customer_metadata
+            engagement_data, contact_data, communication_data, customer_metadata
         )
 
         # Identify relationship gaps
         relationship_gaps = self._identify_relationship_gaps(
-            health_assessment,
-            contact_data,
-            customer_metadata
+            health_assessment, contact_data, customer_metadata
         )
 
         # Analyze stakeholder coverage
-        stakeholder_analysis = self._analyze_stakeholder_coverage(
-            contact_data,
-            customer_metadata
-        )
+        stakeholder_analysis = self._analyze_stakeholder_coverage(contact_data, customer_metadata)
 
         # Generate recommendations
         recommendations = self._generate_relationship_recommendations(
-            health_assessment,
-            relationship_gaps,
-            stakeholder_analysis
+            health_assessment, relationship_gaps, stakeholder_analysis
         )
 
         # Create action plan
-        action_plan = self._create_relationship_action_plan(
-            health_assessment,
-            relationship_gaps
-        )
+        action_plan = self._create_relationship_action_plan(health_assessment, relationship_gaps)
 
         # Format response
         response = self._format_relationship_health_report(
-            health_assessment,
-            relationship_gaps,
-            stakeholder_analysis,
-            recommendations,
-            action_plan
+            health_assessment, relationship_gaps, stakeholder_analysis, recommendations, action_plan
         )
 
         state["agent_response"] = response
@@ -152,18 +132,18 @@ class RelationshipHealthAgent(BaseAgent):
             "relationship_health_assessment_completed",
             customer_id=customer_id,
             health_score=health_assessment["overall_score"],
-            health_tier=health_assessment["health_tier"]
+            health_tier=health_assessment["health_tier"],
         )
 
         return state
 
     def _assess_relationship_health(
         self,
-        engagement_data: Dict[str, Any],
-        contact_data: Dict[str, Any],
-        communication_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        engagement_data: dict[str, Any],
+        contact_data: dict[str, Any],
+        communication_data: dict[str, Any],
+        customer_metadata: dict[str, Any],
+    ) -> dict[str, Any]:
         """
         Assess overall relationship health.
 
@@ -180,31 +160,23 @@ class RelationshipHealthAgent(BaseAgent):
 
         # 1. Engagement frequency (0-25 points)
         scores["engagement_frequency"] = self._score_engagement_frequency(
-            engagement_data,
-            customer_metadata
+            engagement_data, customer_metadata
         )
 
         # 2. Stakeholder coverage (0-25 points)
-        scores["stakeholder_coverage"] = self._score_stakeholder_coverage(
-            contact_data
-        )
+        scores["stakeholder_coverage"] = self._score_stakeholder_coverage(contact_data)
 
         # 3. Communication quality (0-20 points)
         scores["communication_quality"] = self._score_communication_quality(
-            communication_data,
-            engagement_data
+            communication_data, engagement_data
         )
 
         # 4. Relationship depth (0-15 points)
-        scores["relationship_depth"] = self._score_relationship_depth(
-            engagement_data,
-            contact_data
-        )
+        scores["relationship_depth"] = self._score_relationship_depth(engagement_data, contact_data)
 
         # 5. Executive alignment (0-15 points)
         scores["executive_alignment"] = self._score_executive_alignment(
-            contact_data,
-            engagement_data
+            contact_data, engagement_data
         )
 
         # Calculate overall score
@@ -228,13 +200,11 @@ class RelationshipHealthAgent(BaseAgent):
             "risk_level": risk_level,
             "trend": trend,
             "score_change": int(overall_score - previous_score) if previous_score else 0,
-            "assessed_at": datetime.now(UTC).isoformat()
+            "assessed_at": datetime.now(UTC).isoformat(),
         }
 
     def _score_engagement_frequency(
-        self,
-        engagement_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
+        self, engagement_data: dict[str, Any], customer_metadata: dict[str, Any]
     ) -> float:
         """Score engagement frequency (0-25)."""
         tier = customer_metadata.get("tier", "standard")
@@ -252,7 +222,7 @@ class RelationshipHealthAgent(BaseAgent):
 
         return score
 
-    def _score_stakeholder_coverage(self, contact_data: Dict[str, Any]) -> float:
+    def _score_stakeholder_coverage(self, contact_data: dict[str, Any]) -> float:
         """Score stakeholder coverage (0-25)."""
         contacts = contact_data.get("all_contacts", [])
         engaged_contacts = contact_data.get("engaged_contacts_last_90d", [])
@@ -264,7 +234,7 @@ class RelationshipHealthAgent(BaseAgent):
         coverage_pct = (len(engaged_contacts) / len(contacts)) * 100
 
         # Department diversity
-        departments = set(c.get("department", "Unknown") for c in engaged_contacts)
+        departments = {c.get("department", "Unknown") for c in engaged_contacts}
         department_score = min(len(departments) * 3, 10)
 
         # Seniority levels
@@ -278,9 +248,7 @@ class RelationshipHealthAgent(BaseAgent):
         return min(total_score, 25)
 
     def _score_communication_quality(
-        self,
-        communication_data: Dict[str, Any],
-        engagement_data: Dict[str, Any]
+        self, communication_data: dict[str, Any], engagement_data: dict[str, Any]
     ) -> float:
         """Score communication quality (0-20)."""
         score = 0
@@ -311,9 +279,7 @@ class RelationshipHealthAgent(BaseAgent):
         return min(score, 20)
 
     def _score_relationship_depth(
-        self,
-        engagement_data: Dict[str, Any],
-        contact_data: Dict[str, Any]
+        self, engagement_data: dict[str, Any], contact_data: dict[str, Any]
     ) -> float:
         """Score relationship depth (0-15)."""
         score = 0
@@ -331,7 +297,7 @@ class RelationshipHealthAgent(BaseAgent):
         customer_since = contact_data.get("customer_since_date")
         if customer_since:
             try:
-                since_date = datetime.fromisoformat(customer_since.replace('Z', '+00:00'))
+                since_date = datetime.fromisoformat(customer_since.replace("Z", "+00:00"))
                 days_active = (datetime.now(UTC) - since_date).days
                 if days_active > 365:
                     score += 5
@@ -339,7 +305,7 @@ class RelationshipHealthAgent(BaseAgent):
                     score += 3
                 else:
                     score += 1
-            except:
+            except Exception:
                 score += 1
 
         # Proactive engagement
@@ -350,9 +316,7 @@ class RelationshipHealthAgent(BaseAgent):
         return min(score, 15)
 
     def _score_executive_alignment(
-        self,
-        contact_data: Dict[str, Any],
-        engagement_data: Dict[str, Any]
+        self, contact_data: dict[str, Any], engagement_data: dict[str, Any]
     ) -> float:
         """Score executive alignment (0-15)."""
         score = 0
@@ -366,7 +330,7 @@ class RelationshipHealthAgent(BaseAgent):
             last_exec_contact = contact_data.get("executive_sponsor", {}).get("last_contact_date")
             if last_exec_contact:
                 try:
-                    last_contact = datetime.fromisoformat(last_exec_contact.replace('Z', '+00:00'))
+                    last_contact = datetime.fromisoformat(last_exec_contact.replace("Z", "+00:00"))
                     days_since = (datetime.now(UTC) - last_contact).days
                     if days_since <= 30:
                         score += 7
@@ -374,7 +338,7 @@ class RelationshipHealthAgent(BaseAgent):
                         score += 4
                     elif days_since <= 90:
                         score += 2
-                except:
+                except Exception:
                     pass
         else:
             score += 2  # Some baseline points
@@ -384,15 +348,13 @@ class RelationshipHealthAgent(BaseAgent):
     def _determine_health_tier(self, score: int) -> str:
         """Determine health tier from overall score."""
         for tier, config in sorted(
-            self.HEALTH_TIERS.items(),
-            key=lambda x: x[1]["score_min"],
-            reverse=True
+            self.HEALTH_TIERS.items(), key=lambda x: x[1]["score_min"], reverse=True
         ):
             if score >= config["score_min"]:
                 return tier
         return "critical"
 
-    def _determine_risk_level(self, overall_score: int, dimension_scores: Dict[str, float]) -> str:
+    def _determine_risk_level(self, overall_score: int, dimension_scores: dict[str, float]) -> str:
         """Determine relationship risk level."""
         if overall_score >= 75:
             return "low"
@@ -403,7 +365,7 @@ class RelationshipHealthAgent(BaseAgent):
         else:
             return "critical"
 
-    def _calculate_trend(self, current_score: int, previous_score: Optional[int]) -> str:
+    def _calculate_trend(self, current_score: int, previous_score: int | None) -> str:
         """Calculate relationship health trend."""
         if not previous_score:
             return "new"
@@ -419,10 +381,10 @@ class RelationshipHealthAgent(BaseAgent):
 
     def _identify_relationship_gaps(
         self,
-        health_assessment: Dict[str, Any],
-        contact_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        health_assessment: dict[str, Any],
+        contact_data: dict[str, Any],
+        customer_metadata: dict[str, Any],
+    ) -> list[dict[str, Any]]:
         """Identify gaps in relationship health."""
         gaps = []
         dimension_scores = health_assessment["dimension_scores"]
@@ -434,13 +396,15 @@ class RelationshipHealthAgent(BaseAgent):
             score_pct = (actual_score / max_score * 100) if max_score > 0 else 0
 
             if score_pct < 60:  # Below 60% of max
-                gaps.append({
-                    "dimension": dimension,
-                    "actual_score": int(actual_score),
-                    "max_score": max_score,
-                    "gap_severity": "high" if score_pct < 40 else "medium",
-                    "recommendation": self._get_gap_recommendation(dimension, score_pct)
-                })
+                gaps.append(
+                    {
+                        "dimension": dimension,
+                        "actual_score": int(actual_score),
+                        "max_score": max_score,
+                        "gap_severity": "high" if score_pct < 40 else "medium",
+                        "recommendation": self._get_gap_recommendation(dimension, score_pct),
+                    }
+                )
 
         return gaps
 
@@ -451,30 +415,33 @@ class RelationshipHealthAgent(BaseAgent):
             "stakeholder_coverage": "Expand stakeholder network - engage additional departments",
             "communication_quality": "Improve response times and communication sentiment",
             "relationship_depth": "Deepen relationships through strategic discussions",
-            "executive_alignment": "Establish or strengthen executive sponsor relationship"
+            "executive_alignment": "Establish or strengthen executive sponsor relationship",
         }
         return recommendations.get(dimension, "Address this relationship gap")
 
     def _analyze_stakeholder_coverage(
-        self,
-        contact_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, contact_data: dict[str, Any], customer_metadata: dict[str, Any]
+    ) -> dict[str, Any]:
         """Analyze stakeholder coverage."""
         all_contacts = contact_data.get("all_contacts", [])
         engaged_contacts = contact_data.get("engaged_contacts_last_90d", [])
 
         # Department coverage
-        departments = set(c.get("department", "Unknown") for c in engaged_contacts)
+        departments = {c.get("department", "Unknown") for c in engaged_contacts}
 
         # Seniority coverage
         exec_contacts = sum(
-            1 for c in engaged_contacts
-            if any(term in c.get("title", "").lower() for term in ["vp", "ceo", "cto", "cfo", "chief", "president"])
+            1
+            for c in engaged_contacts
+            if any(
+                term in c.get("title", "").lower()
+                for term in ["vp", "ceo", "cto", "cfo", "chief", "president"]
+            )
         )
 
         manager_contacts = sum(
-            1 for c in engaged_contacts
+            1
+            for c in engaged_contacts
             if any(term in c.get("title", "").lower() for term in ["manager", "director"])
         )
 
@@ -492,90 +459,100 @@ class RelationshipHealthAgent(BaseAgent):
             "departments_covered": len(departments),
             "executive_contacts": exec_contacts,
             "manager_contacts": manager_contacts,
-            "multi_threaded": len(engaged_contacts) >= 3
+            "multi_threaded": len(engaged_contacts) >= 3,
         }
 
     def _generate_relationship_recommendations(
         self,
-        health_assessment: Dict[str, Any],
-        relationship_gaps: List[Dict[str, Any]],
-        stakeholder_analysis: Dict[str, Any]
-    ) -> List[Dict[str, str]]:
+        health_assessment: dict[str, Any],
+        relationship_gaps: list[dict[str, Any]],
+        stakeholder_analysis: dict[str, Any],
+    ) -> list[dict[str, str]]:
         """Generate recommendations to improve relationship health."""
         recommendations = []
 
         # Address critical gaps
         for gap in relationship_gaps:
             if gap["gap_severity"] == "high":
-                recommendations.append({
-                    "area": gap["dimension"].replace("_", " ").title(),
-                    "action": gap["recommendation"],
-                    "priority": "high"
-                })
+                recommendations.append(
+                    {
+                        "area": gap["dimension"].replace("_", " ").title(),
+                        "action": gap["recommendation"],
+                        "priority": "high",
+                    }
+                )
 
         # Stakeholder expansion
         if not stakeholder_analysis["multi_threaded"]:
-            recommendations.append({
-                "area": "Stakeholder Network",
-                "action": "Expand to 3+ engaged stakeholders for relationship resilience",
-                "priority": "high"
-            })
+            recommendations.append(
+                {
+                    "area": "Stakeholder Network",
+                    "action": "Expand to 3+ engaged stakeholders for relationship resilience",
+                    "priority": "high",
+                }
+            )
 
         # Executive alignment
         if stakeholder_analysis["executive_contacts"] == 0:
-            recommendations.append({
-                "area": "Executive Engagement",
-                "action": "Identify and engage executive sponsor",
-                "priority": "high"
-            })
+            recommendations.append(
+                {
+                    "area": "Executive Engagement",
+                    "action": "Identify and engage executive sponsor",
+                    "priority": "high",
+                }
+            )
 
         return recommendations[:5]
 
     def _create_relationship_action_plan(
-        self,
-        health_assessment: Dict[str, Any],
-        relationship_gaps: List[Dict[str, Any]]
-    ) -> List[Dict[str, str]]:
+        self, health_assessment: dict[str, Any], relationship_gaps: list[dict[str, Any]]
+    ) -> list[dict[str, str]]:
         """Create action plan to improve relationship health."""
         actions = []
 
         risk_level = health_assessment["risk_level"]
 
         if risk_level in ["high", "critical"]:
-            actions.append({
-                "action": "Schedule urgent executive business review",
-                "owner": "VP Customer Success",
-                "timeline": "Within 1 week",
-                "priority": "critical"
-            })
+            actions.append(
+                {
+                    "action": "Schedule urgent executive business review",
+                    "owner": "VP Customer Success",
+                    "timeline": "Within 1 week",
+                    "priority": "critical",
+                }
+            )
 
         # Address top gaps
         for gap in relationship_gaps[:2]:
-            actions.append({
-                "action": gap["recommendation"],
-                "owner": "CSM",
-                "timeline": "Within 2 weeks",
-                "priority": "high" if gap["gap_severity"] == "high" else "medium"
-            })
+            actions.append(
+                {
+                    "action": gap["recommendation"],
+                    "owner": "CSM",
+                    "timeline": "Within 2 weeks",
+                    "priority": "high" if gap["gap_severity"] == "high" else "medium",
+                }
+            )
 
         # Regular touchpoint
         if health_assessment["overall_score"] < 75:
-            actions.append({
-                "action": "Establish regular weekly or bi-weekly touchpoint cadence",
-                "owner": "CSM",
-                "timeline": "This week",
-                "priority": "medium"
-            })
+            actions.append(
+                {
+                    "action": "Establish regular weekly or bi-weekly touchpoint cadence",
+                    "owner": "CSM",
+                    "timeline": "This week",
+                    "priority": "medium",
+                }
+            )
 
         return actions[:5]
 
     def _format_relationship_health_report(
         self,
-        health_assessment: Dict[str, Any],
-        relationship_gaps: List[Dict[str, Any]],
-        stakeholder_analysis: Dict[str, Any],
-        recommendations: List[Dict[str, str]],
-        action_plan: List[Dict[str, str]]
+        health_assessment: dict[str, Any],
+        relationship_gaps: list[dict[str, Any]],
+        stakeholder_analysis: dict[str, Any],
+        recommendations: list[dict[str, str]],
+        action_plan: list[dict[str, str]],
     ) -> str:
         """Format relationship health report."""
         tier = health_assessment["health_tier"]
@@ -587,34 +564,29 @@ class RelationshipHealthAgent(BaseAgent):
             "good": "???",
             "fair": "??????",
             "at_risk": "????",
-            "critical": "????"
+            "critical": "????",
         }
 
-        risk_emoji = {
-            "low": "????",
-            "medium": "????",
-            "high": "????",
-            "critical": "????"
-        }
+        risk_emoji = {"low": "????", "medium": "????", "high": "????", "critical": "????"}
 
         report = f"""**???? Relationship Health Assessment**
 
-**Overall Score:** {score}/100 {tier_emoji.get(tier, '???')}
-**Health Status:** {tier.replace('_', ' ').title()}
-**Risk Level:** {risk.upper()} {risk_emoji.get(risk, '???')}
-**Trend:** {health_assessment['trend'].capitalize()} ({health_assessment['score_change']:+d} points)
+**Overall Score:** {score}/100 {tier_emoji.get(tier, "???")}
+**Health Status:** {tier.replace("_", " ").title()}
+**Risk Level:** {risk.upper()} {risk_emoji.get(risk, "???")}
+**Trend:** {health_assessment["trend"].capitalize()} ({health_assessment["score_change"]:+d} points)
 
 **Dimension Scores:**
 """
 
         for dimension, score_val in health_assessment["dimension_scores"].items():
             max_score = self.HEALTH_DIMENSIONS[dimension]["weight"]
-            pct = int((score_val / max_score * 100))
+            pct = int(score_val / max_score * 100)
             bar = "???" * int(pct / 10) + "???" * (10 - int(pct / 10))
             report += f"- {dimension.replace('_', ' ').title()}: {score_val}/{max_score} {bar}\n"
 
         # Stakeholder analysis
-        report += f"\n**???? Stakeholder Coverage:**\n"
+        report += "\n**???? Stakeholder Coverage:**\n"
         report += f"- Engaged Contacts: {stakeholder_analysis['engaged_contacts']}/{stakeholder_analysis['total_contacts']}\n"
         report += f"- Coverage Score: {stakeholder_analysis['coverage_score']}%\n"
         report += f"- Departments: {stakeholder_analysis['departments_covered']}\n"
@@ -642,7 +614,13 @@ class RelationshipHealthAgent(BaseAgent):
         if action_plan:
             report += "\n**??? Action Plan:**\n"
             for i, action in enumerate(action_plan, 1):
-                priority_icon = "????" if action["priority"] == "critical" else "????" if action["priority"] == "high" else "????"
+                priority_icon = (
+                    "????"
+                    if action["priority"] == "critical"
+                    else "????"
+                    if action["priority"] == "high"
+                    else "????"
+                )
                 report += f"{i}. **{action['action']}** {priority_icon}\n"
                 report += f"   - Owner: {action['owner']}\n"
                 report += f"   - Timeline: {action['timeline']}\n"
@@ -652,6 +630,7 @@ class RelationshipHealthAgent(BaseAgent):
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -669,40 +648,42 @@ if __name__ == "__main__":
             "Assess relationship health",
             context={
                 "customer_id": "cust_enterprise_001",
-                "customer_metadata": {
-                    "tier": "enterprise",
-                    "previous_relationship_score": 80
-                }
-            }
+                "customer_metadata": {"tier": "enterprise", "previous_relationship_score": 80},
+            },
         )
         state1["entities"] = {
             "engagement_data": {
                 "touchpoints_last_30d": 10,
                 "qbr_attended_last_quarter": True,
-                "feature_requests_submitted": 5
+                "feature_requests_submitted": 5,
             },
             "contact_data": {
                 "executive_sponsor": {
                     "name": "Sarah Johnson",
-                    "last_contact_date": (datetime.now(UTC) - timedelta(days=15)).isoformat()
+                    "last_contact_date": (datetime.now(UTC) - timedelta(days=15)).isoformat(),
                 },
                 "all_contacts": [
                     {"name": "Contact 1", "department": "Engineering", "title": "VP Engineering"},
-                    {"name": "Contact 2", "department": "Operations", "title": "Director Operations"},
+                    {
+                        "name": "Contact 2",
+                        "department": "Operations",
+                        "title": "Director Operations",
+                    },
                     {"name": "Contact 3", "department": "IT", "title": "IT Manager"},
-                    {"name": "Contact 4", "department": "Engineering", "title": "Engineer"}
+                    {"name": "Contact 4", "department": "Engineering", "title": "Engineer"},
                 ],
                 "engaged_contacts_last_90d": [
                     {"name": "Contact 1", "department": "Engineering", "title": "VP Engineering"},
-                    {"name": "Contact 2", "department": "Operations", "title": "Director Operations"},
-                    {"name": "Contact 3", "department": "IT", "title": "IT Manager"}
+                    {
+                        "name": "Contact 2",
+                        "department": "Operations",
+                        "title": "Director Operations",
+                    },
+                    {"name": "Contact 3", "department": "IT", "title": "IT Manager"},
                 ],
-                "customer_since_date": (datetime.now(UTC) - timedelta(days=500)).isoformat()
+                "customer_since_date": (datetime.now(UTC) - timedelta(days=500)).isoformat(),
             },
-            "communication_data": {
-                "avg_response_time_hours": 3,
-                "overall_sentiment": "positive"
-            }
+            "communication_data": {"avg_response_time_hours": 3, "overall_sentiment": "positive"},
         }
 
         result1 = await agent.process(state1)
@@ -721,32 +702,24 @@ if __name__ == "__main__":
             "Check relationship health",
             context={
                 "customer_id": "cust_growth_002",
-                "customer_metadata": {
-                    "tier": "growth",
-                    "previous_relationship_score": 60
-                }
-            }
+                "customer_metadata": {"tier": "growth", "previous_relationship_score": 60},
+            },
         )
         state2["entities"] = {
             "engagement_data": {
                 "touchpoints_last_30d": 1,
                 "qbr_attended_last_quarter": False,
-                "feature_requests_submitted": 0
+                "feature_requests_submitted": 0,
             },
             "contact_data": {
                 "executive_sponsor": {},
-                "all_contacts": [
-                    {"name": "Contact 1", "department": "IT", "title": "IT Manager"}
-                ],
+                "all_contacts": [{"name": "Contact 1", "department": "IT", "title": "IT Manager"}],
                 "engaged_contacts_last_90d": [
                     {"name": "Contact 1", "department": "IT", "title": "IT Manager"}
                 ],
-                "customer_since_date": (datetime.now(UTC) - timedelta(days=120)).isoformat()
+                "customer_since_date": (datetime.now(UTC) - timedelta(days=120)).isoformat(),
             },
-            "communication_data": {
-                "avg_response_time_hours": 72,
-                "overall_sentiment": "neutral"
-            }
+            "communication_data": {"avg_response_time_hours": 72, "overall_sentiment": "neutral"},
         }
 
         result2 = await agent.process(state2)
