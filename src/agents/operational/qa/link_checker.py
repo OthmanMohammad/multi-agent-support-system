@@ -6,14 +6,14 @@ Checks documentation links, API references, and external resources.
 Uses Claude Haiku for efficient link validation.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, UTC
 import re
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("link_checker", tier="operational", category="qa")
@@ -35,15 +35,15 @@ class LinkCheckerAgent(BaseAgent):
 
     # HTTP status codes and their severity
     STATUS_SEVERITY = {
-        200: "success",      # OK
-        301: "warning",      # Moved Permanently
-        302: "warning",      # Found (temporary redirect)
-        400: "high",         # Bad Request
-        401: "high",         # Unauthorized
-        403: "high",         # Forbidden
-        404: "critical",     # Not Found
-        500: "critical",     # Internal Server Error
-        503: "high"          # Service Unavailable
+        200: "success",  # OK
+        301: "warning",  # Moved Permanently
+        302: "warning",  # Found (temporary redirect)
+        400: "high",  # Bad Request
+        401: "high",  # Unauthorized
+        403: "high",  # Forbidden
+        404: "critical",  # Not Found
+        500: "critical",  # Internal Server Error
+        503: "high",  # Service Unavailable
     }
 
     # Link categories
@@ -52,7 +52,7 @@ class LinkCheckerAgent(BaseAgent):
         "api_reference": ["api.", "/api/", "reference"],
         "github": ["github.com"],
         "external": ["http://", "https://"],
-        "internal": ["/"]
+        "internal": ["/"],
     }
 
     def __init__(self):
@@ -62,7 +62,7 @@ class LinkCheckerAgent(BaseAgent):
             temperature=0.1,
             max_tokens=1500,
             capabilities=[],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -82,13 +82,15 @@ class LinkCheckerAgent(BaseAgent):
         state = self.update_state(state)
 
         # Extract parameters
-        response_text = state.get("entities", {}).get("response_text", state.get("agent_response", ""))
+        response_text = state.get("entities", {}).get(
+            "response_text", state.get("agent_response", "")
+        )
         check_external = state.get("entities", {}).get("check_external", True)
 
         self.logger.debug(
             "link_checking_details",
             response_length=len(response_text),
-            check_external=check_external
+            check_external=check_external,
         )
 
         # Extract links
@@ -125,12 +127,7 @@ class LinkCheckerAgent(BaseAgent):
 
         # Format response
         response = self._format_link_report(
-            links,
-            validation_results,
-            issues,
-            recommendations,
-            link_score,
-            passed
+            links, validation_results, issues, recommendations, link_score, passed
         )
 
         state["agent_response"] = response
@@ -149,12 +146,12 @@ class LinkCheckerAgent(BaseAgent):
             links_checked=len(links),
             issues_found=len(issues),
             link_score=link_score,
-            passed=passed
+            passed=passed,
         )
 
         return state
 
-    def _extract_links(self, response_text: str) -> List[Dict[str, Any]]:
+    def _extract_links(self, response_text: str) -> list[dict[str, Any]]:
         """
         Extract all links from response.
 
@@ -174,16 +171,18 @@ class LinkCheckerAgent(BaseAgent):
             url = match.group(0).rstrip(".,!?)")  # Remove trailing punctuation
             category = self._categorize_link(url)
 
-            links.append({
-                "link_id": f"link_{i}",
-                "url": url,
-                "category": category,
-                "position": match.start(),
-                "context": self._extract_link_context(response_text, match.start())
-            })
+            links.append(
+                {
+                    "link_id": f"link_{i}",
+                    "url": url,
+                    "category": category,
+                    "position": match.start(),
+                    "context": self._extract_link_context(response_text, match.start()),
+                }
+            )
 
         # Also check for markdown links
-        markdown_pattern = r'\[([^\]]+)\]\(([^)]+)\)'
+        markdown_pattern = r"\[([^\]]+)\]\(([^)]+)\)"
         md_matches = re.finditer(markdown_pattern, response_text)
 
         for i, match in enumerate(md_matches):
@@ -193,14 +192,16 @@ class LinkCheckerAgent(BaseAgent):
 
             # Only add if not already in list
             if not any(link["url"] == url for link in links):
-                links.append({
-                    "link_id": f"md_link_{i}",
-                    "url": url,
-                    "link_text": link_text,
-                    "category": category,
-                    "position": match.start(),
-                    "context": self._extract_link_context(response_text, match.start())
-                })
+                links.append(
+                    {
+                        "link_id": f"md_link_{i}",
+                        "url": url,
+                        "link_text": link_text,
+                        "category": category,
+                        "position": match.start(),
+                        "context": self._extract_link_context(response_text, match.start()),
+                    }
+                )
 
         return links
 
@@ -227,7 +228,7 @@ class LinkCheckerAgent(BaseAgent):
 
         return context
 
-    def _validate_link(self, link: Dict[str, Any], check_external: bool) -> Dict[str, Any]:
+    def _validate_link(self, link: dict[str, Any], check_external: bool) -> dict[str, Any]:
         """
         Validate a single link.
 
@@ -246,34 +247,42 @@ class LinkCheckerAgent(BaseAgent):
 
         # Check for common broken link patterns
         if "localhost" in url:
-            issues.append({
-                "type": "localhost_link",
-                "severity": "critical",
-                "message": "Link points to localhost (won't work for customers)"
-            })
+            issues.append(
+                {
+                    "type": "localhost_link",
+                    "severity": "critical",
+                    "message": "Link points to localhost (won't work for customers)",
+                }
+            )
 
         if "example.com" in url or "example.org" in url:
-            issues.append({
-                "type": "example_link",
-                "severity": "high",
-                "message": "Link contains example domain - replace with actual URL"
-            })
+            issues.append(
+                {
+                    "type": "example_link",
+                    "severity": "high",
+                    "message": "Link contains example domain - replace with actual URL",
+                }
+            )
 
         # Check for incomplete URLs
         if url.startswith("http:") and link["category"] != "github":
-            issues.append({
-                "type": "insecure_http",
-                "severity": "medium",
-                "message": "Using HTTP instead of HTTPS (security concern)"
-            })
+            issues.append(
+                {
+                    "type": "insecure_http",
+                    "severity": "medium",
+                    "message": "Using HTTP instead of HTTPS (security concern)",
+                }
+            )
 
         # Check for URL structure issues
         if " " in url:
-            issues.append({
-                "type": "malformed_url",
-                "severity": "critical",
-                "message": "URL contains spaces (malformed)"
-            })
+            issues.append(
+                {
+                    "type": "malformed_url",
+                    "severity": "critical",
+                    "message": "URL contains spaces (malformed)",
+                }
+            )
 
         # Mock HTTP status (in production, would actually check)
         # Assume most links are valid for mock
@@ -296,41 +305,45 @@ class LinkCheckerAgent(BaseAgent):
             "http_status": http_status,
             "status": status,
             "issues": issues,
-            "checked_at": datetime.now(UTC).isoformat()
+            "checked_at": datetime.now(UTC).isoformat(),
         }
 
-    def _identify_link_issues(self, validation_results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _identify_link_issues(
+        self, validation_results: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Identify all link issues."""
         all_issues = []
 
         for result in validation_results:
             for issue in result["issues"]:
-                all_issues.append({
-                    **issue,
-                    "link_id": result["link_id"],
-                    "url": result["url"],
-                    "category": result["category"]
-                })
+                all_issues.append(
+                    {
+                        **issue,
+                        "link_id": result["link_id"],
+                        "url": result["url"],
+                        "category": result["category"],
+                    }
+                )
 
             # Add HTTP status issues
             if result["http_status"] != 200:
                 severity = self.STATUS_SEVERITY.get(result["http_status"], "medium")
-                all_issues.append({
-                    "type": "http_error",
-                    "severity": severity,
-                    "message": f"HTTP {result['http_status']} error",
-                    "link_id": result["link_id"],
-                    "url": result["url"],
-                    "category": result["category"]
-                })
+                all_issues.append(
+                    {
+                        "type": "http_error",
+                        "severity": severity,
+                        "message": f"HTTP {result['http_status']} error",
+                        "link_id": result["link_id"],
+                        "url": result["url"],
+                        "category": result["category"],
+                    }
+                )
 
         return all_issues
 
     def _generate_recommendations(
-        self,
-        validation_results: List[Dict[str, Any]],
-        issues: List[Dict[str, Any]]
-    ) -> List[str]:
+        self, validation_results: list[dict[str, Any]], issues: list[dict[str, Any]]
+    ) -> list[str]:
         """Generate link validation recommendations."""
         recommendations = []
 
@@ -341,7 +354,7 @@ class LinkCheckerAgent(BaseAgent):
         # Count by severity
         critical = [i for i in issues if i["severity"] == "critical"]
         high = [i for i in issues if i["severity"] == "high"]
-        medium = [i for i in issues if i["severity"] == "medium"]
+        [i for i in issues if i["severity"] == "medium"]
 
         if critical:
             recommendations.append(
@@ -349,9 +362,7 @@ class LinkCheckerAgent(BaseAgent):
             )
 
         if high:
-            recommendations.append(
-                f"HIGH PRIORITY: Address {len(high)} link issues"
-            )
+            recommendations.append(f"HIGH PRIORITY: Address {len(high)} link issues")
 
         # Specific recommendations
         issue_types = {}
@@ -360,9 +371,7 @@ class LinkCheckerAgent(BaseAgent):
             issue_types[issue_type] = issue_types.get(issue_type, 0) + 1
 
         if "localhost_link" in issue_types:
-            recommendations.append(
-                "Replace localhost links with public URLs or remove them"
-            )
+            recommendations.append("Replace localhost links with public URLs or remove them")
 
         if "example_link" in issue_types:
             recommendations.append(
@@ -370,18 +379,14 @@ class LinkCheckerAgent(BaseAgent):
             )
 
         if "insecure_http" in issue_types:
-            recommendations.append(
-                "Update HTTP links to HTTPS for security"
-            )
+            recommendations.append("Update HTTP links to HTTPS for security")
 
         if "http_error" in issue_types:
-            recommendations.append(
-                "Verify broken links and update to working URLs"
-            )
+            recommendations.append("Verify broken links and update to working URLs")
 
         return recommendations
 
-    def _calculate_link_score(self, validation_results: List[Dict[str, Any]]) -> float:
+    def _calculate_link_score(self, validation_results: list[dict[str, Any]]) -> float:
         """Calculate link quality score (0-100)."""
         if not validation_results:
             return 100.0
@@ -404,7 +409,7 @@ class LinkCheckerAgent(BaseAgent):
 
         return round(final_score, 1)
 
-    def _determine_pass_fail(self, issues: List[Dict[str, Any]]) -> bool:
+    def _determine_pass_fail(self, issues: list[dict[str, Any]]) -> bool:
         """Determine if link check passes."""
         # Fail if any critical issues
         critical_issues = [i for i in issues if i["severity"] == "critical"]
@@ -412,12 +417,12 @@ class LinkCheckerAgent(BaseAgent):
 
     def _format_link_report(
         self,
-        links: List[Dict[str, Any]],
-        validation_results: List[Dict[str, Any]],
-        issues: List[Dict[str, Any]],
-        recommendations: List[str],
+        links: list[dict[str, Any]],
+        validation_results: list[dict[str, Any]],
+        issues: list[dict[str, Any]],
+        recommendations: list[str],
         link_score: float,
-        passed: bool
+        passed: bool,
     ) -> str:
         """Format link validation report."""
         status_icon = "✅" if passed else "❌"
@@ -442,7 +447,7 @@ class LinkCheckerAgent(BaseAgent):
             report += f"- {category.replace('_', ' ').title()}: {count}\n"
 
         # Validation results
-        report += f"\n**Link Validation:**\n"
+        report += "\n**Link Validation:**\n"
         for result in validation_results[:10]:  # Top 10 links
             status = "✓" if result["status"] == "valid" else "✗"
             report += f"{status} {result['url']} - HTTP {result['http_status']}\n"
@@ -452,9 +457,15 @@ class LinkCheckerAgent(BaseAgent):
 
         # Issues
         if issues:
-            report += f"\n**Issues Detected:**\n"
+            report += "\n**Issues Detected:**\n"
             for issue in issues[:5]:
-                icon = "🔴" if issue["severity"] == "critical" else "⚠️" if issue["severity"] == "high" else "ℹ️"
+                icon = (
+                    "🔴"
+                    if issue["severity"] == "critical"
+                    else "⚠️"
+                    if issue["severity"] == "high"
+                    else "ℹ️"
+                )
                 report += f"{icon} [{issue['severity'].upper()}] {issue['message']}\n"
                 report += f"   URL: {issue['url']}\n"
 
@@ -463,7 +474,7 @@ class LinkCheckerAgent(BaseAgent):
 
         # Recommendations
         if recommendations:
-            report += f"\n**Recommendations:**\n"
+            report += "\n**Recommendations:**\n"
             for rec in recommendations:
                 report += f"- {rec}\n"
 
