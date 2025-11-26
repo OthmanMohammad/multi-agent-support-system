@@ -431,7 +431,7 @@ async def refresh_token(
 
     async with get_unit_of_work() as uow:
         # Get user
-        user = await uow.users.get(user_id)
+        user = await uow.users.get_by_id(user_id)
 
         if not user or not user.is_active:
             logger.warning("token_refresh_failed_user_inactive", user_id=user_id)
@@ -746,7 +746,7 @@ async def update_current_user_profile(
             await uow.commit()
 
             # Refresh user
-            updated_user = await uow.users.get(current_user.id)
+            updated_user = await uow.users.get_by_id(current_user.id)
 
             logger.info("user_profile_updated", user_id=str(current_user.id), fields=list(update_data.keys()))
 
@@ -929,7 +929,7 @@ async def revoke_api_key(
 
     async with get_unit_of_work() as uow:
         # Get API key
-        api_key = await uow.api_keys.get(key_id)
+        api_key = await uow.api_keys.get_by_id(key_id)
 
         if not api_key:
             raise HTTPException(
