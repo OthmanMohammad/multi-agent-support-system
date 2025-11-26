@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from src.database.models import Base, Conversation, Message, KBArticle, Customer
-from src.database.session import get_db_session
 
 
 @pytest.fixture(scope="session")
