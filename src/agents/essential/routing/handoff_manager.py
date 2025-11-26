@@ -7,16 +7,16 @@ and stores handoffs in database for audit trail.
 Part of: STORY-01 Routing & Orchestration Swarm (TASK-108)
 """
 
-from typing import Dict, Any, Optional, List
-import json
+from dataclasses import dataclass
 from datetime import datetime
-from dataclasses import dataclass, asdict
+from typing import Any
+
 import structlog
 
-from src.agents.base.base_agent import BaseAgent, AgentConfig
-from src.agents.base.agent_types import AgentType, AgentCapability
-from src.workflow.state import AgentState
+from src.agents.base.agent_types import AgentCapability, AgentType
+from src.agents.base.base_agent import AgentConfig, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.workflow.state import AgentState
 
 logger = structlog.get_logger(__name__)
 
@@ -24,15 +24,16 @@ logger = structlog.get_logger(__name__)
 @dataclass
 class HandoffRecord:
     """Record of an agent handoff."""
+
     conversation_id: str
     from_agent: str
     to_agent: str
     reason: str
     timestamp: datetime
-    state_snapshot: Dict[str, Any]
-    handoff_id: Optional[str] = None
+    state_snapshot: dict[str, Any]
+    handoff_id: str | None = None
     success: bool = True
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @AgentRegistry.register("handoff_manager", tier="essential", category="routing")
@@ -57,16 +58,16 @@ class HandoffManager(BaseAgent):
 
     # Common handoff reasons
     HANDOFF_REASONS = [
-        "complexity_escalation",      # Query too complex
-        "specialist_needed",           # Needs specific expertise
-        "domain_transfer",             # Moving to different domain
-        "human_escalation",            # Escalating to human
-        "verification_needed",         # Needs verification
-        "insufficient_confidence",     # Low confidence response
-        "customer_request",            # Customer asked for transfer
-        "policy_required",             # Requires policy decision
-        "authorization_needed",        # Needs higher authority
-        "multi_domain",                # Crosses multiple domains
+        "complexity_escalation",  # Query too complex
+        "specialist_needed",  # Needs specific expertise
+        "domain_transfer",  # Moving to different domain
+        "human_escalation",  # Escalating to human
+        "verification_needed",  # Needs verification
+        "insufficient_confidence",  # Low confidence response
+        "customer_request",  # Customer asked for transfer
+        "policy_required",  # Requires policy decision
+        "authorization_needed",  # Needs higher authority
+        "multi_domain",  # Crosses multiple domains
     ]
 
     def __init__(self, **kwargs):
@@ -76,16 +77,14 @@ class HandoffManager(BaseAgent):
             type=AgentType.ORCHESTRATOR,
             temperature=0.1,
             max_tokens=300,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE],
             system_prompt_template="",  # Handoff manager doesn't need LLM
             tier="essential",
-            role="handoff_manager"
+            role="handoff_manager",
         )
         super().__init__(config=config, **kwargs)
         self.logger = logger.bind(agent="handoff_manager", agent_type="orchestrator")
-        self.handoff_history: List[HandoffRecord] = []
+        self.handoff_history: list[HandoffRecord] = []
 
     async def process(self, state: AgentState) -> AgentState:
         """
@@ -117,7 +116,7 @@ class HandoffManager(BaseAgent):
         to_agent: str,
         reason: str,
         state: AgentState,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: dict[str, Any] | None = None,
     ) -> AgentState:
         """
         Execute agent-to-agent handoff.
@@ -149,7 +148,7 @@ class HandoffManager(BaseAgent):
                 from_agent=from_agent,
                 to_agent=to_agent,
                 reason=reason,
-                conversation_id=conversation_id
+                conversation_id=conversation_id,
             )
 
             # Create state snapshot for transfer
@@ -164,7 +163,7 @@ class HandoffManager(BaseAgent):
                 timestamp=datetime.now(),
                 state_snapshot=state_snapshot,
                 success=True,
-                error=None
+                error=None,
             )
 
             # Store handoff in database (async)
@@ -185,7 +184,7 @@ class HandoffManager(BaseAgent):
                 to_agent=to_agent,
                 reason=reason,
                 latency_ms=latency_ms,
-                conversation_id=conversation_id
+                conversation_id=conversation_id,
             )
 
             return state
@@ -196,7 +195,7 @@ class HandoffManager(BaseAgent):
                 from_agent=from_agent,
                 to_agent=to_agent,
                 reason=reason,
-                error=str(e)
+                error=str(e),
             )
 
             # Create failed handoff record
@@ -208,19 +207,19 @@ class HandoffManager(BaseAgent):
                 timestamp=datetime.now(),
                 state_snapshot={},
                 success=False,
-                error=str(e)
+                error=str(e),
             )
 
             # Still try to store failed handoff
             try:
                 await self._store_handoff(handoff_record)
-            except:
+            except Exception:
                 pass  # Silent fail for storage
 
             # Return original state (handoff failed)
             return state
 
-    def _create_state_snapshot(self, state: AgentState) -> Dict[str, Any]:
+    def _create_state_snapshot(self, state: AgentState) -> dict[str, Any]:
         """
         Create a clean snapshot of state for transfer.
 
@@ -255,7 +254,7 @@ class HandoffManager(BaseAgent):
             "cs_category",
             "agent_history",
             "response",
-            "confidence"
+            "confidence",
         ]
 
         snapshot = {}
@@ -266,10 +265,7 @@ class HandoffManager(BaseAgent):
         return snapshot
 
     def _update_state_after_handoff(
-        self,
-        state: AgentState,
-        handoff_record: HandoffRecord,
-        metadata: Optional[Dict[str, Any]]
+        self, state: AgentState, handoff_record: HandoffRecord, metadata: dict[str, Any] | None
     ) -> AgentState:
         """
         Update state after handoff execution.
@@ -295,7 +291,7 @@ class HandoffManager(BaseAgent):
             "from_agent": handoff_record.from_agent,
             "to_agent": handoff_record.to_agent,
             "reason": handoff_record.reason,
-            "timestamp": handoff_record.timestamp.isoformat()
+            "timestamp": handoff_record.timestamp.isoformat(),
         }
 
         state["handoff_reason"] = handoff_record.reason
@@ -304,19 +300,21 @@ class HandoffManager(BaseAgent):
         if "handoff_chain" not in state:
             state["handoff_chain"] = []
 
-        state["handoff_chain"].append({
-            "from": handoff_record.from_agent,
-            "to": handoff_record.to_agent,
-            "reason": handoff_record.reason,
-            "timestamp": handoff_record.timestamp.isoformat()
-        })
+        state["handoff_chain"].append(
+            {
+                "from": handoff_record.from_agent,
+                "to": handoff_record.to_agent,
+                "reason": handoff_record.reason,
+                "timestamp": handoff_record.timestamp.isoformat(),
+            }
+        )
 
         # Add handoff metadata
         state["handoff_metadata"] = {
             "total_handoffs": len(state["handoff_chain"]),
             "last_handoff_timestamp": handoff_record.timestamp.isoformat(),
             "current_agent": handoff_record.to_agent,
-            "additional_metadata": metadata or {}
+            "additional_metadata": metadata or {},
         }
 
         # Clear handoff request flags
@@ -343,7 +341,7 @@ class HandoffManager(BaseAgent):
                 timestamp=handoff_record.timestamp.isoformat(),
                 success=handoff_record.success,
                 error=handoff_record.error,
-                state_fields=list(handoff_record.state_snapshot.keys())
+                state_fields=list(handoff_record.state_snapshot.keys()),
             )
 
             # TODO: Implement actual database storage
@@ -365,15 +363,13 @@ class HandoffManager(BaseAgent):
             self.logger.error(
                 "handoff_storage_failed",
                 error=str(e),
-                conversation_id=handoff_record.conversation_id
+                conversation_id=handoff_record.conversation_id,
             )
             # Don't raise - storage failure shouldn't break handoff
 
     def get_handoff_history(
-        self,
-        conversation_id: Optional[str] = None,
-        limit: int = 100
-    ) -> List[HandoffRecord]:
+        self, conversation_id: str | None = None, limit: int = 100
+    ) -> list[HandoffRecord]:
         """
         Get handoff history.
 
@@ -385,15 +381,12 @@ class HandoffManager(BaseAgent):
             List of handoff records
         """
         if conversation_id:
-            filtered = [
-                h for h in self.handoff_history
-                if h.conversation_id == conversation_id
-            ]
+            filtered = [h for h in self.handoff_history if h.conversation_id == conversation_id]
             return filtered[-limit:]
         else:
             return self.handoff_history[-limit:]
 
-    def get_handoff_chain(self, state: AgentState) -> List[Dict[str, Any]]:
+    def get_handoff_chain(self, state: AgentState) -> list[dict[str, Any]]:
         """
         Get the complete handoff chain from state.
 
@@ -406,11 +399,7 @@ class HandoffManager(BaseAgent):
         return state.get("handoff_chain", [])
 
     def should_prevent_loop(
-        self,
-        from_agent: str,
-        to_agent: str,
-        state: AgentState,
-        max_returns: int = 2
+        self, from_agent: str, to_agent: str, state: AgentState, max_returns: int = 2
     ) -> bool:
         """
         Check if handoff would create a loop.
@@ -430,8 +419,7 @@ class HandoffManager(BaseAgent):
 
         # Count how many times this exact handoff has happened
         same_handoffs = sum(
-            1 for h in handoff_chain
-            if h["from"] == from_agent and h["to"] == to_agent
+            1 for h in handoff_chain if h["from"] == from_agent and h["to"] == to_agent
         )
 
         if same_handoffs >= max_returns:
@@ -439,13 +427,13 @@ class HandoffManager(BaseAgent):
                 "handoff_loop_detected",
                 from_agent=from_agent,
                 to_agent=to_agent,
-                occurrences=same_handoffs
+                occurrences=same_handoffs,
             )
             return True
 
         return False
 
-    def get_handoff_stats(self, state: AgentState) -> Dict[str, Any]:
+    def get_handoff_stats(self, state: AgentState) -> dict[str, Any]:
         """
         Get handoff statistics for current conversation.
 
@@ -462,7 +450,7 @@ class HandoffManager(BaseAgent):
                 "total_handoffs": 0,
                 "unique_agents": 0,
                 "avg_time_between_handoffs": 0,
-                "reasons": {}
+                "reasons": {},
             }
 
         # Count reasons
@@ -484,7 +472,7 @@ class HandoffManager(BaseAgent):
             "reasons": reasons,
             "current_agent": state.get("current_agent", "unknown"),
             "first_agent": handoff_chain[0]["from"] if handoff_chain else None,
-            "last_handoff_timestamp": handoff_chain[-1]["timestamp"] if handoff_chain else None
+            "last_handoff_timestamp": handoff_chain[-1]["timestamp"] if handoff_chain else None,
         }
 
 
@@ -505,6 +493,7 @@ def create_handoff_manager(**kwargs) -> HandoffManager:
 # Example usage (for development/testing)
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test_handoff_manager():
@@ -516,13 +505,12 @@ if __name__ == "__main__":
         manager = HandoffManager()
 
         # Test 1: Simple handoff
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("TEST 1: Simple Handoff")
-        print("="*60)
+        print("=" * 60)
 
         state = create_initial_state(
-            message="Complex billing issue",
-            context={"conversation_id": "conv_123"}
+            message="Complex billing issue", context={"conversation_id": "conv_123"}
         )
         state["current_agent"] = "billing_tier1"
 
@@ -530,24 +518,24 @@ if __name__ == "__main__":
             from_agent="billing_tier1",
             to_agent="billing_tier2",
             reason="complexity_escalation",
-            state=state
+            state=state,
         )
 
-        print(f"✓ Handoff executed: billing_tier1 → billing_tier2")
+        print("✓ Handoff executed: billing_tier1 → billing_tier2")
         print(f"  Current agent: {state['current_agent']}")
         print(f"  Reason: {state['handoff_reason']}")
         print(f"  Total handoffs: {state['handoff_metadata']['total_handoffs']}")
 
         # Test 2: Multiple handoffs
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("TEST 2: Multiple Handoffs (Chain)")
-        print("="*60)
+        print("=" * 60)
 
         state = await manager.handoff(
             from_agent="billing_tier2",
             to_agent="billing_specialist",
             reason="specialist_needed",
-            state=state
+            state=state,
         )
 
         stats = manager.get_handoff_stats(state)
@@ -556,23 +544,21 @@ if __name__ == "__main__":
         print(f"  Current agent: {stats['current_agent']}")
 
         # Test 3: Loop detection
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("TEST 3: Loop Detection")
-        print("="*60)
+        print("=" * 60)
 
         # Try to create a loop
         is_loop = manager.should_prevent_loop(
-            from_agent="billing_specialist",
-            to_agent="billing_tier1",
-            state=state
+            from_agent="billing_specialist", to_agent="billing_tier1", state=state
         )
 
         print(f"✓ Loop detected: {is_loop}")
 
         # Display handoff chain
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("HANDOFF CHAIN")
-        print("="*60)
+        print("=" * 60)
 
         chain = manager.get_handoff_chain(state)
         for i, handoff in enumerate(chain, 1):
