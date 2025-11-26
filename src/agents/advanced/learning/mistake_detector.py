@@ -12,14 +12,15 @@ Key Capabilities:
 Part of: EPIC-004 Learning & Improvement Swarm (TASK-4051)
 """
 
-from typing import Dict, Any, List
-import structlog
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
+import structlog
+
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
+from src.api.dependencies import get_db
 from src.services.infrastructure.agent_registry import AgentRegistry
-from src.database.connection import get_db_session
+from src.workflow.state import AgentState
 
 logger = structlog.get_logger(__name__)
 
@@ -28,7 +29,7 @@ logger = structlog.get_logger(__name__)
 class MistakeDetectorAgent(BaseAgent):
     """
     MistakeDetector - Detects and categorizes agent mistakes, hallucinations, and incorrect responses
-    
+
     This agent continuously learns from system data to provide insights and recommendations
     for improving agent performance, customer satisfaction, and operational efficiency.
     """
@@ -39,12 +40,9 @@ class MistakeDetectorAgent(BaseAgent):
             type=AgentType.ANALYZER,
             temperature=0.2,
             max_tokens=3000,
-            capabilities=[
-                AgentCapability.DATABASE_READ,
-                AgentCapability.ANALYTICS
-            ],
+            capabilities=[AgentCapability.DATABASE_READ, AgentCapability.ANALYTICS],
             tier="advanced",
-            system_prompt_template=self._get_system_prompt()
+            system_prompt_template=self._get_system_prompt(),
         )
         super().__init__(config)
         self.logger = logger.bind(agent="mistake_detector")
@@ -53,7 +51,7 @@ class MistakeDetectorAgent(BaseAgent):
         """Get the system prompt."""
         return """You are an expert AI analyst specialized in detects and categorizes agent mistakes, hallucinations, and incorrect responses.
 
-Your role is to analyze system data, identify patterns, and provide actionable recommendations 
+Your role is to analyze system data, identify patterns, and provide actionable recommendations
 for continuous improvement. Focus on data-driven insights that can be immediately implemented.
 
 **Analysis Framework:**
@@ -87,7 +85,7 @@ Base your analysis on the data provided and industry best practices."""
         try:
             # Get analysis parameters
             lookback_days = state.get("lookback_days", 7)
-            
+
             # Perform analysis
             analysis_result = await self._perform_analysis(lookback_days)
 
@@ -96,7 +94,7 @@ Base your analysis on the data provided and industry best practices."""
 
             self.logger.info(
                 "mistake_detector_completed",
-                findings_count=len(analysis_result.get("findings", []))
+                findings_count=len(analysis_result.get("findings", [])),
             )
 
             return self.update_state(
@@ -105,27 +103,27 @@ Base your analysis on the data provided and industry best practices."""
                 status="completed",
                 response_confidence=0.85,
                 next_agent=None,
-                metadata={"analysis_result": analysis_result}
+                metadata={"analysis_result": analysis_result},
             )
 
         except Exception as e:
             self.logger.error("mistake_detector_error", error=str(e), exc_info=True)
             return self.update_state(
                 state,
-                agent_response=f"**Error during analysis:** {str(e)}",
+                agent_response=f"**Error during analysis:** {e!s}",
                 status="error",
                 response_confidence=0.0,
-                next_agent=None
+                next_agent=None,
             )
 
-    async def _perform_analysis(self, lookback_days: int) -> Dict[str, Any]:
+    async def _perform_analysis(self, lookback_days: int) -> dict[str, Any]:
         """Perform the analysis."""
         db = next(get_db())
 
         try:
             # Query relevant data
             end_date = datetime.now(UTC)
-            start_date = end_date - timedelta(days=lookback_days)
+            end_date - timedelta(days=lookback_days)
 
             # Placeholder for actual analysis logic
             # In production, this would query specific tables and perform calculations
@@ -135,13 +133,13 @@ Base your analysis on the data provided and industry best practices."""
                 "findings": [
                     "System operating within normal parameters",
                     "No critical issues detected",
-                    "Opportunities for optimization identified"
+                    "Opportunities for optimization identified",
                 ],
                 "metrics": {
                     "data_points_analyzed": 1000,
                     "patterns_identified": 5,
-                    "recommendations_generated": 3
-                }
+                    "recommendations_generated": 3,
+                },
             }
 
             return analysis_data
@@ -149,27 +147,27 @@ Base your analysis on the data provided and industry best practices."""
         finally:
             db.close()
 
-    def _build_response(self, analysis_result: Dict[str, Any]) -> str:
+    def _build_response(self, analysis_result: dict[str, Any]) -> str:
         """Build formatted response."""
         output = []
-        
-        output.append(f"# MistakeDetector Analysis Report")
+
+        output.append("# MistakeDetector Analysis Report")
         output.append("")
         output.append(f"**Analysis Period:** {analysis_result['period_days']} days")
         output.append("")
-        
+
         output.append("## Key Findings")
         output.append("")
         for i, finding in enumerate(analysis_result.get("findings", []), 1):
             output.append(f"{i}. {finding}")
-        
+
         output.append("")
         output.append("## Metrics")
         output.append("")
         metrics = analysis_result.get("metrics", {})
         for key, value in metrics.items():
             output.append(f"- **{key.replace('_', ' ').title()}:** {value}")
-        
+
         output.append("")
         output.append("## Next Steps")
         output.append("")
@@ -177,5 +175,5 @@ Base your analysis on the data provided and industry best practices."""
         output.append("2. Implement high-impact changes")
         output.append("3. Monitor results for 7-14 days")
         output.append("4. Iterate based on outcomes")
-        
+
         return "\n".join(output)
