@@ -545,5 +545,9 @@ Best Practices:
 
 Generate helpful usage optimization advice."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # Optimization recommendations use analysis context
+        )
         return response
