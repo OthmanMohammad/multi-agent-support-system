@@ -453,5 +453,9 @@ Key Benefits:
 
 Generate a compelling premium support recommendation."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # Sales context is built from customer profile
+        )
         return response
