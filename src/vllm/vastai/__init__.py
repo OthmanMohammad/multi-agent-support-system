@@ -11,7 +11,7 @@ from src.vllm.vastai.client import VastAIClient
 from src.vllm.vastai.orchestrator import GPUOrchestrator, gpu_orchestrator
 
 __all__ = [
-    "VastAIClient",
     "GPUOrchestrator",
+    "VastAIClient",
     "gpu_orchestrator",
 ]
