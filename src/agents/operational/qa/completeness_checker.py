@@ -5,13 +5,13 @@ Ensures response fully addresses customer question with all necessary informatio
 Uses Claude Haiku for efficient completeness validation.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("completeness_checker", tier="operational", category="qa")
@@ -36,7 +36,7 @@ class CompletenessCheckerAgent(BaseAgent):
         "context": "Relevant context and background",
         "details": "Sufficient detail to be actionable",
         "next_steps": "Clear next steps or actions (if applicable)",
-        "resources": "Links to relevant resources (if applicable)"
+        "resources": "Links to relevant resources (if applicable)",
     }
 
     # Question types that require specific elements
@@ -45,7 +45,7 @@ class CompletenessCheckerAgent(BaseAgent):
         "troubleshooting": ["diagnosis", "solution", "prevention"],
         "pricing": ["cost", "billing_period", "limitations"],
         "feature": ["description", "use_cases", "availability"],
-        "comparison": ["differences", "pros_cons", "recommendation"]
+        "comparison": ["differences", "pros_cons", "recommendation"],
     }
 
     def __init__(self):
@@ -55,7 +55,7 @@ class CompletenessCheckerAgent(BaseAgent):
             temperature=0.2,
             max_tokens=1500,
             capabilities=[],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -75,14 +75,16 @@ class CompletenessCheckerAgent(BaseAgent):
         state = self.update_state(state)
 
         # Extract parameters
-        response_text = state.get("entities", {}).get("response_text", state.get("agent_response", ""))
+        response_text = state.get("entities", {}).get(
+            "response_text", state.get("agent_response", "")
+        )
         original_question = state.get("entities", {}).get("original_question", "")
         question_type = state.get("entities", {}).get("question_type", "general")
 
         self.logger.debug(
             "completeness_checking_details",
             response_length=len(response_text),
-            question_type=question_type
+            question_type=question_type,
         )
 
         # Analyze question structure
@@ -93,23 +95,15 @@ class CompletenessCheckerAgent(BaseAgent):
 
         # Check for multi-part question completeness
         multipart_check = self._check_multipart_completeness(
-            original_question,
-            response_text,
-            question_analysis
+            original_question, response_text, question_analysis
         )
 
         # Check for specific question type requirements
-        question_type_check = self._check_question_type_requirements(
-            response_text,
-            question_type
-        )
+        question_type_check = self._check_question_type_requirements(response_text, question_type)
 
         # Identify gaps
         gaps = self._identify_gaps(
-            element_check,
-            multipart_check,
-            question_type_check,
-            question_analysis
+            element_check, multipart_check, question_type_check, question_analysis
         )
 
         # Generate recommendations
@@ -117,9 +111,7 @@ class CompletenessCheckerAgent(BaseAgent):
 
         # Calculate completeness score
         completeness_score = self._calculate_completeness_score(
-            element_check,
-            multipart_check,
-            question_type_check
+            element_check, multipart_check, question_type_check
         )
 
         # Determine pass/fail
@@ -127,12 +119,7 @@ class CompletenessCheckerAgent(BaseAgent):
 
         # Format response
         response = self._format_completeness_report(
-            element_check,
-            gaps,
-            recommendations,
-            completeness_score,
-            passed,
-            question_analysis
+            element_check, gaps, recommendations, completeness_score, passed, question_analysis
         )
 
         state["agent_response"] = response
@@ -149,12 +136,12 @@ class CompletenessCheckerAgent(BaseAgent):
             "completeness_checking_completed",
             completeness_score=completeness_score,
             gaps_found=len(gaps),
-            passed=passed
+            passed=passed,
         )
 
         return state
 
-    def _analyze_question(self, question: str) -> Dict[str, Any]:
+    def _analyze_question(self, question: str) -> dict[str, Any]:
         """
         Analyze question structure and requirements.
 
@@ -181,7 +168,7 @@ class CompletenessCheckerAgent(BaseAgent):
 
         # Detect multi-part question
         parts = []
-        if " and " in question_lower or "?" in question and question.count("?") > 1:
+        if " and " in question_lower or ("?" in question and question.count("?") > 1):
             # Likely multi-part
             parts = [p.strip() for p in question.split(" and ")]
             if len(parts) == 1:
@@ -191,14 +178,12 @@ class CompletenessCheckerAgent(BaseAgent):
             "type": question_type,
             "is_multipart": len(parts) > 1,
             "parts": parts if len(parts) > 1 else [question],
-            "word_count": len(question.split())
+            "word_count": len(question.split()),
         }
 
     def _check_required_elements(
-        self,
-        response_text: str,
-        question_analysis: Dict[str, Any]
-    ) -> Dict[str, Dict[str, Any]]:
+        self, response_text: str, question_analysis: dict[str, Any]
+    ) -> dict[str, dict[str, Any]]:
         """
         Check for required elements in response.
 
@@ -216,16 +201,13 @@ class CompletenessCheckerAgent(BaseAgent):
         has_direct_answer = len(response_text.split()) >= 20
         results["direct_answer"] = {
             "present": has_direct_answer,
-            "confidence": 0.9 if has_direct_answer else 0.3
+            "confidence": 0.9 if has_direct_answer else 0.3,
         }
 
         # Context provided
         context_indicators = ["because", "this is", "the reason", "this means"]
         has_context = any(indicator in text_lower for indicator in context_indicators)
-        results["context"] = {
-            "present": has_context,
-            "confidence": 0.85 if has_context else 0.5
-        }
+        results["context"] = {"present": has_context, "confidence": 0.85 if has_context else 0.5}
 
         # Sufficient detail
         word_count = len(response_text.split())
@@ -233,7 +215,7 @@ class CompletenessCheckerAgent(BaseAgent):
         results["details"] = {
             "present": has_detail,
             "confidence": min(1.0, word_count / 100),
-            "word_count": word_count
+            "word_count": word_count,
         }
 
         # Next steps (if action required)
@@ -242,7 +224,7 @@ class CompletenessCheckerAgent(BaseAgent):
         results["next_steps"] = {
             "present": has_next_steps,
             "confidence": 0.8 if has_next_steps else 0.4,
-            "required": question_analysis["type"] in ["how_to", "troubleshooting"]
+            "required": question_analysis["type"] in ["how_to", "troubleshooting"],
         }
 
         # Resources/links
@@ -250,17 +232,14 @@ class CompletenessCheckerAgent(BaseAgent):
         results["resources"] = {
             "present": has_resources,
             "confidence": 0.9 if has_resources else 0.5,
-            "required": False
+            "required": False,
         }
 
         return results
 
     def _check_multipart_completeness(
-        self,
-        question: str,
-        response_text: str,
-        question_analysis: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, question: str, response_text: str, question_analysis: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Check if all parts of multi-part question are addressed.
 
@@ -273,11 +252,7 @@ class CompletenessCheckerAgent(BaseAgent):
             Multi-part completeness check
         """
         if not question_analysis["is_multipart"]:
-            return {
-                "applicable": False,
-                "all_parts_addressed": True,
-                "parts_addressed": []
-            }
+            return {"applicable": False, "all_parts_addressed": True, "parts_addressed": []}
 
         parts = question_analysis["parts"]
         parts_addressed = []
@@ -288,7 +263,20 @@ class CompletenessCheckerAgent(BaseAgent):
             response_words = set(response_text.lower().split())
 
             # Remove common words
-            common_words = {"the", "a", "an", "is", "are", "how", "what", "when", "where", "why", "do", "does"}
+            common_words = {
+                "the",
+                "a",
+                "an",
+                "is",
+                "are",
+                "how",
+                "what",
+                "when",
+                "where",
+                "why",
+                "do",
+                "does",
+            }
             part_keywords = part_words - common_words
 
             # Check if at least 30% of keywords appear in response
@@ -298,12 +286,14 @@ class CompletenessCheckerAgent(BaseAgent):
             else:
                 addressed = True  # No specific keywords to check
 
-            parts_addressed.append({
-                "part_number": i + 1,
-                "part_text": part,
-                "addressed": addressed,
-                "confidence": overlap / len(part_keywords) if part_keywords else 1.0
-            })
+            parts_addressed.append(
+                {
+                    "part_number": i + 1,
+                    "part_text": part,
+                    "addressed": addressed,
+                    "confidence": overlap / len(part_keywords) if part_keywords else 1.0,
+                }
+            )
 
         all_addressed = all(p["addressed"] for p in parts_addressed)
 
@@ -311,14 +301,12 @@ class CompletenessCheckerAgent(BaseAgent):
             "applicable": True,
             "all_parts_addressed": all_addressed,
             "parts_addressed": parts_addressed,
-            "total_parts": len(parts)
+            "total_parts": len(parts),
         }
 
     def _check_question_type_requirements(
-        self,
-        response_text: str,
-        question_type: str
-    ) -> Dict[str, Any]:
+        self, response_text: str, question_type: str
+    ) -> dict[str, Any]:
         """
         Check question-type-specific requirements.
 
@@ -339,21 +327,35 @@ class CompletenessCheckerAgent(BaseAgent):
         # Check each required element
         for element in required_elements:
             if element == "step_by_step":
-                has_element = any(indicator in text_lower for indicator in ["1.", "2.", "step", "first", "then"])
+                has_element = any(
+                    indicator in text_lower for indicator in ["1.", "2.", "step", "first", "then"]
+                )
             elif element == "prerequisites":
-                has_element = "prerequisite" in text_lower or "you'll need" in text_lower or "before" in text_lower
+                has_element = (
+                    "prerequisite" in text_lower
+                    or "you'll need" in text_lower
+                    or "before" in text_lower
+                )
             elif element == "examples":
                 has_element = "example" in text_lower or "for instance" in text_lower
             elif element == "diagnosis":
-                has_element = "issue" in text_lower or "problem" in text_lower or "caused by" in text_lower
+                has_element = (
+                    "issue" in text_lower or "problem" in text_lower or "caused by" in text_lower
+                )
             elif element == "solution":
-                has_element = "solution" in text_lower or "to fix" in text_lower or "resolve" in text_lower
+                has_element = (
+                    "solution" in text_lower or "to fix" in text_lower or "resolve" in text_lower
+                )
             elif element == "prevention":
-                has_element = "prevent" in text_lower or "avoid" in text_lower or "in future" in text_lower
+                has_element = (
+                    "prevent" in text_lower or "avoid" in text_lower or "in future" in text_lower
+                )
             elif element == "cost":
                 has_element = "$" in response_text or "price" in text_lower or "cost" in text_lower
             elif element == "billing_period":
-                has_element = any(period in text_lower for period in ["month", "year", "annual", "billing"])
+                has_element = any(
+                    period in text_lower for period in ["month", "year", "annual", "billing"]
+                )
             else:
                 has_element = element.replace("_", " ") in text_lower
 
@@ -364,58 +366,62 @@ class CompletenessCheckerAgent(BaseAgent):
             "applicable": True,
             "requirements_met": len(missing) == 0,
             "missing": missing,
-            "question_type": question_type
+            "question_type": question_type,
         }
 
     def _identify_gaps(
         self,
-        element_check: Dict[str, Dict[str, Any]],
-        multipart_check: Dict[str, Any],
-        question_type_check: Dict[str, Any],
-        question_analysis: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        element_check: dict[str, dict[str, Any]],
+        multipart_check: dict[str, Any],
+        question_type_check: dict[str, Any],
+        question_analysis: dict[str, Any],
+    ) -> list[dict[str, Any]]:
         """Identify completeness gaps."""
         gaps = []
 
         # Check basic elements
         for element, result in element_check.items():
             if result.get("required", True) and not result["present"]:
-                gaps.append({
-                    "type": "missing_element",
-                    "element": element,
-                    "severity": "high" if element == "direct_answer" else "medium",
-                    "message": f"Missing {element.replace('_', ' ')}"
-                })
+                gaps.append(
+                    {
+                        "type": "missing_element",
+                        "element": element,
+                        "severity": "high" if element == "direct_answer" else "medium",
+                        "message": f"Missing {element.replace('_', ' ')}",
+                    }
+                )
 
         # Check multi-part completeness
         if multipart_check.get("applicable") and not multipart_check["all_parts_addressed"]:
             unanswered = [p for p in multipart_check["parts_addressed"] if not p["addressed"]]
             for part in unanswered:
-                gaps.append({
-                    "type": "unanswered_part",
-                    "part_number": part["part_number"],
-                    "severity": "high",
-                    "message": f"Part {part['part_number']} of question not fully addressed",
-                    "part_text": part["part_text"]
-                })
+                gaps.append(
+                    {
+                        "type": "unanswered_part",
+                        "part_number": part["part_number"],
+                        "severity": "high",
+                        "message": f"Part {part['part_number']} of question not fully addressed",
+                        "part_text": part["part_text"],
+                    }
+                )
 
         # Check question type requirements
         if question_type_check.get("applicable") and not question_type_check["requirements_met"]:
             for missing in question_type_check["missing"]:
-                gaps.append({
-                    "type": "missing_requirement",
-                    "requirement": missing,
-                    "severity": "medium",
-                    "message": f"Missing {missing.replace('_', ' ')} for {question_type_check['question_type']} question"
-                })
+                gaps.append(
+                    {
+                        "type": "missing_requirement",
+                        "requirement": missing,
+                        "severity": "medium",
+                        "message": f"Missing {missing.replace('_', ' ')} for {question_type_check['question_type']} question",
+                    }
+                )
 
         return gaps
 
     def _generate_recommendations(
-        self,
-        gaps: List[Dict[str, Any]],
-        question_analysis: Dict[str, Any]
-    ) -> List[str]:
+        self, gaps: list[dict[str, Any]], question_analysis: dict[str, Any]
+    ) -> list[str]:
         """Generate completeness recommendations."""
         recommendations = []
 
@@ -431,7 +437,7 @@ class CompletenessCheckerAgent(BaseAgent):
             )
 
         # Specific recommendations
-        gap_types = set(g["type"] for g in gaps)
+        gap_types = {g["type"] for g in gaps}
 
         if "missing_element" in gap_types:
             missing = [g["element"] for g in gaps if g["type"] == "missing_element"]
@@ -453,16 +459,16 @@ class CompletenessCheckerAgent(BaseAgent):
 
     def _calculate_completeness_score(
         self,
-        element_check: Dict[str, Dict[str, Any]],
-        multipart_check: Dict[str, Any],
-        question_type_check: Dict[str, Any]
+        element_check: dict[str, dict[str, Any]],
+        multipart_check: dict[str, Any],
+        question_type_check: dict[str, Any],
     ) -> float:
         """Calculate completeness score (0-100)."""
         score = 0.0
         total_weight = 0.0
 
         # Element scores (weight: 50%)
-        for element, result in element_check.items():
+        for _element, result in element_check.items():
             weight = 10 if result.get("required", True) else 5
             if result["present"]:
                 score += weight * result["confidence"]
@@ -471,7 +477,11 @@ class CompletenessCheckerAgent(BaseAgent):
         # Multi-part score (weight: 30%)
         if multipart_check.get("applicable"):
             parts_score = sum(p["confidence"] for p in multipart_check["parts_addressed"])
-            parts_score = parts_score / len(multipart_check["parts_addressed"]) if multipart_check["parts_addressed"] else 0
+            parts_score = (
+                parts_score / len(multipart_check["parts_addressed"])
+                if multipart_check["parts_addressed"]
+                else 0
+            )
             score += 30 * parts_score
             total_weight += 30
         else:
@@ -484,7 +494,9 @@ class CompletenessCheckerAgent(BaseAgent):
             if question_type_check["requirements_met"]:
                 score += 20
             else:
-                met_count = len(self.QUESTION_TYPES.get(question_type_check["question_type"], [])) - len(question_type_check["missing"])
+                met_count = len(
+                    self.QUESTION_TYPES.get(question_type_check["question_type"], [])
+                ) - len(question_type_check["missing"])
                 total_count = len(self.QUESTION_TYPES.get(question_type_check["question_type"], []))
                 score += 20 * (met_count / total_count if total_count > 0 else 1)
             total_weight += 20
@@ -494,24 +506,21 @@ class CompletenessCheckerAgent(BaseAgent):
 
         return round((score / total_weight * 100) if total_weight > 0 else 0, 1)
 
-    def _determine_pass_fail(self, gaps: List[Dict[str, Any]], completeness_score: float) -> bool:
+    def _determine_pass_fail(self, gaps: list[dict[str, Any]], completeness_score: float) -> bool:
         """Determine if completeness check passes."""
         # Fail if critical gaps or score too low
         high_severity_gaps = [g for g in gaps if g["severity"] == "high"]
 
-        if high_severity_gaps or completeness_score < 60:
-            return False
-
-        return True
+        return not (high_severity_gaps or completeness_score < 60)
 
     def _format_completeness_report(
         self,
-        element_check: Dict[str, Dict[str, Any]],
-        gaps: List[Dict[str, Any]],
-        recommendations: List[str],
+        element_check: dict[str, dict[str, Any]],
+        gaps: list[dict[str, Any]],
+        recommendations: list[str],
         completeness_score: float,
         passed: bool,
-        question_analysis: Dict[str, Any]
+        question_analysis: dict[str, Any],
     ) -> str:
         """Format completeness report."""
         status_icon = "✅" if passed else "❌"
@@ -520,8 +529,8 @@ class CompletenessCheckerAgent(BaseAgent):
 
 **Status:** {status_icon} {"PASSED" if passed else "FAILED"}
 **Completeness Score:** {completeness_score}/100
-**Question Type:** {question_analysis['type']}
-**Multi-part Question:** {"Yes" if question_analysis['is_multipart'] else "No"}
+**Question Type:** {question_analysis["type"]}
+**Multi-part Question:** {"Yes" if question_analysis["is_multipart"] else "No"}
 **Gaps Found:** {len(gaps)}
 
 **Required Elements Check:**
@@ -534,7 +543,7 @@ class CompletenessCheckerAgent(BaseAgent):
 
         # Gaps
         if gaps:
-            report += f"\n**Identified Gaps:**\n"
+            report += "\n**Identified Gaps:**\n"
             for gap in gaps[:5]:
                 icon = "🔴" if gap["severity"] == "high" else "⚠️"
                 report += f"{icon} [{gap['severity'].upper()}] {gap['message']}\n"
@@ -544,7 +553,7 @@ class CompletenessCheckerAgent(BaseAgent):
 
         # Recommendations
         if recommendations:
-            report += f"\n**Recommendations:**\n"
+            report += "\n**Recommendations:**\n"
             for rec in recommendations:
                 report += f"- {rec}\n"
 
