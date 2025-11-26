@@ -5,13 +5,13 @@ Manages executive sponsor relationships, schedules executive check-ins,
 and shares strategic updates to maintain C-level engagement and alignment.
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("executive_sponsor", tier="revenue", category="customer_success")
@@ -33,7 +33,7 @@ class ExecutiveSponsorAgent(BaseAgent):
         "enterprise": {"frequency_days": 30, "format": "video_call", "duration_minutes": 30},
         "premium": {"frequency_days": 60, "format": "video_call", "duration_minutes": 20},
         "growth": {"frequency_days": 90, "format": "email_update", "duration_minutes": 0},
-        "standard": {"frequency_days": 180, "format": "email_update", "duration_minutes": 0}
+        "standard": {"frequency_days": 180, "format": "email_update", "duration_minutes": 0},
     }
 
     # Executive sponsor levels
@@ -41,7 +41,7 @@ class ExecutiveSponsorAgent(BaseAgent):
         "c_suite": {"priority": 1, "influence": "very_high"},
         "vp_level": {"priority": 2, "influence": "high"},
         "director": {"priority": 3, "influence": "medium"},
-        "manager": {"priority": 4, "influence": "low"}
+        "manager": {"priority": 4, "influence": "low"},
     }
 
     # Communication topics
@@ -51,7 +51,7 @@ class ExecutiveSponsorAgent(BaseAgent):
         "Executive success stories",
         "Industry trends & insights",
         "Partnership opportunities",
-        "Innovation & future capabilities"
+        "Innovation & future capabilities",
     ]
 
     def __init__(self):
@@ -60,12 +60,9 @@ class ExecutiveSponsorAgent(BaseAgent):
             type=AgentType.SPECIALIST,
             temperature=0.3,
             max_tokens=700,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.KB_SEARCH
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.KB_SEARCH],
             kb_category="customer_success",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -94,42 +91,30 @@ class ExecutiveSponsorAgent(BaseAgent):
             "executive_sponsor_details",
             customer_id=customer_id,
             tier=customer_metadata.get("tier", "standard"),
-            has_sponsor=bool(contact_data.get("executive_sponsor"))
+            has_sponsor=bool(contact_data.get("executive_sponsor")),
         )
 
         # Identify or validate executive sponsor
         sponsor_analysis = self._analyze_executive_sponsor(
-            contact_data,
-            customer_metadata,
-            business_data
+            contact_data, customer_metadata, business_data
         )
 
         # Plan executive engagement
         engagement_plan = self._plan_executive_engagement(
-            sponsor_analysis,
-            customer_metadata,
-            engagement_data
+            sponsor_analysis, customer_metadata, engagement_data
         )
 
         # Prepare strategic update
         strategic_update = self._prepare_strategic_update(
-            business_data,
-            engagement_data,
-            customer_metadata
+            business_data, engagement_data, customer_metadata
         )
 
         # Generate action plan
-        action_plan = self._generate_engagement_action_plan(
-            sponsor_analysis,
-            engagement_plan
-        )
+        action_plan = self._generate_engagement_action_plan(sponsor_analysis, engagement_plan)
 
         # Format response
         response = self._format_executive_sponsor_report(
-            sponsor_analysis,
-            engagement_plan,
-            strategic_update,
-            action_plan
+            sponsor_analysis, engagement_plan, strategic_update, action_plan
         )
 
         state["agent_response"] = response
@@ -145,17 +130,17 @@ class ExecutiveSponsorAgent(BaseAgent):
             "executive_sponsor_management_completed",
             customer_id=customer_id,
             sponsor_identified=sponsor_analysis.get("sponsor_identified", False),
-            engagement_status=engagement_plan["status"]
+            engagement_status=engagement_plan["status"],
         )
 
         return state
 
     def _analyze_executive_sponsor(
         self,
-        contact_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any],
-        business_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        contact_data: dict[str, Any],
+        customer_metadata: dict[str, Any],
+        business_data: dict[str, Any],
+    ) -> dict[str, Any]:
         """
         Analyze executive sponsor relationship.
 
@@ -184,10 +169,7 @@ class ExecutiveSponsorAgent(BaseAgent):
 
         # Assess sponsor relationship health
         relationship_health = self._assess_sponsor_relationship_health(
-            sponsor_identified,
-            sponsor_engagement,
-            last_contact,
-            business_data
+            sponsor_identified, sponsor_engagement, last_contact, business_data
         )
 
         # Identify potential sponsors if none exists
@@ -205,7 +187,7 @@ class ExecutiveSponsorAgent(BaseAgent):
             "last_contact_date": last_contact,
             "relationship_health": relationship_health,
             "potential_sponsors": potential_sponsors,
-            "requires_identification": not sponsor_identified
+            "requires_identification": not sponsor_identified,
         }
 
     def _determine_sponsor_level(self, title: str) -> str:
@@ -223,23 +205,23 @@ class ExecutiveSponsorAgent(BaseAgent):
         else:
             return "director"  # Default assumption
 
-    def _calculate_sponsor_tenure(self, start_date: Optional[str]) -> int:
+    def _calculate_sponsor_tenure(self, start_date: str | None) -> int:
         """Calculate days since sponsor relationship started."""
         if not start_date:
             return 0
 
         try:
-            start = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            start = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
             return (datetime.now(UTC) - start).days
-        except:
+        except Exception:
             return 0
 
     def _assess_sponsor_relationship_health(
         self,
         sponsor_identified: bool,
         engagement_level: str,
-        last_contact: Optional[str],
-        business_data: Dict[str, Any]
+        last_contact: str | None,
+        business_data: dict[str, Any],
     ) -> str:
         """Assess health of executive sponsor relationship."""
         if not sponsor_identified:
@@ -248,9 +230,9 @@ class ExecutiveSponsorAgent(BaseAgent):
         # Calculate days since last contact
         if last_contact:
             try:
-                last_contact_date = datetime.fromisoformat(last_contact.replace('Z', '+00:00'))
+                last_contact_date = datetime.fromisoformat(last_contact.replace("Z", "+00:00"))
                 days_since_contact = (datetime.now(UTC) - last_contact_date).days
-            except:
+            except Exception:
                 days_since_contact = 999
         else:
             days_since_contact = 999
@@ -265,7 +247,7 @@ class ExecutiveSponsorAgent(BaseAgent):
         else:
             return "at_risk"
 
-    def _identify_potential_sponsors(self, contact_data: Dict[str, Any]) -> List[Dict[str, str]]:
+    def _identify_potential_sponsors(self, contact_data: dict[str, Any]) -> list[dict[str, str]]:
         """Identify potential executive sponsors from contacts."""
         contacts = contact_data.get("all_contacts", [])
         potential = []
@@ -275,13 +257,15 @@ class ExecutiveSponsorAgent(BaseAgent):
             level = self._determine_sponsor_level(title)
 
             if level in ["c_suite", "vp_level"]:
-                potential.append({
-                    "name": contact.get("name", "Unknown"),
-                    "title": title,
-                    "level": level,
-                    "department": contact.get("department", "Unknown"),
-                    "priority": self.SPONSOR_LEVELS[level]["priority"]
-                })
+                potential.append(
+                    {
+                        "name": contact.get("name", "Unknown"),
+                        "title": title,
+                        "level": level,
+                        "department": contact.get("department", "Unknown"),
+                        "priority": self.SPONSOR_LEVELS[level]["priority"],
+                    }
+                )
 
         # Sort by priority
         potential.sort(key=lambda x: x["priority"])
@@ -289,10 +273,10 @@ class ExecutiveSponsorAgent(BaseAgent):
 
     def _plan_executive_engagement(
         self,
-        sponsor_analysis: Dict[str, Any],
-        customer_metadata: Dict[str, Any],
-        engagement_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        sponsor_analysis: dict[str, Any],
+        customer_metadata: dict[str, Any],
+        engagement_data: dict[str, Any],
+    ) -> dict[str, Any]:
         """Plan executive engagement strategy."""
         tier = customer_metadata.get("tier", "standard")
         cadence_config = self.ENGAGEMENT_CADENCE.get(tier, self.ENGAGEMENT_CADENCE["standard"])
@@ -300,9 +284,9 @@ class ExecutiveSponsorAgent(BaseAgent):
         last_contact = sponsor_analysis.get("last_contact_date")
         if last_contact:
             try:
-                last_contact_date = datetime.fromisoformat(last_contact.replace('Z', '+00:00'))
+                last_contact_date = datetime.fromisoformat(last_contact.replace("Z", "+00:00"))
                 days_since_last_contact = (datetime.now(UTC) - last_contact_date).days
-            except:
+            except Exception:
                 days_since_last_contact = cadence_config["frequency_days"] + 1
         else:
             days_since_last_contact = cadence_config["frequency_days"] + 1
@@ -311,7 +295,7 @@ class ExecutiveSponsorAgent(BaseAgent):
         if last_contact:
             try:
                 next_contact = last_contact_date + timedelta(days=cadence_config["frequency_days"])
-            except:
+            except Exception:
                 next_contact = datetime.now(UTC) + timedelta(days=cadence_config["frequency_days"])
         else:
             next_contact = datetime.now(UTC) + timedelta(days=7)  # Schedule soon if new
@@ -335,15 +319,15 @@ class ExecutiveSponsorAgent(BaseAgent):
             "days_since_last_contact": days_since_last_contact,
             "recommended_format": cadence_config["format"],
             "recommended_duration": cadence_config["duration_minutes"],
-            "cadence_days": cadence_config["frequency_days"]
+            "cadence_days": cadence_config["frequency_days"],
         }
 
     def _prepare_strategic_update(
         self,
-        business_data: Dict[str, Any],
-        engagement_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        business_data: dict[str, Any],
+        engagement_data: dict[str, Any],
+        customer_metadata: dict[str, Any],
+    ) -> dict[str, Any]:
         """Prepare strategic update for executive."""
         # Business value metrics
         contract_value = business_data.get("contract_value", 0)
@@ -365,82 +349,92 @@ class ExecutiveSponsorAgent(BaseAgent):
         initiatives = [
             "Expanding platform usage to additional teams",
             "Exploring advanced feature adoption opportunities",
-            "Aligning on strategic roadmap priorities"
+            "Aligning on strategic roadmap priorities",
         ]
 
         return {
             "talking_points": talking_points,
             "strategic_initiatives": initiatives[:3],
             "business_value_focus": f"${contract_value:,} investment delivering measurable results",
-            "recommended_topics": self.STRATEGIC_TOPICS[:4]
+            "recommended_topics": self.STRATEGIC_TOPICS[:4],
         }
 
     def _generate_engagement_action_plan(
-        self,
-        sponsor_analysis: Dict[str, Any],
-        engagement_plan: Dict[str, Any]
-    ) -> List[Dict[str, str]]:
+        self, sponsor_analysis: dict[str, Any], engagement_plan: dict[str, Any]
+    ) -> list[dict[str, str]]:
         """Generate action plan for executive engagement."""
         actions = []
 
         if sponsor_analysis["requires_identification"]:
-            actions.append({
-                "action": "Identify and engage executive sponsor",
-                "owner": "VP Customer Success",
-                "timeline": "Within 2 weeks",
-                "priority": "critical"
-            })
+            actions.append(
+                {
+                    "action": "Identify and engage executive sponsor",
+                    "owner": "VP Customer Success",
+                    "timeline": "Within 2 weeks",
+                    "priority": "critical",
+                }
+            )
 
             if sponsor_analysis.get("potential_sponsors"):
                 potential = sponsor_analysis["potential_sponsors"][0]
-                actions.append({
-                    "action": f"Reach out to {potential['name']} ({potential['title']}) as potential sponsor",
-                    "owner": "CSM + Account Executive",
-                    "timeline": "This week",
-                    "priority": "high"
-                })
+                actions.append(
+                    {
+                        "action": f"Reach out to {potential['name']} ({potential['title']}) as potential sponsor",
+                        "owner": "CSM + Account Executive",
+                        "timeline": "This week",
+                        "priority": "high",
+                    }
+                )
 
         status = engagement_plan["status"]
 
         if status == "overdue":
-            actions.append({
-                "action": "Schedule urgent executive check-in call",
-                "owner": "CSM",
-                "timeline": "Within 3 days",
-                "priority": "high"
-            })
+            actions.append(
+                {
+                    "action": "Schedule urgent executive check-in call",
+                    "owner": "CSM",
+                    "timeline": "Within 3 days",
+                    "priority": "high",
+                }
+            )
 
         if status == "upcoming":
-            actions.append({
-                "action": "Prepare and send executive update",
-                "owner": "CSM",
-                "timeline": "Before next contact date",
-                "priority": "medium"
-            })
+            actions.append(
+                {
+                    "action": "Prepare and send executive update",
+                    "owner": "CSM",
+                    "timeline": "Before next contact date",
+                    "priority": "medium",
+                }
+            )
 
-        actions.append({
-            "action": "Share relevant industry insights and success stories",
-            "owner": "CSM",
-            "timeline": "Quarterly",
-            "priority": "medium"
-        })
+        actions.append(
+            {
+                "action": "Share relevant industry insights and success stories",
+                "owner": "CSM",
+                "timeline": "Quarterly",
+                "priority": "medium",
+            }
+        )
 
         if sponsor_analysis.get("relationship_health") in ["needs_attention", "at_risk"]:
-            actions.append({
-                "action": "Strengthen executive relationship through strategic value discussion",
-                "owner": "VP Customer Success + Exec Sponsor",
-                "timeline": "Within 30 days",
-                "priority": "high"
-            })
+            actions.append(
+                {
+                    "action": "Strengthen executive relationship through strategic value discussion",
+                    "owner": "VP Customer Success + Exec Sponsor",
+                    "timeline": "Within 30 days",
+                    "priority": "high",
+                }
+            )
 
         return actions[:5]
 
     def _format_executive_sponsor_report(
         self,
-        sponsor_analysis: Dict[str, Any],
-        engagement_plan: Dict[str, Any],
-        strategic_update: Dict[str, Any],
-        action_plan: List[Dict[str, str]]
+        sponsor_analysis: dict[str, Any],
+        engagement_plan: dict[str, Any],
+        strategic_update: dict[str, Any],
+        action_plan: list[dict[str, str]],
     ) -> str:
         """Format executive sponsor management report."""
         health_emoji = {
@@ -448,24 +442,24 @@ class ExecutiveSponsorAgent(BaseAgent):
             "good": "???",
             "needs_attention": "??????",
             "at_risk": "????",
-            "missing": "???"
+            "missing": "???",
         }
 
         status_emoji = {
             "needs_identification": "????",
             "overdue": "????",
             "upcoming": "????",
-            "scheduled": "???"
+            "scheduled": "???",
         }
 
         report = f"""**???? Executive Sponsor Relationship Management**
 
-**Sponsor Status:** {sponsor_analysis['sponsor_name']}
-**Title:** {sponsor_analysis['sponsor_title']}
-**Level:** {sponsor_analysis['sponsor_level'].replace('_', ' ').title()}
-**Relationship Health:** {sponsor_analysis['relationship_health'].replace('_', ' ').title()} {health_emoji.get(sponsor_analysis['relationship_health'], '???')}
+**Sponsor Status:** {sponsor_analysis["sponsor_name"]}
+**Title:** {sponsor_analysis["sponsor_title"]}
+**Level:** {sponsor_analysis["sponsor_level"].replace("_", " ").title()}
+**Relationship Health:** {sponsor_analysis["relationship_health"].replace("_", " ").title()} {health_emoji.get(sponsor_analysis["relationship_health"], "???")}
 
-**???? Engagement Status:** {engagement_plan['status'].replace('_', ' ').title()} {status_emoji.get(engagement_plan['status'], '???')}
+**???? Engagement Status:** {engagement_plan["status"].replace("_", " ").title()} {status_emoji.get(engagement_plan["status"], "???")}
 """
 
         if engagement_plan.get("days_since_last_contact", 999) < 999:
@@ -498,7 +492,13 @@ class ExecutiveSponsorAgent(BaseAgent):
         if action_plan:
             report += "\n**??? Action Plan:**\n"
             for i, action in enumerate(action_plan, 1):
-                priority_icon = "????" if action["priority"] == "critical" else "????" if action["priority"] == "high" else "????"
+                priority_icon = (
+                    "????"
+                    if action["priority"] == "critical"
+                    else "????"
+                    if action["priority"] == "high"
+                    else "????"
+                )
                 report += f"{i}. **{action['action']}** {priority_icon}\n"
                 report += f"   - Owner: {action['owner']}\n"
                 report += f"   - Timeline: {action['timeline']}\n"
@@ -511,6 +511,7 @@ class ExecutiveSponsorAgent(BaseAgent):
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -528,11 +529,8 @@ if __name__ == "__main__":
             "Manage executive sponsor relationship",
             context={
                 "customer_id": "cust_enterprise_001",
-                "customer_metadata": {
-                    "tier": "enterprise",
-                    "company_name": "TechCorp Inc"
-                }
-            }
+                "customer_metadata": {"tier": "enterprise", "company_name": "TechCorp Inc"},
+            },
         )
         state1["entities"] = {
             "contact_data": {
@@ -541,17 +539,12 @@ if __name__ == "__main__":
                     "title": "Chief Technology Officer",
                     "start_date": (datetime.now(UTC) - timedelta(days=400)).isoformat(),
                     "engagement_level": "high",
-                    "last_contact_date": (datetime.now(UTC) - timedelta(days=20)).isoformat()
+                    "last_contact_date": (datetime.now(UTC) - timedelta(days=20)).isoformat(),
                 },
-                "all_contacts": []
+                "all_contacts": [],
             },
-            "business_data": {
-                "contract_value": 120000,
-                "roi_realized_percentage": 150
-            },
-            "engagement_data": {
-                "nps_score": 9
-            }
+            "business_data": {"contract_value": 120000, "roi_realized_percentage": 150},
+            "engagement_data": {"nps_score": 9},
         }
 
         result1 = await agent.process(state1)
@@ -570,28 +563,28 @@ if __name__ == "__main__":
             "Identify executive sponsor",
             context={
                 "customer_id": "cust_growth_002",
-                "customer_metadata": {
-                    "tier": "growth",
-                    "company_name": "StartupCo"
-                }
-            }
+                "customer_metadata": {"tier": "growth", "company_name": "StartupCo"},
+            },
         )
         state2["entities"] = {
             "contact_data": {
                 "executive_sponsor": {},
                 "all_contacts": [
-                    {"name": "Mike Chen", "title": "VP of Engineering", "department": "Engineering"},
-                    {"name": "Lisa Park", "title": "Director of Operations", "department": "Operations"},
-                    {"name": "John Smith", "title": "CEO", "department": "Executive"}
-                ]
+                    {
+                        "name": "Mike Chen",
+                        "title": "VP of Engineering",
+                        "department": "Engineering",
+                    },
+                    {
+                        "name": "Lisa Park",
+                        "title": "Director of Operations",
+                        "department": "Operations",
+                    },
+                    {"name": "John Smith", "title": "CEO", "department": "Executive"},
+                ],
             },
-            "business_data": {
-                "contract_value": 35000,
-                "roi_realized_percentage": 80
-            },
-            "engagement_data": {
-                "nps_score": 7
-            }
+            "business_data": {"contract_value": 35000, "roi_realized_percentage": 80},
+            "engagement_data": {"nps_score": 7},
         }
 
         result2 = await agent.process(state2)
