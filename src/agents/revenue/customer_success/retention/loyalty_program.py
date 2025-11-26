@@ -5,13 +5,13 @@ Manages customer loyalty programs, tracks loyalty points, offers rewards,
 and recognizes customer milestones to drive retention and engagement.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("loyalty_program", tier="revenue", category="customer_success")
@@ -34,7 +34,7 @@ class LoyaltyProgramAgent(BaseAgent):
         "silver": {"points_min": 1000, "points_max": 4999, "multiplier": 1.25},
         "gold": {"points_min": 5000, "points_max": 14999, "multiplier": 1.5},
         "platinum": {"points_min": 15000, "points_max": 49999, "multiplier": 2.0},
-        "diamond": {"points_min": 50000, "points_max": 999999, "multiplier": 2.5}
+        "diamond": {"points_min": 50000, "points_max": 999999, "multiplier": 2.5},
     }
 
     # Point earning activities
@@ -48,7 +48,7 @@ class LoyaltyProgramAgent(BaseAgent):
         "community_contribution": 75,
         "nps_promoter": 300,
         "social_media_mention": 100,
-        "beta_testing": 250
+        "beta_testing": 250,
     }
 
     # Rewards catalog
@@ -60,7 +60,7 @@ class LoyaltyProgramAgent(BaseAgent):
         "executive_meeting": {"points": 5000, "value": "1-on-1 with executive"},
         "custom_training": {"points": 3000, "value": "Custom training session"},
         "early_access": {"points": 2000, "value": "Early access to new features"},
-        "discount_renewal": {"points": 4000, "value": "10% renewal discount"}
+        "discount_renewal": {"points": 4000, "value": "10% renewal discount"},
     }
 
     def __init__(self):
@@ -70,7 +70,7 @@ class LoyaltyProgramAgent(BaseAgent):
             temperature=0.2,
             max_tokens=550,
             capabilities=[AgentCapability.CONTEXT_AWARE],
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -98,40 +98,24 @@ class LoyaltyProgramAgent(BaseAgent):
             "loyalty_program_details",
             customer_id=customer_id,
             current_points=loyalty_data.get("points", 0),
-            current_tier=loyalty_data.get("tier", "bronze")
+            current_tier=loyalty_data.get("tier", "bronze"),
         )
 
         # Calculate loyalty status
-        loyalty_status = self._calculate_loyalty_status(
-            loyalty_data,
-            customer_metadata
-        )
+        loyalty_status = self._calculate_loyalty_status(loyalty_data, customer_metadata)
 
         # Process point activities
-        points_update = self._process_point_activities(
-            recent_activities,
-            loyalty_status
-        )
+        points_update = self._process_point_activities(recent_activities, loyalty_status)
 
         # Check for milestones
-        milestones = self._check_milestones(
-            loyalty_data,
-            customer_metadata,
-            points_update
-        )
+        milestones = self._check_milestones(loyalty_data, customer_metadata, points_update)
 
         # Recommend rewards
-        reward_recommendations = self._recommend_rewards(
-            loyalty_status,
-            customer_metadata
-        )
+        reward_recommendations = self._recommend_rewards(loyalty_status, customer_metadata)
 
         # Format response
         response = self._format_loyalty_report(
-            loyalty_status,
-            points_update,
-            milestones,
-            reward_recommendations
+            loyalty_status, points_update, milestones, reward_recommendations
         )
 
         state["agent_response"] = response
@@ -149,16 +133,14 @@ class LoyaltyProgramAgent(BaseAgent):
             customer_id=customer_id,
             tier=loyalty_status["current_tier"],
             points=loyalty_status["total_points"],
-            milestones=len(milestones)
+            milestones=len(milestones),
         )
 
         return state
 
     def _calculate_loyalty_status(
-        self,
-        loyalty_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, loyalty_data: dict[str, Any], customer_metadata: dict[str, Any]
+    ) -> dict[str, Any]:
         """Calculate current loyalty status."""
         current_points = loyalty_data.get("points", 0)
 
@@ -185,7 +167,7 @@ class LoyaltyProgramAgent(BaseAgent):
         # Member since
         member_since = loyalty_data.get("member_since")
         if member_since:
-            member_date = datetime.fromisoformat(member_since.replace('Z', '+00:00'))
+            member_date = datetime.fromisoformat(member_since.replace("Z", "+00:00"))
             membership_days = (datetime.now(UTC) - member_date).days
         else:
             membership_days = 0
@@ -199,21 +181,19 @@ class LoyaltyProgramAgent(BaseAgent):
             "lifetime_points_earned": lifetime_points_earned,
             "lifetime_points_redeemed": lifetime_points_redeemed,
             "membership_days": membership_days,
-            "tier_benefits": self._get_tier_benefits(current_tier)
+            "tier_benefits": self._get_tier_benefits(current_tier),
         }
 
     def _determine_tier(self, points: int) -> str:
         """Determine loyalty tier based on points."""
         for tier, config in sorted(
-            self.LOYALTY_TIERS.items(),
-            key=lambda x: x[1]["points_min"],
-            reverse=True
+            self.LOYALTY_TIERS.items(), key=lambda x: x[1]["points_min"], reverse=True
         ):
             if points >= config["points_min"]:
                 return tier
         return "bronze"
 
-    def _get_next_tier(self, current_tier: str) -> Optional[str]:
+    def _get_next_tier(self, current_tier: str) -> str | None:
         """Get next tier above current."""
         tier_order = ["bronze", "silver", "gold", "platinum", "diamond"]
         try:
@@ -224,30 +204,27 @@ class LoyaltyProgramAgent(BaseAgent):
             pass
         return None
 
-    def _get_tier_benefits(self, tier: str) -> List[str]:
+    def _get_tier_benefits(self, tier: str) -> list[str]:
         """Get benefits for a tier."""
         benefits = {
-            "bronze": [
-                "Earn 1x points on activities",
-                "Access to rewards catalog"
-            ],
+            "bronze": ["Earn 1x points on activities", "Access to rewards catalog"],
             "silver": [
                 "Earn 1.25x points on activities",
                 "Priority email support",
-                "Quarterly swag item"
+                "Quarterly swag item",
             ],
             "gold": [
                 "Earn 1.5x points on activities",
                 "Priority support with 12-hour SLA",
                 "Early access to new features",
-                "Bi-annual executive check-in"
+                "Bi-annual executive check-in",
             ],
             "platinum": [
                 "Earn 2x points on activities",
                 "24/7 premium support",
                 "Dedicated CSM",
                 "Quarterly executive business review",
-                "Beta program access"
+                "Beta program access",
             ],
             "diamond": [
                 "Earn 2.5x points on activities",
@@ -255,16 +232,14 @@ class LoyaltyProgramAgent(BaseAgent):
                 "Executive sponsor",
                 "Product roadmap influence",
                 "VIP event invitations",
-                "Custom feature development consideration"
-            ]
+                "Custom feature development consideration",
+            ],
         }
         return benefits.get(tier, [])
 
     def _process_point_activities(
-        self,
-        recent_activities: List[Dict[str, Any]],
-        loyalty_status: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, recent_activities: list[dict[str, Any]], loyalty_status: dict[str, Any]
+    ) -> dict[str, Any]:
         """Process recent activities and calculate points earned."""
         total_points_earned = 0
         activities_processed = []
@@ -279,26 +254,28 @@ class LoyaltyProgramAgent(BaseAgent):
                 points_earned = int(base_points * multiplier)
                 total_points_earned += points_earned
 
-                activities_processed.append({
-                    "activity": activity_type.replace("_", " ").title(),
-                    "base_points": base_points,
-                    "multiplier": multiplier,
-                    "points_earned": points_earned,
-                    "date": activity.get("date", datetime.now(UTC).isoformat())
-                })
+                activities_processed.append(
+                    {
+                        "activity": activity_type.replace("_", " ").title(),
+                        "base_points": base_points,
+                        "multiplier": multiplier,
+                        "points_earned": points_earned,
+                        "date": activity.get("date", datetime.now(UTC).isoformat()),
+                    }
+                )
 
         return {
             "total_points_earned": total_points_earned,
             "activities_count": len(activities_processed),
-            "activities_processed": activities_processed[:10]  # Top 10
+            "activities_processed": activities_processed[:10],  # Top 10
         }
 
     def _check_milestones(
         self,
-        loyalty_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any],
-        points_update: Dict[str, Any]
-    ) -> List[Dict[str, str]]:
+        loyalty_data: dict[str, Any],
+        customer_metadata: dict[str, Any],
+        points_update: dict[str, Any],
+    ) -> list[dict[str, str]]:
         """Check for loyalty milestones achieved."""
         milestones = []
 
@@ -312,21 +289,25 @@ class LoyaltyProgramAgent(BaseAgent):
         if new_tier != old_tier:
             tier_order = ["bronze", "silver", "gold", "platinum", "diamond"]
             if tier_order.index(new_tier) > tier_order.index(old_tier):
-                milestones.append({
-                    "milestone": f"Tier Upgrade: {old_tier.title()} ??? {new_tier.title()}",
-                    "achievement": f"Reached {new_tier.title()} tier",
-                    "reward": "Tier upgrade benefits unlocked"
-                })
+                milestones.append(
+                    {
+                        "milestone": f"Tier Upgrade: {old_tier.title()} ??? {new_tier.title()}",
+                        "achievement": f"Reached {new_tier.title()} tier",
+                        "reward": "Tier upgrade benefits unlocked",
+                    }
+                )
 
         # Point milestones
         point_milestones = [1000, 5000, 10000, 25000, 50000]
         for milestone_points in point_milestones:
             if current_points < milestone_points <= new_total:
-                milestones.append({
-                    "milestone": f"{milestone_points:,} Points Milestone",
-                    "achievement": f"Accumulated {milestone_points:,} loyalty points",
-                    "reward": "Bonus 500 points"
-                })
+                milestones.append(
+                    {
+                        "milestone": f"{milestone_points:,} Points Milestone",
+                        "achievement": f"Accumulated {milestone_points:,} loyalty points",
+                        "reward": "Bonus 500 points",
+                    }
+                )
 
         # Tenure milestones (if customer data available)
         customer_tenure_months = customer_metadata.get("customer_tenure_months", 0)
@@ -334,19 +315,19 @@ class LoyaltyProgramAgent(BaseAgent):
 
         for months, label in tenure_milestones.items():
             if customer_tenure_months == months:
-                milestones.append({
-                    "milestone": f"{label} Anniversary",
-                    "achievement": f"Loyal customer for {label.lower()}",
-                    "reward": "1000 bonus points + special gift"
-                })
+                milestones.append(
+                    {
+                        "milestone": f"{label} Anniversary",
+                        "achievement": f"Loyal customer for {label.lower()}",
+                        "reward": "1000 bonus points + special gift",
+                    }
+                )
 
         return milestones
 
     def _recommend_rewards(
-        self,
-        loyalty_status: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        self, loyalty_status: dict[str, Any], customer_metadata: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Recommend available rewards for customer."""
         current_points = loyalty_status["total_points"]
         recommendations = []
@@ -355,21 +336,25 @@ class LoyaltyProgramAgent(BaseAgent):
             required_points = reward_data["points"]
 
             if current_points >= required_points:
-                recommendations.append({
-                    "reward": reward_id.replace("_", " ").title(),
-                    "points_cost": required_points,
-                    "value": reward_data["value"],
-                    "affordable": True,
-                    "points_remaining_after": current_points - required_points
-                })
+                recommendations.append(
+                    {
+                        "reward": reward_id.replace("_", " ").title(),
+                        "points_cost": required_points,
+                        "value": reward_data["value"],
+                        "affordable": True,
+                        "points_remaining_after": current_points - required_points,
+                    }
+                )
             elif current_points >= required_points * 0.8:  # Within 80%
-                recommendations.append({
-                    "reward": reward_id.replace("_", " ").title(),
-                    "points_cost": required_points,
-                    "value": reward_data["value"],
-                    "affordable": False,
-                    "points_needed": required_points - current_points
-                })
+                recommendations.append(
+                    {
+                        "reward": reward_id.replace("_", " ").title(),
+                        "points_cost": required_points,
+                        "value": reward_data["value"],
+                        "affordable": False,
+                        "points_needed": required_points - current_points,
+                    }
+                )
 
         # Sort: affordable first, then by value
         recommendations.sort(key=lambda x: (not x["affordable"], x["points_cost"]))
@@ -378,10 +363,10 @@ class LoyaltyProgramAgent(BaseAgent):
 
     def _format_loyalty_report(
         self,
-        loyalty_status: Dict[str, Any],
-        points_update: Dict[str, Any],
-        milestones: List[Dict[str, str]],
-        reward_recommendations: List[Dict[str, Any]]
+        loyalty_status: dict[str, Any],
+        points_update: dict[str, Any],
+        milestones: list[dict[str, str]],
+        reward_recommendations: list[dict[str, Any]],
     ) -> str:
         """Format loyalty program report."""
         tier = loyalty_status["current_tier"]
@@ -391,14 +376,14 @@ class LoyaltyProgramAgent(BaseAgent):
             "silver": "????",
             "gold": "????",
             "platinum": "????",
-            "diamond": "????"
+            "diamond": "????",
         }
 
-        report = f"""**{tier_emoji.get(tier, '???')} Loyalty Program Status**
+        report = f"""**{tier_emoji.get(tier, "???")} Loyalty Program Status**
 
 **Current Tier:** {tier.upper()}
-**Total Points:** {loyalty_status['total_points']:,}
-**Point Multiplier:** {loyalty_status['point_multiplier']}x
+**Total Points:** {loyalty_status["total_points"]:,}
+**Point Multiplier:** {loyalty_status["point_multiplier"]}x
 """
 
         if loyalty_status.get("next_tier"):
@@ -408,7 +393,9 @@ class LoyaltyProgramAgent(BaseAgent):
 
         # Recent activity
         if points_update["activities_count"] > 0:
-            report += f"\n**???? Recent Activity ({points_update['activities_count']} activities):**\n"
+            report += (
+                f"\n**???? Recent Activity ({points_update['activities_count']} activities):**\n"
+            )
             report += f"**Points Earned:** +{points_update['total_points_earned']:,}\n\n"
 
             for activity in points_update["activities_processed"][:5]:
@@ -447,6 +434,7 @@ class LoyaltyProgramAgent(BaseAgent):
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -464,11 +452,8 @@ if __name__ == "__main__":
             "Check loyalty program status",
             context={
                 "customer_id": "cust_loyal_123",
-                "customer_metadata": {
-                    "plan": "premium",
-                    "customer_tenure_months": 24
-                }
-            }
+                "customer_metadata": {"plan": "premium", "customer_tenure_months": 24},
+            },
         )
         state1["entities"] = {
             "loyalty_data": {
@@ -476,14 +461,23 @@ if __name__ == "__main__":
                 "tier": "gold",
                 "member_since": (datetime.now(UTC) - timedelta(days=730)).isoformat(),
                 "lifetime_points_earned": 12000,
-                "lifetime_points_redeemed": 3500
+                "lifetime_points_redeemed": 3500,
             },
             "recent_activities": [
                 {"type": "monthly_renewal", "date": datetime.now(UTC).isoformat()},
-                {"type": "referral_signup", "date": (datetime.now(UTC) - timedelta(days=5)).isoformat()},
-                {"type": "product_review", "date": (datetime.now(UTC) - timedelta(days=10)).isoformat()},
-                {"type": "nps_promoter", "date": (datetime.now(UTC) - timedelta(days=15)).isoformat()}
-            ]
+                {
+                    "type": "referral_signup",
+                    "date": (datetime.now(UTC) - timedelta(days=5)).isoformat(),
+                },
+                {
+                    "type": "product_review",
+                    "date": (datetime.now(UTC) - timedelta(days=10)).isoformat(),
+                },
+                {
+                    "type": "nps_promoter",
+                    "date": (datetime.now(UTC) - timedelta(days=15)).isoformat(),
+                },
+            ],
         }
 
         result1 = await agent.process(state1)
@@ -503,11 +497,8 @@ if __name__ == "__main__":
             "Process loyalty points",
             context={
                 "customer_id": "cust_new_456",
-                "customer_metadata": {
-                    "plan": "basic",
-                    "customer_tenure_months": 2
-                }
-            }
+                "customer_metadata": {"plan": "basic", "customer_tenure_months": 2},
+            },
         )
         state2["entities"] = {
             "loyalty_data": {
@@ -515,12 +506,15 @@ if __name__ == "__main__":
                 "tier": "bronze",
                 "member_since": (datetime.now(UTC) - timedelta(days=60)).isoformat(),
                 "lifetime_points_earned": 250,
-                "lifetime_points_redeemed": 0
+                "lifetime_points_redeemed": 0,
             },
             "recent_activities": [
                 {"type": "training_completion", "date": datetime.now(UTC).isoformat()},
-                {"type": "feature_adoption", "date": (datetime.now(UTC) - timedelta(days=3)).isoformat()}
-            ]
+                {
+                    "type": "feature_adoption",
+                    "date": (datetime.now(UTC) - timedelta(days=3)).isoformat(),
+                },
+            ],
         }
 
         result2 = await agent.process(state2)
