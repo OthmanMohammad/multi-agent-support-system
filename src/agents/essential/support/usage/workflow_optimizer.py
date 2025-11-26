@@ -4,12 +4,12 @@ Workflow Optimizer Agent - Analyzes and optimizes customer workflows.
 Specialist for workflow analysis, best practices, and time-saving suggestions.
 """
 
-from typing import Dict, Any, List
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("workflow_optimizer", tier="essential", category="usage")
@@ -33,10 +33,10 @@ class WorkflowOptimizer(BaseAgent):
             capabilities=[
                 AgentCapability.KB_SEARCH,
                 AgentCapability.CONTEXT_AWARE,
-                AgentCapability.MULTI_TURN
+                AgentCapability.MULTI_TURN,
             ],
             kb_category="usage",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -54,7 +54,7 @@ class WorkflowOptimizer(BaseAgent):
         self.logger.debug(
             "workflow_analysis_started",
             message_preview=message[:100],
-            turn_count=state["turn_count"]
+            turn_count=state["turn_count"],
         )
 
         # Analyze workflow
@@ -63,7 +63,7 @@ class WorkflowOptimizer(BaseAgent):
         self.logger.info(
             "workflow_analyzed",
             inefficiencies_found=len(analysis["inefficiencies"]),
-            workflow_score=analysis["workflow_score"]
+            workflow_score=analysis["workflow_score"],
         )
 
         # Generate optimization suggestions
@@ -71,17 +71,12 @@ class WorkflowOptimizer(BaseAgent):
 
         # Search KB for best practices
         kb_results = await self.search_knowledge_base(
-            "workflow optimization best practices",
-            category="usage",
-            limit=2
+            "workflow optimization best practices", category="usage", limit=2
         )
         state["kb_results"] = kb_results
 
         if kb_results:
-            self.logger.info(
-                "workflow_kb_articles_found",
-                count=len(kb_results)
-            )
+            self.logger.info("workflow_kb_articles_found", count=len(kb_results))
 
         # Add KB context to response
         response = optimizations["message"]
@@ -102,21 +97,18 @@ class WorkflowOptimizer(BaseAgent):
             "workflow_optimization_completed",
             score=analysis["workflow_score"],
             time_savings=optimizations["time_saved_hours_per_week"],
-            status="resolved"
+            status="resolved",
         )
 
         return state
 
     def _analyze_workflow(
-        self,
-        context: Dict[str, Any],
-        workflow: str,
-        message: str
-    ) -> Dict[str, Any]:
+        self, context: dict[str, Any], workflow: str, message: str
+    ) -> dict[str, Any]:
         """Analyze workflow for inefficiencies"""
         feature_usage = context.get("feature_usage", {})
         team_size = context.get("seats_used", 1)
-        plan_tier = context.get("plan", "free")
+        context.get("plan", "free")
         account_age_days = context.get("account_age_days", 0)
 
         inefficiencies = []
@@ -124,83 +116,99 @@ class WorkflowOptimizer(BaseAgent):
         # Check if using automation
         if not feature_usage.get("automation_enabled", False):
             if feature_usage.get("project_count", 0) > 5 or account_age_days > 30:
-                inefficiencies.append({
-                    "type": "manual_repetition",
-                    "description": "Manually repeating tasks that could be automated",
-                    "impact": "high",
-                    "time_saved_hours": 5
-                })
+                inefficiencies.append(
+                    {
+                        "type": "manual_repetition",
+                        "description": "Manually repeating tasks that could be automated",
+                        "impact": "high",
+                        "time_saved_hours": 5,
+                    }
+                )
 
         # Check if using templates
         project_count = feature_usage.get("project_count", 0)
         if project_count > 10 and not feature_usage.get("uses_templates", False):
-            inefficiencies.append({
-                "type": "no_templates",
-                "description": "Creating projects from scratch instead of using templates",
-                "impact": "medium",
-                "time_saved_hours": 2
-            })
+            inefficiencies.append(
+                {
+                    "type": "no_templates",
+                    "description": "Creating projects from scratch instead of using templates",
+                    "impact": "medium",
+                    "time_saved_hours": 2,
+                }
+            )
 
         # Check collaboration usage for teams
         if team_size > 1 and not feature_usage.get("uses_collaboration", False):
-            inefficiencies.append({
-                "type": "poor_collaboration",
-                "description": "Not utilizing team collaboration features",
-                "impact": "medium",
-                "time_saved_hours": 3
-            })
+            inefficiencies.append(
+                {
+                    "type": "poor_collaboration",
+                    "description": "Not utilizing team collaboration features",
+                    "impact": "medium",
+                    "time_saved_hours": 3,
+                }
+            )
 
         # Check keyboard shortcuts usage
         if not feature_usage.get("uses_shortcuts", False) and account_age_days > 14:
-            inefficiencies.append({
-                "type": "no_shortcuts",
-                "description": "Not using keyboard shortcuts for common actions",
-                "impact": "low",
-                "time_saved_hours": 1
-            })
+            inefficiencies.append(
+                {
+                    "type": "no_shortcuts",
+                    "description": "Not using keyboard shortcuts for common actions",
+                    "impact": "low",
+                    "time_saved_hours": 1,
+                }
+            )
 
         # Check bulk operations
         if feature_usage.get("manual_bulk_operations", 0) > 0:
-            inefficiencies.append({
-                "type": "manual_bulk_ops",
-                "description": "Performing actions one-by-one instead of in bulk",
-                "impact": "medium",
-                "time_saved_hours": 2
-            })
+            inefficiencies.append(
+                {
+                    "type": "manual_bulk_ops",
+                    "description": "Performing actions one-by-one instead of in bulk",
+                    "impact": "medium",
+                    "time_saved_hours": 2,
+                }
+            )
 
         # Check integration opportunities
         if team_size > 3 and not feature_usage.get("uses_integrations", False):
-            inefficiencies.append({
-                "type": "no_integrations",
-                "description": "Not integrating with other tools you use daily",
-                "impact": "medium",
-                "time_saved_hours": 4
-            })
+            inefficiencies.append(
+                {
+                    "type": "no_integrations",
+                    "description": "Not integrating with other tools you use daily",
+                    "impact": "medium",
+                    "time_saved_hours": 4,
+                }
+            )
 
         # Check search vs browse behavior
         if feature_usage.get("browse_heavy", False) and not feature_usage.get("uses_search", False):
-            inefficiencies.append({
-                "type": "browse_instead_search",
-                "description": "Browsing through lists instead of using search",
-                "impact": "low",
-                "time_saved_hours": 1
-            })
+            inefficiencies.append(
+                {
+                    "type": "browse_instead_search",
+                    "description": "Browsing through lists instead of using search",
+                    "impact": "low",
+                    "time_saved_hours": 1,
+                }
+            )
 
         # Check notification settings
         if feature_usage.get("notification_overload", False):
-            inefficiencies.append({
-                "type": "notification_overload",
-                "description": "Too many notifications causing distractions",
-                "impact": "low",
-                "time_saved_hours": 1
-            })
+            inefficiencies.append(
+                {
+                    "type": "notification_overload",
+                    "description": "Too many notifications causing distractions",
+                    "impact": "low",
+                    "time_saved_hours": 1,
+                }
+            )
 
         return {
             "inefficiencies": inefficiencies,
-            "workflow_score": self._calculate_workflow_score(inefficiencies)
+            "workflow_score": self._calculate_workflow_score(inefficiencies),
         }
 
-    def _calculate_workflow_score(self, inefficiencies: List[Dict]) -> int:
+    def _calculate_workflow_score(self, inefficiencies: list[dict]) -> int:
         """Calculate workflow efficiency score (0-100)"""
         base_score = 100
 
@@ -215,7 +223,7 @@ class WorkflowOptimizer(BaseAgent):
 
         return max(base_score, 0)
 
-    def _generate_optimizations(self, analysis: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_optimizations(self, analysis: dict[str, Any]) -> dict[str, Any]:
         """Generate optimization recommendations"""
         inefficiencies = analysis["inefficiencies"]
 
@@ -232,14 +240,14 @@ You're already using best practices:
 ✓ Keyboard shortcuts mastered
 
 **Keep it up!** Continue monitoring your workflow for new optimization opportunities.""".format(
-                    analysis['workflow_score']
+                    analysis["workflow_score"]
                 ),
-                "time_saved_hours_per_week": 0
+                "time_saved_hours_per_week": 0,
             }
 
         message = f"""**📊 Workflow Analysis Complete**
 
-Your efficiency score: **{analysis['workflow_score']}/100**
+Your efficiency score: **{analysis["workflow_score"]}/100**
 
 I found **{len(inefficiencies)} opportunities** to optimize your workflow:
 
@@ -254,7 +262,7 @@ I found **{len(inefficiencies)} opportunities** to optimize your workflow:
             if inefficiency["type"] == "manual_repetition":
                 message += f"""
 **{i}. ⚡ Enable Automation** (Save ~{hours} hours/week)
-   - **Current:** {inefficiency['description']}
+   - **Current:** {inefficiency["description"]}
    - **Better:** Set up automation rules to handle repetitive tasks
    - **How:** Settings → Automation → Create Rule
    - **Examples:**
@@ -267,7 +275,7 @@ I found **{len(inefficiencies)} opportunities** to optimize your workflow:
             elif inefficiency["type"] == "no_templates":
                 message += f"""
 **{i}. 📋 Create Templates** (Save ~{hours} hours/week)
-   - **Current:** {inefficiency['description']}
+   - **Current:** {inefficiency["description"]}
    - **Better:** Create project templates for common workflows
    - **How:** Project → More → Save as Template
    - **Examples:**
@@ -280,7 +288,7 @@ I found **{len(inefficiencies)} opportunities** to optimize your workflow:
             elif inefficiency["type"] == "poor_collaboration":
                 message += f"""
 **{i}. 👥 Enable Team Features** (Save ~{hours} hours/week)
-   - **Current:** {inefficiency['description']}
+   - **Current:** {inefficiency["description"]}
    - **Better:** Use @mentions, shared views, and comments
    - **How:** Invite team → Use @mentions in tasks
    - **Benefits:**
@@ -293,7 +301,7 @@ I found **{len(inefficiencies)} opportunities** to optimize your workflow:
             elif inefficiency["type"] == "no_shortcuts":
                 message += f"""
 **{i}. ⌨️ Learn Keyboard Shortcuts** (Save ~{hours} hours/week)
-   - **Current:** {inefficiency['description']}
+   - **Current:** {inefficiency["description"]}
    - **Better:** Master the most common shortcuts
    - **Essential shortcuts:**
      • `Ctrl/Cmd + K` - Quick search
@@ -306,7 +314,7 @@ I found **{len(inefficiencies)} opportunities** to optimize your workflow:
             elif inefficiency["type"] == "manual_bulk_ops":
                 message += f"""
 **{i}. 📦 Use Bulk Operations** (Save ~{hours} hours/week)
-   - **Current:** {inefficiency['description']}
+   - **Current:** {inefficiency["description"]}
    - **Better:** Select multiple items and act on them at once
    - **How:** Shift+Click to select range, Ctrl/Cmd+Click for individuals
    - **Bulk actions:**
@@ -320,7 +328,7 @@ I found **{len(inefficiencies)} opportunities** to optimize your workflow:
             elif inefficiency["type"] == "no_integrations":
                 message += f"""
 **{i}. 🔌 Connect Integrations** (Save ~{hours} hours/week)
-   - **Current:** {inefficiency['description']}
+   - **Current:** {inefficiency["description"]}
    - **Better:** Integrate with tools you use daily
    - **How:** Settings → Integrations → Connect
    - **Popular integrations:**
@@ -333,7 +341,7 @@ I found **{len(inefficiencies)} opportunities** to optimize your workflow:
             elif inefficiency["type"] == "browse_instead_search":
                 message += f"""
 **{i}. 🔍 Use Search Instead of Browse** (Save ~{hours} hours/week)
-   - **Current:** {inefficiency['description']}
+   - **Current:** {inefficiency["description"]}
    - **Better:** Use powerful search to find what you need instantly
    - **How:** Press `/` or Ctrl/Cmd+K anytime
    - **Search tips:**
@@ -346,7 +354,7 @@ I found **{len(inefficiencies)} opportunities** to optimize your workflow:
             elif inefficiency["type"] == "notification_overload":
                 message += f"""
 **{i}. 🔕 Optimize Notifications** (Save ~{hours} hours/week)
-   - **Current:** {inefficiency['description']}
+   - **Current:** {inefficiency["description"]}
    - **Better:** Configure smart notifications for what matters
    - **How:** Settings → Notifications → Customize
    - **Best practices:**
@@ -371,14 +379,12 @@ I found **{len(inefficiencies)} opportunities** to optimize your workflow:
 **Need help?** Let me know which optimization you'd like to implement first, and I'll walk you through it step-by-step!
 """
 
-        return {
-            "message": message,
-            "time_saved_hours_per_week": time_saved
-        }
+        return {"message": message, "time_saved_hours_per_week": time_saved}
 
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -393,11 +399,11 @@ if __name__ == "__main__":
                 "automation_enabled": False,
                 "project_count": 15,
                 "uses_templates": False,
-                "uses_collaboration": False
+                "uses_collaboration": False,
             },
             "seats_used": 5,
             "plan": "premium",
-            "account_age_days": 90
+            "account_age_days": 90,
         }
 
         agent = WorkflowOptimizer()
@@ -421,10 +427,10 @@ if __name__ == "__main__":
                 "uses_templates": True,
                 "uses_collaboration": True,
                 "uses_shortcuts": True,
-                "uses_integrations": True
+                "uses_integrations": True,
             },
             "seats_used": 10,
-            "account_age_days": 180
+            "account_age_days": 180,
         }
 
         result2 = await agent.process(state2)
