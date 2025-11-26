@@ -119,6 +119,7 @@ export class ErrorBoundaryAdvanced extends Component<
     // For now, copy to clipboard
     if (typeof navigator !== "undefined" && navigator.clipboard) {
       navigator.clipboard.writeText(JSON.stringify(report, null, 2));
+      // eslint-disable-next-line no-alert -- Simple user notification
       alert("Error details copied to clipboard");
     }
   };
