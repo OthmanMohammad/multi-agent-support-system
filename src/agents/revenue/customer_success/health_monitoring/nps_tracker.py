@@ -5,13 +5,12 @@ Tracks and analyzes Net Promoter Score trends. Identifies detractors for follow-
 and routes feedback to appropriate teams.
 """
 
-from typing import Dict, Any, List
-from datetime import datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("nps_tracker", tier="revenue", category="customer_success")
@@ -28,11 +27,7 @@ class NPSTrackerAgent(BaseAgent):
     """
 
     # NPS categories
-    NPS_CATEGORIES = {
-        "promoter": (9, 10),
-        "passive": (7, 8),
-        "detractor": (0, 6)
-    }
+    NPS_CATEGORIES = {"promoter": (9, 10), "passive": (7, 8), "detractor": (0, 6)}
 
     def __init__(self):
         config = AgentConfig(
@@ -41,7 +36,7 @@ class NPSTrackerAgent(BaseAgent):
             temperature=0.3,
             max_tokens=400,
             capabilities=[AgentCapability.CONTEXT_AWARE],
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -70,21 +65,21 @@ class NPSTrackerAgent(BaseAgent):
         state["next_agent"] = None
 
         self.logger.info(
-            "nps_tracking_completed",
-            nps_score=nps_score,
-            classification=analysis["classification"]
+            "nps_tracking_completed", nps_score=nps_score, classification=analysis["classification"]
         )
 
         return state
 
-    def _analyze_nps(self, nps_score: int, feedback: str) -> Dict[str, Any]:
+    def _analyze_nps(self, nps_score: int, feedback: str) -> dict[str, Any]:
         """Analyze NPS response."""
         # Classify score
         classification = self._classify_nps(nps_score)
 
         # Determine follow-up needs
         requires_follow_up = classification == "detractor"
-        follow_up_urgency = "high" if nps_score <= 4 else "medium" if classification == "detractor" else "low"
+        follow_up_urgency = (
+            "high" if nps_score <= 4 else "medium" if classification == "detractor" else "low"
+        )
 
         # Extract feedback themes (simplified)
         feedback_themes = self._extract_themes(feedback)
@@ -98,7 +93,7 @@ class NPSTrackerAgent(BaseAgent):
             "requires_follow_up": requires_follow_up,
             "follow_up_urgency": follow_up_urgency,
             "feedback_themes": feedback_themes,
-            "recommended_action": recommended_action
+            "recommended_action": recommended_action,
         }
 
     def _classify_nps(self, score: int) -> str:
@@ -108,7 +103,7 @@ class NPSTrackerAgent(BaseAgent):
                 return category
         return "passive"
 
-    def _extract_themes(self, feedback: str) -> List[str]:
+    def _extract_themes(self, feedback: str) -> list[str]:
         """Extract themes from feedback text."""
         if not feedback:
             return []
@@ -142,7 +137,7 @@ class NPSTrackerAgent(BaseAgent):
         else:  # promoter
             return "Thank and request testimonial or referral"
 
-    def _format_nps_report(self, analysis: Dict[str, Any]) -> str:
+    def _format_nps_report(self, analysis: dict[str, Any]) -> str:
         """Format NPS analysis report."""
         classification = analysis["classification"]
         score = analysis["nps_score"]
@@ -150,7 +145,7 @@ class NPSTrackerAgent(BaseAgent):
         # Classification emoji
         emoji = {"promoter": "????", "passive": "????", "detractor": "????"}
 
-        report = f"""**{emoji.get(classification, '????')} NPS Response Analysis**
+        report = f"""**{emoji.get(classification, "????")} NPS Response Analysis**
 
 **NPS Score:** {score}/10
 **Classification:** {classification.title()}
@@ -170,6 +165,7 @@ class NPSTrackerAgent(BaseAgent):
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -180,10 +176,7 @@ if __name__ == "__main__":
 
         # Test detractor
         state = create_initial_state("Process NPS")
-        state["entities"] = {
-            "nps_score": 3,
-            "feedback": "Product is too complex, support is slow"
-        }
+        state["entities"] = {"nps_score": 3, "feedback": "Product is too complex, support is slow"}
 
         result = await agent.process(state)
         print(f"Classification: {result['nps_classification']}")
