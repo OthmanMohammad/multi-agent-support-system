@@ -2,10 +2,12 @@
 Quality Assurance metrics models for Tier 3
 QA Swarm database tables
 """
-from sqlalchemy import Column, String, Integer, Float, Boolean, ForeignKey, DateTime, Text, Index
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.orm import relationship
+
 import uuid
+
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, String, Text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import relationship
 
 from src.database.models.base import BaseModel
 
@@ -23,7 +25,7 @@ class ResponseQualityCheck(BaseModel):
         UUID(as_uuid=True),
         ForeignKey("conversations.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
     message_id = Column(UUID(as_uuid=True), nullable=True)
 
@@ -90,7 +92,7 @@ class KBArticleQuality(BaseModel):
         UUID(as_uuid=True),
         ForeignKey("kb_articles.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
 
     # Quality checks
@@ -173,7 +175,7 @@ class CodeValidationResult(BaseModel):
         UUID(as_uuid=True),
         ForeignKey("conversations.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
     message_id = Column(UUID(as_uuid=True), nullable=True)
     code_block_index = Column(Integer, nullable=True)
@@ -257,9 +259,7 @@ class LinkCheckResult(BaseModel):
     last_working_at = Column(DateTime(timezone=True), nullable=True)
     consecutive_failures = Column(Integer, default=0, nullable=False)
 
-    __table_args__ = (
-        Index('idx_source', 'source_type', 'source_id'),
-    )
+    __table_args__ = (Index("idx_source", "source_type", "source_id"),)
 
     def __repr__(self) -> str:
         return f"<LinkCheckResult(url={self.url[:50]}, working={self.link_working}, status={self.status_code})>"
@@ -280,7 +280,7 @@ class SensitivityViolation(BaseModel):
         UUID(as_uuid=True),
         ForeignKey("conversations.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
     message_id = Column(UUID(as_uuid=True), nullable=True)
     text_content = Column(Text, nullable=True)
@@ -331,7 +331,7 @@ class HallucinationDetection(BaseModel):
         UUID(as_uuid=True),
         ForeignKey("conversations.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
     message_id = Column(UUID(as_uuid=True), nullable=True)
     agent_id = Column(String(100), nullable=True, index=True)
@@ -364,4 +364,3 @@ class HallucinationDetection(BaseModel):
 
     def __repr__(self) -> str:
         return f"<HallucinationDetection(type={self.hallucination_type}, severity={self.severity}, blocked={self.response_blocked})>"
-    
