@@ -16,24 +16,24 @@ Agents:
 - Empathy Adjuster (TASK-4029)
 """
 
+from src.agents.advanced.personalization.channel_optimizer import ChannelOptimizerAgent
+from src.agents.advanced.personalization.content_recommender import ContentRecommenderAgent
+from src.agents.advanced.personalization.empathy_adjuster import EmpathyAdjusterAgent
+from src.agents.advanced.personalization.journey_personalizer import JourneyPersonalizerAgent
+from src.agents.advanced.personalization.language_adapter import LanguageAdapterAgent
 from src.agents.advanced.personalization.persona_identifier import PersonaIdentifierAgent
 from src.agents.advanced.personalization.preference_learner import PreferenceLearnerAgent
 from src.agents.advanced.personalization.response_personalizer import ResponsePersonalizerAgent
-from src.agents.advanced.personalization.content_recommender import ContentRecommenderAgent
-from src.agents.advanced.personalization.journey_personalizer import JourneyPersonalizerAgent
 from src.agents.advanced.personalization.timing_optimizer import TimingOptimizerAgent
-from src.agents.advanced.personalization.channel_optimizer import ChannelOptimizerAgent
-from src.agents.advanced.personalization.language_adapter import LanguageAdapterAgent
-from src.agents.advanced.personalization.empathy_adjuster import EmpathyAdjusterAgent
 
 __all__ = [
+    "ChannelOptimizerAgent",
+    "ContentRecommenderAgent",
+    "EmpathyAdjusterAgent",
+    "JourneyPersonalizerAgent",
+    "LanguageAdapterAgent",
     "PersonaIdentifierAgent",
     "PreferenceLearnerAgent",
     "ResponsePersonalizerAgent",
-    "ContentRecommenderAgent",
-    "JourneyPersonalizerAgent",
     "TimingOptimizerAgent",
-    "ChannelOptimizerAgent",
-    "LanguageAdapterAgent",
-    "EmpathyAdjusterAgent",
 ]
