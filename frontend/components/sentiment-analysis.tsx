@@ -2,7 +2,7 @@
 
 import type { JSX } from "react";
 import { useMemo } from "react";
-import { Smile, Meh, Frown, TrendingUp, TrendingDown } from "lucide-react";
+import { Frown, Meh, Smile, TrendingDown, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -156,13 +156,10 @@ export function SentimentAnalysis({
     // Sentiment trend (comparing first half vs second half)
     const midpoint = Math.floor(userSentiments.length / 2);
     const firstHalfAvg =
-      userSentiments
-        .slice(0, midpoint)
-        .reduce((sum, s) => sum + s.score, 0) / (midpoint || 1);
+      userSentiments.slice(0, midpoint).reduce((sum, s) => sum + s.score, 0) /
+      (midpoint || 1);
     const secondHalfAvg =
-      userSentiments
-        .slice(midpoint)
-        .reduce((sum, s) => sum + s.score, 0) /
+      userSentiments.slice(midpoint).reduce((sum, s) => sum + s.score, 0) /
       (userSentiments.length - midpoint || 1);
     const trend = secondHalfAvg - firstHalfAvg;
 
@@ -185,18 +182,27 @@ export function SentimentAnalysis({
     return "text-yellow-500";
   };
 
-  const getSentimentIcon = (score: number) => {
+  // Render the appropriate sentiment icon based on score
+  const renderSentimentIcon = (score: number, className: string) => {
     if (score > 0.2) {
-      return Smile;
+      return <Smile className={className} />;
     }
     if (score < -0.2) {
-      return Frown;
+      return <Frown className={className} />;
     }
-    return Meh;
+    return <Meh className={className} />;
   };
 
-  const UserIcon = getSentimentIcon(analysis.avgUserScore);
-  const AssistantIcon = getSentimentIcon(analysis.avgAssistantScore);
+  // Get sentiment label based on score
+  const getSentimentLabel = (score: number) => {
+    if (score > 0.2) {
+      return "Positive";
+    }
+    if (score < -0.2) {
+      return "Negative";
+    }
+    return "Neutral";
+  };
 
   return (
     <div
@@ -217,19 +223,16 @@ export function SentimentAnalysis({
             Customer Sentiment
           </p>
           <div className="flex items-center gap-3">
-            <UserIcon
-              className={cn("h-8 w-8", getSentimentColor(analysis.avgUserScore))}
-            />
+            {renderSentimentIcon(
+              analysis.avgUserScore,
+              cn("h-8 w-8", getSentimentColor(analysis.avgUserScore))
+            )}
             <div>
               <p className="text-2xl font-bold">
                 {(analysis.avgUserScore * 100).toFixed(0)}%
               </p>
               <p className="text-xs text-foreground-secondary">
-                {analysis.avgUserScore > 0.2
-                  ? "Positive"
-                  : analysis.avgUserScore < -0.2
-                    ? "Negative"
-                    : "Neutral"}
+                {getSentimentLabel(analysis.avgUserScore)}
               </p>
             </div>
           </div>
@@ -240,22 +243,16 @@ export function SentimentAnalysis({
             Assistant Tone
           </p>
           <div className="flex items-center gap-3">
-            <AssistantIcon
-              className={cn(
-                "h-8 w-8",
-                getSentimentColor(analysis.avgAssistantScore)
-              )}
-            />
+            {renderSentimentIcon(
+              analysis.avgAssistantScore,
+              cn("h-8 w-8", getSentimentColor(analysis.avgAssistantScore))
+            )}
             <div>
               <p className="text-2xl font-bold">
                 {(analysis.avgAssistantScore * 100).toFixed(0)}%
               </p>
               <p className="text-xs text-foreground-secondary">
-                {analysis.avgAssistantScore > 0.2
-                  ? "Positive"
-                  : analysis.avgAssistantScore < -0.2
-                    ? "Negative"
-                    : "Neutral"}
+                {getSentimentLabel(analysis.avgAssistantScore)}
               </p>
             </div>
           </div>
@@ -330,9 +327,7 @@ export function SentimentAnalysis({
             <>
               <TrendingUp className="h-6 w-6 text-green-500" />
               <div>
-                <p className="text-sm font-medium text-green-500">
-                  Improving
-                </p>
+                <p className="text-sm font-medium text-green-500">Improving</p>
                 <p className="text-xs text-foreground-secondary">
                   Customer sentiment is getting better
                 </p>
