@@ -5,16 +5,15 @@ This middleware enforces rate limits based on user tier, API key, or IP address.
 Uses Redis for distributed rate limiting with token bucket algorithm.
 """
 
-from fastapi import Request, HTTPException, status
-from starlette.middleware.base import BaseHTTPMiddleware
-from typing import Optional, Tuple
 import time
+
+from fastapi import HTTPException, Request, status
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from src.api.auth import RateLimiter
 from src.api.auth.jwt import JWTManager
-from src.database.models.user import UserRole
-from src.utils.logging.setup import get_logger
 from src.core.config import get_settings
+from src.utils.logging.setup import get_logger
 
 logger = get_logger(__name__)
 settings = get_settings()
@@ -31,28 +30,24 @@ RATE_LIMITS = {
         "requests_per_hour": 100,
         "requests_per_day": 1000,
     },
-
     # Regular user
     "user": {
         "requests_per_minute": 60,
         "requests_per_hour": 1000,
         "requests_per_day": 10000,
     },
-
     # Admin users
     "admin": {
         "requests_per_minute": 300,
         "requests_per_hour": 5000,
         "requests_per_day": 50000,
     },
-
     # Super admin (virtually unlimited)
     "super_admin": {
         "requests_per_minute": 1000,
         "requests_per_hour": 20000,
         "requests_per_day": 200000,
     },
-
     # API clients
     "api_client": {
         "requests_per_minute": 120,
@@ -66,7 +61,8 @@ RATE_LIMITS = {
 # HELPER FUNCTIONS
 # =============================================================================
 
-def get_rate_limit_key(request: Request) -> Tuple[str, str]:
+
+def get_rate_limit_key(request: Request) -> tuple[str, str]:
     """
     Get rate limit key and tier for request.
 
@@ -137,6 +133,7 @@ def get_tier_limits(tier: str) -> dict:
 # RATE LIMIT MIDDLEWARE
 # =============================================================================
 
+
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """
     Rate limiting middleware using Redis token bucket algorithm.
@@ -177,18 +174,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         rate_limit_key, tier = get_rate_limit_key(request)
         limits = get_tier_limits(tier)
 
-        logger.debug(
-            "rate_limit_check",
-            key=rate_limit_key,
-            tier=tier,
-            path=request.url.path
-        )
+        logger.debug("rate_limit_check", key=rate_limit_key, tier=tier, path=request.url.path)
 
         # Check minute limit (primary limit)
         allowed, current_count, remaining = await RateLimiter.check_rate_limit(
             key=f"{rate_limit_key}:minute",
             max_requests=limits["requests_per_minute"],
-            window_seconds=60
+            window_seconds=60,
         )
 
         if not allowed:
@@ -202,7 +194,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 path=request.url.path,
                 current=current_count,
                 limit=limits["requests_per_minute"],
-                reset_in=reset_time
+                reset_in=reset_time,
             )
 
             raise HTTPException(
@@ -219,14 +211,14 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     "X-RateLimit-Remaining": "0",
                     "X-RateLimit-Reset": str(int(time.time()) + (reset_time or 60)),
                     "Retry-After": str(reset_time or 60),
-                }
+                },
             )
 
         # Check hour limit (secondary limit)
         hour_allowed, hour_current, hour_remaining = await RateLimiter.check_rate_limit(
             key=f"{rate_limit_key}:hour",
             max_requests=limits["requests_per_hour"],
-            window_seconds=3600
+            window_seconds=3600,
         )
 
         if not hour_allowed:
@@ -237,7 +229,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 key=rate_limit_key,
                 tier=tier,
                 current=hour_current,
-                limit=limits["requests_per_hour"]
+                limit=limits["requests_per_hour"],
             )
 
             raise HTTPException(
@@ -253,14 +245,14 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     "X-RateLimit-Limit-Hour": str(limits["requests_per_hour"]),
                     "X-RateLimit-Remaining-Hour": "0",
                     "Retry-After": str(reset_time or 3600),
-                }
+                },
             )
 
         # Check daily limit (tertiary limit)
         day_allowed, day_current, day_remaining = await RateLimiter.check_rate_limit(
             key=f"{rate_limit_key}:day",
             max_requests=limits["requests_per_day"],
-            window_seconds=86400
+            window_seconds=86400,
         )
 
         if not day_allowed:
@@ -271,7 +263,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 key=rate_limit_key,
                 tier=tier,
                 current=day_current,
-                limit=limits["requests_per_day"]
+                limit=limits["requests_per_day"],
             )
 
             raise HTTPException(
@@ -287,7 +279,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     "X-RateLimit-Limit-Day": str(limits["requests_per_day"]),
                     "X-RateLimit-Remaining-Day": "0",
                     "Retry-After": str(reset_time or 86400),
-                }
+                },
             )
 
         # Request allowed - process it
