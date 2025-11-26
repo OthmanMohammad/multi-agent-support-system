@@ -16,6 +16,7 @@ class AgentType(Enum):
     ROUTER = "router"
     SPECIALIST = "specialist"
     COORDINATOR = "coordinator"
+    ORCHESTRATOR = "orchestrator"
     ANALYZER = "analyzer"
     GENERATOR = "generator"
     UTILITY = "utility"

@@ -105,3 +105,4 @@ zstandard==0.25.0
 # No official SDK needed - using REST API directly
 prometheus-client==0.21.1  # Metrics for vLLM monitoring
 aiofiles==24.1.0  # Async file operations for vLLM logs
+aiosqlite==0.21.0  # Async SQLite for integration test fixtures
