@@ -97,8 +97,12 @@ function analyzeSentiment(text: string): SentimentScore {
   let negativeCount = 0;
 
   for (const word of words) {
-    if (positiveWords.has(word)) positiveCount++;
-    if (negativeWords.has(word)) negativeCount++;
+    if (positiveWords.has(word)) {
+      positiveCount++;
+    }
+    if (negativeWords.has(word)) {
+      negativeCount++;
+    }
   }
 
   const total = positiveCount + negativeCount;
@@ -110,9 +114,13 @@ function analyzeSentiment(text: string): SentimentScore {
   const confidence = total / words.length;
 
   let label: "positive" | "neutral" | "negative";
-  if (score > 0.2) label = "positive";
-  else if (score < -0.2) label = "negative";
-  else label = "neutral";
+  if (score > 0.2) {
+    label = "positive";
+  } else if (score < -0.2) {
+    label = "negative";
+  } else {
+    label = "neutral";
+  }
 
   return { score, label, confidence };
 }
@@ -168,14 +176,22 @@ export function SentimentAnalysis({
   }, [messages]);
 
   const getSentimentColor = (score: number) => {
-    if (score > 0.2) return "text-green-500";
-    if (score < -0.2) return "text-red-500";
+    if (score > 0.2) {
+      return "text-green-500";
+    }
+    if (score < -0.2) {
+      return "text-red-500";
+    }
     return "text-yellow-500";
   };
 
   const getSentimentIcon = (score: number) => {
-    if (score > 0.2) return Smile;
-    if (score < -0.2) return Frown;
+    if (score > 0.2) {
+      return Smile;
+    }
+    if (score < -0.2) {
+      return Frown;
+    }
     return Meh;
   };
 

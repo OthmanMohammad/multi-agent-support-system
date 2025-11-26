@@ -164,9 +164,9 @@ export function MessageInput({
           // Refresh conversation to sync with backend (gets proper message IDs, agent names, etc.)
           await refresh();
         },
-        // onAgentSwitch - log agent transitions
-        (fromAgent: string, toAgent: string) => {
-          console.log(`Agent switch: ${fromAgent} → ${toAgent}`);
+        // onAgentSwitch - handle agent transitions (no-op for now)
+        (_fromAgent: string, _toAgent: string) => {
+          // Agent switch handling can be added here if needed
         }
       );
     } catch (error) {

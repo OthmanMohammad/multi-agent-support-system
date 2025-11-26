@@ -41,7 +41,9 @@ export const Header = (): JSX.Element => {
    * Get user initials for avatar fallback
    */
   const getUserInitials = (name: string | undefined): string => {
-    if (!name) return "U";
+    if (!name) {
+      return "U";
+    }
     const parts = name.split(" ").filter(Boolean);
     const first = parts[0]?.[0] ?? "";
     const second = parts[1]?.[0] ?? "";
