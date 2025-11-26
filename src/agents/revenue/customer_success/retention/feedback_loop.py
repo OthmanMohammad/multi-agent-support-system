@@ -5,13 +5,13 @@ Collects customer feedback, routes to appropriate product/engineering teams,
 tracks implementation, and closes the loop with customers.
 """
 
-from typing import Dict, Any, List
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("feedback_loop", tier="revenue", category="customer_success")
@@ -36,13 +36,18 @@ class FeedbackLoopAgent(BaseAgent):
         "integration_request": {"route_to": "engineering", "priority_boost": 8},
         "documentation": {"route_to": "product", "priority_boost": 3},
         "performance": {"route_to": "engineering", "priority_boost": 12},
-        "general_feedback": {"route_to": "product", "priority_boost": 0}
+        "general_feedback": {"route_to": "product", "priority_boost": 0},
     }
 
     # Implementation status
     IMPLEMENTATION_STATUS = [
-        "received", "triaged", "planned", "in_progress",
-        "completed", "released", "closed_loop"
+        "received",
+        "triaged",
+        "planned",
+        "in_progress",
+        "completed",
+        "released",
+        "closed_loop",
     ]
 
     def __init__(self):
@@ -52,7 +57,7 @@ class FeedbackLoopAgent(BaseAgent):
             temperature=0.2,
             max_tokens=600,
             capabilities=[AgentCapability.CONTEXT_AWARE],
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -79,30 +84,20 @@ class FeedbackLoopAgent(BaseAgent):
             "feedback_loop_details",
             customer_id=customer_id,
             feedback_type=feedback_data.get("feedback_type"),
-            priority=feedback_data.get("priority")
+            priority=feedback_data.get("priority"),
         )
 
         # Categorize and route feedback
-        routing_analysis = self._categorize_and_route_feedback(
-            feedback_data,
-            customer_metadata
-        )
+        routing_analysis = self._categorize_and_route_feedback(feedback_data, customer_metadata)
 
         # Track existing feedback if provided
         tracking_info = self._track_feedback_status(feedback_data)
 
         # Generate follow-up actions
-        follow_up_actions = self._generate_follow_up_actions(
-            routing_analysis,
-            tracking_info
-        )
+        follow_up_actions = self._generate_follow_up_actions(routing_analysis, tracking_info)
 
         # Format response
-        response = self._format_feedback_report(
-            routing_analysis,
-            tracking_info,
-            follow_up_actions
-        )
+        response = self._format_feedback_report(routing_analysis, tracking_info, follow_up_actions)
 
         state["agent_response"] = response
         state["feedback_category"] = routing_analysis["category"]
@@ -119,16 +114,14 @@ class FeedbackLoopAgent(BaseAgent):
             customer_id=customer_id,
             category=routing_analysis["category"],
             route_to=routing_analysis["route_to"],
-            priority=routing_analysis["priority_score"]
+            priority=routing_analysis["priority_score"],
         )
 
         return state
 
     def _categorize_and_route_feedback(
-        self,
-        feedback_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, feedback_data: dict[str, Any], customer_metadata: dict[str, Any]
+    ) -> dict[str, Any]:
         """Categorize feedback and determine routing."""
         feedback_text = feedback_data.get("feedback_text", "")
         feedback_type = feedback_data.get("feedback_type", "general_feedback")
@@ -138,8 +131,7 @@ class FeedbackLoopAgent(BaseAgent):
             feedback_type = self._auto_categorize_feedback(feedback_text)
 
         category_config = self.FEEDBACK_CATEGORIES.get(
-            feedback_type,
-            self.FEEDBACK_CATEGORIES["general_feedback"]
+            feedback_type, self.FEEDBACK_CATEGORIES["general_feedback"]
         )
 
         # Determine routing
@@ -147,20 +139,14 @@ class FeedbackLoopAgent(BaseAgent):
 
         # Calculate priority score (0-100)
         priority_score = self._calculate_feedback_priority(
-            feedback_data,
-            customer_metadata,
-            category_config["priority_boost"]
+            feedback_data, customer_metadata, category_config["priority_boost"]
         )
 
         # Determine urgency
         urgency = "high" if priority_score >= 75 else "medium" if priority_score >= 50 else "low"
 
         # Estimate impact
-        impact = self._estimate_feedback_impact(
-            feedback_type,
-            customer_metadata,
-            priority_score
-        )
+        impact = self._estimate_feedback_impact(feedback_type, customer_metadata, priority_score)
 
         return {
             "category": feedback_type,
@@ -170,7 +156,7 @@ class FeedbackLoopAgent(BaseAgent):
             "impact": impact,
             "requires_response": priority_score >= 60,
             "sla_days": 3 if urgency == "high" else 7 if urgency == "medium" else 14,
-            "routed_at": datetime.now(UTC).isoformat()
+            "routed_at": datetime.now(UTC).isoformat(),
         }
 
     def _auto_categorize_feedback(self, feedback_text: str) -> str:
@@ -185,7 +171,9 @@ class FeedbackLoopAgent(BaseAgent):
             return "integration_request"
         elif any(word in text_lower for word in ["feature", "capability", "add", "want", "need"]):
             return "feature_request"
-        elif any(word in text_lower for word in ["confusing", "hard to use", "ux", "ui", "difficult"]):
+        elif any(
+            word in text_lower for word in ["confusing", "hard to use", "ux", "ui", "difficult"]
+        ):
             return "usability_issue"
         elif any(word in text_lower for word in ["documentation", "docs", "help", "guide"]):
             return "documentation"
@@ -193,10 +181,7 @@ class FeedbackLoopAgent(BaseAgent):
             return "general_feedback"
 
     def _calculate_feedback_priority(
-        self,
-        feedback_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any],
-        category_boost: int
+        self, feedback_data: dict[str, Any], customer_metadata: dict[str, Any], category_boost: int
     ) -> int:
         """Calculate feedback priority score."""
         priority = 50  # Base priority
@@ -235,10 +220,7 @@ class FeedbackLoopAgent(BaseAgent):
         return min(priority, 100)
 
     def _estimate_feedback_impact(
-        self,
-        feedback_type: str,
-        customer_metadata: Dict[str, Any],
-        priority_score: int
+        self, feedback_type: str, customer_metadata: dict[str, Any], priority_score: int
     ) -> str:
         """Estimate business impact of feedback."""
         if priority_score >= 80:
@@ -248,10 +230,7 @@ class FeedbackLoopAgent(BaseAgent):
         else:
             return "low"
 
-    def _track_feedback_status(
-        self,
-        feedback_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _track_feedback_status(self, feedback_data: dict[str, Any]) -> dict[str, Any]:
         """Track feedback implementation status."""
         feedback_id = feedback_data.get("feedback_id", "new")
         current_status = feedback_data.get("status", "received")
@@ -259,7 +238,7 @@ class FeedbackLoopAgent(BaseAgent):
         # Calculate days in current status
         status_updated_at = feedback_data.get("status_updated_at")
         if status_updated_at:
-            status_date = datetime.fromisoformat(status_updated_at.replace('Z', '+00:00'))
+            status_date = datetime.fromisoformat(status_updated_at.replace("Z", "+00:00"))
             days_in_status = (datetime.now(UTC) - status_date).days
         else:
             days_in_status = 0
@@ -268,7 +247,7 @@ class FeedbackLoopAgent(BaseAgent):
         expected_cycle_time_days = feedback_data.get("expected_cycle_time_days", 30)
         submission_date = feedback_data.get("submitted_at")
         if submission_date:
-            submit_date = datetime.fromisoformat(submission_date.replace('Z', '+00:00'))
+            submit_date = datetime.fromisoformat(submission_date.replace("Z", "+00:00"))
             total_days = (datetime.now(UTC) - submit_date).days
             is_overdue = total_days > expected_cycle_time_days
         else:
@@ -282,69 +261,77 @@ class FeedbackLoopAgent(BaseAgent):
             "total_days_open": total_days,
             "is_overdue": is_overdue,
             "expected_cycle_time_days": expected_cycle_time_days,
-            "needs_customer_update": days_in_status >= 14 and current_status != "closed_loop"
+            "needs_customer_update": days_in_status >= 14 and current_status != "closed_loop",
         }
 
     def _generate_follow_up_actions(
-        self,
-        routing_analysis: Dict[str, Any],
-        tracking_info: Dict[str, Any]
-    ) -> List[Dict[str, str]]:
+        self, routing_analysis: dict[str, Any], tracking_info: dict[str, Any]
+    ) -> list[dict[str, str]]:
         """Generate follow-up actions for feedback."""
         actions = []
 
         # Routing action
         if routing_analysis["route_to"]:
-            actions.append({
-                "action": f"Route to {routing_analysis['route_to'].title()} team",
-                "owner": "CSM",
-                "timeline": f"Within {routing_analysis['sla_days']} days",
-                "priority": routing_analysis["urgency"]
-            })
+            actions.append(
+                {
+                    "action": f"Route to {routing_analysis['route_to'].title()} team",
+                    "owner": "CSM",
+                    "timeline": f"Within {routing_analysis['sla_days']} days",
+                    "priority": routing_analysis["urgency"],
+                }
+            )
 
         # Customer communication
         if routing_analysis["requires_response"]:
-            actions.append({
-                "action": "Acknowledge feedback receipt with customer",
-                "owner": "CSM",
-                "timeline": "Within 24 hours",
-                "priority": "high"
-            })
+            actions.append(
+                {
+                    "action": "Acknowledge feedback receipt with customer",
+                    "owner": "CSM",
+                    "timeline": "Within 24 hours",
+                    "priority": "high",
+                }
+            )
 
         # Status update action
         if tracking_info.get("needs_customer_update"):
-            actions.append({
-                "action": "Provide status update to customer",
-                "owner": "CSM",
-                "timeline": "Immediately",
-                "priority": "high"
-            })
+            actions.append(
+                {
+                    "action": "Provide status update to customer",
+                    "owner": "CSM",
+                    "timeline": "Immediately",
+                    "priority": "high",
+                }
+            )
 
         # Implementation tracking
         if tracking_info.get("status") == "completed":
-            actions.append({
-                "action": "Close loop with customer - notify of implementation",
-                "owner": "CSM",
-                "timeline": "This week",
-                "priority": "medium"
-            })
+            actions.append(
+                {
+                    "action": "Close loop with customer - notify of implementation",
+                    "owner": "CSM",
+                    "timeline": "This week",
+                    "priority": "medium",
+                }
+            )
 
         # Escalation for overdue items
         if tracking_info.get("is_overdue"):
-            actions.append({
-                "action": "Escalate overdue feedback to Product Manager",
-                "owner": "CS Manager",
-                "timeline": "Immediately",
-                "priority": "high"
-            })
+            actions.append(
+                {
+                    "action": "Escalate overdue feedback to Product Manager",
+                    "owner": "CS Manager",
+                    "timeline": "Immediately",
+                    "priority": "high",
+                }
+            )
 
         return actions[:5]
 
     def _format_feedback_report(
         self,
-        routing_analysis: Dict[str, Any],
-        tracking_info: Dict[str, Any],
-        follow_up_actions: List[Dict[str, str]]
+        routing_analysis: dict[str, Any],
+        tracking_info: dict[str, Any],
+        follow_up_actions: list[dict[str, str]],
     ) -> str:
         """Format feedback loop report."""
         priority = routing_analysis["priority_score"]
@@ -353,13 +340,13 @@ class FeedbackLoopAgent(BaseAgent):
 
         report = f"""**???? Feedback Loop Report**
 
-**Category:** {routing_analysis['category'].replace('_', ' ').title()}
-**Route To:** {routing_analysis['route_to'].title()} Team
+**Category:** {routing_analysis["category"].replace("_", " ").title()}
+**Route To:** {routing_analysis["route_to"].title()} Team
 **Priority Score:** {priority}/100 {priority_emoji}
-**Urgency:** {routing_analysis['urgency'].upper()}
-**Impact:** {routing_analysis['impact'].title()}
-**Response Required:** {'Yes' if routing_analysis['requires_response'] else 'No'}
-**SLA:** {routing_analysis['sla_days']} days
+**Urgency:** {routing_analysis["urgency"].upper()}
+**Impact:** {routing_analysis["impact"].title()}
+**Response Required:** {"Yes" if routing_analysis["requires_response"] else "No"}
+**SLA:** {routing_analysis["sla_days"]} days
 
 **???? Tracking Information:**
 """
@@ -378,7 +365,13 @@ class FeedbackLoopAgent(BaseAgent):
         if follow_up_actions:
             report += "\n**???? Follow-Up Actions:**\n"
             for i, action in enumerate(follow_up_actions, 1):
-                priority_icon = "????" if action["priority"] == "high" else "????" if action["priority"] == "medium" else "????"
+                priority_icon = (
+                    "????"
+                    if action["priority"] == "high"
+                    else "????"
+                    if action["priority"] == "medium"
+                    else "????"
+                )
                 report += f"{i}. **{action['action']}** {priority_icon}\n"
                 report += f"   - Owner: {action['owner']}\n"
                 report += f"   - Timeline: {action['timeline']}\n"
@@ -388,6 +381,7 @@ class FeedbackLoopAgent(BaseAgent):
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -405,18 +399,15 @@ if __name__ == "__main__":
             "Process customer feedback",
             context={
                 "customer_id": "cust_123",
-                "customer_metadata": {
-                    "plan": "enterprise",
-                    "health_score": 45
-                }
-            }
+                "customer_metadata": {"plan": "enterprise", "health_score": 45},
+            },
         )
         state1["entities"] = {
             "feedback_data": {
                 "feedback_type": "feature_request",
                 "feedback_text": "We need advanced analytics dashboard with custom metrics",
                 "affected_users": 50,
-                "priority": "high"
+                "priority": "high",
             }
         }
 
@@ -437,8 +428,8 @@ if __name__ == "__main__":
             "Check feedback status",
             context={
                 "customer_id": "cust_456",
-                "customer_metadata": {"plan": "premium", "health_score": 72}
-            }
+                "customer_metadata": {"plan": "premium", "health_score": 72},
+            },
         )
         state2["entities"] = {
             "feedback_data": {
@@ -450,7 +441,7 @@ if __name__ == "__main__":
                 "submitted_at": (datetime.now(UTC) - timedelta(days=45)).isoformat(),
                 "expected_cycle_time_days": 30,
                 "affected_users": 150,
-                "priority": "critical"
+                "priority": "critical",
             }
         }
 
