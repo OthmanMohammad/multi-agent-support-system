@@ -22,7 +22,11 @@ class BlogPostWriterAgent(BaseAgent):
         user_message = f"Write content about: {topic}"
         
         try:
-            content = await self.call_llm(system_prompt, user_message)
+            content = await self.call_llm(
+                system_prompt=system_prompt,
+                user_message=user_message,
+                conversation_history=[]  # Content generation is standalone
+            )
         except:
             content = f"**Blog Post Writer**: Content generated for {topic}"
         
