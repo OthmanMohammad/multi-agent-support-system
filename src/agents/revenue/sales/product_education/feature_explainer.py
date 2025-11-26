@@ -5,13 +5,12 @@ Explains product features clearly and tailors explanations to prospect's industr
 Provides demos, videos, screenshots, and competitor comparisons.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("feature_explainer", tier="revenue", category="sales")
@@ -32,7 +31,7 @@ class FeatureExplainer(BaseAgent):
         "core": ["automation", "integration", "analytics", "reporting"],
         "advanced": ["api", "webhooks", "custom_workflows", "ai_powered"],
         "enterprise": ["sso", "audit_logs", "role_based_access", "dedicated_support"],
-        "collaboration": ["team_workspaces", "shared_dashboards", "comments", "notifications"]
+        "collaboration": ["team_workspaces", "shared_dashboards", "comments", "notifications"],
     }
 
     # Industry-specific feature mapping
@@ -41,15 +40,20 @@ class FeatureExplainer(BaseAgent):
         "healthcare": ["hipaa_compliance", "data_security", "audit_logs", "encryption"],
         "finance": ["sox_compliance", "audit_trails", "data_governance", "security"],
         "retail": ["inventory_tracking", "sales_analytics", "customer_insights", "pos_integration"],
-        "manufacturing": ["supply_chain", "quality_control", "production_tracking", "iot_integration"]
+        "manufacturing": [
+            "supply_chain",
+            "quality_control",
+            "production_tracking",
+            "iot_integration",
+        ],
     }
 
     # Role-based explanation depth
     ROLE_DEPTH = {
         "executive": "high_level",  # Focus on business value
-        "manager": "balanced",       # Mix of value and functionality
-        "technical": "detailed",     # Deep technical details
-        "end_user": "practical"      # How-to and workflows
+        "manager": "balanced",  # Mix of value and functionality
+        "technical": "detailed",  # Deep technical details
+        "end_user": "practical",  # How-to and workflows
     }
 
     # Competitor comparison matrix
@@ -58,7 +62,7 @@ class FeatureExplainer(BaseAgent):
         "integration": "200+ pre-built integrations vs avg 50",
         "analytics": "Real-time analytics vs hourly/daily updates",
         "pricing": "Transparent per-user pricing vs complex tiers",
-        "support": "24/7 human support vs chatbot-only"
+        "support": "24/7 human support vs chatbot-only",
     }
 
     def __init__(self):
@@ -70,10 +74,10 @@ class FeatureExplainer(BaseAgent):
             capabilities=[
                 AgentCapability.KB_SEARCH,
                 AgentCapability.CONTEXT_AWARE,
-                AgentCapability.MULTI_TURN
+                AgentCapability.MULTI_TURN,
             ],
             kb_category="sales",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -100,11 +104,7 @@ class FeatureExplainer(BaseAgent):
         competitor_comparison = self._generate_competitor_comparison(requested_features)
 
         # Search KB for feature documentation
-        kb_results = await self.search_knowledge_base(
-            message,
-            category="sales",
-            limit=5
-        )
+        kb_results = await self.search_knowledge_base(message, category="sales", limit=5)
         state["kb_results"] = kb_results
 
         # Generate tailored explanation
@@ -116,7 +116,7 @@ class FeatureExplainer(BaseAgent):
             competitor_comparison,
             kb_results,
             customer_metadata,
-            state
+            state,
         )
 
         # Update state
@@ -131,18 +131,18 @@ class FeatureExplainer(BaseAgent):
         self.logger.info(
             "feature_explainer_completed",
             features_count=len(requested_features),
-            approach=explanation_approach["depth"]
+            approach=explanation_approach["depth"],
         )
 
         return state
 
-    def _identify_requested_features(self, message: str) -> List[str]:
+    def _identify_requested_features(self, message: str) -> list[str]:
         """Identify which features are being asked about"""
         message_lower = message.lower()
         requested = []
 
         # Check all feature categories
-        for category, features in self.FEATURE_CATEGORIES.items():
+        for _category, features in self.FEATURE_CATEGORIES.items():
             for feature in features:
                 if feature.replace("_", " ") in message_lower or feature in message_lower:
                     requested.append(feature)
@@ -153,7 +153,7 @@ class FeatureExplainer(BaseAgent):
 
         return list(set(requested))  # Remove duplicates
 
-    def _determine_approach(self, customer_metadata: Dict) -> Dict[str, Any]:
+    def _determine_approach(self, customer_metadata: dict) -> dict[str, Any]:
         """Determine how to explain based on prospect profile"""
         title = customer_metadata.get("title", "").lower()
         industry = customer_metadata.get("industry", "other").lower()
@@ -164,7 +164,9 @@ class FeatureExplainer(BaseAgent):
             role_type = "executive"
         elif "manager" in title or "director" in title or "head" in title:
             role_type = "manager"
-        elif any(tech_title in title for tech_title in ["engineer", "developer", "architect", "admin"]):
+        elif any(
+            tech_title in title for tech_title in ["engineer", "developer", "architect", "admin"]
+        ):
             role_type = "technical"
 
         depth = self.ROLE_DEPTH.get(role_type, "balanced")
@@ -178,21 +180,14 @@ class FeatureExplainer(BaseAgent):
             "industry": industry,
             "industry_features": industry_features,
             "include_technical_details": role_type in ["technical", "manager"],
-            "include_roi_metrics": role_type in ["executive", "manager"]
+            "include_roi_metrics": role_type in ["executive", "manager"],
         }
 
     def _get_demo_materials(
-        self,
-        requested_features: List[str],
-        approach: Dict
-    ) -> Dict[str, List[str]]:
+        self, requested_features: list[str], approach: dict
+    ) -> dict[str, list[str]]:
         """Get relevant demo materials for requested features"""
-        materials = {
-            "videos": [],
-            "screenshots": [],
-            "walkthroughs": [],
-            "code_samples": []
-        }
+        materials = {"videos": [], "screenshots": [], "walkthroughs": [], "code_samples": []}
 
         for feature in requested_features:
             # Add video demos
@@ -212,7 +207,7 @@ class FeatureExplainer(BaseAgent):
 
         return materials
 
-    def _generate_competitor_comparison(self, requested_features: List[str]) -> Dict[str, str]:
+    def _generate_competitor_comparison(self, requested_features: list[str]) -> dict[str, str]:
         """Generate competitor comparison for relevant features"""
         comparisons = {}
 
@@ -229,13 +224,13 @@ class FeatureExplainer(BaseAgent):
     async def _generate_feature_explanation(
         self,
         message: str,
-        requested_features: List[str],
-        approach: Dict,
-        demo_materials: Dict,
-        competitor_comparison: Dict,
-        kb_results: List[Dict],
-        customer_metadata: Dict,
-        state: AgentState
+        requested_features: list[str],
+        approach: dict,
+        demo_materials: dict,
+        competitor_comparison: dict,
+        kb_results: list[dict],
+        customer_metadata: dict,
+        state: AgentState,
     ) -> str:
         """Generate tailored feature explanation"""
 
@@ -256,7 +251,9 @@ class FeatureExplainer(BaseAgent):
         if demo_materials["screenshots"]:
             demo_context += f"- Screenshots: {len(demo_materials['screenshots'])} available\n"
         if demo_materials["walkthroughs"]:
-            demo_context += f"- Interactive walkthroughs: {len(demo_materials['walkthroughs'])} available\n"
+            demo_context += (
+                f"- Interactive walkthroughs: {len(demo_materials['walkthroughs'])} available\n"
+            )
 
         # Build competitor comparison
         competitor_context = ""
@@ -268,15 +265,15 @@ class FeatureExplainer(BaseAgent):
         system_prompt = f"""You are a Feature Explainer specialist helping prospects understand our product.
 
 Prospect Profile:
-- Role: {approach['role_type'].replace('_', ' ').title()}
-- Industry: {approach['industry'].title()}
-- Explanation Depth: {approach['depth']}
-- Include Technical Details: {approach['include_technical_details']}
-- Include ROI Metrics: {approach['include_roi_metrics']}
+- Role: {approach["role_type"].replace("_", " ").title()}
+- Industry: {approach["industry"].title()}
+- Explanation Depth: {approach["depth"]}
+- Include Technical Details: {approach["include_technical_details"]}
+- Include ROI Metrics: {approach["include_roi_metrics"]}
 
-Requested Features: {', '.join(requested_features)}
+Requested Features: {", ".join(requested_features)}
 
-Industry-Relevant Features: {', '.join(approach['industry_features'])}
+Industry-Relevant Features: {", ".join(approach["industry_features"])}
 
 Tailor your explanation to:
 1. Match the prospect's technical level and role
@@ -295,9 +292,7 @@ Tailor your explanation to:
 Generate a clear, tailored feature explanation that addresses their question."""
 
         response = await self.call_llm(
-            system_prompt,
-            user_prompt,
-            conversation_history=conversation_history
+            system_prompt, user_prompt, conversation_history=conversation_history
         )
         return response
 
@@ -305,6 +300,7 @@ Generate a clear, tailored feature explanation that addresses their question."""
 if __name__ == "__main__":
     """Test harness for FeatureExplainer"""
     import asyncio
+
     from src.workflow.state import AgentState
 
     async def test_feature_explainer():
@@ -313,13 +309,9 @@ if __name__ == "__main__":
         # Test case 1: Executive asking about automation
         state1 = AgentState(
             current_message="Can you explain your automation capabilities?",
-            customer_metadata={
-                "title": "CEO",
-                "industry": "technology",
-                "company_size": 500
-            },
+            customer_metadata={"title": "CEO", "industry": "technology", "company_size": 500},
             messages=[],
-            status="pending"
+            status="pending",
         )
 
         result1 = await agent.process(state1)
@@ -335,10 +327,10 @@ if __name__ == "__main__":
             customer_metadata={
                 "title": "Software Engineer",
                 "industry": "finance",
-                "company_size": 200
+                "company_size": 200,
             },
             messages=[],
-            status="pending"
+            status="pending",
         )
 
         result2 = await agent.process(state2)
