@@ -5,13 +5,12 @@ This agent verifies eligibility, calculates refund amounts, and processes
 approved refunds via the billing system.
 """
 
-from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("refund_processor", tier="essential", category="billing")
@@ -37,17 +36,17 @@ class RefundProcessor(BaseAgent):
         "full_refund_conditions": [
             "Within 30 days of purchase",
             "No previous refund on account",
-            "Account in good standing"
+            "Account in good standing",
         ],
         "prorated_refund_conditions": [
             "Annual plan with >30 days remaining",
-            "Billing error or service outage"
+            "Billing error or service outage",
         ],
         "no_refund_conditions": [
             "Used service for >30 days",
             "Previous refund requested",
-            "Terms of service violation"
-        ]
+            "Terms of service violation",
+        ],
     }
 
     def __init__(self):
@@ -55,12 +54,9 @@ class RefundProcessor(BaseAgent):
             name="refund_processor",
             type=AgentType.SPECIALIST,
             temperature=0.1,  # Low temp for strict policy enforcement
-            capabilities=[
-                AgentCapability.KB_SEARCH,
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="billing",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -87,7 +83,7 @@ class RefundProcessor(BaseAgent):
             "refund_processing_details",
             message_preview=user_message[:100],
             customer_id=state.get("customer_id"),
-            turn_count=state["turn_count"]
+            turn_count=state["turn_count"],
         )
 
         # Check eligibility
@@ -98,11 +94,7 @@ class RefundProcessor(BaseAgent):
             refund_amount = self._calculate_refund(customer_metadata, eligibility)
 
             # Process refund
-            result = await self._process_refund(
-                customer_metadata,
-                refund_amount,
-                state
-            )
+            result = await self._process_refund(customer_metadata, refund_amount, state)
 
             state["agent_response"] = result["message"]
             state["refund_processed"] = True
@@ -113,7 +105,7 @@ class RefundProcessor(BaseAgent):
                 "refund_approved_and_processed",
                 customer_id=state.get("customer_id"),
                 amount=refund_amount,
-                refund_type=eligibility["refund_type"]
+                refund_type=eligibility["refund_type"],
             )
 
         else:
@@ -126,7 +118,13 @@ class RefundProcessor(BaseAgent):
             self.logger.info(
                 "refund_denied",
                 customer_id=state.get("customer_id"),
-                reasons=[k for k, v in eligibility.items() if k.startswith("within_") or k.startswith("no_") or k.startswith("account_") and not v]
+                reasons=[
+                    k
+                    for k, v in eligibility.items()
+                    if k.startswith("within_")
+                    or k.startswith("no_")
+                    or (k.startswith("account_") and not v)
+                ],
             )
 
         state["next_agent"] = None
@@ -134,11 +132,7 @@ class RefundProcessor(BaseAgent):
 
         return state
 
-    def _check_eligibility(
-        self,
-        customer_metadata: Dict,
-        state: AgentState
-    ) -> Dict:
+    def _check_eligibility(self, customer_metadata: dict, state: AgentState) -> dict:
         """
         Check if customer eligible for refund.
 
@@ -153,14 +147,13 @@ class RefundProcessor(BaseAgent):
 
         # Get subscription creation date
         subscription_created = customer_metadata.get(
-            "subscription_created_at",
-            datetime.now().isoformat()
+            "subscription_created_at", datetime.now().isoformat()
         )
 
         # Parse date (handle both string and datetime)
         if isinstance(subscription_created, str):
             try:
-                created_date = datetime.fromisoformat(subscription_created.replace('Z', '+00:00'))
+                created_date = datetime.fromisoformat(subscription_created.replace("Z", "+00:00"))
             except ValueError:
                 # Fallback to now if parsing fails
                 created_date = datetime.now()
@@ -191,7 +184,7 @@ class RefundProcessor(BaseAgent):
             previous_refunds=previous_refunds,
             no_previous_refunds=no_previous_refunds,
             account_good_standing=account_good_standing,
-            eligible=eligible
+            eligible=eligible,
         )
 
         return {
@@ -200,14 +193,10 @@ class RefundProcessor(BaseAgent):
             "within_money_back_period": within_30_days,
             "no_previous_refunds": no_previous_refunds,
             "account_good_standing": account_good_standing,
-            "refund_type": "full" if within_30_days else "prorated"
+            "refund_type": "full" if within_30_days else "prorated",
         }
 
-    def _calculate_refund(
-        self,
-        customer_metadata: Dict,
-        eligibility: Dict
-    ) -> float:
+    def _calculate_refund(self, customer_metadata: dict, eligibility: dict) -> float:
         """
         Calculate refund amount.
 
@@ -224,15 +213,10 @@ class RefundProcessor(BaseAgent):
 
         if refund_type == "full":
             # Full refund
-            if billing_cycle == "annual":
-                refund_amount = mrr * 12
-            else:
-                refund_amount = mrr
+            refund_amount = mrr * 12 if billing_cycle == "annual" else mrr
 
             self.logger.debug(
-                "refund_calculated_full",
-                amount=refund_amount,
-                billing_cycle=billing_cycle
+                "refund_calculated_full", amount=refund_amount, billing_cycle=billing_cycle
             )
 
         elif refund_type == "prorated":
@@ -245,24 +229,18 @@ class RefundProcessor(BaseAgent):
                 "refund_calculated_prorated",
                 amount=refund_amount,
                 months_remaining=months_remaining,
-                monthly_rate=monthly_rate
+                monthly_rate=monthly_rate,
             )
 
         else:
             refund_amount = 0
-            self.logger.warning(
-                "refund_calculation_unknown_type",
-                refund_type=refund_type
-            )
+            self.logger.warning("refund_calculation_unknown_type", refund_type=refund_type)
 
         return refund_amount
 
     async def _process_refund(
-        self,
-        customer_metadata: Dict,
-        amount: float,
-        state: AgentState
-    ) -> Dict:
+        self, customer_metadata: dict, amount: float, state: AgentState
+    ) -> dict:
         """
         Process refund via Stripe API.
 
@@ -284,7 +262,7 @@ class RefundProcessor(BaseAgent):
             "refund_processing_initiated",
             customer_id=customer_id,
             amount=amount,
-            email=customer_email
+            email=customer_email,
         )
 
         message = f"""Your refund has been processed successfully.
@@ -300,7 +278,7 @@ We're sorry to see you go! If you change your mind, you can always upgrade again
 
         return {"message": message, "amount": amount}
 
-    def _explain_ineligibility(self, eligibility: Dict) -> str:
+    def _explain_ineligibility(self, eligibility: dict) -> str:
         """
         Explain why customer not eligible for refund.
 
@@ -324,14 +302,12 @@ We're sorry to see you go! If you change your mind, you can always upgrade again
             )
 
         if not eligibility["account_good_standing"]:
-            reasons.append(
-                "Your account has outstanding issues that need to be resolved first"
-            )
+            reasons.append("Your account has outstanding issues that need to be resolved first")
 
         message = f"""I'm sorry, but your account is not eligible for a refund based on our policy.
 
 **Reason(s):**
-{chr(10).join(f'- {r}' for r in reasons)}
+{chr(10).join(f"- {r}" for r in reasons)}
 
 **Our refund policy:**
 - 30-day money-back guarantee (no questions asked)
@@ -351,6 +327,7 @@ Would you like to explore any of these options instead? I'm here to help find th
 if __name__ == "__main__":
     # Test refund processor
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -369,17 +346,17 @@ if __name__ == "__main__":
                     "subscription_created_at": (datetime.now() - timedelta(days=15)).isoformat(),
                     "previous_refund_count": 0,
                     "account_status": "active",
-                    "email": "test@example.com"
+                    "email": "test@example.com",
                 }
-            }
+            },
         )
 
         processor = RefundProcessor()
         result1 = await processor.process(state1)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("TEST 1: Eligible Refund (15 days old)")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Refund processed: {result1.get('refund_processed')}")
         print(f"Refund amount: ${result1.get('refund_amount')}")
         print(f"\nResponse:\n{result1['agent_response']}")
@@ -393,16 +370,16 @@ if __name__ == "__main__":
                     "mrr": 100,
                     "subscription_created_at": (datetime.now() - timedelta(days=45)).isoformat(),
                     "previous_refund_count": 0,
-                    "account_status": "active"
+                    "account_status": "active",
                 }
-            }
+            },
         )
 
         result2 = await processor.process(state2)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("TEST 2: Ineligible Refund (45 days old)")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Refund processed: {result2.get('refund_processed')}")
         print(f"\nResponse:\n{result2['agent_response']}")
 
@@ -415,16 +392,16 @@ if __name__ == "__main__":
                     "mrr": 100,
                     "subscription_created_at": (datetime.now() - timedelta(days=10)).isoformat(),
                     "previous_refund_count": 1,
-                    "account_status": "active"
+                    "account_status": "active",
                 }
-            }
+            },
         )
 
         result3 = await processor.process(state3)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("TEST 3: Previous Refund Exists")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Refund processed: {result3.get('refund_processed')}")
         print(f"\nResponse:\n{result3['agent_response'][:200]}...")
 
