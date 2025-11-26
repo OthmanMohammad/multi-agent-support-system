@@ -7,15 +7,16 @@ collaboration is needed to resolve the query effectively.
 Part of: STORY-01 Routing & Orchestration Swarm (TASK-106)
 """
 
-from typing import Dict, Any, Optional, List
 import json
 from datetime import datetime
+from typing import Any
+
 import structlog
 
-from src.agents.base.base_agent import BaseAgent, AgentConfig
-from src.agents.base.agent_types import AgentType, AgentCapability
-from src.workflow.state import AgentState
+from src.agents.base.agent_types import AgentCapability, AgentType
+from src.agents.base.base_agent import AgentConfig, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.workflow.state import AgentState
 
 logger = structlog.get_logger(__name__)
 
@@ -41,10 +42,10 @@ class ComplexityAssessor(BaseAgent):
 
     # Complexity levels
     COMPLEXITY_LEVELS = {
-        (1, 3): "simple",      # Single issue, straightforward
-        (4, 6): "moderate",    # Multiple factors, some investigation
-        (7, 8): "complex",     # Cross-domain, deep analysis needed
-        (9, 10): "very_complex"  # Multi-agent, extensive work
+        (1, 3): "simple",  # Single issue, straightforward
+        (4, 6): "moderate",  # Multiple factors, some investigation
+        (7, 8): "complex",  # Cross-domain, deep analysis needed
+        (9, 10): "very_complex",  # Multi-agent, extensive work
     }
 
     def __init__(self, **kwargs):
@@ -54,12 +55,10 @@ class ComplexityAssessor(BaseAgent):
             type=AgentType.ANALYZER,
             temperature=0.2,  # Low but allows nuance
             max_tokens=300,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE],
             system_prompt_template=self._get_system_prompt(),
             tier="essential",
-            role="complexity_assessor"
+            role="complexity_assessor",
         )
         super().__init__(config=config, **kwargs)
         self.logger = logger.bind(agent="complexity_assessor", agent_type="analyzer")
@@ -204,7 +203,7 @@ Provide complexity assessment in JSON format."""
             response = await self.call_llm(
                 system_prompt=self._get_system_prompt(),
                 user_message=prompt,
-                conversation_history=conversation_history
+                conversation_history=conversation_history,
             )
 
             # Parse response
@@ -231,7 +230,7 @@ Provide complexity assessment in JSON format."""
             state["complexity_metadata"] = {
                 "latency_ms": latency_ms,
                 "timestamp": datetime.now().isoformat(),
-                "model": self.config.model
+                "model": self.config.model,
             }
 
             self.logger.info(
@@ -239,16 +238,14 @@ Provide complexity assessment in JSON format."""
                 score=assessment["complexity_score"],
                 level=assessment["complexity_level"],
                 multi_agent=assessment["multi_agent_needed"],
-                latency_ms=latency_ms
+                latency_ms=latency_ms,
             )
 
             return state
 
         except Exception as e:
             self.logger.error(
-                "complexity_assessment_failed",
-                error=str(e),
-                error_type=type(e).__name__
+                "complexity_assessment_failed", error=str(e), error_type=type(e).__name__
             )
 
             # Fallback to moderate complexity
@@ -286,7 +283,7 @@ Provide complexity assessment in JSON format."""
             parts.append(f"Health: {customer_metadata['health_score']}/100")
 
         if customer_metadata.get("churn_risk"):
-            risk = int(customer_metadata['churn_risk'] * 100)
+            risk = int(customer_metadata["churn_risk"] * 100)
             parts.append(f"Churn Risk: {risk}%")
 
         # Include entities
@@ -299,7 +296,7 @@ Provide complexity assessment in JSON format."""
 
         return ""
 
-    def _parse_response(self, response: str) -> Dict[str, Any]:
+    def _parse_response(self, response: str) -> dict[str, Any]:
         """
         Parse LLM response into complexity assessment.
 
@@ -315,8 +312,7 @@ Provide complexity assessment in JSON format."""
             if cleaned_response.startswith("```"):
                 lines = cleaned_response.split("\n")
                 cleaned_response = "\n".join(
-                    line for line in lines
-                    if not line.strip().startswith("```")
+                    line for line in lines if not line.strip().startswith("```")
                 )
 
             # Parse JSON
@@ -325,8 +321,7 @@ Provide complexity assessment in JSON format."""
             # Ensure it's a dict
             if not isinstance(assessment, dict):
                 self.logger.warning(
-                    "complexity_assessor_invalid_type",
-                    type=type(assessment).__name__
+                    "complexity_assessor_invalid_type", type=type(assessment).__name__
                 )
                 return self._get_default_assessment()
 
@@ -334,13 +329,11 @@ Provide complexity assessment in JSON format."""
 
         except json.JSONDecodeError as e:
             self.logger.warning(
-                "complexity_assessor_invalid_json",
-                response_preview=response[:100],
-                error=str(e)
+                "complexity_assessor_invalid_json", response_preview=response[:100], error=str(e)
             )
             return self._get_default_assessment()
 
-    def _validate_assessment(self, assessment: Dict[str, Any]) -> Dict[str, Any]:
+    def _validate_assessment(self, assessment: dict[str, Any]) -> dict[str, Any]:
         """
         Validate and normalize complexity assessment.
 
@@ -381,14 +374,13 @@ Provide complexity assessment in JSON format."""
         resolution_time = str(assessment.get("estimated_resolution_time", "medium")).lower()
         if resolution_time in ["quick", "medium", "long"]:
             validated["estimated_resolution_time"] = resolution_time
+        # Derive from complexity
+        elif validated["complexity_score"] <= 3:
+            validated["estimated_resolution_time"] = "quick"
+        elif validated["complexity_score"] <= 6:
+            validated["estimated_resolution_time"] = "medium"
         else:
-            # Derive from complexity
-            if validated["complexity_score"] <= 3:
-                validated["estimated_resolution_time"] = "quick"
-            elif validated["complexity_score"] <= 6:
-                validated["estimated_resolution_time"] = "medium"
-            else:
-                validated["estimated_resolution_time"] = "long"
+            validated["estimated_resolution_time"] = "long"
 
         # Pass through other fields
         validated["skill_requirements"] = assessment.get("skill_requirements", [])
@@ -397,11 +389,7 @@ Provide complexity assessment in JSON format."""
 
         return validated
 
-    def _adjust_for_context(
-        self,
-        assessment: Dict[str, Any],
-        state: AgentState
-    ) -> Dict[str, Any]:
+    def _adjust_for_context(self, assessment: dict[str, Any], state: AgentState) -> dict[str, Any]:
         """
         Adjust complexity assessment based on context.
 
@@ -437,7 +425,7 @@ Provide complexity assessment in JSON format."""
 
         return assessment
 
-    def _get_default_assessment(self) -> Dict[str, Any]:
+    def _get_default_assessment(self) -> dict[str, Any]:
         """
         Get default moderate complexity assessment.
 
@@ -456,8 +444,8 @@ Provide complexity assessment in JSON format."""
                 "latency_ms": 0,
                 "timestamp": datetime.now().isoformat(),
                 "model": self.config.model,
-                "fallback": True
-            }
+                "fallback": True,
+            },
         }
 
 
@@ -478,6 +466,7 @@ def create_complexity_assessor(**kwargs) -> ComplexityAssessor:
 # Example usage (for development/testing)
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test_complexity_assessor():
@@ -490,41 +479,36 @@ if __name__ == "__main__":
 
         # Test cases covering different complexity levels
         test_cases = [
-            {
-                "message": "How do I reset my password?",
-                "context": {},
-                "expected_level": "simple"
-            },
+            {"message": "How do I reset my password?", "context": {}, "expected_level": "simple"},
             {
                 "message": "The app isn't syncing properly, can you help?",
                 "context": {},
-                "expected_level": "moderate"
+                "expected_level": "moderate",
             },
             {
                 "message": "We need to migrate from Asana, set up SSO, train our team of 100, and integrate with Salesforce",
                 "context": {"plan": "enterprise", "team_size": 100},
-                "expected_level": "very_complex"
+                "expected_level": "very_complex",
             },
             {
                 "message": "Billing error is blocking our production deployment - urgent!",
                 "context": {"plan": "enterprise", "health_score": 30, "churn_risk": 0.8},
-                "expected_level": "complex"
+                "expected_level": "complex",
             },
         ]
 
         for i, test in enumerate(test_cases, 1):
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"TEST CASE {i}: {test['message'][:60]}...")
-            print(f"{'='*60}")
+            print(f"{'=' * 60}")
 
             state = create_initial_state(
-                message=test["message"],
-                context={"customer_metadata": test.get("context", {})}
+                message=test["message"], context={"customer_metadata": test.get("context", {})}
             )
 
             result = await assessor.process(state)
 
-            print(f"\n✓ Complexity Assessment:")
+            print("\n✓ Complexity Assessment:")
             print(f"  Score: {result['complexity_score']}/10")
             print(f"  Level: {result['complexity_level']}")
             print(f"  Multi-Agent Needed: {result['multi_agent_needed']}")
