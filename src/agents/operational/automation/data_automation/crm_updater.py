@@ -5,14 +5,14 @@ Auto-updates CRM systems (Salesforce, HubSpot) from customer conversations,
 support tickets, and interactions.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, UTC
 import json
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("crm_updater", tier="operational", category="automation")
@@ -36,18 +36,18 @@ class CRMUpdaterAgent(BaseAgent):
         "salesforce": {
             "api_endpoint": "https://api.salesforce.com/services/data/v58.0",
             "objects": ["Contact", "Lead", "Opportunity", "Account", "Case"],
-            "max_batch_size": 200
+            "max_batch_size": 200,
         },
         "hubspot": {
             "api_endpoint": "https://api.hubapi.com",
             "objects": ["contacts", "companies", "deals", "tickets"],
-            "max_batch_size": 100
+            "max_batch_size": 100,
         },
         "pipedrive": {
             "api_endpoint": "https://api.pipedrive.com/v1",
             "objects": ["persons", "organizations", "deals", "activities"],
-            "max_batch_size": 500
-        }
+            "max_batch_size": 500,
+        },
     }
 
     # Extractable CRM fields from conversations
@@ -59,7 +59,7 @@ class CRMUpdaterAgent(BaseAgent):
             "pain_points",
             "use_cases",
             "technical_level",
-            "decision_maker"
+            "decision_maker",
         ],
         "opportunity": [
             "deal_size",
@@ -68,7 +68,7 @@ class CRMUpdaterAgent(BaseAgent):
             "competitors",
             "budget",
             "timeline",
-            "decision_criteria"
+            "decision_criteria",
         ],
         "account": [
             "health_score",
@@ -76,8 +76,8 @@ class CRMUpdaterAgent(BaseAgent):
             "engagement_level",
             "churn_risk",
             "expansion_potential",
-            "product_usage"
-        ]
+            "product_usage",
+        ],
     }
 
     # Conversation sentiment to CRM health score mapping
@@ -86,7 +86,7 @@ class CRMUpdaterAgent(BaseAgent):
         "positive": 75,
         "neutral": 50,
         "negative": 30,
-        "very_negative": 10
+        "very_negative": 10,
     }
 
     def __init__(self):
@@ -96,7 +96,7 @@ class CRMUpdaterAgent(BaseAgent):
             temperature=0.1,
             max_tokens=1000,
             capabilities=[AgentCapability.DATABASE_WRITE],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -123,67 +123,41 @@ class CRMUpdaterAgent(BaseAgent):
         crm_system = entities.get("crm_system", customer_metadata.get("crm_system", "salesforce"))
         update_type = entities.get("update_type", "auto")
 
-        self.logger.debug(
-            "crm_update_details",
-            crm_system=crm_system,
-            update_type=update_type
-        )
+        self.logger.debug("crm_update_details", crm_system=crm_system, update_type=update_type)
 
         # Extract insights from conversation
         conversation_insights = await self._extract_conversation_insights(
-            message,
-            customer_metadata
+            message, customer_metadata
         )
 
         # Map insights to CRM fields
         field_updates = self._map_insights_to_crm_fields(
-            conversation_insights,
-            crm_system,
-            customer_metadata
+            conversation_insights, crm_system, customer_metadata
         )
 
         # Determine what CRM objects to update
-        update_targets = self._determine_update_targets(
-            field_updates,
-            customer_metadata
-        )
+        update_targets = self._determine_update_targets(field_updates, customer_metadata)
 
         # Validate updates
-        validation = self._validate_updates(
-            field_updates,
-            update_targets,
-            crm_system
-        )
+        validation = self._validate_updates(field_updates, update_targets, crm_system)
 
         # Apply updates to CRM
         update_results = await self._update_crm_external(
-            crm_system,
-            update_targets,
-            field_updates,
-            validation
+            crm_system, update_targets, field_updates, validation
         )
 
         # Log activity in CRM
         activity_log = await self._log_crm_activity(
-            crm_system,
-            message,
-            customer_metadata,
-            update_results
+            crm_system, message, customer_metadata, update_results
         )
 
         # Log automation action
         automation_log = self._log_automation_action(
-            "crm_updated",
-            update_results,
-            customer_metadata
+            "crm_updated", update_results, customer_metadata
         )
 
         # Generate response
-        response = self._format_crm_update_response(
-            update_results,
-            activity_log,
-            validation
-        )
+        response = self._format_crm_update_response(update_results, activity_log, validation)
 
         state["agent_response"] = response
         state["crm_updates"] = update_results
@@ -199,16 +173,14 @@ class CRMUpdaterAgent(BaseAgent):
             "crm_updated_successfully",
             crm_system=crm_system,
             objects_updated=len(update_results.get("updated_objects", [])),
-            fields_updated=len(field_updates)
+            fields_updated=len(field_updates),
         )
 
         return state
 
     async def _extract_conversation_insights(
-        self,
-        message: str,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, message: str, customer_metadata: dict
+    ) -> dict[str, Any]:
         """
         Extract CRM-relevant insights from conversation.
 
@@ -240,34 +212,29 @@ Be precise and extract only factual information mentioned in the conversation.""
 Message: {message}
 
 Current Customer Data:
-- Company: {customer_metadata.get('customer_name', 'Unknown')}
-- Plan: {customer_metadata.get('plan_name', 'Unknown')}
-- Industry: {customer_metadata.get('industry', 'Unknown')}
+- Company: {customer_metadata.get("customer_name", "Unknown")}
+- Plan: {customer_metadata.get("plan_name", "Unknown")}
+- Industry: {customer_metadata.get("industry", "Unknown")}
 
 Return JSON with extracted fields: company_info, pain_points, use_cases, budget_signals, timeline, sentiment, competitors, next_steps, engagement_level, and any other relevant business data."""
 
         response = await self.call_llm(
             system_prompt=system_prompt,
             user_message=user_prompt,
-            conversation_history=[]  # CRM insights extraction uses message context
+            conversation_history=[],  # CRM insights extraction uses message context
         )
 
         # Parse LLM response
         try:
             import re
-            json_match = re.search(r'\{.*\}', response, re.DOTALL)
+
+            json_match = re.search(r"\{.*\}", response, re.DOTALL)
             if json_match:
                 insights = json.loads(json_match.group())
             else:
-                insights = {
-                    "sentiment": "neutral",
-                    "engagement_level": "medium"
-                }
-        except:
-            insights = {
-                "sentiment": "neutral",
-                "engagement_level": "medium"
-            }
+                insights = {"sentiment": "neutral", "engagement_level": "medium"}
+        except Exception:
+            insights = {"sentiment": "neutral", "engagement_level": "medium"}
 
         # Add metadata
         insights["extracted_at"] = datetime.now(UTC).isoformat()
@@ -276,11 +243,8 @@ Return JSON with extracted fields: company_info, pain_points, use_cases, budget_
         return insights
 
     def _map_insights_to_crm_fields(
-        self,
-        insights: Dict,
-        crm_system: str,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, insights: dict, crm_system: str, customer_metadata: dict
+    ) -> dict[str, Any]:
         """
         Map conversation insights to CRM field updates.
 
@@ -292,11 +256,7 @@ Return JSON with extracted fields: company_info, pain_points, use_cases, budget_
         Returns:
             Field updates mapped to CRM
         """
-        field_updates = {
-            "Contact": {},
-            "Account": {},
-            "Opportunity": {}
-        }
+        field_updates = {"Contact": {}, "Account": {}, "Opportunity": {}}
 
         # Map contact fields
         if insights.get("company_info"):
@@ -330,14 +290,16 @@ Return JSON with extracted fields: company_info, pain_points, use_cases, budget_
 
         if insights.get("competitors"):
             field_updates["Opportunity"]["Competitors__c"] = ", ".join(
-                insights["competitors"] if isinstance(insights["competitors"], list)
+                insights["competitors"]
+                if isinstance(insights["competitors"], list)
                 else [str(insights["competitors"])]
             )
 
         # Add pain points to notes
         if insights.get("pain_points"):
             pain_points_str = ", ".join(
-                insights["pain_points"] if isinstance(insights["pain_points"], list)
+                insights["pain_points"]
+                if isinstance(insights["pain_points"], list)
                 else [str(insights["pain_points"])]
             )
             field_updates["Contact"]["Pain_Points__c"] = pain_points_str
@@ -350,10 +312,8 @@ Return JSON with extracted fields: company_info, pain_points, use_cases, budget_
         return field_updates
 
     def _determine_update_targets(
-        self,
-        field_updates: Dict,
-        customer_metadata: Dict
-    ) -> List[Dict[str, Any]]:
+        self, field_updates: dict, customer_metadata: dict
+    ) -> list[dict[str, Any]]:
         """
         Determine which CRM objects to update.
 
@@ -368,36 +328,39 @@ Return JSON with extracted fields: company_info, pain_points, use_cases, budget_
 
         # Update Contact
         if field_updates.get("Contact"):
-            update_targets.append({
-                "object_type": "Contact",
-                "record_id": customer_metadata.get("crm_contact_id", "00X000001"),
-                "fields": field_updates["Contact"]
-            })
+            update_targets.append(
+                {
+                    "object_type": "Contact",
+                    "record_id": customer_metadata.get("crm_contact_id", "00X000001"),
+                    "fields": field_updates["Contact"],
+                }
+            )
 
         # Update Account
         if field_updates.get("Account"):
-            update_targets.append({
-                "object_type": "Account",
-                "record_id": customer_metadata.get("crm_account_id", "00Y000001"),
-                "fields": field_updates["Account"]
-            })
+            update_targets.append(
+                {
+                    "object_type": "Account",
+                    "record_id": customer_metadata.get("crm_account_id", "00Y000001"),
+                    "fields": field_updates["Account"],
+                }
+            )
 
         # Update Opportunity if exists
         if field_updates.get("Opportunity") and customer_metadata.get("crm_opportunity_id"):
-            update_targets.append({
-                "object_type": "Opportunity",
-                "record_id": customer_metadata["crm_opportunity_id"],
-                "fields": field_updates["Opportunity"]
-            })
+            update_targets.append(
+                {
+                    "object_type": "Opportunity",
+                    "record_id": customer_metadata["crm_opportunity_id"],
+                    "fields": field_updates["Opportunity"],
+                }
+            )
 
         return update_targets
 
     def _validate_updates(
-        self,
-        field_updates: Dict,
-        update_targets: List[Dict],
-        crm_system: str
-    ) -> Dict[str, Any]:
+        self, field_updates: dict, update_targets: list[dict], crm_system: str
+    ) -> dict[str, Any]:
         """
         Validate CRM updates before applying.
 
@@ -409,11 +372,7 @@ Return JSON with extracted fields: company_info, pain_points, use_cases, budget_
         Returns:
             Validation results
         """
-        validation = {
-            "is_valid": True,
-            "warnings": [],
-            "errors": []
-        }
+        validation = {"is_valid": True, "warnings": [], "errors": []}
 
         # Check if we have targets
         if not update_targets:
@@ -433,12 +392,8 @@ Return JSON with extracted fields: company_info, pain_points, use_cases, budget_
         return validation
 
     async def _update_crm_external(
-        self,
-        crm_system: str,
-        update_targets: List[Dict],
-        field_updates: Dict,
-        validation: Dict
-    ) -> Dict[str, Any]:
+        self, crm_system: str, update_targets: list[dict], field_updates: dict, validation: dict
+    ) -> dict[str, Any]:
         """
         Update CRM via external API (mocked).
 
@@ -466,7 +421,7 @@ Return JSON with extracted fields: company_info, pain_points, use_cases, budget_
                 "fields_updated": list(target["fields"].keys()),
                 "field_count": len(target["fields"]),
                 "status": "success",
-                "updated_at": datetime.now(UTC).isoformat()
+                "updated_at": datetime.now(UTC).isoformat(),
             }
             updated_objects.append(update_record)
 
@@ -475,7 +430,7 @@ Return JSON with extracted fields: company_info, pain_points, use_cases, budget_
                 crm_system=crm_system,
                 object_type=target["object_type"],
                 record_id=target["record_id"],
-                field_count=len(target["fields"])
+                field_count=len(target["fields"]),
             )
 
         return {
@@ -484,16 +439,12 @@ Return JSON with extracted fields: company_info, pain_points, use_cases, budget_
             "total_objects": len(updated_objects),
             "total_fields": sum(obj["field_count"] for obj in updated_objects),
             "status": "success",
-            "timestamp": datetime.now(UTC).isoformat()
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     async def _log_crm_activity(
-        self,
-        crm_system: str,
-        message: str,
-        customer_metadata: Dict,
-        update_results: Dict
-    ) -> Dict[str, Any]:
+        self, crm_system: str, message: str, customer_metadata: dict, update_results: dict
+    ) -> dict[str, Any]:
         """
         Log activity/note in CRM.
 
@@ -517,18 +468,15 @@ Return JSON with extracted fields: company_info, pain_points, use_cases, budget_
             "created_at": datetime.now(UTC).isoformat(),
             "metadata": {
                 "source": "support_conversation",
-                "auto_updates": len(update_results.get("updated_objects", []))
-            }
+                "auto_updates": len(update_results.get("updated_objects", [])),
+            },
         }
 
         return activity
 
     def _log_automation_action(
-        self,
-        action_type: str,
-        update_results: Dict,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, action_type: str, update_results: dict, customer_metadata: dict
+    ) -> dict[str, Any]:
         """Log automated action for audit trail."""
         return {
             "action_type": action_type,
@@ -538,22 +486,19 @@ Return JSON with extracted fields: company_info, pain_points, use_cases, budget_
             "success": update_results.get("status") == "success",
             "details": {
                 "objects_updated": len(update_results.get("updated_objects", [])),
-                "total_fields": update_results.get("total_fields", 0)
-            }
+                "total_fields": update_results.get("total_fields", 0),
+            },
         }
 
     def _format_crm_update_response(
-        self,
-        update_results: Dict,
-        activity_log: Dict,
-        validation: Dict
+        self, update_results: dict, activity_log: dict, validation: dict
     ) -> str:
         """Format CRM update response."""
         response = f"""**CRM Updated Successfully**
 
-CRM System: {update_results['crm_system'].upper()}
-Objects Updated: {update_results['total_objects']}
-Total Fields Updated: {update_results['total_fields']}
+CRM System: {update_results["crm_system"].upper()}
+Objects Updated: {update_results["total_objects"]}
+Total Fields Updated: {update_results["total_fields"]}
 
 **Updated Objects:**
 """
@@ -564,9 +509,9 @@ Total Fields Updated: {update_results['total_fields']}
             response += f"- Status: {obj['status'].title()}\n"
 
         response += f"""\n**Activity Logged:**
-- Activity ID: {activity_log['id']}
-- Type: {activity_log['type']}
-- Created: {activity_log['created_at']}
+- Activity ID: {activity_log["id"]}
+- Type: {activity_log["type"]}
+- Created: {activity_log["created_at"]}
 """
 
         if validation.get("warnings"):
