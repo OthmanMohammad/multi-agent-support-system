@@ -13,18 +13,18 @@ Agents:
     - UpsellIdentifier: Identifies expansion opportunities (TASK-1046)
 """
 
-from src.agents.revenue.sales.deal_progression.demo_scheduler import DemoScheduler
-from src.agents.revenue.sales.deal_progression.trial_optimizer import TrialOptimizer
-from src.agents.revenue.sales.deal_progression.proposal_generator import ProposalGenerator
-from src.agents.revenue.sales.deal_progression.contract_negotiator import ContractNegotiator
 from src.agents.revenue.sales.deal_progression.closer import Closer
+from src.agents.revenue.sales.deal_progression.contract_negotiator import ContractNegotiator
+from src.agents.revenue.sales.deal_progression.demo_scheduler import DemoScheduler
+from src.agents.revenue.sales.deal_progression.proposal_generator import ProposalGenerator
+from src.agents.revenue.sales.deal_progression.trial_optimizer import TrialOptimizer
 from src.agents.revenue.sales.deal_progression.upsell_identifier import UpsellIdentifier
 
 __all__ = [
-    "DemoScheduler",
-    "TrialOptimizer",
-    "ProposalGenerator",
-    "ContractNegotiator",
     "Closer",
+    "ContractNegotiator",
+    "DemoScheduler",
+    "ProposalGenerator",
+    "TrialOptimizer",
     "UpsellIdentifier",
 ]
