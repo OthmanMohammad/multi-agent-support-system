@@ -4,7 +4,10 @@
  * Re-exports conversation hooks from the hooks directory.
  */
 
-import { useConversations as useConversationsHook, useConversation } from '@/lib/hooks/useConversations';
+import {
+  useConversation,
+  useConversations as useConversationsHook,
+} from "@/lib/hooks/useConversations";
 
 // Re-export from main hooks
 export { useConversation };
