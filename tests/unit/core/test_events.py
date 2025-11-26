@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from uuid import UUID
 from datetime import datetime
 
-from core.events import (
+from src.core.events import (
     DomainEvent,
     EventBus,
     get_event_bus,
