@@ -5,13 +5,12 @@ Handles "not ready yet" objections by offering pilot programs, phased rollouts,
 and explaining risks of waiting.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("timing_objection_handler", tier="revenue", category="sales")
@@ -32,28 +31,36 @@ class TimingObjectionHandler(BaseAgent):
         "not_ready_now": {
             "approach": "pilot_program",
             "tactics": ["pilot_offering", "soft_start", "early_wins"],
-            "supporting_materials": ["pilot_guide", "quick_start_checklist", "success_stories"]
+            "supporting_materials": ["pilot_guide", "quick_start_checklist", "success_stories"],
         },
         "budget_next_quarter": {
             "approach": "reservation_strategy",
             "tactics": ["lock_pricing", "reserve_spot", "budget_justification"],
-            "supporting_materials": ["budget_template", "roi_calculator", "pricing_guarantee"]
+            "supporting_materials": ["budget_template", "roi_calculator", "pricing_guarantee"],
         },
         "too_busy_right_now": {
             "approach": "low_touch_onboarding",
             "tactics": ["turnkey_setup", "white_glove_onboarding", "minimal_effort_required"],
-            "supporting_materials": ["onboarding_timeline", "effort_estimate", "done_for_you_services"]
+            "supporting_materials": [
+                "onboarding_timeline",
+                "effort_estimate",
+                "done_for_you_services",
+            ],
         },
         "waiting_for_x": {
             "approach": "phased_rollout",
             "tactics": ["start_partial", "gradual_implementation", "parallel_running"],
-            "supporting_materials": ["phased_plan", "implementation_roadmap", "flexibility_options"]
+            "supporting_materials": [
+                "phased_plan",
+                "implementation_roadmap",
+                "flexibility_options",
+            ],
         },
         "exploring_options": {
             "approach": "urgency_creation",
             "tactics": ["competitive_pressure", "opportunity_cost", "limited_time_offers"],
-            "supporting_materials": ["market_trends", "competitive_analysis", "special_offers"]
-        }
+            "supporting_materials": ["market_trends", "competitive_analysis", "special_offers"],
+        },
     }
 
     # Pilot program options
@@ -66,7 +73,7 @@ class TimingObjectionHandler(BaseAgent):
             "cost": "Free",
             "support_level": "Email support",
             "conversion_incentive": "20% discount on annual plan if converted",
-            "ideal_for": ["not_ready_now", "too_busy_right_now"]
+            "ideal_for": ["not_ready_now", "too_busy_right_now"],
         },
         "department_pilot": {
             "name": "Department Pilot",
@@ -76,7 +83,7 @@ class TimingObjectionHandler(BaseAgent):
             "cost": "50% off regular pricing",
             "support_level": "Dedicated success manager",
             "conversion_incentive": "Grandfather pricing + free onboarding",
-            "ideal_for": ["not_ready_now", "waiting_for_x"]
+            "ideal_for": ["not_ready_now", "waiting_for_x"],
         },
         "enterprise_pilot": {
             "name": "Enterprise Pilot",
@@ -86,8 +93,8 @@ class TimingObjectionHandler(BaseAgent):
             "cost": "Custom pricing",
             "support_level": "White-glove support + quarterly reviews",
             "conversion_incentive": "Custom contract terms",
-            "ideal_for": ["waiting_for_x", "exploring_options"]
-        }
+            "ideal_for": ["waiting_for_x", "exploring_options"],
+        },
     }
 
     # Phased rollout approaches
@@ -98,35 +105,35 @@ class TimingObjectionHandler(BaseAgent):
                 "duration": "2-4 weeks",
                 "scope": "Single team/department (10-20 users)",
                 "goal": "Validate fit and gather feedback",
-                "effort": "Low - 2-3 hours setup"
+                "effort": "Low - 2-3 hours setup",
             },
             "phase2": {
                 "duration": "4-8 weeks",
                 "scope": "Expand to related teams (50-100 users)",
                 "goal": "Refine processes and build momentum",
-                "effort": "Medium - team training"
+                "effort": "Medium - team training",
             },
             "phase3": {
                 "duration": "8-12 weeks",
                 "scope": "Full company rollout",
                 "goal": "Complete adoption and optimization",
-                "effort": "Managed - with support team"
-            }
+                "effort": "Managed - with support team",
+            },
         },
         "parallel_running": {
             "name": "Parallel Running",
             "description": "Run new system alongside existing tools",
             "duration": "4-12 weeks",
             "benefits": ["Zero risk", "Compare results", "Smooth transition"],
-            "support": "Migration assistance included"
+            "support": "Migration assistance included",
         },
         "feature_based_rollout": {
             "name": "Feature-Based Rollout",
             "description": "Implement features incrementally",
             "approach": "Start with most valuable features, add more over time",
             "benefits": ["Quick wins", "Manageable change", "Lower risk"],
-            "timeline": "Flexible, based on your pace"
-        }
+            "timeline": "Flexible, based on your pace",
+        },
     }
 
     # Risks of waiting / urgency factors
@@ -136,36 +143,36 @@ class TimingObjectionHandler(BaseAgent):
             "impact": "high",
             "description": "Every month of delay costs potential productivity gains",
             "quantification": "Typical ROI of 2.5x means waiting = losing money",
-            "time_impact": "6-month delay = $X in lost productivity"
+            "time_impact": "6-month delay = $X in lost productivity",
         },
         "competitive_disadvantage": {
             "factor": "Competitive Disadvantage",
             "impact": "medium",
             "description": "Competitors adopting faster move ahead",
             "quantification": "Companies implementing now gain 6-month advantage",
-            "time_impact": "Market share implications"
+            "time_impact": "Market share implications",
         },
         "price_increases": {
             "factor": "Pricing Changes",
             "impact": "medium",
             "description": "Current pricing guaranteed only for limited time",
             "quantification": "Next pricing tier is 15-20% higher",
-            "time_impact": "Lock in current pricing now"
+            "time_impact": "Lock in current pricing now",
         },
         "change_management": {
             "factor": "Change Management Complexity",
             "impact": "medium",
             "description": "Delaying makes eventual change harder",
             "quantification": "User adoption drops 25% for each quarter delayed",
-            "time_impact": "Organizational resistance increases over time"
+            "time_impact": "Organizational resistance increases over time",
         },
         "technical_debt": {
             "factor": "Growing Technical Debt",
             "impact": "high",
             "description": "Current inefficient processes accumulate problems",
             "quantification": "Manual processes double in cost annually",
-            "time_impact": "Migration complexity increases with delay"
-        }
+            "time_impact": "Migration complexity increases with delay",
+        },
     }
 
     # Low-effort onboarding options
@@ -173,27 +180,40 @@ class TimingObjectionHandler(BaseAgent):
         "white_glove_onboarding": {
             "service": "White-Glove Onboarding",
             "customer_time": "4-6 hours total",
-            "our_team_does": ["Data migration", "Configuration", "Integration setup", "Team training"],
+            "our_team_does": [
+                "Data migration",
+                "Configuration",
+                "Integration setup",
+                "Team training",
+            ],
             "customer_does": ["Initial requirements call", "Provide access", "User acceptance"],
             "timeline": "2 weeks to full production",
-            "availability": "Enterprise and Growth plans"
+            "availability": "Enterprise and Growth plans",
         },
         "turnkey_setup": {
             "service": "Turnkey Setup Service",
             "customer_time": "2-3 hours total",
-            "our_team_does": ["Pre-configured templates", "Automated setup", "Best practices applied"],
+            "our_team_does": [
+                "Pre-configured templates",
+                "Automated setup",
+                "Best practices applied",
+            ],
             "customer_does": ["Review setup", "Invite users"],
             "timeline": "3-5 days to launch",
-            "availability": "All plans"
+            "availability": "All plans",
         },
         "done_for_you_migration": {
             "service": "Done-For-You Migration",
             "customer_time": "1-2 hours (data review only)",
-            "our_team_does": ["Extract data from old system", "Clean and transform", "Import and validate"],
+            "our_team_does": [
+                "Extract data from old system",
+                "Clean and transform",
+                "Import and validate",
+            ],
             "customer_does": ["Provide credentials", "Final approval"],
             "timeline": "1-2 weeks",
-            "availability": "Growth and Enterprise plans"
-        }
+            "availability": "Growth and Enterprise plans",
+        },
     }
 
     # Budget justification resources
@@ -202,27 +222,27 @@ class TimingObjectionHandler(BaseAgent):
             "name": "Business Case Template",
             "description": "Pre-built ROI calculator and business case",
             "includes": ["Cost-benefit analysis", "ROI projections", "Competitor comparisons"],
-            "typical_roi": "2.5x in first year"
+            "typical_roi": "2.5x in first year",
         },
         "executive_summary": {
             "name": "Executive Summary",
             "description": "One-page overview for executive approval",
             "includes": ["Key benefits", "Investment required", "Expected outcomes"],
-            "format": "PowerPoint and PDF"
+            "format": "PowerPoint and PDF",
         },
         "procurement_kit": {
             "name": "Procurement Kit",
             "description": "Everything procurement needs",
             "includes": ["Security questionnaire", "Vendor information", "Contract templates"],
-            "speeds_approval": "By 50% on average"
-        }
+            "speeds_approval": "By 50% on average",
+        },
     }
 
     # Severity indicators
     SEVERITY_INDICATORS = {
         "blocker": ["not this year", "on hold indefinitely", "definitely not now"],
         "major": ["not ready", "maybe next quarter", "not the right time", "revisit in"],
-        "minor": ["timing concern", "soon", "exploring timeline", "when should we"]
+        "minor": ["timing concern", "soon", "exploring timeline", "when should we"],
     }
 
     def __init__(self):
@@ -234,10 +254,10 @@ class TimingObjectionHandler(BaseAgent):
             capabilities=[
                 AgentCapability.KB_SEARCH,
                 AgentCapability.CONTEXT_AWARE,
-                AgentCapability.ENTITY_EXTRACTION
+                AgentCapability.ENTITY_EXTRACTION,
             ],
             kb_category="sales",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -262,7 +282,7 @@ class TimingObjectionHandler(BaseAgent):
         self.logger.debug(
             "timing_objection_details",
             message_preview=message[:100],
-            turn_count=state["turn_count"]
+            turn_count=state["turn_count"],
         )
 
         # Identify timing objection type
@@ -275,7 +295,9 @@ class TimingObjectionHandler(BaseAgent):
         mentioned_timeline = self._extract_timeline(message)
 
         # Get appropriate response strategy
-        strategy = self.RESPONSE_STRATEGIES.get(objection_type, self.RESPONSE_STRATEGIES["not_ready_now"])
+        strategy = self.RESPONSE_STRATEGIES.get(
+            objection_type, self.RESPONSE_STRATEGIES["not_ready_now"]
+        )
 
         # Get pilot program options
         pilot_options = self._get_pilot_options(objection_type, customer_metadata)
@@ -293,11 +315,7 @@ class TimingObjectionHandler(BaseAgent):
         budget_resources = self._get_budget_resources(objection_type)
 
         # Search knowledge base
-        kb_results = await self.search_knowledge_base(
-            message,
-            category="sales",
-            limit=4
-        )
+        kb_results = await self.search_knowledge_base(message, category="sales", limit=4)
         state["kb_results"] = kb_results
 
         # Generate response
@@ -314,21 +332,16 @@ class TimingObjectionHandler(BaseAgent):
             budget_resources,
             kb_results,
             customer_metadata,
-            state
+            state,
         )
 
         # Calculate resolution confidence
         resolution_confidence = self._calculate_resolution_confidence(
-            objection_type,
-            objection_severity,
-            mentioned_timeline
+            objection_type, objection_severity, mentioned_timeline
         )
 
         # Determine escalation need
-        needs_escalation = self._check_escalation_needed(
-            objection_severity,
-            resolution_confidence
-        )
+        needs_escalation = self._check_escalation_needed(objection_severity, resolution_confidence)
 
         # Update state
         state["agent_response"] = response
@@ -348,7 +361,7 @@ class TimingObjectionHandler(BaseAgent):
             objection_type=objection_type,
             severity=objection_severity,
             confidence=resolution_confidence,
-            escalated=needs_escalation
+            escalated=needs_escalation,
         )
 
         return state
@@ -357,13 +370,23 @@ class TimingObjectionHandler(BaseAgent):
         """Identify the type of timing objection"""
         message_lower = message.lower()
 
-        if any(phrase in message_lower for phrase in ["next quarter", "next year", "budget cycle", "fiscal year"]):
+        if any(
+            phrase in message_lower
+            for phrase in ["next quarter", "next year", "budget cycle", "fiscal year"]
+        ):
             return "budget_next_quarter"
-        elif any(phrase in message_lower for phrase in ["too busy", "bandwidth", "resources", "capacity"]):
+        elif any(
+            phrase in message_lower for phrase in ["too busy", "bandwidth", "resources", "capacity"]
+        ):
             return "too_busy_right_now"
-        elif any(phrase in message_lower for phrase in ["waiting for", "after we", "once we", "until we"]):
+        elif any(
+            phrase in message_lower for phrase in ["waiting for", "after we", "once we", "until we"]
+        ):
             return "waiting_for_x"
-        elif any(phrase in message_lower for phrase in ["exploring", "evaluating", "looking at", "considering"]):
+        elif any(
+            phrase in message_lower
+            for phrase in ["exploring", "evaluating", "looking at", "considering"]
+        ):
             return "exploring_options"
         else:
             return "not_ready_now"
@@ -378,7 +401,7 @@ class TimingObjectionHandler(BaseAgent):
 
         return "minor"
 
-    def _extract_timeline(self, message: str) -> Optional[str]:
+    def _extract_timeline(self, message: str) -> str | None:
         """Extract any mentioned timeline from the message"""
         message_lower = message.lower()
 
@@ -392,7 +415,7 @@ class TimingObjectionHandler(BaseAgent):
             "q4": "Q4",
             "next year": "12+ months",
             "6 months": "6 months",
-            "3 months": "3 months"
+            "3 months": "3 months",
         }
 
         for pattern, timeline in timeline_patterns.items():
@@ -401,13 +424,15 @@ class TimingObjectionHandler(BaseAgent):
 
         return None
 
-    def _get_pilot_options(self, objection_type: str, customer_metadata: Dict) -> List[Dict[str, Any]]:
+    def _get_pilot_options(
+        self, objection_type: str, customer_metadata: dict
+    ) -> list[dict[str, Any]]:
         """Get appropriate pilot program options"""
         company_size = customer_metadata.get("company_size", 0)
         options = []
 
         # Get pilots ideal for this objection type
-        for pilot_key, pilot_data in self.PILOT_PROGRAMS.items():
+        for _pilot_key, pilot_data in self.PILOT_PROGRAMS.items():
             if objection_type in pilot_data.get("ideal_for", []):
                 options.append(pilot_data)
 
@@ -422,7 +447,7 @@ class TimingObjectionHandler(BaseAgent):
 
         return options[:2]  # Return top 2 options
 
-    def _get_rollout_options(self, objection_type: str) -> List[Dict[str, Any]]:
+    def _get_rollout_options(self, objection_type: str) -> list[dict[str, Any]]:
         """Get phased rollout options"""
         # Crawl-walk-run is good for most timing objections
         options = [self.PHASED_ROLLOUT_OPTIONS["crawl_walk_run"]]
@@ -437,7 +462,7 @@ class TimingObjectionHandler(BaseAgent):
 
         return options
 
-    def _get_urgency_factors(self, objection_type: str, severity: str) -> List[Dict[str, Any]]:
+    def _get_urgency_factors(self, objection_type: str, severity: str) -> list[dict[str, Any]]:
         """Get relevant urgency factors"""
         factors = []
 
@@ -459,7 +484,7 @@ class TimingObjectionHandler(BaseAgent):
 
         return factors
 
-    def _get_low_effort_options(self, customer_metadata: Dict) -> List[Dict[str, Any]]:
+    def _get_low_effort_options(self, customer_metadata: dict) -> list[dict[str, Any]]:
         """Get low-effort onboarding options"""
         company_size = customer_metadata.get("company_size", 0)
         options = []
@@ -474,21 +499,18 @@ class TimingObjectionHandler(BaseAgent):
 
         return options
 
-    def _get_budget_resources(self, objection_type: str) -> List[Dict[str, Any]]:
+    def _get_budget_resources(self, objection_type: str) -> list[dict[str, Any]]:
         """Get budget justification resources"""
         if objection_type == "budget_next_quarter":
             return [
                 self.BUDGET_RESOURCES["business_case_template"],
                 self.BUDGET_RESOURCES["executive_summary"],
-                self.BUDGET_RESOURCES["procurement_kit"]
+                self.BUDGET_RESOURCES["procurement_kit"],
             ]
         return [self.BUDGET_RESOURCES["business_case_template"]]
 
     def _calculate_resolution_confidence(
-        self,
-        objection_type: str,
-        severity: str,
-        mentioned_timeline: Optional[str]
+        self, objection_type: str, severity: str, mentioned_timeline: str | None
     ) -> float:
         """Calculate confidence in resolving the timing objection"""
         base_confidence = 0.70
@@ -496,19 +518,15 @@ class TimingObjectionHandler(BaseAgent):
         # Adjust for objection type (some are easier to overcome)
         type_adjustments = {
             "too_busy_right_now": 0.15,  # Easy with low-effort options
-            "not_ready_now": 0.10,        # Pilot programs help
+            "not_ready_now": 0.10,  # Pilot programs help
             "exploring_options": 0.05,
             "waiting_for_x": 0.0,
-            "budget_next_quarter": -0.05  # Harder - real budget constraints
+            "budget_next_quarter": -0.05,  # Harder - real budget constraints
         }
         base_confidence += type_adjustments.get(objection_type, 0.0)
 
         # Adjust for severity
-        severity_adjustments = {
-            "minor": 0.15,
-            "major": 0.0,
-            "blocker": -0.20
-        }
+        severity_adjustments = {"minor": 0.15, "major": 0.0, "blocker": -0.20}
         base_confidence += severity_adjustments.get(severity, 0.0)
 
         # Adjust based on timeline
@@ -524,25 +542,23 @@ class TimingObjectionHandler(BaseAgent):
         """Determine if escalation is needed"""
         if severity == "blocker" and confidence < 0.60:
             return True
-        if confidence < 0.55:
-            return True
-        return False
+        return confidence < 0.55
 
     async def _generate_timing_response(
         self,
         message: str,
         objection_type: str,
         severity: str,
-        mentioned_timeline: Optional[str],
-        strategy: Dict,
-        pilot_options: List[Dict],
-        rollout_options: List[Dict],
-        urgency_factors: List[Dict],
-        low_effort_options: List[Dict],
-        budget_resources: List[Dict],
-        kb_results: List[Dict],
-        customer_metadata: Dict,
-        state: AgentState
+        mentioned_timeline: str | None,
+        strategy: dict,
+        pilot_options: list[dict],
+        rollout_options: list[dict],
+        urgency_factors: list[dict],
+        low_effort_options: list[dict],
+        budget_resources: list[dict],
+        kb_results: list[dict],
+        customer_metadata: dict,
+        state: AgentState,
     ) -> str:
         """Generate personalized timing objection response"""
 
@@ -580,7 +596,7 @@ class TimingObjectionHandler(BaseAgent):
                     rollout_context += f"  - Effort: {rollout['phase1']['effort']}\n"
                 else:
                     rollout_context += f"  - {rollout.get('description', '')}\n"
-                    if 'benefits' in rollout:
+                    if "benefits" in rollout:
                         rollout_context += f"  - Benefits: {', '.join(rollout['benefits'])}\n"
 
         # Build urgency context
@@ -614,14 +630,14 @@ class TimingObjectionHandler(BaseAgent):
         system_prompt = f"""You are a Timing Objection Handler specialist addressing readiness and timing concerns.
 
 Objection Analysis:
-- Objection Type: {objection_type.replace('_', ' ').title()}
+- Objection Type: {objection_type.replace("_", " ").title()}
 - Severity: {severity.upper()}{timeline_str}
-- Response Strategy: {strategy['approach'].replace('_', ' ').title()}
+- Response Strategy: {strategy["approach"].replace("_", " ").title()}
 
 Customer Profile:
-- Company: {customer_metadata.get('company', 'Unknown')}
-- Industry: {customer_metadata.get('industry', 'Unknown')}
-- Company Size: {customer_metadata.get('company_size', 'Unknown')}
+- Company: {customer_metadata.get("company", "Unknown")}
+- Industry: {customer_metadata.get("industry", "Unknown")}
+- Company Size: {customer_metadata.get("company_size", "Unknown")}
 
 Your response should:
 1. Acknowledge their timing concerns empathetically
@@ -632,8 +648,8 @@ Your response should:
 6. Provide budget justification resources if needed
 7. Make it easy to say "yes" to starting small now
 
-Key Tactics: {', '.join(strategy['tactics'])}
-Supporting Materials: {', '.join(strategy['supporting_materials'])}
+Key Tactics: {", ".join(strategy["tactics"])}
+Supporting Materials: {", ".join(strategy["supporting_materials"])}
 
 Important: Be understanding and flexible. Focus on removing barriers, not pressuring."""
 
@@ -649,9 +665,7 @@ Important: Be understanding and flexible. Focus on removing barriers, not pressu
 Generate a helpful, flexible response that addresses their timing concerns."""
 
         response = await self.call_llm(
-            system_prompt,
-            user_prompt,
-            conversation_history=conversation_history
+            system_prompt, user_prompt, conversation_history=conversation_history
         )
         return response
 
@@ -675,15 +689,15 @@ if __name__ == "__main__":
                     "company": "BusyCo Inc",
                     "title": "Operations Manager",
                     "company_size": 150,
-                    "industry": "technology"
+                    "industry": "technology",
                 }
-            }
+            },
         )
 
         agent = TimingObjectionHandler()
         result1 = await agent.process(state1)
 
-        print(f"\nTest 1 - Too Busy Right Now")
+        print("\nTest 1 - Too Busy Right Now")
         print(f"Objection Type: {result1['objection_type']}")
         print(f"Severity: {result1['objection_severity']}")
         print(f"Resolution Confidence: {result1['response_confidence']:.2f}")
@@ -699,14 +713,14 @@ if __name__ == "__main__":
                     "company": "Enterprise Corp",
                     "title": "CFO",
                     "company_size": 500,
-                    "industry": "finance"
+                    "industry": "finance",
                 }
-            }
+            },
         )
 
         result2 = await agent.process(state2)
 
-        print(f"\nTest 2 - Budget Next Quarter")
+        print("\nTest 2 - Budget Next Quarter")
         print(f"Objection Type: {result2['objection_type']}")
         print(f"Severity: {result2['objection_severity']}")
         print(f"Mentioned Timeline: {result2['mentioned_timeline']}")
@@ -722,14 +736,14 @@ if __name__ == "__main__":
                     "company": "MidMarket Co",
                     "title": "VP of Sales",
                     "company_size": 200,
-                    "industry": "retail"
+                    "industry": "retail",
                 }
-            }
+            },
         )
 
         result3 = await agent.process(state3)
 
-        print(f"\nTest 3 - Waiting for CRM Migration")
+        print("\nTest 3 - Waiting for CRM Migration")
         print(f"Objection Type: {result3['objection_type']}")
         print(f"Severity: {result3['objection_severity']}")
         print(f"Mentioned Timeline: {result3['mentioned_timeline']}")
