@@ -4,16 +4,17 @@ Engagement metrics provider.
 Fetches customer engagement and product usage data from database.
 """
 
-from typing import Dict, Any, Optional
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
+from typing import Any
 from uuid import UUID
-from sqlalchemy import select, func
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.services.infrastructure.context_enrichment.providers.base_provider import BaseContextProvider
-from src.database.models import UsageEvent, FeatureUsage
-from src.database.unit_of_work import UnitOfWork
 from src.database.connection import get_db_session
+from src.database.unit_of_work import UnitOfWork
+from src.services.infrastructure.context_enrichment.providers.base_provider import (
+    BaseContextProvider,
+)
 
 
 class EngagementMetricsProvider(BaseContextProvider):
@@ -29,11 +30,8 @@ class EngagementMetricsProvider(BaseContextProvider):
     """
 
     async def fetch(
-        self,
-        customer_id: str,
-        conversation_id: Optional[str] = None,
-        **kwargs
-    ) -> Dict[str, Any]:
+        self, customer_id: str, conversation_id: str | None = None, **kwargs
+    ) -> dict[str, Any]:
         """
         Fetch engagement metrics from database.
 
@@ -60,11 +58,7 @@ class EngagementMetricsProvider(BaseContextProvider):
             async for session in get_db_session():
                 return await self._fetch_with_session(cust_uuid, session)
 
-    async def _fetch_with_session(
-        self,
-        customer_id: UUID,
-        session: AsyncSession
-    ) -> Dict[str, Any]:
+    async def _fetch_with_session(self, customer_id: UUID, session: AsyncSession) -> dict[str, Any]:
         """Fetch engagement metrics using provided session"""
         try:
             uow = UnitOfWork(session)
@@ -75,23 +69,24 @@ class EngagementMetricsProvider(BaseContextProvider):
 
             # Filter to last 30 days
             recent_events = [
-                event for event in usage_events
-                if hasattr(event, 'created_at') and
-                   event.created_at.replace(tzinfo=None) > cutoff_date
+                event
+                for event in usage_events
+                if hasattr(event, "created_at")
+                and event.created_at.replace(tzinfo=None) > cutoff_date
             ]
 
             # Count login events
             login_events = [
-                event for event in recent_events
-                if hasattr(event, 'event_type') and event.event_type == 'login'
+                event
+                for event in recent_events
+                if hasattr(event, "event_type") and event.event_type == "login"
             ]
             login_count = len(login_events)
 
             # Get last login
             if login_events:
                 last_login = max(
-                    event.created_at for event in login_events
-                    if hasattr(event, 'created_at')
+                    event.created_at for event in login_events if hasattr(event, "created_at")
                 )
                 days_since = (datetime.now(UTC) - last_login.replace(tzinfo=None)).days
             else:
@@ -101,14 +96,13 @@ class EngagementMetricsProvider(BaseContextProvider):
             # Calculate average session duration
             session_durations = []
             for event in recent_events:
-                if hasattr(event, 'extra_metadata') and event.extra_metadata:
-                    duration = event.extra_metadata.get('session_duration_minutes')
+                if hasattr(event, "extra_metadata") and event.extra_metadata:
+                    duration = event.extra_metadata.get("session_duration_minutes")
                     if duration:
                         session_durations.append(float(duration))
 
             avg_session_duration = (
-                sum(session_durations) / len(session_durations)
-                if session_durations else 0.0
+                sum(session_durations) / len(session_durations) if session_durations else 0.0
             )
 
             # Fetch feature usage
@@ -116,25 +110,21 @@ class EngagementMetricsProvider(BaseContextProvider):
 
             # Filter to last 30 days
             recent_features = [
-                fu for fu in feature_usage
-                if hasattr(fu, 'date') and
-                   fu.date.replace(tzinfo=None) > cutoff_date
+                fu
+                for fu in feature_usage
+                if hasattr(fu, "date") and fu.date.replace(tzinfo=None) > cutoff_date
             ]
 
             # Aggregate feature usage by feature name
             feature_counts = {}
             for fu in recent_features:
-                if hasattr(fu, 'feature_name') and hasattr(fu, 'usage_count'):
+                if hasattr(fu, "feature_name") and hasattr(fu, "usage_count"):
                     name = fu.feature_name
                     count = fu.usage_count
                     feature_counts[name] = feature_counts.get(name, 0) + count
 
             # Sort by usage
-            sorted_features = sorted(
-                feature_counts.items(),
-                key=lambda x: x[1],
-                reverse=True
-            )
+            sorted_features = sorted(feature_counts.items(), key=lambda x: x[1], reverse=True)
 
             most_used = [name for name, count in sorted_features[:5]]
 
@@ -145,13 +135,15 @@ class EngagementMetricsProvider(BaseContextProvider):
 
             # Identify unused premium features
             all_premium_features = [
-                "advanced_analytics", "custom_reports", "api_access",
-                "webhooks", "sso", "audit_logs", "priority_support"
+                "advanced_analytics",
+                "custom_reports",
+                "api_access",
+                "webhooks",
+                "sso",
+                "audit_logs",
+                "priority_support",
             ]
-            unused_features = [
-                feat for feat in all_premium_features
-                if feat not in feature_counts
-            ]
+            unused_features = [feat for feat in all_premium_features if feat not in feature_counts]
 
             return {
                 "last_login": last_login,
@@ -168,11 +160,11 @@ class EngagementMetricsProvider(BaseContextProvider):
                 "fetch_failed",
                 customer_id=str(customer_id),
                 error=str(e),
-                error_type=type(e).__name__
+                error_type=type(e).__name__,
             )
             return self._get_fallback_data()
 
-    def _get_fallback_data(self) -> Dict[str, Any]:
+    def _get_fallback_data(self) -> dict[str, Any]:
         """Get fallback data when query fails"""
         return {
             "last_login": None,
