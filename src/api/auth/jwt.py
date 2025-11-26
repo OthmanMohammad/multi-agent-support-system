@@ -4,11 +4,12 @@ JWT Token Management - Access and refresh tokens
 This module handles JWT token generation, validation, and revocation.
 """
 
-from typing import Dict, Any, Optional
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
+from typing import Any
 from uuid import UUID, uuid4
-from jose import JWTError, jwt
+
 from fastapi import HTTPException, status
+from jose import JWTError, jwt
 
 from src.core.config import get_settings
 from src.utils.logging.setup import get_logger
@@ -34,7 +35,7 @@ class JWTManager:
 
     # Token expiration times
     ACCESS_TOKEN_EXPIRE_MINUTES = 60  # 1 hour
-    REFRESH_TOKEN_EXPIRE_DAYS = 30    # 30 days
+    REFRESH_TOKEN_EXPIRE_DAYS = 30  # 30 days
 
     @classmethod
     def create_access_token(
@@ -43,7 +44,7 @@ class JWTManager:
         email: str,
         role: str,
         scopes: list[str],
-        expires_delta: Optional[timedelta] = None
+        expires_delta: timedelta | None = None,
     ) -> str:
         """
         Create JWT access token.
@@ -62,43 +63,29 @@ class JWTManager:
         if expires_delta:
             expire = datetime.now(UTC) + expires_delta
         else:
-            expire = datetime.now(UTC) + timedelta(
-                minutes=cls.ACCESS_TOKEN_EXPIRE_MINUTES
-            )
+            expire = datetime.now(UTC) + timedelta(minutes=cls.ACCESS_TOKEN_EXPIRE_MINUTES)
 
         # Create payload
         payload = {
-            "sub": str(user_id),           # Subject (user ID)
-            "email": email,                 # User email
-            "role": role,                   # User role
-            "scopes": scopes,               # Permission scopes
-            "type": "access",               # Token type
-            "exp": expire,                  # Expiration time
-            "iat": datetime.now(UTC),       # Issued at
-            "jti": str(uuid4())             # JWT ID (for revocation)
+            "sub": str(user_id),  # Subject (user ID)
+            "email": email,  # User email
+            "role": role,  # User role
+            "scopes": scopes,  # Permission scopes
+            "type": "access",  # Token type
+            "exp": expire,  # Expiration time
+            "iat": datetime.now(UTC),  # Issued at
+            "jti": str(uuid4()),  # JWT ID (for revocation)
         }
 
         # Encode token
-        token = jwt.encode(
-            payload,
-            settings.jwt.secret_key,
-            algorithm=cls.ALGORITHM
-        )
+        token = jwt.encode(payload, settings.jwt.secret_key, algorithm=cls.ALGORITHM)
 
-        logger.debug(
-            "access_token_created",
-            user_id=str(user_id),
-            expires_at=expire.isoformat()
-        )
+        logger.debug("access_token_created", user_id=str(user_id), expires_at=expire.isoformat())
 
         return token
 
     @classmethod
-    def create_refresh_token(
-        cls,
-        user_id: UUID,
-        expires_delta: Optional[timedelta] = None
-    ) -> str:
+    def create_refresh_token(cls, user_id: UUID, expires_delta: timedelta | None = None) -> str:
         """
         Create JWT refresh token.
 
@@ -113,36 +100,26 @@ class JWTManager:
         if expires_delta:
             expire = datetime.now(UTC) + expires_delta
         else:
-            expire = datetime.now(UTC) + timedelta(
-                days=cls.REFRESH_TOKEN_EXPIRE_DAYS
-            )
+            expire = datetime.now(UTC) + timedelta(days=cls.REFRESH_TOKEN_EXPIRE_DAYS)
 
         # Create payload (minimal for refresh tokens)
         payload = {
-            "sub": str(user_id),        # Subject (user ID)
-            "type": "refresh",          # Token type
-            "exp": expire,              # Expiration time
-            "iat": datetime.now(UTC),   # Issued at
-            "jti": str(uuid4())         # JWT ID (for revocation)
+            "sub": str(user_id),  # Subject (user ID)
+            "type": "refresh",  # Token type
+            "exp": expire,  # Expiration time
+            "iat": datetime.now(UTC),  # Issued at
+            "jti": str(uuid4()),  # JWT ID (for revocation)
         }
 
         # Encode token
-        token = jwt.encode(
-            payload,
-            settings.jwt.secret_key,
-            algorithm=cls.ALGORITHM
-        )
+        token = jwt.encode(payload, settings.jwt.secret_key, algorithm=cls.ALGORITHM)
 
-        logger.debug(
-            "refresh_token_created",
-            user_id=str(user_id),
-            expires_at=expire.isoformat()
-        )
+        logger.debug("refresh_token_created", user_id=str(user_id), expires_at=expire.isoformat())
 
         return token
 
     @classmethod
-    def verify_token(cls, token: str) -> Dict[str, Any]:
+    def verify_token(cls, token: str) -> dict[str, Any]:
         """
         Verify and decode JWT token.
 
@@ -157,16 +134,10 @@ class JWTManager:
         """
         try:
             # Decode token
-            payload = jwt.decode(
-                token,
-                settings.jwt.secret_key,
-                algorithms=[cls.ALGORITHM]
-            )
+            payload = jwt.decode(token, settings.jwt.secret_key, algorithms=[cls.ALGORITHM])
 
             logger.debug(
-                "token_verified",
-                token_type=payload.get("type"),
-                user_id=payload.get("sub")
+                "token_verified", token_type=payload.get("type"), user_id=payload.get("sub")
             )
 
             return payload
@@ -176,20 +147,16 @@ class JWTManager:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token has expired",
-                headers={"WWW-Authenticate": "Bearer"}
-            )
+                headers={"WWW-Authenticate": "Bearer"},
+            ) from None
 
         except JWTError as e:
-            logger.warning(
-                "token_invalid",
-                error=str(e),
-                error_type=type(e).__name__
-            )
+            logger.warning("token_invalid", error=str(e), error_type=type(e).__name__)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token",
-                headers={"WWW-Authenticate": "Bearer"}
-            )
+                headers={"WWW-Authenticate": "Bearer"},
+            ) from None
 
     @classmethod
     def get_user_id_from_token(cls, token: str) -> UUID:
@@ -210,17 +177,15 @@ class JWTManager:
 
         if not user_id_str:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token: missing user ID"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token: missing user ID"
             )
 
         try:
             return UUID(user_id_str)
         except ValueError:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token: malformed user ID"
-            )
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token: malformed user ID"
+            ) from None
 
     @classmethod
     def get_token_jti(cls, token: str) -> str:
@@ -243,14 +208,13 @@ class JWTManager:
 
         if not jti:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token: missing JWT ID"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token: missing JWT ID"
             )
 
         return jti
 
     @classmethod
-    def validate_access_token(cls, token: str) -> Dict[str, Any]:
+    def validate_access_token(cls, token: str) -> dict[str, Any]:
         """
         Validate access token and return payload.
 
@@ -267,20 +231,15 @@ class JWTManager:
 
         # Check token type
         if payload.get("type") != "access":
-            logger.warning(
-                "invalid_token_type",
-                expected="access",
-                actual=payload.get("type")
-            )
+            logger.warning("invalid_token_type", expected="access", actual=payload.get("type"))
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token type"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type"
             )
 
         return payload
 
     @classmethod
-    def validate_refresh_token(cls, token: str) -> Dict[str, Any]:
+    def validate_refresh_token(cls, token: str) -> dict[str, Any]:
         """
         Validate refresh token and return payload.
 
@@ -297,14 +256,9 @@ class JWTManager:
 
         # Check token type
         if payload.get("type") != "refresh":
-            logger.warning(
-                "invalid_token_type",
-                expected="refresh",
-                actual=payload.get("type")
-            )
+            logger.warning("invalid_token_type", expected="refresh", actual=payload.get("type"))
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token type"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type"
             )
 
         return payload
