@@ -6,24 +6,25 @@ Automatically generates FAQ entries from frequently asked questions in conversat
 Part of: STORY-002 Knowledge Base Swarm (TASK-209)
 """
 
-from typing import List, Dict
-from collections import Counter
-from datetime import datetime, timedelta, UTC
 import json
+from collections import Counter
+from datetime import UTC, datetime, timedelta
+
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
-from src.agents.base.base_agent import BaseAgent
-from src.agents.base.agent_types import AgentType
 from src.agents.base import AgentConfig
-from src.workflow.state import AgentState
+from src.agents.base.agent_types import AgentType
+from src.agents.base.base_agent import BaseAgent
 from src.database.connection import get_db_session
-from src.database.models import Message, Conversation
+from src.database.models import Conversation, Message
 from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 try:
     from sentence_transformers import SentenceTransformer
     from sklearn.cluster import DBSCAN
+
     CLUSTERING_AVAILABLE = True
 except ImportError:
     CLUSTERING_AVAILABLE = False
@@ -45,20 +46,22 @@ class FAQGenerator(BaseAgent):
         config = AgentConfig(
             name="faq_generator",
             type=AgentType.SPECIALIST,
-             # Better writing
+            # Better writing
             temperature=0.3,
             max_tokens=1024,
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
 
         # Initialize embedding model for clustering
         if CLUSTERING_AVAILABLE:
-            self.embedding_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+            self.embedding_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
         else:
             self.embedding_model = None
-            self.logger.warning("clustering_unavailable", message="sentence-transformers not installed")
+            self.logger.warning(
+                "clustering_unavailable", message="sentence-transformers not installed"
+            )
 
         self.logger.info("faq_generator_initialized")
 
@@ -77,39 +80,22 @@ class FAQGenerator(BaseAgent):
         limit = state.get("faq_limit", 5)
 
         self.logger.info(
-            "faq_generation_started",
-            days=days,
-            min_frequency=min_frequency,
-            limit=limit
+            "faq_generation_started", days=days, min_frequency=min_frequency, limit=limit
         )
 
         # Generate FAQs
-        faqs = await self.generate_faqs(
-            days=days,
-            min_frequency=min_frequency,
-            limit=limit
-        )
+        faqs = await self.generate_faqs(days=days, min_frequency=min_frequency, limit=limit)
 
         # Update state
-        state = self.update_state(
-            state,
-            generated_faqs=faqs,
-            faqs_count=len(faqs)
-        )
+        state = self.update_state(state, generated_faqs=faqs, faqs_count=len(faqs))
 
-        self.logger.info(
-            "faq_generation_completed",
-            faqs_count=len(faqs)
-        )
+        self.logger.info("faq_generation_completed", faqs_count=len(faqs))
 
         return state
 
     async def generate_faqs(
-        self,
-        days: int = 30,
-        min_frequency: int = 10,
-        limit: int = 5
-    ) -> List[Dict]:
+        self, days: int = 30, min_frequency: int = 10, limit: int = 5
+    ) -> list[dict]:
         """
         Generate FAQ entries from conversations.
 
@@ -139,11 +125,7 @@ class FAQGenerator(BaseAgent):
 
         return faqs
 
-    async def _find_common_questions(
-        self,
-        days: int,
-        min_frequency: int
-    ) -> List[Dict]:
+    async def _find_common_questions(self, days: int, min_frequency: int) -> list[dict]:
         """
         Find commonly asked questions.
 
@@ -160,30 +142,25 @@ class FAQGenerator(BaseAgent):
             async with get_db_session() as session:
                 # Get user messages from conversations
                 result = await session.execute(
-                    select(Message, Conversation).join(
-                        Conversation,
-                        Message.conversation_id == Conversation.id
-                    ).where(
-                        Message.role == 'user',
-                        Conversation.created_at >= cutoff
-                    )
+                    select(Message, Conversation)
+                    .join(Conversation, Message.conversation_id == Conversation.id)
+                    .where(Message.role == "user", Conversation.created_at >= cutoff)
                 )
                 rows = result.all()
 
                 # Extract questions (messages containing ?)
                 questions = []
                 for msg, conv in rows:
-                    if '?' in msg.content:
-                        questions.append({
-                            "content": msg.content,
-                            "conversation_id": str(conv.id) if conv else None
-                        })
+                    if "?" in msg.content:
+                        questions.append(
+                            {
+                                "content": msg.content,
+                                "conversation_id": str(conv.id) if conv else None,
+                            }
+                        )
 
                 # Count similar questions (simple lowercase match)
-                question_counts = Counter([
-                    q["content"].lower().strip()
-                    for q in questions
-                ])
+                question_counts = Counter([q["content"].lower().strip() for q in questions])
 
                 # Filter by frequency
                 common = [
@@ -195,23 +172,18 @@ class FAQGenerator(BaseAgent):
                 self.logger.info(
                     "common_questions_found",
                     total_questions=len(questions),
-                    common_questions=len(common)
+                    common_questions=len(common),
                 )
 
                 return common
 
         except SQLAlchemyError as e:
             self.logger.error(
-                "common_questions_retrieval_failed",
-                error=str(e),
-                error_type=type(e).__name__
+                "common_questions_retrieval_failed", error=str(e), error_type=type(e).__name__
             )
             return []
 
-    async def _cluster_similar_questions(
-        self,
-        questions: List[Dict]
-    ) -> List[List[Dict]]:
+    async def _cluster_similar_questions(self, questions: list[dict]) -> list[list[dict]]:
         """
         Cluster similar questions together.
 
@@ -231,11 +203,7 @@ class FAQGenerator(BaseAgent):
             embeddings = self.embedding_model.encode(question_texts)
 
             # Cluster using DBSCAN
-            clustering = DBSCAN(
-                eps=0.3,
-                min_samples=2,
-                metric='cosine'
-            ).fit(embeddings)
+            clustering = DBSCAN(eps=0.3, min_samples=2, metric="cosine").fit(embeddings)
 
             # Group by cluster
             clusters = {}
@@ -245,29 +213,20 @@ class FAQGenerator(BaseAgent):
                 clusters[label].append(questions[idx])
 
             # Return clusters as list (excluding noise cluster -1 if present)
-            cluster_list = [
-                cluster
-                for label, cluster in clusters.items()
-                if label != -1
-            ]
+            cluster_list = [cluster for label, cluster in clusters.items() if label != -1]
 
-            self.logger.info(
-                "questions_clustered",
-                clusters_count=len(cluster_list)
-            )
+            self.logger.info("questions_clustered", clusters_count=len(cluster_list))
 
             return cluster_list
 
         except Exception as e:
             self.logger.error(
-                "question_clustering_failed",
-                error=str(e),
-                error_type=type(e).__name__
+                "question_clustering_failed", error=str(e), error_type=type(e).__name__
             )
             # Return each question as its own cluster
             return [[q] for q in questions]
 
-    async def _generate_faq_entry(self, question_cluster: List[Dict]) -> Dict:
+    async def _generate_faq_entry(self, question_cluster: list[dict]) -> dict:
         """
         Generate FAQ entry from question cluster.
 
@@ -291,9 +250,7 @@ Return ONLY valid JSON with this structure:
   "confidence": 0.85
 }"""
 
-        questions_text = "\n".join([
-            f"- {q['question']}" for q in question_cluster
-        ])
+        questions_text = "\n".join([f"- {q['question']}" for q in question_cluster])
         user_prompt = f"""Similar questions:\n{questions_text}\n\nCreate FAQ entry."""
 
         try:
@@ -301,7 +258,7 @@ Return ONLY valid JSON with this structure:
                 system_prompt=system_prompt,
                 user_message=user_prompt,
                 max_tokens=1024,
-                conversation_history=[]  # FAQ generation is standalone, no conversation context
+                conversation_history=[],  # FAQ generation is standalone, no conversation context
             )
 
             faq = json.loads(response)
@@ -313,17 +270,13 @@ Return ONLY valid JSON with this structure:
             self.logger.info(
                 "faq_entry_generated",
                 question=faq.get("question", "")[:50],
-                frequency=faq["frequency"]
+                frequency=faq["frequency"],
             )
 
             return faq
 
         except (json.JSONDecodeError, Exception) as e:
-            self.logger.error(
-                "faq_generation_failed",
-                error=str(e),
-                error_type=type(e).__name__
-            )
+            self.logger.error("faq_generation_failed", error=str(e), error_type=type(e).__name__)
             # Fallback
             return {
                 "question": question_cluster[0]["question"],
@@ -332,13 +285,14 @@ Return ONLY valid JSON with this structure:
                 "category": "general",
                 "frequency": sum(q.get("count", 1) for q in question_cluster),
                 "confidence": 0.0,
-                "status": "error"
+                "status": "error",
             }
 
 
 if __name__ == "__main__":
     # Test FAQ Generator
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -349,11 +303,7 @@ if __name__ == "__main__":
         generator = FAQGenerator()
 
         print("\nTest 1: Generate FAQs")
-        faqs = await generator.generate_faqs(
-            days=30,
-            min_frequency=5,
-            limit=3
-        )
+        faqs = await generator.generate_faqs(days=30, min_frequency=5, limit=3)
 
         print(f"Generated {len(faqs)} FAQs:")
         for i, faq in enumerate(faqs, 1):
