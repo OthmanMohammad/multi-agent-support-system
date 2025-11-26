@@ -17,35 +17,47 @@ Configured with:
 # Add project root to sys.path to allow direct execution
 import sys
 from pathlib import Path
+
 project_root = Path(__file__).parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from fastapi import FastAPI
 
-# Import routes
-from src.api.routes import conversations, customers, health, analytics, auth, agents, workflows, oauth, admin, conversations_stream
+from src.api.auth import close_redis_client, get_redis_client
 from src.api.error_handlers import setup_error_handlers
 
 # Import middleware
 from src.api.middleware import (
     CorrelationMiddleware,
+    CORSSecurityMiddleware,
     LoggingMiddleware,
     RateLimitMiddleware,
     SecurityHeadersMiddleware,
-    CORSSecurityMiddleware
 )
 
-# Import initialization functions
-from src.utils.logging.setup import setup_logging, get_logger
-from src.utils.monitoring.sentry_config import init_sentry
-from src.database.connection import init_db, close_db
-from src.api.auth import get_redis_client, close_redis_client
+# Import routes
+from src.api.routes import (
+    admin,
+    agents,
+    analytics,
+    auth,
+    conversations,
+    conversations_stream,
+    customers,
+    health,
+    oauth,
+    workflows,
+)
 
 # Import configuration
 from src.core.config import get_settings
 from src.core.config_validator import require_valid_configuration
+from src.database.connection import close_db, init_db
 
+# Import initialization functions
+from src.utils.logging.setup import get_logger, setup_logging
+from src.utils.monitoring.sentry_config import init_sentry
 
 # Initialize logger for this module
 logger = get_logger(__name__)
@@ -154,7 +166,7 @@ async def startup_event():
         "application_startup_initiated",
         environment=settings.environment,
         version=settings.app_version,
-        phase="startup"
+        phase="startup",
     )
 
     # Initialize structured logging
@@ -180,12 +192,12 @@ async def startup_event():
             "redis_initialized",
             url=settings.redis.url,
             rate_limiting_enabled=settings.redis.rate_limit_enabled,
-            token_blacklist_enabled=settings.redis.token_blacklist_enabled
+            token_blacklist_enabled=settings.redis.token_blacklist_enabled,
         )
     else:
         logger.warning(
             "redis_not_available",
-            message="Redis is disabled or unavailable. Rate limiting and token blacklist will not work."
+            message="Redis is disabled or unavailable. Rate limiting and token blacklist will not work.",
         )
 
     # Log CORS configuration
@@ -193,7 +205,7 @@ async def startup_event():
         "cors_configuration",
         allowed_origins=settings.api.cors_origins,
         origin_count=len(settings.api.cors_origins),
-        allows_credentials=settings.api.cors_credentials
+        allows_credentials=settings.api.cors_credentials,
     )
 
     # Log authentication configuration
@@ -201,14 +213,14 @@ async def startup_event():
         "authentication_configuration",
         jwt_algorithm=settings.jwt.algorithm,
         access_token_expire_minutes=settings.jwt.access_token_expire_minutes,
-        refresh_token_expire_days=settings.jwt.refresh_token_expire_days
+        refresh_token_expire_days=settings.jwt.refresh_token_expire_days,
     )
 
     logger.info(
         "application_startup_completed",
         environment=settings.environment,
         status="ready",
-        message=f"Multi-Agent Support System v{settings.app_version} ready to accept requests"
+        message=f"Multi-Agent Support System v{settings.app_version} ready to accept requests",
     )
 
 
@@ -219,16 +231,14 @@ async def shutdown_event():
 
     Phase 3: Added GPU orchestrator cleanup for safe shutdown
     """
-    logger.info(
-        "application_shutdown_initiated",
-        environment=settings.environment
-    )
+    logger.info("application_shutdown_initiated", environment=settings.environment)
 
     # Phase 3: Cleanup GPU instances before shutdown
     if settings.vastai.auto_destroy_on_shutdown:
         try:
             logger.info("vllm_gpu_shutdown_started")
             from src.vllm.orchestrator import gpu_orchestrator
+
             await gpu_orchestrator.close()
             logger.info("vllm_gpu_shutdown_complete")
         except Exception as e:
@@ -236,7 +246,7 @@ async def shutdown_event():
                 "vllm_gpu_shutdown_error",
                 error=str(e),
                 exc_info=True,
-                message="Failed to cleanup GPU instance - manual cleanup may be required"
+                message="Failed to cleanup GPU instance - manual cleanup may be required",
             )
 
     # Close Redis connection
@@ -249,29 +259,26 @@ async def shutdown_event():
     await close_db()
     logger.info("database_connections_closed")
 
-    logger.info(
-        "application_shutdown_completed",
-        message="Shutdown complete"
-    )
+    logger.info("application_shutdown_completed", message="Shutdown complete")
 
 
 @app.get("/")
 async def root():
     """
     Root endpoint - API status
-    
+
     Returns:
         API information and status
     """
     logger.debug("root_endpoint_accessed")
-    
+
     return {
         "name": "Multi-Agent Support System",
         "version": settings.app_version,
         "environment": settings.environment,
         "status": "running",
         "docs": "/api/docs",
-        "health": "/api/health"
+        "health": "/api/health",
     }
 
 
@@ -296,18 +303,18 @@ async def api_root():
             "conversations": "/api/conversations",
             "customers": "/api/customers",
             "analytics": "/api/analytics",
-            "docs": "/api/docs"
-        }
+            "docs": "/api/docs",
+        },
     }
 
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "api.main:app",
         host=settings.api.host,
         port=settings.api.port,
         reload=True,
-        log_level="info"
+        log_level="info",
     )
