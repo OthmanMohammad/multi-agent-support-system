@@ -2,11 +2,10 @@
 Security Advisor Agent - Provides security best practices, 2FA setup, and audit log guidance.
 """
 
-from typing import Dict, Any
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("security_advisor", tier="essential", category="account")
@@ -19,7 +18,7 @@ class SecurityAdvisor(BaseAgent):
         "session_timeout": "Auto-logout after inactivity",
         "ip_whitelist": "IP restrictions (Enterprise)",
         "audit_logs": "Security event logging",
-        "password_policy": "Strong password requirements"
+        "password_policy": "Strong password requirements",
     }
 
     def __init__(self):
@@ -29,7 +28,7 @@ class SecurityAdvisor(BaseAgent):
             temperature=0.3,
             capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="account",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -37,21 +36,21 @@ class SecurityAdvisor(BaseAgent):
     async def process(self, state: AgentState) -> AgentState:
         self.logger.info("security_advisor_processing_started")
         state = self.update_state(state)
-        
+
         message = state["current_message"]
         action = self._detect_security_action(message)
-        
+
         kb_results = await self.search_knowledge_base(message, category="account", limit=2)
         state["kb_results"] = kb_results
-        
+
         response = self._generate_security_guide(action)
-        
+
         state["agent_response"] = response
         state["security_action"] = action
         state["response_confidence"] = 0.85
         state["next_agent"] = None
         state["status"] = "resolved"
-        
+
         self.logger.info("security_processing_completed", action=action)
         return state
 
@@ -221,8 +220,10 @@ Settings > Security > Enable 2FA"""
 **Start Here:**
 Settings > Security > Enable 2FA"""
 
+
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
