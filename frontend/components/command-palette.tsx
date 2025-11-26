@@ -42,26 +42,26 @@ export function CommandPalette(): JSX.Element {
   const router = useRouter();
   const { setTheme } = useTheme();
 
+  // Handle open state change with search reset
+  const handleOpenChange = useCallback((newOpen: boolean) => {
+    setOpen(newOpen);
+    if (!newOpen) {
+      setSearch("");
+    }
+  }, []);
+
   // Toggle with Cmd+K or Ctrl+K
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setOpen((open) => !open);
+        handleOpenChange(!open);
       }
     };
 
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
-  }, []);
-
-  // Reset search when closed
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: reset search input when dialog closes
-    if (!open) {
-      setSearch("");
-    }
-  }, [open]);
+  }, [handleOpenChange, open]);
 
   const commands: CommandItem[] = [
     // Navigation
@@ -192,7 +192,7 @@ export function CommandPalette(): JSX.Element {
   return (
     <Command.Dialog
       open={open}
-      onOpenChange={setOpen}
+      onOpenChange={handleOpenChange}
       label="Command Menu"
       className="fixed left-1/2 top-1/2 z-50 w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl border border-border bg-surface shadow-2xl"
     >
