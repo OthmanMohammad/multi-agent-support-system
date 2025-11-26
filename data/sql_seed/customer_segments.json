@@ -1,0 +1,905 @@
+{
+  "table": "customer_segments",
+  "records": [
+    {
+      "id": "3b9c7275-6d3f-4d9e-9670-189080a6949d",
+      "customer_id": "55ed5c06-c40c-402d-a538-1d3c82d4c463",
+      "segment_name": "churned",
+      "segment_type": "lifecycle",
+      "confidence_score": 0.7,
+      "assigned_at": "2025-11-26T08:15:36.228235",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "21e97873-a5bf-4752-81fc-0a4e202ed054",
+      "customer_id": "c4d3518d-55cb-4a80-9bb6-ae7bf8a3dee2",
+      "segment_name": "high_risk",
+      "segment_type": "risk",
+      "confidence_score": 0.83,
+      "assigned_at": "2025-11-26T08:15:36.228258",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "22f11608-a45e-4298-a8c3-f802dd36cece",
+      "customer_id": "73a20df0-8247-439e-b5db-8a65b7a3db79",
+      "segment_name": "at-risk",
+      "segment_type": "lifecycle",
+      "confidence_score": 0.64,
+      "assigned_at": "2025-11-26T08:15:36.228267",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "e439207c-865e-451e-96a3-b7624fd0899c",
+      "customer_id": "8926ba8b-39bc-4e43-bc72-3f4544a3b84b",
+      "segment_name": "mid_value",
+      "segment_type": "value",
+      "confidence_score": 0.64,
+      "assigned_at": "2025-11-26T08:15:36.228348",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "a3e129a4-11d2-46e8-b4c9-963ba551f962",
+      "customer_id": "af805a32-00cc-47df-aa18-67590a128f38",
+      "segment_name": "critical",
+      "segment_type": "risk",
+      "confidence_score": 0.64,
+      "assigned_at": "2025-11-26T08:15:36.228359",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "b1576052-4a38-4c4a-8737-3350f023ab2c",
+      "customer_id": "b0aeb1b5-4920-4037-8c3d-7801a9267ee5",
+      "segment_name": "low_risk",
+      "segment_type": "risk",
+      "confidence_score": 0.81,
+      "assigned_at": "2025-11-26T08:15:36.228374",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "ed243396-76e9-4c0e-91f7-09da239fbed3",
+      "customer_id": "69c3376e-1f6c-423c-ac34-3532e2afaae1",
+      "segment_name": "power_user",
+      "segment_type": "behavior",
+      "confidence_score": 0.85,
+      "assigned_at": "2025-11-26T08:15:36.228385",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "e82dbd65-aef4-48f5-b8e2-1fd75f228e39",
+      "customer_id": "83d64b0c-cd18-4563-b7e8-58f694be2649",
+      "segment_name": "nonprofit",
+      "segment_type": "industry",
+      "confidence_score": 0.77,
+      "assigned_at": "2025-11-26T08:15:36.228406",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "ed624d0f-dbc5-42f6-a320-441d1cf1af4a",
+      "customer_id": "b693f076-984d-42c8-8e97-196d9c4c58a4",
+      "segment_name": "low_risk",
+      "segment_type": "risk",
+      "confidence_score": 0.65,
+      "assigned_at": "2025-11-26T08:15:36.228417",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "c1d34ff4-cbea-474c-8074-e0a1a00c9302",
+      "customer_id": "b9cc2ebf-8ba0-4ca1-be55-5e6ac2c702da",
+      "segment_name": "low_risk",
+      "segment_type": "risk",
+      "confidence_score": 0.9,
+      "assigned_at": "2025-11-26T08:15:36.228426",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "33e54a3c-d101-4d74-8201-dfec2a6d26e9",
+      "customer_id": "13d41301-e15b-493f-8ca8-caf46024772e",
+      "segment_name": "high_value",
+      "segment_type": "value",
+      "confidence_score": 0.87,
+      "assigned_at": "2025-11-26T08:15:36.228435",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "0c07956e-906e-47f0-83cf-405f177d897f",
+      "customer_id": "77f655a4-5bb1-4c20-a1a8-59044ac2f519",
+      "segment_name": "high_value",
+      "segment_type": "value",
+      "confidence_score": 0.75,
+      "assigned_at": "2025-11-26T08:15:36.228444",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "5c3b4819-fc25-4b61-817f-c735ba08c031",
+      "customer_id": "3882003f-c6f1-4419-a72d-52777cebfbbc",
+      "segment_name": "critical",
+      "segment_type": "risk",
+      "confidence_score": 0.81,
+      "assigned_at": "2025-11-26T08:15:36.228452",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "0ae17a67-95fd-4aea-8e12-a3293323e095",
+      "customer_id": "137e51a3-cc91-42a0-a6b5-a07ecd725b35",
+      "segment_name": "power_user",
+      "segment_type": "behavior",
+      "confidence_score": 0.9,
+      "assigned_at": "2025-11-26T08:15:36.228460",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "59cd24ce-c540-4eae-bfbe-c95d9f1f1cf4",
+      "customer_id": "4e90a8f3-e5fc-4336-b4c6-14af448a7d74",
+      "segment_name": "mature",
+      "segment_type": "lifecycle",
+      "confidence_score": 0.66,
+      "assigned_at": "2025-11-26T08:15:36.228468",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "2fa65d43-581b-46d1-a086-27992e5fbea1",
+      "customer_id": "8926ba8b-39bc-4e43-bc72-3f4544a3b84b",
+      "segment_name": "casual_user",
+      "segment_type": "behavior",
+      "confidence_score": 0.93,
+      "assigned_at": "2025-11-26T08:15:36.228477",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "59f4c46b-bb8d-45e5-ab64-033588c76902",
+      "customer_id": "11a22548-f803-49f2-896a-fb32ae9af696",
+      "segment_name": "churned",
+      "segment_type": "lifecycle",
+      "confidence_score": 0.83,
+      "assigned_at": "2025-11-26T08:15:36.228485",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "48738cf0-f5fc-4996-ae19-c6566edfc062",
+      "customer_id": "69c3376e-1f6c-423c-ac34-3532e2afaae1",
+      "segment_name": "finance",
+      "segment_type": "industry",
+      "confidence_score": 0.84,
+      "assigned_at": "2025-11-26T08:15:36.228494",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "079b8519-c259-475b-90a3-7beae8fa89ef",
+      "customer_id": "e0c23ac4-d511-4e04-958c-20b314cc735f",
+      "segment_name": "enterprise",
+      "segment_type": "value",
+      "confidence_score": 0.76,
+      "assigned_at": "2025-11-26T08:15:36.228502",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "b8e2b114-2851-4602-9f7e-ee6caea1bff7",
+      "customer_id": "9b770a2f-4d4f-431f-9e59-832afd0ad12a",
+      "segment_name": "finance",
+      "segment_type": "industry",
+      "confidence_score": 0.67,
+      "assigned_at": "2025-11-26T08:15:36.228514",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "e07acb65-41e7-4325-8de7-c85c9ebfacb9",
+      "customer_id": "d7bbbadb-3eb1-48fc-a00e-0e3c6a4038d2",
+      "segment_name": "enterprise",
+      "segment_type": "value",
+      "confidence_score": 0.93,
+      "assigned_at": "2025-11-26T08:15:36.228522",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "48b6d49d-1c98-42f6-92b3-6a5434316397",
+      "customer_id": "b693f076-984d-42c8-8e97-196d9c4c58a4",
+      "segment_name": "nonprofit",
+      "segment_type": "industry",
+      "confidence_score": 0.9,
+      "assigned_at": "2025-11-26T08:15:36.228531",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "581fe040-b68b-443a-8247-df2b7f40e1e0",
+      "customer_id": "55ed5c06-c40c-402d-a538-1d3c82d4c463",
+      "segment_name": "marketing",
+      "segment_type": "industry",
+      "confidence_score": 0.95,
+      "assigned_at": "2025-11-26T08:15:36.228539",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "86ab8612-3de3-4155-8669-dc43b49e1b22",
+      "customer_id": "3e8f199f-b160-4d81-bf07-7c4899bbfa88",
+      "segment_name": "dormant",
+      "segment_type": "behavior",
+      "confidence_score": 0.74,
+      "assigned_at": "2025-11-26T08:15:36.228548",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "a9d2bfc4-0cec-44ef-9a0a-403ed0f9fe52",
+      "customer_id": "3e8f199f-b160-4d81-bf07-7c4899bbfa88",
+      "segment_name": "critical",
+      "segment_type": "risk",
+      "confidence_score": 0.89,
+      "assigned_at": "2025-11-26T08:15:36.228559",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "0c009d95-258f-40e8-98ad-44d976181732",
+      "customer_id": "f7b69109-b8ab-4498-8319-a99bebeed576",
+      "segment_name": "casual_user",
+      "segment_type": "behavior",
+      "confidence_score": 0.86,
+      "assigned_at": "2025-11-26T08:15:36.228573",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "88019480-98ee-4f0f-a9d0-f651d1d59fe6",
+      "customer_id": "8360e714-2a76-4d9b-9407-b6122581ae14",
+      "segment_name": "mid_value",
+      "segment_type": "value",
+      "confidence_score": 0.74,
+      "assigned_at": "2025-11-26T08:15:36.228584",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "6304ad1b-8326-490a-9db1-db07c91e9e84",
+      "customer_id": "6a849ea2-b855-4355-8e61-9884f7ae682b",
+      "segment_name": "critical",
+      "segment_type": "risk",
+      "confidence_score": 0.7,
+      "assigned_at": "2025-11-26T08:15:36.228593",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "2bae16b1-aba1-4bf8-acd0-526fc9de7cfa",
+      "customer_id": "5e58f821-89f0-4cad-aa58-62a7549750c1",
+      "segment_name": "power_user",
+      "segment_type": "behavior",
+      "confidence_score": 0.63,
+      "assigned_at": "2025-11-26T08:15:36.228601",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "22282235-f1ab-45dc-9050-44fa7cdd81a2",
+      "customer_id": "47878252-2033-466e-afc0-a83ba902f2c9",
+      "segment_name": "education",
+      "segment_type": "industry",
+      "confidence_score": 0.77,
+      "assigned_at": "2025-11-26T08:15:36.228609",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "e4892803-8f57-4a28-ad88-99ccced1d85c",
+      "customer_id": "66fc2b21-c4be-43e7-a246-d7dabf129244",
+      "segment_name": "mid_value",
+      "segment_type": "value",
+      "confidence_score": 0.87,
+      "assigned_at": "2025-11-26T08:15:36.228618",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "ecc89be6-6ef1-46a8-9f96-bc1a95195d2b",
+      "customer_id": "8c6e959d-a827-4bcb-bec5-530a3fe54889",
+      "segment_name": "power_user",
+      "segment_type": "behavior",
+      "confidence_score": 0.71,
+      "assigned_at": "2025-11-26T08:15:36.228626",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "e8b1911c-1c76-4155-a552-140d324c05f8",
+      "customer_id": "f9f43cd0-cd5c-47de-80b7-d8deb1757b19",
+      "segment_name": "medium_risk",
+      "segment_type": "risk",
+      "confidence_score": 0.83,
+      "assigned_at": "2025-11-26T08:15:36.228634",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "feab5f1f-ca20-4d65-ae47-8b2bccd2cc20",
+      "customer_id": "b6f3fb07-8d31-44ef-a9cc-bb3e2e2d3126",
+      "segment_name": "casual_user",
+      "segment_type": "behavior",
+      "confidence_score": 0.75,
+      "assigned_at": "2025-11-26T08:15:36.228643",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "02f7a7b9-1a53-44c1-bdfa-cde5c1ac37b5",
+      "customer_id": "d50bdce7-2e2b-461f-91c1-f3a701d83134",
+      "segment_name": "new",
+      "segment_type": "lifecycle",
+      "confidence_score": 0.66,
+      "assigned_at": "2025-11-26T08:15:36.228651",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "be5c7be4-207c-4c13-a57c-086051b09683",
+      "customer_id": "6706f9be-94cb-478e-84a7-2e885c21a11f",
+      "segment_name": "high_risk",
+      "segment_type": "risk",
+      "confidence_score": 0.68,
+      "assigned_at": "2025-11-26T08:15:36.228659",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "dc2cd81b-3c53-40c5-a76e-08931bcaaf2c",
+      "customer_id": "b6f3fb07-8d31-44ef-a9cc-bb3e2e2d3126",
+      "segment_name": "mid_value",
+      "segment_type": "value",
+      "confidence_score": 0.63,
+      "assigned_at": "2025-11-26T08:15:36.228671",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "883a94c7-b748-45f4-93a2-7972c1bde473",
+      "customer_id": "0c4f9845-20cf-44a7-92b1-c72428709668",
+      "segment_name": "casual_user",
+      "segment_type": "behavior",
+      "confidence_score": 0.91,
+      "assigned_at": "2025-11-26T08:15:36.228680",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "46ef215a-69d8-4814-9d6e-9803a0b0fad1",
+      "customer_id": "1d3ed106-ff41-4c25-be06-7545e9d4cadc",
+      "segment_name": "enterprise",
+      "segment_type": "value",
+      "confidence_score": 0.89,
+      "assigned_at": "2025-11-26T08:15:36.228690",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "fc583f07-0f00-4855-b1f7-335110388140",
+      "customer_id": "8c6ae507-65a0-4c2f-a9ce-32ab780bc766",
+      "segment_name": "critical",
+      "segment_type": "risk",
+      "confidence_score": 0.85,
+      "assigned_at": "2025-11-26T08:15:36.228698",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "d89fe6f2-6ccc-41b4-885e-b66203ea1fea",
+      "customer_id": "3e8f199f-b160-4d81-bf07-7c4899bbfa88",
+      "segment_name": "casual_user",
+      "segment_type": "behavior",
+      "confidence_score": 0.75,
+      "assigned_at": "2025-11-26T08:15:36.228706",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "7519500f-cf32-4860-8376-b6b215d74514",
+      "customer_id": "0a30546e-2ca7-4a36-a849-adf3924c4bce",
+      "segment_name": "marketing",
+      "segment_type": "industry",
+      "confidence_score": 0.84,
+      "assigned_at": "2025-11-26T08:15:36.228719",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "cf0bb533-7e71-414b-b396-e4206d434b5a",
+      "customer_id": "8590b4f0-c079-43b2-bd57-5c9c09e74da2",
+      "segment_name": "low_risk",
+      "segment_type": "risk",
+      "confidence_score": 0.71,
+      "assigned_at": "2025-11-26T08:15:36.228727",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "d5a065fc-1fe1-483f-98ae-f55f30135c57",
+      "customer_id": "63f2a4f8-b6a1-4ddf-9758-17104261c9f4",
+      "segment_name": "onboarding",
+      "segment_type": "lifecycle",
+      "confidence_score": 0.84,
+      "assigned_at": "2025-11-26T08:15:36.228736",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "cd1feeac-037e-4531-85ae-ffe9c59004b6",
+      "customer_id": "170e76a7-8375-48e0-add5-8716af67546b",
+      "segment_name": "enterprise",
+      "segment_type": "value",
+      "confidence_score": 0.67,
+      "assigned_at": "2025-11-26T08:15:36.228746",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "f29ea304-7027-4628-b4aa-aa64249b3c4d",
+      "customer_id": "3e8f199f-b160-4d81-bf07-7c4899bbfa88",
+      "segment_name": "high_risk",
+      "segment_type": "risk",
+      "confidence_score": 0.7,
+      "assigned_at": "2025-11-26T08:15:36.228754",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "f248ef06-10c8-4509-90d4-26daac4a3fd1",
+      "customer_id": "e4a35d4c-9f1c-401d-b92b-ecfd4a8f4430",
+      "segment_name": "legal",
+      "segment_type": "industry",
+      "confidence_score": 0.94,
+      "assigned_at": "2025-11-26T08:15:36.228763",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "d1fdbaab-3cbb-4ae5-8448-1237dd00ef36",
+      "customer_id": "d420aaed-5489-4e40-838c-318551a672b4",
+      "segment_name": "champion",
+      "segment_type": "behavior",
+      "confidence_score": 0.93,
+      "assigned_at": "2025-11-26T08:15:36.228771",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "4dc1e044-305b-4da8-ad3e-28771a6cb539",
+      "customer_id": "77f655a4-5bb1-4c20-a1a8-59044ac2f519",
+      "segment_name": "churned",
+      "segment_type": "lifecycle",
+      "confidence_score": 0.77,
+      "assigned_at": "2025-11-26T08:15:36.228780",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "266ddfd0-d649-4c79-a131-b9f53c6a872c",
+      "customer_id": "d7bbbadb-3eb1-48fc-a00e-0e3c6a4038d2",
+      "segment_name": "medium_risk",
+      "segment_type": "risk",
+      "confidence_score": 1.0,
+      "assigned_at": "2025-11-26T08:15:36.228789",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "119ba46e-937c-480a-9356-780070d65a3c",
+      "customer_id": "3882003f-c6f1-4419-a72d-52777cebfbbc",
+      "segment_name": "medium_risk",
+      "segment_type": "risk",
+      "confidence_score": 0.86,
+      "assigned_at": "2025-11-26T08:15:36.228799",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "50312519-61be-4b3b-8449-091fa05123a8",
+      "customer_id": "170e76a7-8375-48e0-add5-8716af67546b",
+      "segment_name": "onboarding",
+      "segment_type": "lifecycle",
+      "confidence_score": 0.81,
+      "assigned_at": "2025-11-26T08:15:36.228829",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "18618015-44c5-425c-b6b5-76bc7a9b1f00",
+      "customer_id": "97d8f4c1-5820-44c1-be09-6188fadc046f",
+      "segment_name": "technology",
+      "segment_type": "industry",
+      "confidence_score": 0.98,
+      "assigned_at": "2025-11-26T08:15:36.228848",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "6ea8911a-5627-4468-851f-c83485c4fc5b",
+      "customer_id": "66fc2b21-c4be-43e7-a246-d7dabf129244",
+      "segment_name": "mature",
+      "segment_type": "lifecycle",
+      "confidence_score": 0.65,
+      "assigned_at": "2025-11-26T08:15:36.228857",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "34a52b36-c765-47cd-a9f0-3b2315abf9fe",
+      "customer_id": "0d463c85-57cb-4053-91d3-31b54f4297fd",
+      "segment_name": "growing",
+      "segment_type": "lifecycle",
+      "confidence_score": 0.85,
+      "assigned_at": "2025-11-26T08:15:36.228865",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "9bd142e0-06d4-4561-a578-3de9b44a8637",
+      "customer_id": "97d8f4c1-5820-44c1-be09-6188fadc046f",
+      "segment_name": "churned",
+      "segment_type": "lifecycle",
+      "confidence_score": 0.71,
+      "assigned_at": "2025-11-26T08:15:36.228876",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "ab9bde4d-d673-4b1c-a623-19abcca9b72e",
+      "customer_id": "47878252-2033-466e-afc0-a83ba902f2c9",
+      "segment_name": "onboarding",
+      "segment_type": "lifecycle",
+      "confidence_score": 0.98,
+      "assigned_at": "2025-11-26T08:15:36.228884",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "6a34f376-695b-4375-8f52-9733ab6a7855",
+      "customer_id": "0d463c85-57cb-4053-91d3-31b54f4297fd",
+      "segment_name": "high_value",
+      "segment_type": "value",
+      "confidence_score": 0.93,
+      "assigned_at": "2025-11-26T08:15:36.228893",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "1ebdb2c6-efa1-459f-9824-833f67e56791",
+      "customer_id": "9df08b32-e4d3-4c99-a730-b2b8b2f6a70e",
+      "segment_name": "enterprise",
+      "segment_type": "value",
+      "confidence_score": 0.68,
+      "assigned_at": "2025-11-26T08:15:36.228901",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "bbab1faf-e659-4a09-963e-36a4eac87df6",
+      "customer_id": "d50bdce7-2e2b-461f-91c1-f3a701d83134",
+      "segment_name": "legal",
+      "segment_type": "industry",
+      "confidence_score": 0.69,
+      "assigned_at": "2025-11-26T08:15:36.228909",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "3f2ce6cf-96e5-4f74-9114-3e5818cba37b",
+      "customer_id": "c01e8012-59d5-4e7b-aa54-d4aa726d648a",
+      "segment_name": "dormant",
+      "segment_type": "behavior",
+      "confidence_score": 0.83,
+      "assigned_at": "2025-11-26T08:15:36.228918",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "4b1e15c5-aba8-4d45-92ee-bc1b1442e79b",
+      "customer_id": "0bd691c3-db86-4108-abba-caaf5beb8a3f",
+      "segment_name": "dormant",
+      "segment_type": "behavior",
+      "confidence_score": 0.8,
+      "assigned_at": "2025-11-26T08:15:36.228926",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "f0ec4adc-4489-4871-b3f9-43f62762d40f",
+      "customer_id": "51a91f42-d532-49b0-a67e-8581bdc0380a",
+      "segment_name": "medium_risk",
+      "segment_type": "risk",
+      "confidence_score": 0.95,
+      "assigned_at": "2025-11-26T08:15:36.228934",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "37c810a0-322a-4e61-821d-884a6641d1ee",
+      "customer_id": "b0aeb1b5-4920-4037-8c3d-7801a9267ee5",
+      "segment_name": "low_value",
+      "segment_type": "value",
+      "confidence_score": 0.72,
+      "assigned_at": "2025-11-26T08:15:36.228945",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "3c620745-4884-4417-8c1f-d4e2b7901474",
+      "customer_id": "f9f43cd0-cd5c-47de-80b7-d8deb1757b19",
+      "segment_name": "critical",
+      "segment_type": "risk",
+      "confidence_score": 0.62,
+      "assigned_at": "2025-11-26T08:15:36.228954",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "1a2c69e5-474e-48e7-9894-4406369a7877",
+      "customer_id": "7883e9aa-844c-42ed-92d0-a731b3e82664",
+      "segment_name": "manufacturing",
+      "segment_type": "industry",
+      "confidence_score": 0.97,
+      "assigned_at": "2025-11-26T08:15:36.228962",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "62110021-1fa5-425a-a047-e2f9c964e5bc",
+      "customer_id": "2091e266-a9d7-46a8-a8dd-d52355f48e3b",
+      "segment_name": "mid_value",
+      "segment_type": "value",
+      "confidence_score": 0.8,
+      "assigned_at": "2025-11-26T08:15:36.228970",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "caa02e1f-fdca-41cd-b489-3e1d3927e0b4",
+      "customer_id": "ae099772-b892-4c02-ba89-de98142926d9",
+      "segment_name": "dormant",
+      "segment_type": "behavior",
+      "confidence_score": 0.74,
+      "assigned_at": "2025-11-26T08:15:36.228979",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "018044d8-da47-4e86-ab67-ce5f9c46c09f",
+      "customer_id": "67e5fd00-fb89-43f6-a82c-33bfb70153c2",
+      "segment_name": "churned",
+      "segment_type": "lifecycle",
+      "confidence_score": 0.88,
+      "assigned_at": "2025-11-26T08:15:36.228987",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "cf87b3c6-fea3-4243-b0d9-f7b60c0f826a",
+      "customer_id": "6a849ea2-b855-4355-8e61-9884f7ae682b",
+      "segment_name": "mid_value",
+      "segment_type": "value",
+      "confidence_score": 0.68,
+      "assigned_at": "2025-11-26T08:15:36.228996",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "4fbad7e7-ccfd-4ad1-a3bc-6e235bc8e5f2",
+      "customer_id": "f9f43cd0-cd5c-47de-80b7-d8deb1757b19",
+      "segment_name": "champion",
+      "segment_type": "behavior",
+      "confidence_score": 0.95,
+      "assigned_at": "2025-11-26T08:15:36.229004",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "c41b002e-0b92-4861-9d2d-392337eaaa35",
+      "customer_id": "47878252-2033-466e-afc0-a83ba902f2c9",
+      "segment_name": "dormant",
+      "segment_type": "behavior",
+      "confidence_score": 1.0,
+      "assigned_at": "2025-11-26T08:15:36.229013",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "07a10f58-ec0e-417d-98ca-44300870c89b",
+      "customer_id": "2777b725-b797-4a21-87be-2aab29fbaba6",
+      "segment_name": "high_risk",
+      "segment_type": "risk",
+      "confidence_score": 0.84,
+      "assigned_at": "2025-11-26T08:15:36.229022",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "78d08d4c-c39f-449d-b0d1-b00ad75a578a",
+      "customer_id": "abaefea1-6f79-4158-9ab8-b7e1af90bfc4",
+      "segment_name": "mature",
+      "segment_type": "lifecycle",
+      "confidence_score": 0.66,
+      "assigned_at": "2025-11-26T08:15:36.229030",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "d02a59b5-2aee-49b3-95d8-a5286096829c",
+      "customer_id": "ce9779e1-b478-4069-ab51-05488ba8f36a",
+      "segment_name": "dormant",
+      "segment_type": "behavior",
+      "confidence_score": 0.96,
+      "assigned_at": "2025-11-26T08:15:36.229039",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "f1ae92f4-521d-4678-bd4a-3bd4e1775641",
+      "customer_id": "51a91f42-d532-49b0-a67e-8581bdc0380a",
+      "segment_name": "retail",
+      "segment_type": "industry",
+      "confidence_score": 0.93,
+      "assigned_at": "2025-11-26T08:15:36.229048",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "2c6b9ae0-5456-4eb5-9072-25a011daa5ae",
+      "customer_id": "66fc2b21-c4be-43e7-a246-d7dabf129244",
+      "segment_name": "dormant",
+      "segment_type": "behavior",
+      "confidence_score": 0.72,
+      "assigned_at": "2025-11-26T08:15:36.229056",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "4d2ab789-8c4e-4a07-b6dc-0dd862229a78",
+      "customer_id": "3237fbb1-2257-416b-8f49-ac8144ff51a1",
+      "segment_name": "casual_user",
+      "segment_type": "behavior",
+      "confidence_score": 0.66,
+      "assigned_at": "2025-11-26T08:15:36.229068",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "ac1334a5-6284-4ffe-8b8e-9d3379351e88",
+      "customer_id": "c4d3518d-55cb-4a80-9bb6-ae7bf8a3dee2",
+      "segment_name": "medium_risk",
+      "segment_type": "risk",
+      "confidence_score": 0.89,
+      "assigned_at": "2025-11-26T08:15:36.229077",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "4a6cce2d-d989-4885-b9f2-da0a6c3b15ef",
+      "customer_id": "f88e07df-7fe2-45cf-983c-282547e7d2de",
+      "segment_name": "dormant",
+      "segment_type": "behavior",
+      "confidence_score": 0.8,
+      "assigned_at": "2025-11-26T08:15:36.229085",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "02b169eb-8dab-4141-954d-70c13e207971",
+      "customer_id": "7883e9aa-844c-42ed-92d0-a731b3e82664",
+      "segment_name": "manufacturing",
+      "segment_type": "industry",
+      "confidence_score": 0.92,
+      "assigned_at": "2025-11-26T08:15:36.229094",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "29a2af86-4072-4824-85f0-7fa69f495969",
+      "customer_id": "8c6ae507-65a0-4c2f-a9ce-32ab780bc766",
+      "segment_name": "casual_user",
+      "segment_type": "behavior",
+      "confidence_score": 0.65,
+      "assigned_at": "2025-11-26T08:15:36.229102",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "553542cd-abf1-4071-a32c-650505018940",
+      "customer_id": "d358256f-72f5-4b5a-974b-4601b31821d2",
+      "segment_name": "casual_user",
+      "segment_type": "behavior",
+      "confidence_score": 0.67,
+      "assigned_at": "2025-11-26T08:15:36.229110",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "6ec20b6c-d198-49fd-bc56-551e2c24da76",
+      "customer_id": "f88e07df-7fe2-45cf-983c-282547e7d2de",
+      "segment_name": "legal",
+      "segment_type": "industry",
+      "confidence_score": 0.68,
+      "assigned_at": "2025-11-26T08:15:36.229121",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "0eb3dcfa-070c-4f05-9bbb-ebea9e17d37e",
+      "customer_id": "2091e266-a9d7-46a8-a8dd-d52355f48e3b",
+      "segment_name": "technology",
+      "segment_type": "industry",
+      "confidence_score": 0.85,
+      "assigned_at": "2025-11-26T08:15:36.229130",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "581a84d2-8c49-427e-80ff-f613464d647a",
+      "customer_id": "47878252-2033-466e-afc0-a83ba902f2c9",
+      "segment_name": "churned",
+      "segment_type": "lifecycle",
+      "confidence_score": 0.82,
+      "assigned_at": "2025-11-26T08:15:36.229139",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "81fc4008-4558-486d-98ce-7793de519bfd",
+      "customer_id": "0bd691c3-db86-4108-abba-caaf5beb8a3f",
+      "segment_name": "medium_risk",
+      "segment_type": "risk",
+      "confidence_score": 0.9,
+      "assigned_at": "2025-11-26T08:15:36.229150",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "11d06efb-d3d3-4fae-b3f6-4b0a4a93f2f0",
+      "customer_id": "0a30546e-2ca7-4a36-a849-adf3924c4bce",
+      "segment_name": "champion",
+      "segment_type": "behavior",
+      "confidence_score": 0.92,
+      "assigned_at": "2025-11-26T08:15:36.229158",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "71ab472f-f72f-4c4b-b04a-1e10dfe90f9f",
+      "customer_id": "73a20df0-8247-439e-b5db-8a65b7a3db79",
+      "segment_name": "technology",
+      "segment_type": "industry",
+      "confidence_score": 0.72,
+      "assigned_at": "2025-11-26T08:15:36.229169",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "48281235-b175-4f58-98dd-4c1f075568d1",
+      "customer_id": "b693f076-984d-42c8-8e97-196d9c4c58a4",
+      "segment_name": "power_user",
+      "segment_type": "behavior",
+      "confidence_score": 0.73,
+      "assigned_at": "2025-11-26T08:15:36.229177",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "2aeee312-ca33-473e-92ac-be459a77a22d",
+      "customer_id": "82afae5d-65df-4f24-a846-00fb1ca5a22e",
+      "segment_name": "critical",
+      "segment_type": "risk",
+      "confidence_score": 0.95,
+      "assigned_at": "2025-11-26T08:15:36.229185",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "4073e242-62b7-42f8-8013-63285ea65f8a",
+      "customer_id": "b93bb77c-df40-473b-85ac-0743b13f4135",
+      "segment_name": "mid_value",
+      "segment_type": "value",
+      "confidence_score": 0.88,
+      "assigned_at": "2025-11-26T08:15:36.229194",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "31a297dd-6b4e-4848-a286-0581045f6d24",
+      "customer_id": "09bd8c5b-8bfd-466e-b605-e218718c67d1",
+      "segment_name": "growing",
+      "segment_type": "lifecycle",
+      "confidence_score": 0.97,
+      "assigned_at": "2025-11-26T08:15:36.229202",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "aa65909e-3ee5-4878-99b3-4277e838bdd6",
+      "customer_id": "5e58f821-89f0-4cad-aa58-62a7549750c1",
+      "segment_name": "mid_value",
+      "segment_type": "value",
+      "confidence_score": 0.92,
+      "assigned_at": "2025-11-26T08:15:36.229210",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "bd20ae18-b026-4636-919b-104471f61678",
+      "customer_id": "8360e714-2a76-4d9b-9407-b6122581ae14",
+      "segment_name": "critical",
+      "segment_type": "risk",
+      "confidence_score": 0.86,
+      "assigned_at": "2025-11-26T08:15:36.229219",
+      "assigned_by": "churn_predictor"
+    },
+    {
+      "id": "63da897f-33bf-4e87-9b3a-0fdc594d0726",
+      "customer_id": "3df21b21-90fa-4bff-8a46-baccf10a64b8",
+      "segment_name": "power_user",
+      "segment_type": "behavior",
+      "confidence_score": 0.99,
+      "assigned_at": "2025-11-26T08:15:36.229227",
+      "assigned_by": "manual"
+    },
+    {
+      "id": "44fd8487-75e5-44b5-ad5a-1c6e7b637460",
+      "customer_id": "99f0579f-5525-4246-8f29-52a7f100daf5",
+      "segment_name": "critical",
+      "segment_type": "risk",
+      "confidence_score": 0.97,
+      "assigned_at": "2025-11-26T08:15:36.229236",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "668e1c7a-e839-4da3-825a-7aface87f2b8",
+      "customer_id": "c4d3518d-55cb-4a80-9bb6-ae7bf8a3dee2",
+      "segment_name": "new",
+      "segment_type": "lifecycle",
+      "confidence_score": 0.76,
+      "assigned_at": "2025-11-26T08:15:36.229244",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "70c26fc0-06f3-457b-978a-c69f6788d7fa",
+      "customer_id": "ce9779e1-b478-4069-ab51-05488ba8f36a",
+      "segment_name": "new",
+      "segment_type": "lifecycle",
+      "confidence_score": 0.88,
+      "assigned_at": "2025-11-26T08:15:36.229253",
+      "assigned_by": "health_score"
+    },
+    {
+      "id": "284eed36-08e9-4cef-b94b-ce887772313f",
+      "customer_id": "2091e266-a9d7-46a8-a8dd-d52355f48e3b",
+      "segment_name": "retail",
+      "segment_type": "industry",
+      "confidence_score": 0.81,
+      "assigned_at": "2025-11-26T08:15:36.229261",
+      "assigned_by": "health_score"
+    }
+  ]
+}
