@@ -1,57 +1,59 @@
 """
 Unit of Work Pattern - Manages database transactions across repositories
 """
-from typing import Optional, AsyncIterator
+
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.connection import get_db_session
 from src.database.repositories import (
-    UserRepository,
-    APIKeyRepository,
-    CustomerRepository,
-    ConversationRepository,
-    MessageRepository,
-    AgentPerformanceRepository,
-    CustomerHealthEventRepository,
-    CustomerSegmentRepository,
-    CustomerNoteRepository,
-    CustomerContactRepository,
-    CustomerIntegrationRepository,
-    SubscriptionRepository,
-    InvoiceRepository,
-    PaymentRepository,
-    UsageEventRepository,
-    CreditRepository,
-    EmployeeRepository,
-    LeadRepository,
-    DealRepository,
-    SalesActivityRepository,
-    QuoteRepository,
-    ConversationAnalyticsRepository,
-    FeatureUsageRepository,
     ABTestRepository,
-    WorkflowRepository,
-    WorkflowExecutionRepository,
-    ScheduledTaskRepository,
-    AgentHandoffRepository,
     AgentCollaborationRepository,
-    ConversationTagRepository,
+    AgentHandoffRepository,
+    AgentPerformanceRepository,
+    APIKeyRepository,
     AuditLogRepository,
+    ConversationAnalyticsRepository,
+    ConversationRepository,
+    ConversationTagRepository,
+    CreditRepository,
+    CustomerContactRepository,
+    CustomerHealthEventRepository,
+    CustomerIntegrationRepository,
+    CustomerNoteRepository,
+    CustomerRepository,
+    CustomerSegmentRepository,
+    DealRepository,
+    EmployeeRepository,
+    FeatureUsageRepository,
+    InvoiceRepository,
+    LeadRepository,
+    MessageRepository,
+    PaymentRepository,
+    QuoteRepository,
+    SalesActivityRepository,
+    ScheduledTaskRepository,
+    SubscriptionRepository,
+    UsageEventRepository,
+    UserRepository,
+    WorkflowExecutionRepository,
+    WorkflowRepository,
 )
 
 
 class UnitOfWork:
     """
     Unit of Work - Coordinates database operations in a single transaction
-    
+
     Benefits:
     - Atomic operations (all succeed or all fail)
     - Consistent state across repositories
     - Automatic rollback on errors
     - Lazy repository initialization
-    
+
     Attributes:
         session: Database session
         customers: Customer repository
@@ -59,8 +61,8 @@ class UnitOfWork:
         messages: Message repository
         agent_performance: Agent performance repository
     """
-    
-    def __init__(self, session: AsyncSession, current_user_id: Optional[UUID] = None):
+
+    def __init__(self, session: AsyncSession, current_user_id: UUID | None = None):
         """
         Initialize Unit of Work
 
@@ -72,53 +74,53 @@ class UnitOfWork:
         self.current_user_id = current_user_id
 
         # Lazy-loaded repositories - Authentication
-        self._user_repo: Optional[UserRepository] = None
-        self._api_key_repo: Optional[APIKeyRepository] = None
+        self._user_repo: UserRepository | None = None
+        self._api_key_repo: APIKeyRepository | None = None
 
         # Lazy-loaded repositories - Core
-        self._customer_repo: Optional[CustomerRepository] = None
-        self._conversation_repo: Optional[ConversationRepository] = None
-        self._message_repo: Optional[MessageRepository] = None
-        self._agent_performance_repo: Optional[AgentPerformanceRepository] = None
+        self._customer_repo: CustomerRepository | None = None
+        self._conversation_repo: ConversationRepository | None = None
+        self._message_repo: MessageRepository | None = None
+        self._agent_performance_repo: AgentPerformanceRepository | None = None
 
         # Lazy-loaded repositories - Customer Health
-        self._customer_health_event_repo: Optional[CustomerHealthEventRepository] = None
-        self._customer_segment_repo: Optional[CustomerSegmentRepository] = None
-        self._customer_note_repo: Optional[CustomerNoteRepository] = None
-        self._customer_contact_repo: Optional[CustomerContactRepository] = None
-        self._customer_integration_repo: Optional[CustomerIntegrationRepository] = None
+        self._customer_health_event_repo: CustomerHealthEventRepository | None = None
+        self._customer_segment_repo: CustomerSegmentRepository | None = None
+        self._customer_note_repo: CustomerNoteRepository | None = None
+        self._customer_contact_repo: CustomerContactRepository | None = None
+        self._customer_integration_repo: CustomerIntegrationRepository | None = None
 
         # Lazy-loaded repositories - Subscription & Billing
-        self._subscription_repo: Optional[SubscriptionRepository] = None
-        self._invoice_repo: Optional[InvoiceRepository] = None
-        self._payment_repo: Optional[PaymentRepository] = None
-        self._usage_event_repo: Optional[UsageEventRepository] = None
-        self._credit_repo: Optional[CreditRepository] = None
+        self._subscription_repo: SubscriptionRepository | None = None
+        self._invoice_repo: InvoiceRepository | None = None
+        self._payment_repo: PaymentRepository | None = None
+        self._usage_event_repo: UsageEventRepository | None = None
+        self._credit_repo: CreditRepository | None = None
 
         # Lazy-loaded repositories - Sales
-        self._employee_repo: Optional[EmployeeRepository] = None
-        self._lead_repo: Optional[LeadRepository] = None
-        self._deal_repo: Optional[DealRepository] = None
-        self._sales_activity_repo: Optional[SalesActivityRepository] = None
-        self._quote_repo: Optional[QuoteRepository] = None
+        self._employee_repo: EmployeeRepository | None = None
+        self._lead_repo: LeadRepository | None = None
+        self._deal_repo: DealRepository | None = None
+        self._sales_activity_repo: SalesActivityRepository | None = None
+        self._quote_repo: QuoteRepository | None = None
 
         # Lazy-loaded repositories - Analytics
-        self._conversation_analytics_repo: Optional[ConversationAnalyticsRepository] = None
-        self._feature_usage_repo: Optional[FeatureUsageRepository] = None
-        self._ab_test_repo: Optional[ABTestRepository] = None
+        self._conversation_analytics_repo: ConversationAnalyticsRepository | None = None
+        self._feature_usage_repo: FeatureUsageRepository | None = None
+        self._ab_test_repo: ABTestRepository | None = None
 
         # Lazy-loaded repositories - Workflow
-        self._workflow_repo: Optional[WorkflowRepository] = None
-        self._workflow_execution_repo: Optional[WorkflowExecutionRepository] = None
-        self._scheduled_task_repo: Optional[ScheduledTaskRepository] = None
+        self._workflow_repo: WorkflowRepository | None = None
+        self._workflow_execution_repo: WorkflowExecutionRepository | None = None
+        self._scheduled_task_repo: ScheduledTaskRepository | None = None
 
         # Lazy-loaded repositories - Agent Handoff
-        self._agent_handoff_repo: Optional[AgentHandoffRepository] = None
-        self._agent_collaboration_repo: Optional[AgentCollaborationRepository] = None
-        self._conversation_tag_repo: Optional[ConversationTagRepository] = None
+        self._agent_handoff_repo: AgentHandoffRepository | None = None
+        self._agent_collaboration_repo: AgentCollaborationRepository | None = None
+        self._conversation_tag_repo: ConversationTagRepository | None = None
 
         # Lazy-loaded repositories - Audit
-        self._audit_log_repo: Optional[AuditLogRepository] = None
+        self._audit_log_repo: AuditLogRepository | None = None
 
     # Authentication Repositories
     @property
@@ -141,21 +143,21 @@ class UnitOfWork:
         if self._customer_repo is None:
             self._customer_repo = CustomerRepository(self.session)
         return self._customer_repo
-    
+
     @property
     def conversations(self) -> ConversationRepository:
         """Get conversation repository (lazy-loaded)"""
         if self._conversation_repo is None:
             self._conversation_repo = ConversationRepository(self.session)
         return self._conversation_repo
-    
+
     @property
     def messages(self) -> MessageRepository:
         """Get message repository (lazy-loaded)"""
         if self._message_repo is None:
             self._message_repo = MessageRepository(self.session)
         return self._message_repo
-    
+
     @property
     def agent_performance(self) -> AgentPerformanceRepository:
         """Get agent performance repository (lazy-loaded)"""
@@ -348,22 +350,22 @@ class UnitOfWork:
     async def commit(self):
         """Commit the current transaction"""
         await self.session.commit()
-    
+
     async def rollback(self):
         """Rollback the current transaction"""
         await self.session.rollback()
-    
+
     async def flush(self):
         """
         Flush pending changes without committing
         Useful for getting auto-generated IDs
         """
         await self.session.flush()
-    
+
     async def refresh(self, instance):
         """
         Refresh instance with latest data from database
-        
+
         Args:
             instance: SQLAlchemy model instance
         """
@@ -371,26 +373,24 @@ class UnitOfWork:
 
 
 @asynccontextmanager
-async def get_unit_of_work(
-    current_user_id: Optional[UUID] = None
-) -> AsyncIterator[UnitOfWork]:
+async def get_unit_of_work(current_user_id: UUID | None = None) -> AsyncIterator[UnitOfWork]:
     """
     Context manager for Unit of Work pattern
-    
+
     Automatically commits on success, rolls back on exception.
-    
+
     Args:
         current_user_id: ID of user performing operations (for audit)
-    
+
     Usage:
         async with get_unit_of_work() as uow:
             customer = await uow.customers.create(...)
             conversation = await uow.conversations.create(...)
             # Commits automatically here
-    
+
     Yields:
         UnitOfWork instance
-    
+
     Raises:
         Exception: Any exception from nested operations (after rollback)
     """
@@ -407,9 +407,7 @@ async def get_unit_of_work(
 
 # Convenience function for backward compatibility
 @asynccontextmanager
-async def get_uow(
-    current_user_id: Optional[UUID] = None
-) -> AsyncIterator[UnitOfWork]:
+async def get_uow(current_user_id: UUID | None = None) -> AsyncIterator[UnitOfWork]:
     """Alias for get_unit_of_work"""
     async with get_unit_of_work(current_user_id) as uow:
         yield uow
@@ -418,13 +416,13 @@ async def get_uow(
 if __name__ == "__main__":
     import asyncio
     from uuid import uuid4
-    
+
     async def test_unit_of_work():
         """Test Unit of Work pattern"""
         print("=" * 70)
         print("TESTING UNIT OF WORK")
         print("=" * 70)
-        
+
         # Test successful transaction
         print("\n1. Testing successful transaction...")
         try:
@@ -433,21 +431,19 @@ if __name__ == "__main__":
                     email=f"test_{uuid4().hex[:8]}@example.com",
                     name="Test User",
                     plan="free",
-                    extra_metadata={}
+                    extra_metadata={},
                 )
                 print(f"   ✓ Customer created: {customer.email}")
-                
-                conversation = await uow.conversations.create_with_customer(
-                    customer_id=customer.id
-                )
+
+                conversation = await uow.conversations.create_with_customer(customer_id=customer.id)
                 print(f"   ✓ Conversation created: {conversation.id}")
-                
+
                 # Transaction commits here
-            
+
             print("   ✓ Transaction committed successfully")
         except Exception as e:
             print(f"   ✗ Error: {e}")
-        
+
         # Test rollback on error
         print("\n2. Testing rollback on error...")
         try:
@@ -456,15 +452,15 @@ if __name__ == "__main__":
                     email=f"test_{uuid4().hex[:8]}@example.com",
                     name="Test User 2",
                     plan="free",
-                    extra_metadata={}
+                    extra_metadata={},
                 )
                 print(f"   ✓ Customer created: {customer.email}")
-                
+
                 # Simulate error
                 raise ValueError("Simulated error")
         except ValueError:
             print("   ✓ Exception caught, transaction rolled back")
-        
+
         print("\n✓ Unit of Work tests passed")
-    
+
     asyncio.run(test_unit_of_work())
