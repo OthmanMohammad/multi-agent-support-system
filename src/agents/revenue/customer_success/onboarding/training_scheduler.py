@@ -5,13 +5,13 @@ Schedules training sessions, tracks attendance, and measures training effectiven
 Ensures users gain required product proficiency during onboarding.
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("training_scheduler", tier="revenue", category="customer_success")
@@ -32,16 +32,11 @@ class TrainingSchedulerAgent(BaseAgent):
         "admin_training": {"duration_mins": 90, "max_attendees": 10},
         "user_training": {"duration_mins": 60, "max_attendees": 50},
         "technical_training": {"duration_mins": 120, "max_attendees": 5},
-        "advanced_features": {"duration_mins": 90, "max_attendees": 15}
+        "advanced_features": {"duration_mins": 90, "max_attendees": 15},
     }
 
     # Attendance thresholds
-    ATTENDANCE_THRESHOLDS = {
-        "excellent": 90,
-        "good": 75,
-        "acceptable": 60,
-        "poor": 40
-    }
+    ATTENDANCE_THRESHOLDS = {"excellent": 90, "good": 75, "acceptable": 60, "poor": 40}
 
     def __init__(self):
         config = AgentConfig(
@@ -50,7 +45,7 @@ class TrainingSchedulerAgent(BaseAgent):
             temperature=0.3,
             max_tokens=450,
             capabilities=[AgentCapability.CONTEXT_AWARE],
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -77,7 +72,7 @@ class TrainingSchedulerAgent(BaseAgent):
             "training_scheduling_details",
             customer_id=customer_id,
             sessions_scheduled=len(training_data.get("scheduled_sessions", [])),
-            sessions_completed=len(training_data.get("completed_sessions", []))
+            sessions_completed=len(training_data.get("completed_sessions", [])),
         )
 
         # Analyze training status
@@ -102,16 +97,14 @@ class TrainingSchedulerAgent(BaseAgent):
             "training_scheduling_completed",
             customer_id=customer_id,
             training_status=training_analysis["status"],
-            completion_pct=training_analysis["completion_percentage"]
+            completion_pct=training_analysis["completion_percentage"],
         )
 
         return state
 
     def _analyze_training_status(
-        self,
-        training_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, training_data: dict[str, Any], customer_metadata: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Analyze training program status and effectiveness.
 
@@ -132,19 +125,14 @@ class TrainingSchedulerAgent(BaseAgent):
         completion_percentage = int((sessions_completed_count / total_required_sessions) * 100)
 
         # Calculate attendance metrics
-        attendance_metrics = self._calculate_attendance_metrics(
-            completed_sessions,
-            total_users
-        )
+        attendance_metrics = self._calculate_attendance_metrics(completed_sessions, total_users)
 
         # Calculate effectiveness
         effectiveness_score = self._calculate_effectiveness(training_data, attendance_metrics)
 
         # Identify issues
         issues = self._identify_training_issues(
-            scheduled_sessions,
-            completed_sessions,
-            attendance_metrics
+            scheduled_sessions, completed_sessions, attendance_metrics
         )
 
         # Determine status
@@ -152,11 +140,13 @@ class TrainingSchedulerAgent(BaseAgent):
             completion_percentage,
             attendance_metrics["avg_attendance_rate"],
             effectiveness_score,
-            issues
+            issues,
         )
 
         # Check if makeup sessions needed
-        makeup_needed = attendance_metrics["avg_attendance_rate"] < self.ATTENDANCE_THRESHOLDS["acceptable"]
+        makeup_needed = (
+            attendance_metrics["avg_attendance_rate"] < self.ATTENDANCE_THRESHOLDS["acceptable"]
+        )
 
         return {
             "status": status,
@@ -171,21 +161,19 @@ class TrainingSchedulerAgent(BaseAgent):
             "effectiveness_score": effectiveness_score,
             "makeup_sessions_needed": makeup_needed,
             "issues": issues,
-            "analyzed_at": datetime.now(UTC).isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat(),
         }
 
     def _calculate_attendance_metrics(
-        self,
-        completed_sessions: List[Dict[str, Any]],
-        total_users: int
-    ) -> Dict[str, Any]:
+        self, completed_sessions: list[dict[str, Any]], total_users: int
+    ) -> dict[str, Any]:
         """Calculate attendance metrics across sessions."""
         if not completed_sessions:
             return {
                 "avg_attendance_rate": 0,
                 "category": "poor",
                 "unique_attendees": 0,
-                "total_attendances": 0
+                "total_attendances": 0,
             }
 
         total_attendance = 0
@@ -203,11 +191,15 @@ class TrainingSchedulerAgent(BaseAgent):
             attendee_ids = session.get("attendee_ids", [])
             unique_attendees.update(attendee_ids)
 
-        avg_attendance_rate = int((total_attendance / total_expected * 100)) if total_expected > 0 else 0
+        avg_attendance_rate = (
+            int(total_attendance / total_expected * 100) if total_expected > 0 else 0
+        )
 
         # Determine category
         category = "poor"
-        for cat, threshold in sorted(self.ATTENDANCE_THRESHOLDS.items(), key=lambda x: x[1], reverse=True):
+        for cat, threshold in sorted(
+            self.ATTENDANCE_THRESHOLDS.items(), key=lambda x: x[1], reverse=True
+        ):
             if avg_attendance_rate >= threshold:
                 category = cat
                 break
@@ -216,13 +208,11 @@ class TrainingSchedulerAgent(BaseAgent):
             "avg_attendance_rate": avg_attendance_rate,
             "category": category,
             "unique_attendees": len(unique_attendees),
-            "total_attendances": total_attendance
+            "total_attendances": total_attendance,
         }
 
     def _calculate_effectiveness(
-        self,
-        training_data: Dict[str, Any],
-        attendance_metrics: Dict[str, Any]
+        self, training_data: dict[str, Any], attendance_metrics: dict[str, Any]
     ) -> int:
         """Calculate training effectiveness score (0-100)."""
         score = 0
@@ -246,60 +236,70 @@ class TrainingSchedulerAgent(BaseAgent):
 
     def _identify_training_issues(
         self,
-        scheduled_sessions: List[Dict[str, Any]],
-        completed_sessions: List[Dict[str, Any]],
-        attendance_metrics: Dict[str, Any]
-    ) -> List[Dict[str, str]]:
+        scheduled_sessions: list[dict[str, Any]],
+        completed_sessions: list[dict[str, Any]],
+        attendance_metrics: dict[str, Any],
+    ) -> list[dict[str, str]]:
         """Identify issues with training program."""
         issues = []
 
         # Low attendance issue
         if attendance_metrics["avg_attendance_rate"] < self.ATTENDANCE_THRESHOLDS["acceptable"]:
-            issues.append({
-                "issue": "Low attendance rate",
-                "severity": "high",
-                "impact": f"Only {attendance_metrics['avg_attendance_rate']}% attendance - users missing critical training"
-            })
+            issues.append(
+                {
+                    "issue": "Low attendance rate",
+                    "severity": "high",
+                    "impact": f"Only {attendance_metrics['avg_attendance_rate']}% attendance - users missing critical training",
+                }
+            )
 
         # No sessions scheduled
         if not scheduled_sessions and len(completed_sessions) < 4:
-            issues.append({
-                "issue": "Training sessions not scheduled",
-                "severity": "critical",
-                "impact": "Cannot complete onboarding without training program"
-            })
+            issues.append(
+                {
+                    "issue": "Training sessions not scheduled",
+                    "severity": "critical",
+                    "impact": "Cannot complete onboarding without training program",
+                }
+            )
 
         # Sessions behind schedule
         if scheduled_sessions:
             overdue = [s for s in scheduled_sessions if self._is_session_overdue(s)]
             if overdue:
-                issues.append({
-                    "issue": f"{len(overdue)} sessions overdue",
-                    "severity": "medium",
-                    "impact": "Training timeline at risk"
-                })
+                issues.append(
+                    {
+                        "issue": f"{len(overdue)} sessions overdue",
+                        "severity": "medium",
+                        "impact": "Training timeline at risk",
+                    }
+                )
 
         # Low user coverage
-        user_coverage = (attendance_metrics["unique_attendees"] / 10) * 100  # Assuming 10 users baseline
+        user_coverage = (
+            attendance_metrics["unique_attendees"] / 10
+        ) * 100  # Assuming 10 users baseline
         if user_coverage < 50:
-            issues.append({
-                "issue": "Low user coverage",
-                "severity": "high",
-                "impact": f"Only {attendance_metrics['unique_attendees']} users trained - need broader participation"
-            })
+            issues.append(
+                {
+                    "issue": "Low user coverage",
+                    "severity": "high",
+                    "impact": f"Only {attendance_metrics['unique_attendees']} users trained - need broader participation",
+                }
+            )
 
         return issues
 
-    def _is_session_overdue(self, session: Dict[str, Any]) -> bool:
+    def _is_session_overdue(self, session: dict[str, Any]) -> bool:
         """Check if a session is overdue."""
         scheduled_date_str = session.get("scheduled_date")
         if not scheduled_date_str:
             return False
 
         try:
-            scheduled_date = datetime.fromisoformat(scheduled_date_str.replace('Z', '+00:00'))
+            scheduled_date = datetime.fromisoformat(scheduled_date_str.replace("Z", "+00:00"))
             return datetime.now(UTC) > scheduled_date
-        except:
+        except Exception:
             return False
 
     def _determine_training_status(
@@ -307,7 +307,7 @@ class TrainingSchedulerAgent(BaseAgent):
         completion_pct: int,
         attendance_rate: int,
         effectiveness: int,
-        issues: List[Dict[str, str]]
+        issues: list[dict[str, str]],
     ) -> str:
         """Determine overall training status."""
         critical_issues = [i for i in issues if i["severity"] == "critical"]
@@ -326,10 +326,7 @@ class TrainingSchedulerAgent(BaseAgent):
         else:
             return "not_started"
 
-    def _generate_recommendations(
-        self,
-        training_analysis: Dict[str, Any]
-    ) -> List[Dict[str, str]]:
+    def _generate_recommendations(self, training_analysis: dict[str, Any]) -> list[dict[str, str]]:
         """Generate training recommendations."""
         recommendations = []
 
@@ -338,61 +335,71 @@ class TrainingSchedulerAgent(BaseAgent):
 
         # Status-based recommendations
         if status == "blocked":
-            recommendations.append({
-                "action": "Schedule all required training sessions immediately",
-                "priority": "critical",
-                "owner": "Training Scheduler",
-                "timeline": "Within 2 days"
-            })
+            recommendations.append(
+                {
+                    "action": "Schedule all required training sessions immediately",
+                    "priority": "critical",
+                    "owner": "Training Scheduler",
+                    "timeline": "Within 2 days",
+                }
+            )
 
         if status == "at_risk":
-            recommendations.append({
-                "action": "Investigate attendance barriers and reschedule sessions",
-                "priority": "high",
-                "owner": "Training Scheduler",
-                "timeline": "This week"
-            })
+            recommendations.append(
+                {
+                    "action": "Investigate attendance barriers and reschedule sessions",
+                    "priority": "high",
+                    "owner": "Training Scheduler",
+                    "timeline": "This week",
+                }
+            )
 
         # Issue-based recommendations
         for issue in issues:
             if "Low attendance" in issue["issue"]:
-                recommendations.append({
-                    "action": "Schedule makeup training sessions for no-shows",
-                    "priority": "high",
-                    "owner": "Training Scheduler",
-                    "timeline": "Next week"
-                })
+                recommendations.append(
+                    {
+                        "action": "Schedule makeup training sessions for no-shows",
+                        "priority": "high",
+                        "owner": "Training Scheduler",
+                        "timeline": "Next week",
+                    }
+                )
             elif "not scheduled" in issue["issue"].lower():
-                recommendations.append({
-                    "action": "Create and publish training calendar",
-                    "priority": "critical",
-                    "owner": "Training Scheduler",
-                    "timeline": "Within 48 hours"
-                })
+                recommendations.append(
+                    {
+                        "action": "Create and publish training calendar",
+                        "priority": "critical",
+                        "owner": "Training Scheduler",
+                        "timeline": "Within 48 hours",
+                    }
+                )
 
         # Proactive recommendations
         if training_analysis["makeup_sessions_needed"]:
-            recommendations.append({
-                "action": "Offer on-demand training resources for missed sessions",
-                "priority": "medium",
-                "owner": "Training Scheduler",
-                "timeline": "This week"
-            })
+            recommendations.append(
+                {
+                    "action": "Offer on-demand training resources for missed sessions",
+                    "priority": "medium",
+                    "owner": "Training Scheduler",
+                    "timeline": "This week",
+                }
+            )
 
         if status in ["completed", "completed_excellent"]:
-            recommendations.append({
-                "action": "Issue training completion certificates to users",
-                "priority": "low",
-                "owner": "Training Scheduler",
-                "timeline": "Within 1 week"
-            })
+            recommendations.append(
+                {
+                    "action": "Issue training completion certificates to users",
+                    "priority": "low",
+                    "owner": "Training Scheduler",
+                    "timeline": "Within 1 week",
+                }
+            )
 
         return recommendations[:5]
 
     def _format_training_report(
-        self,
-        training_analysis: Dict[str, Any],
-        recommendations: List[Dict[str, str]]
+        self, training_analysis: dict[str, Any], recommendations: list[dict[str, str]]
     ) -> str:
         """Format training scheduler report."""
         status = training_analysis["status"]
@@ -403,22 +410,22 @@ class TrainingSchedulerAgent(BaseAgent):
             "in_progress": "????",
             "at_risk": "??????",
             "blocked": "????",
-            "not_started": "????"
+            "not_started": "????",
         }
 
-        report = f"""**{status_emoji.get(status, '????')} Training Scheduler Report**
+        report = f"""**{status_emoji.get(status, "????")} Training Scheduler Report**
 
-**Status:** {status.replace('_', ' ').title()}
-**Completion:** {training_analysis['completion_percentage']}% ({training_analysis['sessions_completed']}/{training_analysis['total_required_sessions']} sessions)
+**Status:** {status.replace("_", " ").title()}
+**Completion:** {training_analysis["completion_percentage"]}% ({training_analysis["sessions_completed"]}/{training_analysis["total_required_sessions"]} sessions)
 
 **Attendance Metrics:**
-- Average Attendance Rate: {training_analysis['avg_attendance_rate']}% ({training_analysis['attendance_category'].title()})
-- Users Trained: {training_analysis['users_trained']}/{training_analysis['total_users']}
-- Sessions Scheduled: {training_analysis['sessions_scheduled']}
+- Average Attendance Rate: {training_analysis["avg_attendance_rate"]}% ({training_analysis["attendance_category"].title()})
+- Users Trained: {training_analysis["users_trained"]}/{training_analysis["total_users"]}
+- Sessions Scheduled: {training_analysis["sessions_scheduled"]}
 
 **Effectiveness:**
-- Training Effectiveness Score: {training_analysis['effectiveness_score']}/100
-- Makeup Sessions Needed: {'Yes' if training_analysis['makeup_sessions_needed'] else 'No'}
+- Training Effectiveness Score: {training_analysis["effectiveness_score"]}/100
+- Makeup Sessions Needed: {"Yes" if training_analysis["makeup_sessions_needed"] else "No"}
 """
 
         # Issues
@@ -442,6 +449,7 @@ class TrainingSchedulerAgent(BaseAgent):
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -457,25 +465,36 @@ if __name__ == "__main__":
 
         state1 = create_initial_state(
             "Check training status",
-            context={
-                "customer_id": "cust_123",
-                "customer_metadata": {
-                    "total_users": 15
-                }
-            }
+            context={"customer_id": "cust_123", "customer_metadata": {"total_users": 15}},
         )
         state1["entities"] = {
             "training_data": {
                 "scheduled_sessions": [
-                    {"type": "admin_training", "scheduled_date": (datetime.now(UTC) + timedelta(days=3)).isoformat()},
-                    {"type": "user_training", "scheduled_date": (datetime.now(UTC) + timedelta(days=7)).isoformat()}
+                    {
+                        "type": "admin_training",
+                        "scheduled_date": (datetime.now(UTC) + timedelta(days=3)).isoformat(),
+                    },
+                    {
+                        "type": "user_training",
+                        "scheduled_date": (datetime.now(UTC) + timedelta(days=7)).isoformat(),
+                    },
                 ],
                 "completed_sessions": [
-                    {"type": "admin_training", "attended_count": 12, "invited_count": 15, "attendee_ids": [f"user_{i}" for i in range(12)]},
-                    {"type": "user_training", "attended_count": 14, "invited_count": 15, "attendee_ids": [f"user_{i}" for i in range(14)]}
+                    {
+                        "type": "admin_training",
+                        "attended_count": 12,
+                        "invited_count": 15,
+                        "attendee_ids": [f"user_{i}" for i in range(12)],
+                    },
+                    {
+                        "type": "user_training",
+                        "attended_count": 14,
+                        "invited_count": 15,
+                        "attendee_ids": [f"user_{i}" for i in range(14)],
+                    },
                 ],
                 "quiz_scores": [85, 90, 78, 88],
-                "training_satisfaction": 8
+                "training_satisfaction": 8,
             }
         }
 
@@ -493,19 +512,21 @@ if __name__ == "__main__":
 
         state2 = create_initial_state(
             "Assess training issues",
-            context={
-                "customer_id": "cust_456",
-                "customer_metadata": {"total_users": 20}
-            }
+            context={"customer_id": "cust_456", "customer_metadata": {"total_users": 20}},
         )
         state2["entities"] = {
             "training_data": {
                 "scheduled_sessions": [],
                 "completed_sessions": [
-                    {"type": "admin_training", "attended_count": 5, "invited_count": 20, "attendee_ids": [f"user_{i}" for i in range(5)]}
+                    {
+                        "type": "admin_training",
+                        "attended_count": 5,
+                        "invited_count": 20,
+                        "attendee_ids": [f"user_{i}" for i in range(5)],
+                    }
                 ],
                 "quiz_scores": [60, 55],
-                "training_satisfaction": 5
+                "training_satisfaction": 5,
             }
         }
 
