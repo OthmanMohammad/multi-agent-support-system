@@ -2,11 +2,10 @@
 SSO Specialist Agent - Helps configure SAML/OAuth SSO for enterprise customers.
 """
 
-from typing import Dict, Any
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("sso_specialist", tier="essential", category="account")
@@ -19,7 +18,7 @@ class SSOSpecialist(BaseAgent):
         "google_workspace": "Google Workspace",
         "onelogin": "OneLogin",
         "auth0": "Auth0",
-        "custom_saml": "Custom SAML 2.0 Provider"
+        "custom_saml": "Custom SAML 2.0 Provider",
     }
 
     def __init__(self):
@@ -29,7 +28,7 @@ class SSOSpecialist(BaseAgent):
             temperature=0.3,
             capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="account",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -37,11 +36,11 @@ class SSOSpecialist(BaseAgent):
     async def process(self, state: AgentState) -> AgentState:
         self.logger.info("sso_specialist_processing_started")
         state = self.update_state(state)
-        
+
         message = state["current_message"]
         customer_context = state.get("customer_metadata", {})
         plan = customer_context.get("plan", "free")
-        
+
         # Check enterprise requirement
         if plan not in ["enterprise"]:
             state["agent_response"] = self._sso_upgrade_required()
@@ -49,19 +48,19 @@ class SSOSpecialist(BaseAgent):
             state["next_agent"] = None
             state["status"] = "resolved"
             return state
-        
+
         provider = self._detect_sso_provider(message)
         kb_results = await self.search_knowledge_base(message, category="account", limit=2)
         state["kb_results"] = kb_results
-        
+
         response = self._generate_sso_guide(provider)
-        
+
         state["agent_response"] = response
         state["sso_provider"] = provider
         state["response_confidence"] = 0.85
         state["next_agent"] = None
         state["status"] = "resolved"
-        
+
         self.logger.info("sso_processing_completed", provider=provider)
         return state
 
@@ -286,15 +285,16 @@ Let me know: "Setup SSO with Okta/Azure/Google"
 
 **Contact:** support@example.com for SSO assistance"""
 
+
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
         agent = SSOSpecialist()
         state = create_initial_state(
-            "How do I setup SSO with Okta?",
-            context={"customer_metadata": {"plan": "enterprise"}}
+            "How do I setup SSO with Okta?", context={"customer_metadata": {"plan": "enterprise"}}
         )
         result = await agent.process(state)
         print(f"Provider: {result.get('sso_provider')}")
