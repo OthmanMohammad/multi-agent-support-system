@@ -520,5 +520,9 @@ Your response should:
 
 Generate a clear billing calculation explanation."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # Billing calculations are standalone
+        )
         return response
