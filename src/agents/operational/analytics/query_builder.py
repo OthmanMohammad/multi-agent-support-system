@@ -175,7 +175,12 @@ Available tables and columns:
 Return the intent as a structured format."""
 
         try:
-            response = await self.call_llm(system_prompt, user_message, max_tokens=500)
+            response = await self.call_llm(
+                system_prompt=system_prompt,
+                user_message=user_message,
+                conversation_history=[],  # Query intent parsing uses query context
+                max_tokens=500
+            )
 
             # Parse response (simplified - in production, use JSON parsing)
             intent = self._extract_intent_from_response(response, nl_query)
