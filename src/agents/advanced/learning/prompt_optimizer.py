@@ -15,18 +15,17 @@ Key Capabilities:
 Part of: EPIC-004 Learning & Improvement Swarm (TASK-4056)
 """
 
-from typing import Dict, Any, List, Optional
-import structlog
-from datetime import datetime, timedelta, UTC
 from collections import defaultdict
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.services.infrastructure.agent_registry import AgentRegistry
-from src.database.connection import get_db_session
+import structlog
+
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
+from src.api.dependencies import get_db
 from src.database.models.conversation import Conversation
-from src.database.models.message import Message
-from src.database.models.agent_performance import AgentPerformance
+from src.services.infrastructure.agent_registry import AgentRegistry
+from src.workflow.state import AgentState
 
 logger = structlog.get_logger(__name__)
 
@@ -55,12 +54,9 @@ class PromptOptimizerAgent(BaseAgent):
             type=AgentType.ANALYZER,
             temperature=0.2,
             max_tokens=4000,
-            capabilities=[
-                AgentCapability.DATABASE_READ,
-                AgentCapability.ANALYTICS
-            ],
+            capabilities=[AgentCapability.DATABASE_READ, AgentCapability.ANALYTICS],
             tier="advanced",
-            system_prompt_template=self._get_system_prompt()
+            system_prompt_template=self._get_system_prompt(),
         )
         super().__init__(config)
         self.logger = logger.bind(agent="prompt_optimizer")
@@ -137,7 +133,7 @@ Provide 3-5 highest-impact optimization recommendations."""
             performance_summary = await self._analyze_agent_performance(
                 lookback_days=lookback_days,
                 min_conversations=min_conversations,
-                target_agent=target_agent
+                target_agent=target_agent,
             )
 
             # If no data, return early
@@ -147,7 +143,7 @@ Provide 3-5 highest-impact optimization recommendations."""
                     agent_response="**Insufficient data for prompt optimization analysis.** Need at least 50 conversations in the last 7 days.",
                     status="completed",
                     response_confidence=0.5,
-                    next_agent=None
+                    next_agent=None,
                 )
 
             # Build analysis prompt
@@ -167,7 +163,9 @@ Provide actionable, testable prompt improvements."""
             optimization_state = state.copy()
             optimization_state["user_message"] = analysis_prompt
             optimization_state["performance_summary"] = performance_summary
-            optimization_state["conversation_history"] = []  # Prompt optimization is standalone analysis
+            optimization_state[
+                "conversation_history"
+            ] = []  # Prompt optimization is standalone analysis
 
             llm_response = await self.call_llm(optimization_state)
 
@@ -175,15 +173,13 @@ Provide actionable, testable prompt improvements."""
             recommendations = self._extract_recommendations(llm_response)
 
             final_response = self._build_final_response(
-                llm_response,
-                recommendations,
-                performance_summary
+                llm_response, recommendations, performance_summary
             )
 
             self.logger.info(
                 "prompt_optimizer_completed",
                 recommendations_count=len(recommendations),
-                agents_analyzed=len(performance_summary.get("agent_stats", {}))
+                agents_analyzed=len(performance_summary.get("agent_stats", {})),
             )
 
             return self.update_state(
@@ -195,26 +191,23 @@ Provide actionable, testable prompt improvements."""
                 metadata={
                     "recommendations": recommendations,
                     "performance_summary": performance_summary,
-                    "analysis_period_days": lookback_days
-                }
+                    "analysis_period_days": lookback_days,
+                },
             )
 
         except Exception as e:
             self.logger.error("prompt_optimizer_error", error=str(e), exc_info=True)
             return self.update_state(
                 state,
-                agent_response=f"**Error during prompt optimization analysis:** {str(e)}",
+                agent_response=f"**Error during prompt optimization analysis:** {e!s}",
                 status="error",
                 response_confidence=0.0,
-                next_agent=None
+                next_agent=None,
             )
 
     async def _analyze_agent_performance(
-        self,
-        lookback_days: int,
-        min_conversations: int,
-        target_agent: Optional[str]
-    ) -> Dict[str, Any]:
+        self, lookback_days: int, min_conversations: int, target_agent: str | None
+    ) -> dict[str, Any]:
         """
         Analyze agent performance from database.
 
@@ -231,13 +224,11 @@ Provide actionable, testable prompt improvements."""
             # Query conversations with outcomes
             query = db.query(Conversation).filter(
                 Conversation.started_at >= start_date,
-                Conversation.status.in_(["resolved", "closed"])
+                Conversation.status.in_(["resolved", "closed"]),
             )
 
             if target_agent:
-                query = query.filter(
-                    Conversation.agents_involved.contains([target_agent])
-                )
+                query = query.filter(Conversation.agents_involved.contains([target_agent]))
 
             conversations = query.all()
 
@@ -245,19 +236,21 @@ Provide actionable, testable prompt improvements."""
                 return {}
 
             # Aggregate metrics by agent
-            agent_stats = defaultdict(lambda: {
-                "conversation_count": 0,
-                "avg_csat": 0.0,
-                "avg_resolution_time": 0.0,
-                "avg_confidence": 0.0,
-                "escalation_count": 0,
-                "total_messages": 0,
-                "sentiment_scores": [],
-                "kb_usage_count": 0,
-                "csat_scores": [],
-                "resolution_times": [],
-                "confidence_scores": []
-            })
+            agent_stats = defaultdict(
+                lambda: {
+                    "conversation_count": 0,
+                    "avg_csat": 0.0,
+                    "avg_resolution_time": 0.0,
+                    "avg_confidence": 0.0,
+                    "escalation_count": 0,
+                    "total_messages": 0,
+                    "sentiment_scores": [],
+                    "kb_usage_count": 0,
+                    "csat_scores": [],
+                    "resolution_times": [],
+                    "confidence_scores": [],
+                }
+            )
 
             for conv in conversations:
                 # Get primary agent (first agent that handled conversation)
@@ -298,35 +291,39 @@ Provide actionable, testable prompt improvements."""
                             stats["confidence_scores"].append(message.confidence)
 
             # Calculate averages
-            for agent, stats in agent_stats.items():
+            for _agent, stats in agent_stats.items():
                 if stats["csat_scores"]:
                     stats["avg_csat"] = sum(stats["csat_scores"]) / len(stats["csat_scores"])
                 if stats["resolution_times"]:
-                    stats["avg_resolution_time"] = sum(stats["resolution_times"]) / len(stats["resolution_times"])
+                    stats["avg_resolution_time"] = sum(stats["resolution_times"]) / len(
+                        stats["resolution_times"]
+                    )
                 if stats["confidence_scores"]:
-                    stats["avg_confidence"] = sum(stats["confidence_scores"]) / len(stats["confidence_scores"])
+                    stats["avg_confidence"] = sum(stats["confidence_scores"]) / len(
+                        stats["confidence_scores"]
+                    )
                 if stats["sentiment_scores"]:
-                    stats["avg_sentiment"] = sum(stats["sentiment_scores"]) / len(stats["sentiment_scores"])
+                    stats["avg_sentiment"] = sum(stats["sentiment_scores"]) / len(
+                        stats["sentiment_scores"]
+                    )
 
                 stats["escalation_rate"] = (
                     stats["escalation_count"] / stats["conversation_count"]
-                    if stats["conversation_count"] > 0 else 0.0
+                    if stats["conversation_count"] > 0
+                    else 0.0
                 )
 
             return {
                 "agent_stats": dict(agent_stats),
                 "total_conversations": len(conversations),
-                "date_range": {
-                    "start": start_date.isoformat(),
-                    "end": end_date.isoformat()
-                },
-                "lookback_days": lookback_days
+                "date_range": {"start": start_date.isoformat(), "end": end_date.isoformat()},
+                "lookback_days": lookback_days,
             }
 
         finally:
             db.close()
 
-    def _format_performance_summary(self, summary: Dict[str, Any]) -> str:
+    def _format_performance_summary(self, summary: dict[str, Any]) -> str:
         """Format performance summary for LLM analysis."""
         output = []
 
@@ -339,9 +336,7 @@ Provide actionable, testable prompt improvements."""
         # Sort agents by conversation count
         agent_stats = summary["agent_stats"]
         sorted_agents = sorted(
-            agent_stats.items(),
-            key=lambda x: x[1]["conversation_count"],
-            reverse=True
+            agent_stats.items(), key=lambda x: x[1]["conversation_count"], reverse=True
         )
 
         for agent_name, stats in sorted_agents:
@@ -349,17 +344,17 @@ Provide actionable, testable prompt improvements."""
             output.append(f"- Conversations: {stats['conversation_count']}")
             output.append(f"- Avg CSAT: {stats['avg_csat']:.2f}/5.0")
             output.append(f"- Avg Confidence: {stats['avg_confidence']:.2f}")
-            output.append(f"- Escalation Rate: {stats['escalation_rate']*100:.1f}%")
+            output.append(f"- Escalation Rate: {stats['escalation_rate'] * 100:.1f}%")
             output.append(f"- Avg Resolution Time: {stats['avg_resolution_time']:.0f}s")
             output.append(f"- KB Articles Used: {stats['kb_usage_count']}")
 
             # Highlight issues
             issues = []
-            if stats['avg_csat'] < 4.0:
+            if stats["avg_csat"] < 4.0:
                 issues.append("?????? Low CSAT")
-            if stats['avg_confidence'] < 0.7:
+            if stats["avg_confidence"] < 0.7:
                 issues.append("?????? Low Confidence")
-            if stats['escalation_rate'] > 0.15:
+            if stats["escalation_rate"] > 0.15:
                 issues.append("?????? High Escalation Rate")
 
             if issues:
@@ -369,7 +364,7 @@ Provide actionable, testable prompt improvements."""
 
         return "\n".join(output)
 
-    def _extract_recommendations(self, llm_response: str) -> List[Dict[str, Any]]:
+    def _extract_recommendations(self, llm_response: str) -> list[dict[str, Any]]:
         """Extract structured recommendations from LLM response."""
         # In a production system, this would parse structured output
         # For now, return a simple list
@@ -378,15 +373,15 @@ Provide actionable, testable prompt improvements."""
                 "agent": "auto_detected",
                 "priority": "high",
                 "category": "prompt_optimization",
-                "recommendation": llm_response
+                "recommendation": llm_response,
             }
         ]
 
     def _build_final_response(
         self,
         llm_response: str,
-        recommendations: List[Dict[str, Any]],
-        performance_summary: Dict[str, Any]
+        recommendations: list[dict[str, Any]],
+        performance_summary: dict[str, Any],
     ) -> str:
         """Build final comprehensive response."""
         output = []
@@ -408,15 +403,15 @@ Provide actionable, testable prompt improvements."""
         output.append("")
         agent_stats = performance_summary["agent_stats"]
         top_agents = sorted(
-            agent_stats.items(),
-            key=lambda x: x[1]["conversation_count"],
-            reverse=True
+            agent_stats.items(), key=lambda x: x[1]["conversation_count"], reverse=True
         )[:5]
 
         for agent_name, stats in top_agents:
-            output.append(f"**{agent_name}:** {stats['conversation_count']} convos, "
-                        f"CSAT {stats['avg_csat']:.2f}, "
-                        f"Confidence {stats['avg_confidence']:.2f}")
+            output.append(
+                f"**{agent_name}:** {stats['conversation_count']} convos, "
+                f"CSAT {stats['avg_csat']:.2f}, "
+                f"Confidence {stats['avg_confidence']:.2f}"
+            )
 
         output.append("")
         output.append("## ???? Next Steps")
