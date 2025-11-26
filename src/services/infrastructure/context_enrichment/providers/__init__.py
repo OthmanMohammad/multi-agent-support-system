@@ -7,6 +7,8 @@ Providers fetch context data from various sources:
 - Realtime: Current system status and activity
 """
 
-from src.services.infrastructure.context_enrichment.providers.base_provider import BaseContextProvider
+from src.services.infrastructure.context_enrichment.providers.base_provider import (
+    BaseContextProvider,
+)
 
 __all__ = ["BaseContextProvider"]
