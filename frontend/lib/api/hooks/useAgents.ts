@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "@/lib/api/client";
+import { apiClient } from "@/lib/api-client";
 import type { components } from "@/types/api";
 
 /**
@@ -20,7 +20,11 @@ export function useAgents() {
   return useQuery({
     queryKey: ["agents"],
     queryFn: async (): Promise<AgentList> => {
-      return apiClient.get<AgentList>("/api/agents");
+      const result = await apiClient.get<AgentList>("/api/agents");
+      if (!result.success) {
+        throw result.error;
+      }
+      return result.data;
     },
     staleTime: 60000, // 1 minute
     gcTime: 10 * 60 * 1000, // 10 minutes
@@ -34,7 +38,11 @@ export function useAgent(agentId: string) {
   return useQuery({
     queryKey: ["agents", agentId],
     queryFn: async (): Promise<Agent> => {
-      return apiClient.get<Agent>(`/api/agents/${agentId}`);
+      const result = await apiClient.get<Agent>(`/api/agents/${agentId}`);
+      if (!result.success) {
+        throw result.error;
+      }
+      return result.data;
     },
     enabled: !!agentId,
     staleTime: 60000, // 1 minute
@@ -50,7 +58,11 @@ export function useCreateAgent() {
 
   return useMutation({
     mutationFn: async (data: CreateAgentRequest): Promise<Agent> => {
-      return apiClient.post<Agent>("/api/agents", data);
+      const result = await apiClient.post<Agent>("/api/agents", data);
+      if (!result.success) {
+        throw result.error;
+      }
+      return result.data;
     },
     onSuccess: () => {
       // Invalidate agents list
@@ -69,7 +81,11 @@ export function useUpdateAgent(agentId: string) {
 
   return useMutation({
     mutationFn: async (data: UpdateAgentRequest): Promise<Agent> => {
-      return apiClient.patch<Agent>(`/api/agents/${agentId}`, data);
+      const result = await apiClient.patch<Agent>(`/api/agents/${agentId}`, data);
+      if (!result.success) {
+        throw result.error;
+      }
+      return result.data;
     },
     onSuccess: () => {
       // Invalidate agent query
@@ -92,7 +108,10 @@ export function useDeleteAgent() {
 
   return useMutation({
     mutationFn: async (agentId: string): Promise<void> => {
-      return apiClient.delete<void>(`/api/agents/${agentId}`);
+      const result = await apiClient.delete<void>(`/api/agents/${agentId}`);
+      if (!result.success) {
+        throw result.error;
+      }
     },
     onSuccess: () => {
       // Invalidate agents list
