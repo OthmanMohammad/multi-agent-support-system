@@ -12,7 +12,8 @@ Each module contains routes for a specific domain:
 """
 
 from fastapi import APIRouter
-from src.api.routes import auth, agents, workflows, conversations, customers, analytics, health
+
+from src.api.routes import agents, analytics, auth, conversations, customers, health, workflows
 
 # Create main router
 api_router = APIRouter()
