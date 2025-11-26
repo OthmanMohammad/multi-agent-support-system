@@ -5,13 +5,12 @@ Sells premium support packages by identifying high-touch support needs.
 Converts support-intensive customers into premium support subscribers.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("premium_support_seller", tier="revenue", category="monetization")
@@ -41,10 +40,10 @@ class PremiumSupportSeller(BaseAgent):
                 "4-hour response SLA",
                 "Unlimited tickets",
                 "Phone support during business hours",
-                "Monthly support reviews"
+                "Monthly support reviews",
             ],
             "ideal_for": ["mid_market", "growing_teams"],
-            "min_tickets_per_month": 15
+            "min_tickets_per_month": 15,
         },
         "enterprise": {
             "name": "Enterprise Support",
@@ -57,10 +56,10 @@ class PremiumSupportSeller(BaseAgent):
                 "Quarterly business reviews",
                 "Architecture guidance",
                 "Priority bug fixes",
-                "Named support contacts"
+                "Named support contacts",
             ],
             "ideal_for": ["enterprise", "mission_critical"],
-            "min_tickets_per_month": 25
+            "min_tickets_per_month": 25,
         },
         "premium_plus": {
             "name": "Premium Plus Support",
@@ -73,40 +72,24 @@ class PremiumSupportSeller(BaseAgent):
                 "Weekly sync meetings",
                 "Custom SLA agreements",
                 "On-call support engineer",
-                "Proactive monitoring"
+                "Proactive monitoring",
             ],
             "ideal_for": ["enterprise", "high_value"],
-            "min_tickets_per_month": 40
-        }
+            "min_tickets_per_month": 40,
+        },
     }
 
     # Qualification criteria
     QUALIFICATION_CRITERIA = {
-        "high_ticket_volume": {
-            "metric": "tickets_per_month",
-            "threshold": 15,
-            "weight": 0.30
-        },
-        "critical_issues": {
-            "metric": "critical_tickets_per_month",
-            "threshold": 3,
-            "weight": 0.25
-        },
+        "high_ticket_volume": {"metric": "tickets_per_month", "threshold": 15, "weight": 0.30},
+        "critical_issues": {"metric": "critical_tickets_per_month", "threshold": 3, "weight": 0.25},
         "slow_response_frustration": {
             "metric": "avg_response_time_hours",
             "threshold": 6,
-            "weight": 0.20
+            "weight": 0.20,
         },
-        "escalations": {
-            "metric": "escalated_tickets",
-            "threshold": 5,
-            "weight": 0.15
-        },
-        "weekend_tickets": {
-            "metric": "weekend_tickets",
-            "threshold": 5,
-            "weight": 0.10
-        }
+        "escalations": {"metric": "escalated_tickets", "threshold": 5, "weight": 0.15},
+        "weekend_tickets": {"metric": "weekend_tickets", "threshold": 5, "weight": 0.10},
     }
 
     # Value calculation factors
@@ -114,22 +97,19 @@ class PremiumSupportSeller(BaseAgent):
         "time_saved_per_ticket_hours": 2,  # Hours saved with faster response
         "engineer_hourly_cost": 75,  # Average engineer cost
         "downtime_cost_per_hour": 5000,  # Cost of critical downtime
-        "productivity_boost": 0.25  # 25% productivity improvement
+        "productivity_boost": 0.25,  # 25% productivity improvement
     }
 
     def __init__(self):
         config = AgentConfig(
             name="premium_support_seller",
             type=AgentType.SPECIALIST,
-             # Sonnet for sales conversations
+            # Sonnet for sales conversations
             temperature=0.3,
             max_tokens=600,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.KB_SEARCH
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.KB_SEARCH],
             kb_category="monetization",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -155,38 +135,25 @@ class PremiumSupportSeller(BaseAgent):
         qualification = self._qualify_customer(customer_metadata)
 
         # Determine recommended tier
-        recommended_tier = self._recommend_tier(
-            qualification,
-            customer_metadata
-        )
+        recommended_tier = self._recommend_tier(qualification, customer_metadata)
 
         # Calculate ROI and value
-        roi_analysis = self._calculate_roi(
-            recommended_tier,
-            customer_metadata
-        )
+        roi_analysis = self._calculate_roi(recommended_tier, customer_metadata)
 
         # Build value proposition
         value_proposition = self._build_value_proposition(
-            recommended_tier,
-            roi_analysis,
-            customer_metadata
+            recommended_tier, roi_analysis, customer_metadata
         )
 
         # Compare current vs premium support
-        comparison = self._compare_support_tiers(
-            recommended_tier,
-            customer_metadata
-        )
+        comparison = self._compare_support_tiers(recommended_tier, customer_metadata)
 
         # Generate objection handling
-        objections = self._prepare_objection_handling(recommended_tier)
+        self._prepare_objection_handling(recommended_tier)
 
         # Search KB for premium support resources
         kb_results = await self.search_knowledge_base(
-            "premium support enterprise SLA",
-            category="monetization",
-            limit=2
+            "premium support enterprise SLA", category="monetization", limit=2
         )
         state["kb_results"] = kb_results
 
@@ -199,7 +166,7 @@ class PremiumSupportSeller(BaseAgent):
             roi_analysis,
             comparison,
             kb_results,
-            customer_metadata
+            customer_metadata,
         )
 
         # Update state
@@ -216,18 +183,18 @@ class PremiumSupportSeller(BaseAgent):
             "premium_support_seller_completed",
             qualified=qualification["is_qualified"],
             recommended_tier=recommended_tier,
-            roi_percentage=roi_analysis.get("roi_percentage", 0)
+            roi_percentage=roi_analysis.get("roi_percentage", 0),
         )
 
         return state
 
-    def _qualify_customer(self, customer_metadata: Dict) -> Dict[str, Any]:
+    def _qualify_customer(self, customer_metadata: dict) -> dict[str, Any]:
         """Qualify customer for premium support based on criteria"""
         qualification = {
             "is_qualified": False,
             "qualification_score": 0.0,
             "qualifying_factors": [],
-            "signals": {}
+            "signals": {},
         }
 
         total_weight = 0
@@ -244,7 +211,7 @@ class PremiumSupportSeller(BaseAgent):
                 "metric": metric,
                 "actual": actual_value,
                 "threshold": threshold,
-                "meets_threshold": actual_value >= threshold
+                "meets_threshold": actual_value >= threshold,
             }
 
             if actual_value >= threshold:
@@ -252,18 +219,13 @@ class PremiumSupportSeller(BaseAgent):
                 qualification["qualifying_factors"].append(factor)
 
         qualification["qualification_score"] = round(
-            (weighted_score / total_weight) * 100 if total_weight > 0 else 0,
-            2
+            (weighted_score / total_weight) * 100 if total_weight > 0 else 0, 2
         )
         qualification["is_qualified"] = qualification["qualification_score"] >= 50
 
         return qualification
 
-    def _recommend_tier(
-        self,
-        qualification: Dict,
-        customer_metadata: Dict
-    ) -> str:
+    def _recommend_tier(self, qualification: dict, customer_metadata: dict) -> str:
         """Recommend appropriate premium support tier"""
         tickets_per_month = customer_metadata.get("tickets_per_month", 0)
         company_size = customer_metadata.get("company_size", 0)
@@ -277,11 +239,7 @@ class PremiumSupportSeller(BaseAgent):
         else:
             return "business"
 
-    def _calculate_roi(
-        self,
-        tier: str,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+    def _calculate_roi(self, tier: str, customer_metadata: dict) -> dict[str, Any]:
         """Calculate ROI for premium support investment"""
         tier_info = self.PREMIUM_SUPPORT_TIERS[tier]
         annual_cost = tier_info["price_annual"]
@@ -305,7 +263,9 @@ class PremiumSupportSeller(BaseAgent):
         total_annual_value = time_saved_value + downtime_value + productivity_value
 
         # Calculate ROI
-        roi_percentage = ((total_annual_value - annual_cost) / annual_cost) * 100 if annual_cost > 0 else 0
+        roi_percentage = (
+            ((total_annual_value - annual_cost) / annual_cost) * 100 if annual_cost > 0 else 0
+        )
         payback_months = (annual_cost / (total_annual_value / 12)) if total_annual_value > 0 else 0
 
         return {
@@ -318,15 +278,12 @@ class PremiumSupportSeller(BaseAgent):
             "total_annual_value": round(total_annual_value, 2),
             "roi_percentage": round(roi_percentage, 2),
             "payback_months": round(payback_months, 1),
-            "monthly_savings": round((total_annual_value - annual_cost) / 12, 2)
+            "monthly_savings": round((total_annual_value - annual_cost) / 12, 2),
         }
 
     def _build_value_proposition(
-        self,
-        tier: str,
-        roi_analysis: Dict,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, tier: str, roi_analysis: dict, customer_metadata: dict
+    ) -> dict[str, Any]:
         """Build personalized value proposition"""
         tier_info = self.PREMIUM_SUPPORT_TIERS[tier]
         company = customer_metadata.get("company", "your team")
@@ -337,17 +294,15 @@ class PremiumSupportSeller(BaseAgent):
                 f"Reduce response time from 6+ hours to {tier_info.get('sla', '1 hour')}",
                 f"Save ${roi_analysis['time_saved_value']:,.0f} in engineering time annually",
                 f"Prevent ${roi_analysis['downtime_reduction_value']:,.0f} in downtime costs",
-                f"ROI: {roi_analysis['roi_percentage']:.0f}% annual return"
+                f"ROI: {roi_analysis['roi_percentage']:.0f}% annual return",
             ],
             "use_case": f"With {customer_metadata.get('tickets_per_month', 0)} tickets/month, {company} needs faster, dedicated support",
-            "urgency": "Critical issues are costing you time and money every day"
+            "urgency": "Critical issues are costing you time and money every day",
         }
 
     def _compare_support_tiers(
-        self,
-        recommended_tier: str,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, recommended_tier: str, customer_metadata: dict
+    ) -> dict[str, Any]:
         """Compare current support with recommended premium tier"""
         recommended = self.PREMIUM_SUPPORT_TIERS[recommended_tier]
 
@@ -357,7 +312,7 @@ class PremiumSupportSeller(BaseAgent):
                 "response_time": "24-48 hours",
                 "channels": "Email only",
                 "availability": "Business hours",
-                "cost": "$0/month"
+                "cost": "$0/month",
             },
             "recommended": {
                 "name": recommended["name"],
@@ -365,12 +320,12 @@ class PremiumSupportSeller(BaseAgent):
                 "channels": "Phone, Email, Chat",
                 "availability": "24/7",
                 "cost": f"${recommended['price_monthly']}/month",
-                "features": recommended["features"]
+                "features": recommended["features"],
             },
-            "upgrade_value": "Faster resolutions, less downtime, dedicated support"
+            "upgrade_value": "Faster resolutions, less downtime, dedicated support",
         }
 
-    def _prepare_objection_handling(self, tier: str) -> Dict[str, str]:
+    def _prepare_objection_handling(self, tier: str) -> dict[str, str]:
         """Prepare responses to common objections"""
         tier_info = self.PREMIUM_SUPPORT_TIERS[tier]
 
@@ -378,19 +333,19 @@ class PremiumSupportSeller(BaseAgent):
             "too_expensive": f"The ROI shows you'll save more than the ${tier_info['price_monthly']}/mo cost in reduced downtime and engineer time",
             "dont_need_it": "Your support volume and critical issues show this would save significant time and money",
             "try_later": "Every month without premium support is costing you thousands in productivity losses",
-            "works_fine_now": "Standard support works, but critical issues taking 24+ hours cost you real money and team frustration"
+            "works_fine_now": "Standard support works, but critical issues taking 24+ hours cost you real money and team frustration",
         }
 
     async def _generate_sales_response(
         self,
         message: str,
-        qualification: Dict,
+        qualification: dict,
         recommended_tier: str,
-        value_proposition: Dict,
-        roi_analysis: Dict,
-        comparison: Dict,
-        kb_results: List[Dict],
-        customer_metadata: Dict
+        value_proposition: dict,
+        roi_analysis: dict,
+        comparison: dict,
+        kb_results: list[dict],
+        customer_metadata: dict,
     ) -> str:
         """Generate premium support sales response"""
 
@@ -398,19 +353,19 @@ class PremiumSupportSeller(BaseAgent):
 
         # Build qualification context
         qual_context = f"""
-Qualification Score: {qualification['qualification_score']}/100
-Qualifying Factors: {', '.join(qualification['qualifying_factors'])}
-Recommended Tier: {tier_info['name']}
+Qualification Score: {qualification["qualification_score"]}/100
+Qualifying Factors: {", ".join(qualification["qualifying_factors"])}
+Recommended Tier: {tier_info["name"]}
 """
 
         # Build ROI context
         roi_context = f"""
 ROI Analysis:
-- Monthly Cost: ${roi_analysis['monthly_cost']}
-- Annual Value: ${roi_analysis['total_annual_value']:,.0f}
-- ROI: {roi_analysis['roi_percentage']:.0f}%
-- Payback Period: {roi_analysis['payback_months']} months
-- Time Saved: {roi_analysis['time_saved_hours']:.0f} hours/year
+- Monthly Cost: ${roi_analysis["monthly_cost"]}
+- Annual Value: ${roi_analysis["total_annual_value"]:,.0f}
+- ROI: {roi_analysis["roi_percentage"]:.0f}%
+- Payback Period: {roi_analysis["payback_months"]} months
+- Time Saved: {roi_analysis["time_saved_hours"]:.0f} hours/year
 """
 
         # Build KB context
@@ -422,15 +377,15 @@ ROI Analysis:
 
         system_prompt = f"""You are a Premium Support Seller helping customers get better support outcomes.
 
-Customer: {customer_metadata.get('company', 'Customer')}
-Current Support Tickets: {customer_metadata.get('tickets_per_month', 0)}/month
+Customer: {customer_metadata.get("company", "Customer")}
+Current Support Tickets: {customer_metadata.get("tickets_per_month", 0)}/month
 {qual_context}
 {roi_context}
 
 Your response should:
 1. Acknowledge their support challenges empathetically
 2. Identify specific pain points from their support usage
-3. Present the value of {tier_info['name']}
+3. Present the value of {tier_info["name"]}
 4. Quantify ROI and time savings
 5. Compare current vs premium support clearly
 6. Address concerns about cost with value
@@ -444,10 +399,10 @@ Tone: Helpful, data-driven, solution-focused"""
         user_prompt = f"""Customer message: {message}
 
 Value Proposition:
-{value_proposition['headline']}
+{value_proposition["headline"]}
 
 Key Benefits:
-{chr(10).join(f'- {benefit}' for benefit in value_proposition['key_benefits'])}
+{chr(10).join(f"- {benefit}" for benefit in value_proposition["key_benefits"])}
 
 {kb_context}
 
@@ -456,6 +411,6 @@ Generate a compelling premium support recommendation."""
         response = await self.call_llm(
             system_prompt=system_prompt,
             user_message=user_prompt,
-            conversation_history=[]  # Sales context is built from customer profile
+            conversation_history=[],  # Sales context is built from customer profile
         )
         return response
