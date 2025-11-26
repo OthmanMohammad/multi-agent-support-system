@@ -175,6 +175,9 @@ Analyze ONLY the message content and context. Output valid JSON."""
             # Get customer context for enhanced analysis
             customer_context = state.get("customer_metadata", {})
 
+            # Get conversation history for context
+            conversation_history = self.get_conversation_context(state)
+
             # Call LLM for sentiment analysis
             context_str = self._format_customer_context(customer_context)
             prompt = f"""Analyze the sentiment of this message.
@@ -187,7 +190,8 @@ Provide sentiment analysis in JSON format."""
 
             response = await self.call_llm(
                 system_prompt=self._get_system_prompt(),
-                user_message=prompt
+                user_message=prompt,
+                conversation_history=conversation_history
             )
 
             # Parse response
