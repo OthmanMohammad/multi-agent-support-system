@@ -5,14 +5,14 @@ Generates role-specific dashboards with JSON output for various stakeholders.
 Provides customized data views for executives, managers, and individual contributors.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta, UTC
 import json
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("dashboard_generator", tier="operational", category="analytics")
@@ -38,9 +38,9 @@ class DashboardGeneratorAgent(BaseAgent):
                 "customer_growth",
                 "key_metrics",
                 "health_indicators",
-                "strategic_initiatives"
+                "strategic_initiatives",
             ],
-            "refresh_interval": "daily"
+            "refresh_interval": "daily",
         },
         "cs_manager": {
             "name": "Customer Success Manager Dashboard",
@@ -50,9 +50,9 @@ class DashboardGeneratorAgent(BaseAgent):
                 "at_risk_accounts",
                 "nps_score",
                 "adoption_metrics",
-                "upcoming_renewals"
+                "upcoming_renewals",
             ],
-            "refresh_interval": "hourly"
+            "refresh_interval": "hourly",
         },
         "sales_manager": {
             "name": "Sales Manager Dashboard",
@@ -62,9 +62,9 @@ class DashboardGeneratorAgent(BaseAgent):
                 "deal_stages",
                 "quota_attainment",
                 "top_opportunities",
-                "sales_velocity"
+                "sales_velocity",
             ],
-            "refresh_interval": "hourly"
+            "refresh_interval": "hourly",
         },
         "support_manager": {
             "name": "Support Manager Dashboard",
@@ -74,9 +74,9 @@ class DashboardGeneratorAgent(BaseAgent):
                 "csat_trends",
                 "agent_performance",
                 "backlog_status",
-                "escalations"
+                "escalations",
             ],
-            "refresh_interval": "realtime"
+            "refresh_interval": "realtime",
         },
         "product_manager": {
             "name": "Product Manager Dashboard",
@@ -86,9 +86,9 @@ class DashboardGeneratorAgent(BaseAgent):
                 "feature_requests",
                 "bug_trends",
                 "usage_analytics",
-                "retention_cohorts"
+                "retention_cohorts",
             ],
-            "refresh_interval": "daily"
+            "refresh_interval": "daily",
         },
         "engineering": {
             "name": "Engineering Dashboard",
@@ -98,10 +98,10 @@ class DashboardGeneratorAgent(BaseAgent):
                 "error_rates",
                 "deployment_frequency",
                 "incident_status",
-                "infrastructure_costs"
+                "infrastructure_costs",
             ],
-            "refresh_interval": "realtime"
-        }
+            "refresh_interval": "realtime",
+        },
     }
 
     # Widget data sources
@@ -109,27 +109,27 @@ class DashboardGeneratorAgent(BaseAgent):
         "revenue_overview": {
             "type": "metric_card",
             "metrics": ["mrr", "arr", "growth_rate"],
-            "visualization": "trend_line"
+            "visualization": "trend_line",
         },
         "customer_growth": {
             "type": "chart",
             "chart_type": "line",
-            "metrics": ["new_customers", "churned_customers", "net_growth"]
+            "metrics": ["new_customers", "churned_customers", "net_growth"],
         },
         "account_health": {
             "type": "distribution",
             "chart_type": "pie",
-            "segments": ["healthy", "at_risk", "critical"]
+            "segments": ["healthy", "at_risk", "critical"],
         },
         "pipeline_overview": {
             "type": "funnel",
-            "stages": ["qualified", "demo", "proposal", "negotiation", "closed_won"]
+            "stages": ["qualified", "demo", "proposal", "negotiation", "closed_won"],
         },
         "ticket_volume": {
             "type": "chart",
             "chart_type": "bar",
-            "metrics": ["new_tickets", "resolved_tickets", "open_tickets"]
-        }
+            "metrics": ["new_tickets", "resolved_tickets", "open_tickets"],
+        },
     }
 
     def __init__(self):
@@ -139,7 +139,7 @@ class DashboardGeneratorAgent(BaseAgent):
             temperature=0.2,
             max_tokens=2000,
             capabilities=[AgentCapability.DATABASE_WRITE],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -168,36 +168,25 @@ class DashboardGeneratorAgent(BaseAgent):
             "dashboard_generation_details",
             role=role,
             time_range=time_range,
-            custom_widgets=custom_widgets is not None
+            custom_widgets=custom_widgets is not None,
         )
 
         # Get dashboard template
         dashboard_template = self._get_dashboard_template(role, custom_widgets)
 
         # Fetch data for widgets
-        dashboard_data = self._fetch_dashboard_data(
-            dashboard_template,
-            time_range,
-            include_trends
-        )
+        dashboard_data = self._fetch_dashboard_data(dashboard_template, time_range, include_trends)
 
         # Build dashboard JSON
         dashboard_json = self._build_dashboard_json(
-            dashboard_template,
-            dashboard_data,
-            role,
-            time_range
+            dashboard_template, dashboard_data, role, time_range
         )
 
         # Generate insights for dashboard
         insights = self._generate_dashboard_insights(dashboard_data, role)
 
         # Format response
-        response = self._format_dashboard_response(
-            dashboard_json,
-            insights,
-            role
-        )
+        response = self._format_dashboard_response(dashboard_json, insights, role)
 
         state["agent_response"] = response
         state["dashboard_json"] = dashboard_json
@@ -211,16 +200,14 @@ class DashboardGeneratorAgent(BaseAgent):
             "dashboard_generation_completed",
             role=role,
             widgets_count=len(dashboard_template["widgets"]),
-            insights_count=len(insights)
+            insights_count=len(insights),
         )
 
         return state
 
     def _get_dashboard_template(
-        self,
-        role: str,
-        custom_widgets: Optional[List[str]]
-    ) -> Dict[str, Any]:
+        self, role: str, custom_widgets: list[str] | None
+    ) -> dict[str, Any]:
         """
         Get dashboard template for role.
 
@@ -245,11 +232,8 @@ class DashboardGeneratorAgent(BaseAgent):
         return template
 
     def _fetch_dashboard_data(
-        self,
-        dashboard_template: Dict[str, Any],
-        time_range: str,
-        include_trends: bool
-    ) -> Dict[str, Any]:
+        self, dashboard_template: dict[str, Any], time_range: str, include_trends: bool
+    ) -> dict[str, Any]:
         """
         Fetch data for all dashboard widgets.
 
@@ -264,7 +248,7 @@ class DashboardGeneratorAgent(BaseAgent):
         dashboard_data = {
             "time_range": time_range,
             "generated_at": datetime.now(UTC).isoformat(),
-            "widgets": {}
+            "widgets": {},
         }
 
         for widget_name in dashboard_template["widgets"]:
@@ -274,11 +258,8 @@ class DashboardGeneratorAgent(BaseAgent):
         return dashboard_data
 
     def _fetch_widget_data(
-        self,
-        widget_name: str,
-        time_range: str,
-        include_trends: bool
-    ) -> Dict[str, Any]:
+        self, widget_name: str, time_range: str, include_trends: bool
+    ) -> dict[str, Any]:
         """
         Fetch data for a specific widget.
 
@@ -291,7 +272,7 @@ class DashboardGeneratorAgent(BaseAgent):
             Widget data
         """
         # Mock data - in production, query actual data sources
-        widget_config = self.WIDGET_CONFIGS.get(widget_name, {"type": "metric_card"})
+        self.WIDGET_CONFIGS.get(widget_name, {"type": "metric_card"})
 
         # Generate mock data based on widget type
         if widget_name == "revenue_overview":
@@ -300,8 +281,8 @@ class DashboardGeneratorAgent(BaseAgent):
                 "data": {
                     "mrr": {"value": 542000, "change": "+8.5%", "trend": "up"},
                     "arr": {"value": 6504000, "change": "+12.3%", "trend": "up"},
-                    "growth_rate": {"value": 12.3, "change": "+2.1%", "trend": "up"}
-                }
+                    "growth_rate": {"value": 12.3, "change": "+2.1%", "trend": "up"},
+                },
             }
         elif widget_name == "customer_growth":
             return {
@@ -312,9 +293,9 @@ class DashboardGeneratorAgent(BaseAgent):
                     "datasets": [
                         {"label": "New Customers", "values": [45, 52, 48, 61, 55, 38, 42]},
                         {"label": "Churned", "values": [12, 8, 15, 10, 13, 9, 11]},
-                        {"label": "Net Growth", "values": [33, 44, 33, 51, 42, 29, 31]}
-                    ]
-                }
+                        {"label": "Net Growth", "values": [33, 44, 33, 51, 42, 29, 31]},
+                    ],
+                },
             }
         elif widget_name == "account_health":
             return {
@@ -324,9 +305,9 @@ class DashboardGeneratorAgent(BaseAgent):
                     "segments": [
                         {"label": "Healthy", "value": 1245, "percentage": 75.5},
                         {"label": "At Risk", "value": 312, "percentage": 19.0},
-                        {"label": "Critical", "value": 91, "percentage": 5.5}
+                        {"label": "Critical", "value": 91, "percentage": 5.5},
                     ]
-                }
+                },
             }
         elif widget_name == "pipeline_overview":
             return {
@@ -337,9 +318,9 @@ class DashboardGeneratorAgent(BaseAgent):
                         {"name": "Demo", "count": 285, "value": 9975000},
                         {"name": "Proposal", "count": 142, "value": 4970000},
                         {"name": "Negotiation", "count": 67, "value": 2345000},
-                        {"name": "Closed Won", "count": 28, "value": 980000}
+                        {"name": "Closed Won", "count": 28, "value": 980000},
                     ]
-                }
+                },
             }
         elif widget_name == "ticket_volume":
             return {
@@ -350,9 +331,9 @@ class DashboardGeneratorAgent(BaseAgent):
                     "datasets": [
                         {"label": "New Tickets", "values": [145, 162, 138, 171, 155, 89, 92]},
                         {"label": "Resolved", "values": [132, 148, 155, 149, 168, 95, 88]},
-                        {"label": "Open", "values": [234, 248, 231, 253, 240, 234, 238]}
-                    ]
-                }
+                        {"label": "Open", "values": [234, 248, 231, 253, 240, 234, 238]},
+                    ],
+                },
             }
         elif widget_name == "nps_score":
             return {
@@ -360,8 +341,8 @@ class DashboardGeneratorAgent(BaseAgent):
                 "data": {
                     "score": {"value": 52, "change": "+3", "trend": "up"},
                     "promoters": {"value": 68, "percentage": 68},
-                    "detractors": {"value": 16, "percentage": 16}
-                }
+                    "detractors": {"value": 16, "percentage": 16},
+                },
             }
         elif widget_name == "expansion_opportunities":
             return {
@@ -373,9 +354,9 @@ class DashboardGeneratorAgent(BaseAgent):
                     "items": [
                         {"account": "Acme Corp", "value": 85000, "readiness": "high"},
                         {"account": "TechStart Inc", "value": 62000, "readiness": "high"},
-                        {"account": "Global Solutions", "value": 48000, "readiness": "medium"}
-                    ]
-                }
+                        {"account": "Global Solutions", "value": 48000, "readiness": "medium"},
+                    ],
+                },
             }
         elif widget_name == "at_risk_accounts":
             return {
@@ -385,29 +366,33 @@ class DashboardGeneratorAgent(BaseAgent):
                     "critical": 5,
                     "at_risk_arr": 890000,
                     "items": [
-                        {"account": "RetailCo", "arr": 125000, "health_score": 32, "risk": "critical"},
-                        {"account": "FinServ LLC", "arr": 98000, "health_score": 38, "risk": "critical"},
-                        {"account": "MedTech", "arr": 87000, "health_score": 45, "risk": "high"}
-                    ]
-                }
+                        {
+                            "account": "RetailCo",
+                            "arr": 125000,
+                            "health_score": 32,
+                            "risk": "critical",
+                        },
+                        {
+                            "account": "FinServ LLC",
+                            "arr": 98000,
+                            "health_score": 38,
+                            "risk": "critical",
+                        },
+                        {"account": "MedTech", "arr": 87000, "health_score": 45, "risk": "high"},
+                    ],
+                },
             }
         else:
             # Generic widget data
-            return {
-                "type": "metric_card",
-                "data": {
-                    "value": 0,
-                    "status": "no_data"
-                }
-            }
+            return {"type": "metric_card", "data": {"value": 0, "status": "no_data"}}
 
     def _build_dashboard_json(
         self,
-        dashboard_template: Dict[str, Any],
-        dashboard_data: Dict[str, Any],
+        dashboard_template: dict[str, Any],
+        dashboard_data: dict[str, Any],
         role: str,
-        time_range: str
-    ) -> Dict[str, Any]:
+        time_range: str,
+    ) -> dict[str, Any]:
         """
         Build complete dashboard JSON structure.
 
@@ -428,7 +413,7 @@ class DashboardGeneratorAgent(BaseAgent):
                 "time_range": time_range,
                 "refresh_interval": dashboard_template["refresh_interval"],
                 "generated_at": dashboard_data["generated_at"],
-                "widgets": []
+                "widgets": [],
             }
         }
 
@@ -439,17 +424,15 @@ class DashboardGeneratorAgent(BaseAgent):
                     "id": widget_name,
                     "name": widget_name.replace("_", " ").title(),
                     "config": self.WIDGET_CONFIGS.get(widget_name, {}),
-                    "data": dashboard_data["widgets"][widget_name]
+                    "data": dashboard_data["widgets"][widget_name],
                 }
                 dashboard_json["dashboard"]["widgets"].append(widget)
 
         return dashboard_json
 
     def _generate_dashboard_insights(
-        self,
-        dashboard_data: Dict[str, Any],
-        role: str
-    ) -> List[Dict[str, Any]]:
+        self, dashboard_data: dict[str, Any], role: str
+    ) -> list[dict[str, Any]]:
         """
         Generate insights from dashboard data.
 
@@ -467,67 +450,78 @@ class DashboardGeneratorAgent(BaseAgent):
             if widget_name == "revenue_overview":
                 mrr_change = widget_data.get("data", {}).get("mrr", {}).get("change", "")
                 if "+" in mrr_change:
-                    insights.append({
-                        "type": "positive",
-                        "widget": widget_name,
-                        "message": f"MRR growing at {mrr_change} - strong revenue momentum",
-                        "priority": "high"
-                    })
+                    insights.append(
+                        {
+                            "type": "positive",
+                            "widget": widget_name,
+                            "message": f"MRR growing at {mrr_change} - strong revenue momentum",
+                            "priority": "high",
+                        }
+                    )
 
             elif widget_name == "at_risk_accounts":
                 critical = widget_data.get("data", {}).get("critical", 0)
                 if critical > 0:
-                    insights.append({
-                        "type": "alert",
-                        "widget": widget_name,
-                        "message": f"{critical} accounts at critical risk - immediate action needed",
-                        "priority": "critical"
-                    })
+                    insights.append(
+                        {
+                            "type": "alert",
+                            "widget": widget_name,
+                            "message": f"{critical} accounts at critical risk - immediate action needed",
+                            "priority": "critical",
+                        }
+                    )
 
             elif widget_name == "pipeline_overview":
                 stages = widget_data.get("data", {}).get("stages", [])
                 if stages and len(stages) >= 2:
-                    conversion_rate = (stages[-1]["count"] / stages[0]["count"]) * 100 if stages[0]["count"] > 0 else 0
-                    insights.append({
-                        "type": "info",
-                        "widget": widget_name,
-                        "message": f"Pipeline conversion rate: {conversion_rate:.1f}%",
-                        "priority": "medium"
-                    })
+                    conversion_rate = (
+                        (stages[-1]["count"] / stages[0]["count"]) * 100
+                        if stages[0]["count"] > 0
+                        else 0
+                    )
+                    insights.append(
+                        {
+                            "type": "info",
+                            "widget": widget_name,
+                            "message": f"Pipeline conversion rate: {conversion_rate:.1f}%",
+                            "priority": "medium",
+                        }
+                    )
 
         # Add role-specific insights
         if role == "executive":
-            insights.append({
-                "type": "summary",
-                "message": "Business metrics trending positively across key indicators",
-                "priority": "high"
-            })
+            insights.append(
+                {
+                    "type": "summary",
+                    "message": "Business metrics trending positively across key indicators",
+                    "priority": "high",
+                }
+            )
         elif role == "cs_manager":
-            insights.append({
-                "type": "action",
-                "message": "Focus on critical accounts to reduce churn risk",
-                "priority": "high"
-            })
+            insights.append(
+                {
+                    "type": "action",
+                    "message": "Focus on critical accounts to reduce churn risk",
+                    "priority": "high",
+                }
+            )
 
         return insights
 
     def _format_dashboard_response(
-        self,
-        dashboard_json: Dict[str, Any],
-        insights: List[Dict[str, Any]],
-        role: str
+        self, dashboard_json: dict[str, Any], insights: list[dict[str, Any]], role: str
     ) -> str:
         """Format dashboard generation response."""
         dashboard_info = dashboard_json.get("dashboard", {})
 
-        response = f"""**{dashboard_info['name']}**
+        response = f"""**{dashboard_info["name"]}**
 
 **Dashboard Configuration:**
-- Role: {role.replace('_', ' ').title()}
-- Time Range: {dashboard_info['time_range']}
-- Refresh Interval: {dashboard_info['refresh_interval']}
-- Widgets: {len(dashboard_info.get('widgets', []))}
-- Generated: {dashboard_info['generated_at']}
+- Role: {role.replace("_", " ").title()}
+- Time Range: {dashboard_info["time_range"]}
+- Refresh Interval: {dashboard_info["refresh_interval"]}
+- Widgets: {len(dashboard_info.get("widgets", []))}
+- Generated: {dashboard_info["generated_at"]}
 
 """
 
@@ -535,7 +529,13 @@ class DashboardGeneratorAgent(BaseAgent):
         if insights:
             response += "**Key Insights:**\n"
             for insight in insights[:5]:
-                icon = "🔴" if insight.get("type") == "alert" else "✅" if insight.get("type") == "positive" else "ℹ️"
+                icon = (
+                    "🔴"
+                    if insight.get("type") == "alert"
+                    else "✅"
+                    if insight.get("type") == "positive"
+                    else "ℹ️"
+                )
                 response += f"{icon} {insight['message']}\n"
             response += "\n"
 
