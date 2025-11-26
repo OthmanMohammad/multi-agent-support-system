@@ -17,16 +17,17 @@ Features:
 Part of: Phase 2 - LiteLLM Multi-Backend Abstraction Layer
 """
 
-from typing import List, Dict, Any, Optional, AsyncIterator
-import litellm
-from litellm import completion, acompletion
-import structlog
 import time
-from datetime import datetime
+from collections.abc import AsyncIterator
+from typing import Any
 
-from src.llm.litellm_config import litellm_config, LLMBackend
-from src.utils.monitoring.metrics import llm_metrics
+import litellm
+import structlog
+from litellm import acompletion
+
+from src.llm.litellm_config import LLMBackend, litellm_config
 from src.utils.cost_tracking import cost_tracker
+from src.utils.monitoring.metrics import llm_metrics
 
 logger = structlog.get_logger(__name__)
 
@@ -62,19 +63,19 @@ class UnifiedLLMClient:
 
         # Configure LiteLLM global settings
         litellm.drop_params = True  # Drop unsupported params gracefully
-        litellm.telemetry = False   # Disable LiteLLM telemetry
+        litellm.telemetry = False  # Disable LiteLLM telemetry
         litellm.set_verbose = False  # Reduce logging noise
 
         logger.info("unified_llm_client_initialized")
 
     async def chat_completion(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         model_tier: str = "haiku",
-        temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None,
+        temperature: float | None = None,
+        max_tokens: int | None = None,
         stream: bool = False,
-        **kwargs
+        **kwargs,
     ) -> str:
         """
         Unified chat completion across backends.
@@ -214,10 +215,7 @@ class UnifiedLLMClient:
             raise
 
     async def chat_completion_stream(
-        self,
-        messages: List[Dict[str, str]],
-        model_tier: str = "haiku",
-        **kwargs
+        self, messages: list[dict[str, str]], model_tier: str = "haiku", **kwargs
     ) -> AsyncIterator[str]:
         """
         Streaming chat completion (future implementation).
@@ -272,7 +270,7 @@ class UnifiedLLMClient:
         """Get currently active backend"""
         return self.config.get_current_backend()
 
-    def get_backend_info(self) -> Dict[str, Any]:
+    def get_backend_info(self) -> dict[str, Any]:
         """
         Get current backend information.
 
@@ -281,7 +279,7 @@ class UnifiedLLMClient:
         """
         return self.config.get_backend_info()
 
-    def get_metrics_summary(self) -> Dict[str, Any]:
+    def get_metrics_summary(self) -> dict[str, Any]:
         """
         Get LLM usage metrics summary.
 
@@ -290,7 +288,7 @@ class UnifiedLLMClient:
         """
         return llm_metrics.get_all_stats()
 
-    def get_cost_summary(self) -> Dict[str, Any]:
+    def get_cost_summary(self) -> dict[str, Any]:
         """
         Get cost summary.
 
@@ -299,7 +297,7 @@ class UnifiedLLMClient:
         """
         return cost_tracker.get_breakdown()
 
-    async def health_check(self) -> Dict[str, bool]:
+    async def health_check(self) -> dict[str, bool]:
         """
         Check health of available backends.
 
