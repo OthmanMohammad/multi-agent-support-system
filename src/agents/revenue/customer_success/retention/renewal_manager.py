@@ -5,14 +5,13 @@ Manages contract renewals, tracks renewal dates, prepares renewal proposals,
 and identifies renewal risks to prevent churn at contract expiration.
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta, UTC
-from decimal import Decimal
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("renewal_manager", tier="revenue", category="customer_success")
@@ -31,11 +30,11 @@ class RenewalManagerAgent(BaseAgent):
 
     # Renewal windows (days before contract end)
     RENEWAL_WINDOWS = {
-        "early": 90,      # 90+ days out
-        "active": 60,     # 60-89 days out
-        "critical": 30,   # 30-59 days out
-        "urgent": 14,     # 14-29 days out
-        "emergency": 7    # <14 days out
+        "early": 90,  # 90+ days out
+        "active": 60,  # 60-89 days out
+        "critical": 30,  # 30-59 days out
+        "urgent": 14,  # 14-29 days out
+        "emergency": 7,  # <14 days out
     }
 
     # Renewal risk levels
@@ -43,7 +42,7 @@ class RenewalManagerAgent(BaseAgent):
         "green": {"score_min": 75, "retention_probability": 95},
         "yellow": {"score_min": 50, "retention_probability": 75},
         "orange": {"score_min": 30, "retention_probability": 50},
-        "red": {"score_min": 0, "retention_probability": 25}
+        "red": {"score_min": 0, "retention_probability": 25},
     }
 
     def __init__(self):
@@ -52,12 +51,9 @@ class RenewalManagerAgent(BaseAgent):
             type=AgentType.SPECIALIST,
             temperature=0.3,
             max_tokens=800,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.KB_SEARCH
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.KB_SEARCH],
             kb_category="customer_success",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -85,42 +81,30 @@ class RenewalManagerAgent(BaseAgent):
             "renewal_management_details",
             customer_id=customer_id,
             renewal_date=contract_data.get("renewal_date"),
-            contract_value=contract_data.get("contract_value")
+            contract_value=contract_data.get("contract_value"),
         )
 
         # Analyze renewal status
         renewal_analysis = self._analyze_renewal_status(
-            contract_data,
-            health_data,
-            customer_metadata
+            contract_data, health_data, customer_metadata
         )
 
         # Generate renewal proposal
         renewal_proposal = self._generate_renewal_proposal(
-            renewal_analysis,
-            contract_data,
-            customer_metadata
+            renewal_analysis, contract_data, customer_metadata
         )
 
         # Identify risks and opportunities
         risks_and_opportunities = self._identify_risks_and_opportunities(
-            renewal_analysis,
-            health_data,
-            contract_data
+            renewal_analysis, health_data, contract_data
         )
 
         # Generate action plan
-        action_plan = self._generate_renewal_action_plan(
-            renewal_analysis,
-            risks_and_opportunities
-        )
+        action_plan = self._generate_renewal_action_plan(renewal_analysis, risks_and_opportunities)
 
         # Format response
         response = self._format_renewal_report(
-            renewal_analysis,
-            renewal_proposal,
-            risks_and_opportunities,
-            action_plan
+            renewal_analysis, renewal_proposal, risks_and_opportunities, action_plan
         )
 
         state["agent_response"] = response
@@ -139,17 +123,17 @@ class RenewalManagerAgent(BaseAgent):
             customer_id=customer_id,
             renewal_window=renewal_analysis["renewal_window"],
             risk_level=renewal_analysis["renewal_risk_level"],
-            retention_probability=renewal_analysis["retention_probability"]
+            retention_probability=renewal_analysis["retention_probability"],
         )
 
         return state
 
     def _analyze_renewal_status(
         self,
-        contract_data: Dict[str, Any],
-        health_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        contract_data: dict[str, Any],
+        health_data: dict[str, Any],
+        customer_metadata: dict[str, Any],
+    ) -> dict[str, Any]:
         """
         Analyze current renewal status and health.
 
@@ -164,7 +148,7 @@ class RenewalManagerAgent(BaseAgent):
         # Parse renewal date
         renewal_date_str = contract_data.get("renewal_date")
         if renewal_date_str:
-            renewal_date = datetime.fromisoformat(renewal_date_str.replace('Z', '+00:00'))
+            renewal_date = datetime.fromisoformat(renewal_date_str.replace("Z", "+00:00"))
         else:
             # Default to 90 days from now if not provided
             renewal_date = datetime.now(UTC) + timedelta(days=90)
@@ -176,9 +160,7 @@ class RenewalManagerAgent(BaseAgent):
 
         # Calculate renewal health score (0-100)
         renewal_health_score = self._calculate_renewal_health_score(
-            health_data,
-            contract_data,
-            customer_metadata
+            health_data, contract_data, customer_metadata
         )
 
         # Determine risk level
@@ -191,17 +173,11 @@ class RenewalManagerAgent(BaseAgent):
         contract_history = self._assess_contract_history(contract_data)
 
         # Calculate usage vs contract
-        usage_vs_contract = self._calculate_usage_vs_contract(
-            health_data,
-            contract_data
-        )
+        usage_vs_contract = self._calculate_usage_vs_contract(health_data, contract_data)
 
         # Identify renewal blockers
         renewal_blockers = self._identify_renewal_blockers(
-            renewal_health_score,
-            health_data,
-            contract_data,
-            days_to_renewal
+            renewal_health_score, health_data, contract_data, days_to_renewal
         )
 
         return {
@@ -214,7 +190,7 @@ class RenewalManagerAgent(BaseAgent):
             "contract_history": contract_history,
             "usage_vs_contract": usage_vs_contract,
             "renewal_blockers": renewal_blockers,
-            "analyzed_at": datetime.now(UTC).isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat(),
         }
 
     def _determine_renewal_window(self, days_to_renewal: int) -> str:
@@ -232,9 +208,9 @@ class RenewalManagerAgent(BaseAgent):
 
     def _calculate_renewal_health_score(
         self,
-        health_data: Dict[str, Any],
-        contract_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
+        health_data: dict[str, Any],
+        contract_data: dict[str, Any],
+        customer_metadata: dict[str, Any],
     ) -> int:
         """Calculate renewal health score (0-100)."""
         score = 0
@@ -265,34 +241,32 @@ class RenewalManagerAgent(BaseAgent):
     def _determine_risk_level(self, health_score: int) -> str:
         """Determine renewal risk level from health score."""
         for risk_level, config in sorted(
-            self.RISK_LEVELS.items(),
-            key=lambda x: x[1]["score_min"],
-            reverse=True
+            self.RISK_LEVELS.items(), key=lambda x: x[1]["score_min"], reverse=True
         ):
             if health_score >= config["score_min"]:
                 return risk_level
         return "red"
 
-    def _assess_contract_history(self, contract_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _assess_contract_history(self, contract_data: dict[str, Any]) -> dict[str, Any]:
         """Assess contract history patterns."""
         return {
             "contract_length_years": contract_data.get("contract_length_years", 1),
             "renewals_completed": contract_data.get("renewals_completed", 0),
             "lifetime_value": contract_data.get("lifetime_value", 0),
             "payment_on_time_rate": contract_data.get("payment_on_time_rate", 100),
-            "has_churned_before": contract_data.get("has_churned_before", False)
+            "has_churned_before": contract_data.get("has_churned_before", False),
         }
 
     def _calculate_usage_vs_contract(
-        self,
-        health_data: Dict[str, Any],
-        contract_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, health_data: dict[str, Any], contract_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Calculate usage compared to contract limits."""
         contracted_users = contract_data.get("contracted_users", 10)
         active_users = health_data.get("active_users", 5)
 
-        usage_percentage = int((active_users / contracted_users) * 100) if contracted_users > 0 else 0
+        usage_percentage = (
+            int((active_users / contracted_users) * 100) if contracted_users > 0 else 0
+        )
 
         if usage_percentage > 90:
             usage_status = "at_capacity"
@@ -307,69 +281,81 @@ class RenewalManagerAgent(BaseAgent):
             "contracted_users": contracted_users,
             "active_users": active_users,
             "usage_percentage": usage_percentage,
-            "usage_status": usage_status
+            "usage_status": usage_status,
         }
 
     def _identify_renewal_blockers(
         self,
         health_score: int,
-        health_data: Dict[str, Any],
-        contract_data: Dict[str, Any],
-        days_to_renewal: int
-    ) -> List[Dict[str, str]]:
+        health_data: dict[str, Any],
+        contract_data: dict[str, Any],
+        days_to_renewal: int,
+    ) -> list[dict[str, str]]:
         """Identify potential renewal blockers."""
         blockers = []
 
         if health_score < 50:
-            blockers.append({
-                "blocker": "Low renewal health score",
-                "severity": "critical",
-                "impact": "High churn risk - immediate intervention needed"
-            })
+            blockers.append(
+                {
+                    "blocker": "Low renewal health score",
+                    "severity": "critical",
+                    "impact": "High churn risk - immediate intervention needed",
+                }
+            )
 
         if health_data.get("nps_score", 5) < 6:
-            blockers.append({
-                "blocker": "Low NPS indicates customer dissatisfaction",
-                "severity": "high",
-                "impact": "Customer unlikely to recommend or renew"
-            })
+            blockers.append(
+                {
+                    "blocker": "Low NPS indicates customer dissatisfaction",
+                    "severity": "high",
+                    "impact": "Customer unlikely to recommend or renew",
+                }
+            )
 
         if contract_data.get("payment_status") != "current":
-            blockers.append({
-                "blocker": "Outstanding payment issues",
-                "severity": "high",
-                "impact": "Cannot process renewal until payment resolved"
-            })
+            blockers.append(
+                {
+                    "blocker": "Outstanding payment issues",
+                    "severity": "high",
+                    "impact": "Cannot process renewal until payment resolved",
+                }
+            )
 
         if health_data.get("support_tickets_last_30d", 0) > 10:
-            blockers.append({
-                "blocker": "High support ticket volume",
-                "severity": "medium",
-                "impact": "Indicates product issues affecting satisfaction"
-            })
+            blockers.append(
+                {
+                    "blocker": "High support ticket volume",
+                    "severity": "medium",
+                    "impact": "Indicates product issues affecting satisfaction",
+                }
+            )
 
         if health_data.get("usage_rate", 100) < 40:
-            blockers.append({
-                "blocker": "Very low product usage",
-                "severity": "high",
-                "impact": "Not realizing value from product"
-            })
+            blockers.append(
+                {
+                    "blocker": "Very low product usage",
+                    "severity": "high",
+                    "impact": "Not realizing value from product",
+                }
+            )
 
         if days_to_renewal < 30 and not contract_data.get("renewal_discussion_started", False):
-            blockers.append({
-                "blocker": "Renewal discussion not yet initiated",
-                "severity": "critical",
-                "impact": "Risk of auto-churn or rushed decision"
-            })
+            blockers.append(
+                {
+                    "blocker": "Renewal discussion not yet initiated",
+                    "severity": "critical",
+                    "impact": "Risk of auto-churn or rushed decision",
+                }
+            )
 
         return blockers
 
     def _generate_renewal_proposal(
         self,
-        renewal_analysis: Dict[str, Any],
-        contract_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        renewal_analysis: dict[str, Any],
+        contract_data: dict[str, Any],
+        customer_metadata: dict[str, Any],
+    ) -> dict[str, Any]:
         """Generate renewal proposal with pricing and terms."""
         current_value = contract_data.get("contract_value", 50000)
         usage_data = renewal_analysis["usage_vs_contract"]
@@ -380,7 +366,7 @@ class RenewalManagerAgent(BaseAgent):
             "current_value": current_value,
             "proposed_value": current_value,
             "term_length_months": 12,
-            "pricing_adjustments": []
+            "pricing_adjustments": [],
         }
 
         # Check for expansion opportunity
@@ -389,11 +375,13 @@ class RenewalManagerAgent(BaseAgent):
             expansion_value = int(current_value * (expansion_pct / 100))
             proposal["proposed_value"] = current_value + expansion_value
             proposal["proposal_type"] = "renewal_with_expansion"
-            proposal["pricing_adjustments"].append({
-                "type": "expansion",
-                "amount": expansion_value,
-                "reason": "At user capacity - recommend 25% expansion"
-            })
+            proposal["pricing_adjustments"].append(
+                {
+                    "type": "expansion",
+                    "amount": expansion_value,
+                    "reason": "At user capacity - recommend 25% expansion",
+                }
+            )
 
         # Check for contraction risk
         elif usage_data["usage_status"] == "significantly_underutilized":
@@ -402,78 +390,80 @@ class RenewalManagerAgent(BaseAgent):
                 contraction_value = int(current_value * (contraction_pct / 100))
                 proposal["proposed_value"] = current_value - contraction_value
                 proposal["proposal_type"] = "renewal_with_contraction"
-                proposal["pricing_adjustments"].append({
-                    "type": "contraction",
-                    "amount": -contraction_value,
-                    "reason": "Usage significantly below contract - right-size contract"
-                })
+                proposal["pricing_adjustments"].append(
+                    {
+                        "type": "contraction",
+                        "amount": -contraction_value,
+                        "reason": "Usage significantly below contract - right-size contract",
+                    }
+                )
 
         # Multi-year discount opportunity
         if renewal_analysis["renewal_health_score"] >= 70:
             proposal["multi_year_option"] = {
                 "term_length_months": 24,
                 "discount_percentage": 10,
-                "discounted_value": int(proposal["proposed_value"] * 0.9)
+                "discounted_value": int(proposal["proposed_value"] * 0.9),
             }
 
         return proposal
 
     def _identify_risks_and_opportunities(
         self,
-        renewal_analysis: Dict[str, Any],
-        health_data: Dict[str, Any],
-        contract_data: Dict[str, Any]
-    ) -> Dict[str, List[Dict[str, str]]]:
+        renewal_analysis: dict[str, Any],
+        health_data: dict[str, Any],
+        contract_data: dict[str, Any],
+    ) -> dict[str, list[dict[str, str]]]:
         """Identify renewal risks and expansion opportunities."""
         risks = []
         opportunities = []
 
         # Risks
         if renewal_analysis["renewal_risk_level"] in ["orange", "red"]:
-            risks.append({
-                "risk": f"High churn probability ({100 - renewal_analysis['retention_probability']}%)",
-                "mitigation": "Executive business review and save team mobilization"
-            })
+            risks.append(
+                {
+                    "risk": f"High churn probability ({100 - renewal_analysis['retention_probability']}%)",
+                    "mitigation": "Executive business review and save team mobilization",
+                }
+            )
 
         for blocker in renewal_analysis["renewal_blockers"]:
             if blocker["severity"] in ["critical", "high"]:
-                risks.append({
-                    "risk": blocker["blocker"],
-                    "mitigation": blocker["impact"]
-                })
+                risks.append({"risk": blocker["blocker"], "mitigation": blocker["impact"]})
 
         # Opportunities
         if renewal_analysis["usage_vs_contract"]["usage_status"] == "at_capacity":
-            opportunities.append({
-                "opportunity": "User expansion",
-                "potential_value": f"25-50% ARR increase",
-                "approach": "Proactive expansion conversation based on usage"
-            })
+            opportunities.append(
+                {
+                    "opportunity": "User expansion",
+                    "potential_value": "25-50% ARR increase",
+                    "approach": "Proactive expansion conversation based on usage",
+                }
+            )
 
         if health_data.get("nps_score", 5) >= 9:
-            opportunities.append({
-                "opportunity": "Multi-year commitment",
-                "potential_value": "Revenue security + 10% discount acceptable",
-                "approach": "Offer 2-3 year terms with strategic pricing"
-            })
+            opportunities.append(
+                {
+                    "opportunity": "Multi-year commitment",
+                    "potential_value": "Revenue security + 10% discount acceptable",
+                    "approach": "Offer 2-3 year terms with strategic pricing",
+                }
+            )
 
         if contract_data.get("contract_length_years", 1) == 1:
-            opportunities.append({
-                "opportunity": "Upgrade to annual prepay",
-                "potential_value": "Improved cash flow",
-                "approach": "Offer prepay discount for cash upfront"
-            })
+            opportunities.append(
+                {
+                    "opportunity": "Upgrade to annual prepay",
+                    "potential_value": "Improved cash flow",
+                    "approach": "Offer prepay discount for cash upfront",
+                }
+            )
 
-        return {
-            "risks": risks[:5],
-            "opportunities": opportunities[:5]
-        }
+        return {"risks": risks[:5], "opportunities": opportunities[:5]}
 
     def _generate_renewal_action_plan(
-        self,
-        renewal_analysis: Dict[str, Any],
-        risks_and_opportunities: Dict[str, Any]
-    ) -> List[Dict[str, str]]:
+        self, renewal_analysis: dict[str, Any], risks_and_opportunities: dict[str, Any]
+    ) -> list[dict[str, str]]:
         """Generate action plan for renewal."""
         actions = []
         window = renewal_analysis["renewal_window"]
@@ -481,107 +471,114 @@ class RenewalManagerAgent(BaseAgent):
 
         # Critical/urgent actions
         if window in ["emergency", "urgent"]:
-            actions.append({
-                "action": "Escalate to executive sponsor immediately",
-                "owner": "VP Customer Success",
-                "timeline": "Within 24 hours",
-                "priority": "critical"
-            })
+            actions.append(
+                {
+                    "action": "Escalate to executive sponsor immediately",
+                    "owner": "VP Customer Success",
+                    "timeline": "Within 24 hours",
+                    "priority": "critical",
+                }
+            )
 
         if risk_level in ["orange", "red"]:
-            actions.append({
-                "action": "Convene save team (CSM, Sales, Product, Exec)",
-                "owner": "CSM + CS Manager",
-                "timeline": "Within 2 days",
-                "priority": "critical"
-            })
+            actions.append(
+                {
+                    "action": "Convene save team (CSM, Sales, Product, Exec)",
+                    "owner": "CSM + CS Manager",
+                    "timeline": "Within 2 days",
+                    "priority": "critical",
+                }
+            )
 
         # Standard renewal actions
         if window in ["active", "critical", "urgent", "emergency"]:
-            actions.append({
-                "action": "Schedule renewal discussion with decision maker",
-                "owner": "CSM",
-                "timeline": "This week",
-                "priority": "high"
-            })
+            actions.append(
+                {
+                    "action": "Schedule renewal discussion with decision maker",
+                    "owner": "CSM",
+                    "timeline": "This week",
+                    "priority": "high",
+                }
+            )
 
-            actions.append({
-                "action": "Prepare renewal proposal and business case",
-                "owner": "CSM + Sales",
-                "timeline": "Before renewal meeting",
-                "priority": "high"
-            })
+            actions.append(
+                {
+                    "action": "Prepare renewal proposal and business case",
+                    "owner": "CSM + Sales",
+                    "timeline": "Before renewal meeting",
+                    "priority": "high",
+                }
+            )
 
         # Opportunity actions
         if risks_and_opportunities["opportunities"]:
-            actions.append({
-                "action": f"Present expansion opportunity: {risks_and_opportunities['opportunities'][0]['opportunity']}",
-                "owner": "CSM + Account Executive",
-                "timeline": "During renewal discussion",
-                "priority": "medium"
-            })
+            actions.append(
+                {
+                    "action": f"Present expansion opportunity: {risks_and_opportunities['opportunities'][0]['opportunity']}",
+                    "owner": "CSM + Account Executive",
+                    "timeline": "During renewal discussion",
+                    "priority": "medium",
+                }
+            )
 
         # Risk mitigation actions
         for risk in risks_and_opportunities["risks"][:2]:
-            actions.append({
-                "action": f"Address risk: {risk['risk']}",
-                "owner": "CSM",
-                "timeline": "Before renewal decision",
-                "priority": "high"
-            })
+            actions.append(
+                {
+                    "action": f"Address risk: {risk['risk']}",
+                    "owner": "CSM",
+                    "timeline": "Before renewal decision",
+                    "priority": "high",
+                }
+            )
 
         return actions[:6]
 
     def _format_renewal_report(
         self,
-        renewal_analysis: Dict[str, Any],
-        renewal_proposal: Dict[str, Any],
-        risks_and_opportunities: Dict[str, Any],
-        action_plan: List[Dict[str, str]]
+        renewal_analysis: dict[str, Any],
+        renewal_proposal: dict[str, Any],
+        risks_and_opportunities: dict[str, Any],
+        action_plan: list[dict[str, str]],
     ) -> str:
         """Format renewal management report."""
         risk_level = renewal_analysis["renewal_risk_level"]
         window = renewal_analysis["renewal_window"]
 
-        risk_emoji = {
-            "green": "????",
-            "yellow": "????",
-            "orange": "????",
-            "red": "????"
-        }
+        risk_emoji = {"green": "????", "yellow": "????", "orange": "????", "red": "????"}
 
         window_emoji = {
             "early": "????",
             "active": "???",
             "critical": "??????",
             "urgent": "????",
-            "emergency": "????"
+            "emergency": "????",
         }
 
-        report = f"""**{window_emoji.get(window, '????')} Renewal Management Report**
+        report = f"""**{window_emoji.get(window, "????")} Renewal Management Report**
 
-**Renewal Status:** {window.title()} ({renewal_analysis['days_to_renewal']} days to renewal)
-**Risk Level:** {risk_level.upper()} {risk_emoji.get(risk_level, '???')}
-**Retention Probability:** {renewal_analysis['retention_probability']}%
-**Renewal Health Score:** {renewal_analysis['renewal_health_score']}/100
+**Renewal Status:** {window.title()} ({renewal_analysis["days_to_renewal"]} days to renewal)
+**Risk Level:** {risk_level.upper()} {risk_emoji.get(risk_level, "???")}
+**Retention Probability:** {renewal_analysis["retention_probability"]}%
+**Renewal Health Score:** {renewal_analysis["renewal_health_score"]}/100
 
 **Contract Information:**
-- Current Value: ${renewal_analysis['contract_history']['lifetime_value']:,}
-- Contract Length: {renewal_analysis['contract_history']['contract_length_years']} year(s)
-- Previous Renewals: {renewal_analysis['contract_history']['renewals_completed']}
-- Payment On-Time Rate: {renewal_analysis['contract_history']['payment_on_time_rate']}%
+- Current Value: ${renewal_analysis["contract_history"]["lifetime_value"]:,}
+- Contract Length: {renewal_analysis["contract_history"]["contract_length_years"]} year(s)
+- Previous Renewals: {renewal_analysis["contract_history"]["renewals_completed"]}
+- Payment On-Time Rate: {renewal_analysis["contract_history"]["payment_on_time_rate"]}%
 
 **Usage vs Contract:**
-- Contracted Users: {renewal_analysis['usage_vs_contract']['contracted_users']}
-- Active Users: {renewal_analysis['usage_vs_contract']['active_users']}
-- Usage Rate: {renewal_analysis['usage_vs_contract']['usage_percentage']}%
-- Status: {renewal_analysis['usage_vs_contract']['usage_status'].replace('_', ' ').title()}
+- Contracted Users: {renewal_analysis["usage_vs_contract"]["contracted_users"]}
+- Active Users: {renewal_analysis["usage_vs_contract"]["active_users"]}
+- Usage Rate: {renewal_analysis["usage_vs_contract"]["usage_percentage"]}%
+- Status: {renewal_analysis["usage_vs_contract"]["usage_status"].replace("_", " ").title()}
 
 **???? Renewal Proposal:**
-- Type: {renewal_proposal['proposal_type'].replace('_', ' ').title()}
-- Current Value: ${renewal_proposal['current_value']:,}
-- Proposed Value: ${renewal_proposal['proposed_value']:,}
-- Term: {renewal_proposal['term_length_months']} months
+- Type: {renewal_proposal["proposal_type"].replace("_", " ").title()}
+- Current Value: ${renewal_proposal["current_value"]:,}
+- Proposed Value: ${renewal_proposal["proposed_value"]:,}
+- Term: {renewal_proposal["term_length_months"]} months
 """
 
         if renewal_proposal.get("pricing_adjustments"):
@@ -591,8 +588,10 @@ class RenewalManagerAgent(BaseAgent):
 
         if renewal_proposal.get("multi_year_option"):
             myo = renewal_proposal["multi_year_option"]
-            report += f"\n**Multi-Year Option Available:**\n"
-            report += f"- {myo['term_length_months']} months at {myo['discount_percentage']}% discount\n"
+            report += "\n**Multi-Year Option Available:**\n"
+            report += (
+                f"- {myo['term_length_months']} months at {myo['discount_percentage']}% discount\n"
+            )
             report += f"- Discounted Value: ${myo['discounted_value']:,}\n"
 
         # Blockers
@@ -621,7 +620,13 @@ class RenewalManagerAgent(BaseAgent):
         if action_plan:
             report += "\n**???? Renewal Action Plan:**\n"
             for i, action in enumerate(action_plan, 1):
-                priority_icon = "????" if action["priority"] == "critical" else "????" if action["priority"] == "high" else "????"
+                priority_icon = (
+                    "????"
+                    if action["priority"] == "critical"
+                    else "????"
+                    if action["priority"] == "high"
+                    else "????"
+                )
                 report += f"{i}. **{action['action']}** {priority_icon}\n"
                 report += f"   - Owner: {action['owner']}\n"
                 report += f"   - Timeline: {action['timeline']}\n"
@@ -631,6 +636,7 @@ class RenewalManagerAgent(BaseAgent):
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -648,8 +654,8 @@ if __name__ == "__main__":
             "Manage renewal for this customer",
             context={
                 "customer_id": "cust_123",
-                "customer_metadata": {"plan": "enterprise", "industry": "technology"}
-            }
+                "customer_metadata": {"plan": "enterprise", "industry": "technology"},
+            },
         )
         state1["entities"] = {
             "contract_data": {
@@ -661,15 +667,15 @@ if __name__ == "__main__":
                 "renewals_completed": 2,
                 "lifetime_value": 225000,
                 "payment_on_time_rate": 100,
-                "renewal_discussion_started": True
+                "renewal_discussion_started": True,
             },
             "health_data": {
                 "health_score": 85,
                 "usage_rate": 90,
                 "nps_score": 9,
                 "active_users": 48,
-                "support_tickets_last_30d": 2
-            }
+                "support_tickets_last_30d": 2,
+            },
         }
 
         result1 = await agent.process(state1)
@@ -687,10 +693,7 @@ if __name__ == "__main__":
 
         state2 = create_initial_state(
             "Urgent renewal assessment needed",
-            context={
-                "customer_id": "cust_456",
-                "customer_metadata": {"plan": "premium"}
-            }
+            context={"customer_id": "cust_456", "customer_metadata": {"plan": "premium"}},
         )
         state2["entities"] = {
             "contract_data": {
@@ -702,15 +705,15 @@ if __name__ == "__main__":
                 "renewals_completed": 0,
                 "lifetime_value": 45000,
                 "payment_on_time_rate": 70,
-                "renewal_discussion_started": False
+                "renewal_discussion_started": False,
             },
             "health_data": {
                 "health_score": 35,
                 "usage_rate": 25,
                 "nps_score": 3,
                 "active_users": 8,
-                "support_tickets_last_30d": 15
-            }
+                "support_tickets_last_30d": 15,
+            },
         }
 
         result2 = await agent.process(state2)
