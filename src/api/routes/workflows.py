@@ -12,41 +12,41 @@ Provides endpoints for:
 Part of: Phase 2 - Agent & Workflow Endpoints
 """
 
-import asyncio
-from typing import Dict, Any, Optional
-from uuid import UUID, uuid4
-from datetime import datetime, UTC, timedelta
-from fastapi import APIRouter, Depends, HTTPException, status
-import time
 import os
+import time
+from datetime import UTC, datetime
+from typing import Any
+from uuid import UUID
 
+from fastapi import APIRouter, Depends, HTTPException, status
+
+from src.api.auth.permissions import PermissionScope, require_scopes
+from src.api.dependencies import get_current_user
 from src.api.models.workflow_models import (
-    SequentialWorkflowRequest,
-    SequentialWorkflowResponse,
-    ParallelWorkflowRequest,
-    ParallelWorkflowResponse,
+    DebateRound,
     DebateWorkflowRequest,
     DebateWorkflowResponse,
-    DebateRound,
-    VerificationWorkflowRequest,
-    VerificationWorkflowResponse,
+    ExpertOpinion,
     ExpertPanelWorkflowRequest,
     ExpertPanelWorkflowResponse,
-    ExpertOpinion,
+    ParallelWorkflowRequest,
+    ParallelWorkflowResponse,
+    SequentialWorkflowRequest,
+    SequentialWorkflowResponse,
+    VerificationWorkflowRequest,
+    VerificationWorkflowResponse,
     WorkflowJobResponse,
 )
-from src.api.dependencies import get_current_user
-from src.api.auth.permissions import PermissionScope, require_scopes
 from src.database.models.user import User
 from src.services.infrastructure.agent_registry import AgentRegistry
-from src.services.job_store import RedisJobStore, InMemoryJobStore, JobType, JobStatus
-from src.workflow.patterns.sequential import SequentialWorkflow, SequentialStep
-from src.workflow.patterns.parallel import ParallelWorkflow
-from src.workflow.patterns.debate import DebateWorkflow
-from src.workflow.patterns.verification import VerificationWorkflow
-from src.workflow.patterns.expert_panel import ExpertPanelWorkflow
-from src.workflow.state import AgentState
+from src.services.job_store import InMemoryJobStore, JobType, RedisJobStore
 from src.utils.logging.setup import get_logger
+from src.workflow.patterns.debate import DebateWorkflow
+from src.workflow.patterns.expert_panel import ExpertPanelWorkflow
+from src.workflow.patterns.parallel import ParallelWorkflow
+from src.workflow.patterns.sequential import SequentialStep, SequentialWorkflow
+from src.workflow.patterns.verification import VerificationWorkflow
+from src.workflow.state import AgentState
 
 logger = get_logger(__name__)
 
@@ -57,6 +57,7 @@ router = APIRouter(prefix="/workflows")
 # =============================================================================
 # PRODUCTION JOB STORE (Redis-backed with in-memory fallback)
 # =============================================================================
+
 
 # Initialize job store (Redis if available, otherwise in-memory)
 def _initialize_workflow_job_store():
@@ -71,7 +72,7 @@ def _initialize_workflow_job_store():
     else:
         logger.warning(
             "using_in_memory_workflow_job_store",
-            message="Using in-memory job store. Jobs will not persist across restarts."
+            message="Using in-memory job store. Jobs will not persist across restarts.",
         )
         return InMemoryJobStore()
 
@@ -99,12 +100,10 @@ async def shutdown_workflow_job_store():
 # HELPER FUNCTIONS
 # =============================================================================
 
+
 def check_agents_exist(agent_names: list[str]) -> bool:
     """Check if all agents exist in registry"""
-    for agent_name in agent_names:
-        if not AgentRegistry.get_agent(agent_name):
-            return False
-    return True
+    return all(AgentRegistry.get_agent(agent_name) for agent_name in agent_names)
 
 
 def get_missing_agents(agent_names: list[str]) -> list[str]:
@@ -120,11 +119,11 @@ def get_missing_agents(agent_names: list[str]) -> list[str]:
 # SEQUENTIAL WORKFLOW
 # =============================================================================
 
+
 @router.post("/sequential", response_model=SequentialWorkflowResponse)
 @require_scopes(PermissionScope.EXECUTE_WORKFLOWS)
 async def execute_sequential_workflow(
-    request: SequentialWorkflowRequest,
-    current_user: User = Depends(get_current_user)
+    request: SequentialWorkflowRequest, current_user: User = Depends(get_current_user)
 ):
     """
     Execute a sequential workflow.
@@ -144,7 +143,7 @@ async def execute_sequential_workflow(
         "sequential_workflow_request",
         workflow_name=request.name,
         user_id=str(current_user.id),
-        steps_count=len(request.steps)
+        steps_count=len(request.steps),
     )
 
     start_time = time.time()
@@ -154,8 +153,7 @@ async def execute_sequential_workflow(
     missing = get_missing_agents(agent_names)
     if missing:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Agents not found: {', '.join(missing)}"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Agents not found: {', '.join(missing)}"
         )
 
     # Build workflow steps
@@ -206,7 +204,7 @@ async def execute_sequential_workflow(
             "sequential_workflow_success",
             workflow_name=request.name,
             steps_executed=len(result.steps_executed),
-            execution_time=execution_time
+            execution_time=execution_time,
         )
 
         return response
@@ -219,7 +217,7 @@ async def execute_sequential_workflow(
             workflow_name=request.name,
             error=str(e),
             execution_time=execution_time,
-            exc_info=True
+            exc_info=True,
         )
 
         return SequentialWorkflowResponse(
@@ -238,11 +236,11 @@ async def execute_sequential_workflow(
 # PARALLEL WORKFLOW
 # =============================================================================
 
+
 @router.post("/parallel", response_model=ParallelWorkflowResponse)
 @require_scopes(PermissionScope.EXECUTE_WORKFLOWS)
 async def execute_parallel_workflow(
-    request: ParallelWorkflowRequest,
-    current_user: User = Depends(get_current_user)
+    request: ParallelWorkflowRequest, current_user: User = Depends(get_current_user)
 ):
     """
     Execute a parallel workflow.
@@ -261,7 +259,7 @@ async def execute_parallel_workflow(
         "parallel_workflow_request",
         workflow_name=request.name,
         user_id=str(current_user.id),
-        agents_count=len(request.agents)
+        agents_count=len(request.agents),
     )
 
     start_time = time.time()
@@ -270,8 +268,7 @@ async def execute_parallel_workflow(
     missing = get_missing_agents(request.agents)
     if missing:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Agents not found: {', '.join(missing)}"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Agents not found: {', '.join(missing)}"
         )
 
     # Create workflow
@@ -312,7 +309,7 @@ async def execute_parallel_workflow(
             workflow_name=request.name,
             agents_succeeded=len(result.agents_succeeded),
             agents_failed=len(result.agents_failed),
-            execution_time=execution_time
+            execution_time=execution_time,
         )
 
         return response
@@ -325,7 +322,7 @@ async def execute_parallel_workflow(
             workflow_name=request.name,
             error=str(e),
             execution_time=execution_time,
-            exc_info=True
+            exc_info=True,
         )
 
         return ParallelWorkflowResponse(
@@ -345,11 +342,11 @@ async def execute_parallel_workflow(
 # DEBATE WORKFLOW
 # =============================================================================
 
+
 @router.post("/debate", response_model=DebateWorkflowResponse)
 @require_scopes(PermissionScope.EXECUTE_WORKFLOWS)
 async def execute_debate_workflow(
-    request: DebateWorkflowRequest,
-    current_user: User = Depends(get_current_user)
+    request: DebateWorkflowRequest, current_user: User = Depends(get_current_user)
 ):
     """
     Execute a debate workflow.
@@ -370,7 +367,7 @@ async def execute_debate_workflow(
         workflow_name=request.name,
         user_id=str(current_user.id),
         agents_count=len(request.agents),
-        rounds=request.rounds
+        rounds=request.rounds,
     )
 
     start_time = time.time()
@@ -380,8 +377,7 @@ async def execute_debate_workflow(
     missing = get_missing_agents(all_agents)
     if missing:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Agents not found: {', '.join(missing)}"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Agents not found: {', '.join(missing)}"
         )
 
     # Create workflow
@@ -433,7 +429,7 @@ async def execute_debate_workflow(
             "debate_workflow_success",
             workflow_name=request.name,
             rounds_completed=result.rounds_completed,
-            execution_time=execution_time
+            execution_time=execution_time,
         )
 
         return response
@@ -446,7 +442,7 @@ async def execute_debate_workflow(
             workflow_name=request.name,
             error=str(e),
             execution_time=execution_time,
-            exc_info=True
+            exc_info=True,
         )
 
         return DebateWorkflowResponse(
@@ -466,11 +462,11 @@ async def execute_debate_workflow(
 # VERIFICATION WORKFLOW
 # =============================================================================
 
+
 @router.post("/verification", response_model=VerificationWorkflowResponse)
 @require_scopes(PermissionScope.EXECUTE_WORKFLOWS)
 async def execute_verification_workflow(
-    request: VerificationWorkflowRequest,
-    current_user: User = Depends(get_current_user)
+    request: VerificationWorkflowRequest, current_user: User = Depends(get_current_user)
 ):
     """
     Execute a verification workflow.
@@ -490,18 +486,17 @@ async def execute_verification_workflow(
         "verification_workflow_request",
         workflow_name=request.name,
         user_id=str(current_user.id),
-        verifiers_count=len(request.verifier_agents)
+        verifiers_count=len(request.verifier_agents),
     )
 
     start_time = time.time()
 
     # Validate agents
-    all_agents = [request.primary_agent] + request.verifier_agents
+    all_agents = [request.primary_agent, *request.verifier_agents]
     missing = get_missing_agents(all_agents)
     if missing:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Agents not found: {', '.join(missing)}"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Agents not found: {', '.join(missing)}"
         )
 
     # Create workflow
@@ -543,7 +538,7 @@ async def execute_verification_workflow(
             workflow_name=request.name,
             iterations=result.iterations,
             consensus=result.consensus_achieved,
-            execution_time=execution_time
+            execution_time=execution_time,
         )
 
         return response
@@ -556,7 +551,7 @@ async def execute_verification_workflow(
             workflow_name=request.name,
             error=str(e),
             execution_time=execution_time,
-            exc_info=True
+            exc_info=True,
         )
 
         return VerificationWorkflowResponse(
@@ -576,11 +571,11 @@ async def execute_verification_workflow(
 # EXPERT PANEL WORKFLOW
 # =============================================================================
 
+
 @router.post("/expert-panel", response_model=ExpertPanelWorkflowResponse)
 @require_scopes(PermissionScope.EXECUTE_WORKFLOWS)
 async def execute_expert_panel_workflow(
-    request: ExpertPanelWorkflowRequest,
-    current_user: User = Depends(get_current_user)
+    request: ExpertPanelWorkflowRequest, current_user: User = Depends(get_current_user)
 ):
     """
     Execute an expert panel workflow.
@@ -600,7 +595,7 @@ async def execute_expert_panel_workflow(
         "expert_panel_workflow_request",
         workflow_name=request.name,
         user_id=str(current_user.id),
-        experts_count=len(request.experts)
+        experts_count=len(request.experts),
     )
 
     start_time = time.time()
@@ -610,8 +605,7 @@ async def execute_expert_panel_workflow(
     missing = get_missing_agents(all_agents)
     if missing:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Agents not found: {', '.join(missing)}"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Agents not found: {', '.join(missing)}"
         )
 
     # Create workflow
@@ -666,7 +660,7 @@ async def execute_expert_panel_workflow(
             workflow_name=request.name,
             experts_count=len(expert_opinions),
             consensus=result.consensus_level,
-            execution_time=execution_time
+            execution_time=execution_time,
         )
 
         return response
@@ -679,7 +673,7 @@ async def execute_expert_panel_workflow(
             workflow_name=request.name,
             error=str(e),
             execution_time=execution_time,
-            exc_info=True
+            exc_info=True,
         )
 
         return ExpertPanelWorkflowResponse(
@@ -699,12 +693,11 @@ async def execute_expert_panel_workflow(
 # ASYNC WORKFLOW EXECUTION
 # =============================================================================
 
+
 @router.post("/{workflow_type}/execute-async", response_model=WorkflowJobResponse)
 @require_scopes(PermissionScope.EXECUTE_WORKFLOWS)
 async def execute_workflow_async(
-    workflow_type: str,
-    request: Dict[str, Any],
-    current_user: User = Depends(get_current_user)
+    workflow_type: str, request: dict[str, Any], current_user: User = Depends(get_current_user)
 ):
     """
     Execute a workflow asynchronously.
@@ -720,14 +713,10 @@ async def execute_workflow_async(
     if workflow_type not in valid_types:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid workflow type. Must be one of: {', '.join(valid_types)}"
+            detail=f"Invalid workflow type. Must be one of: {', '.join(valid_types)}",
         )
 
-    logger.info(
-        "workflow_async_request",
-        workflow_type=workflow_type,
-        user_id=str(current_user.id)
-    )
+    logger.info("workflow_async_request", workflow_type=workflow_type, user_id=str(current_user.id))
 
     # Create job in job store
     workflow_name = request.get("name", f"{workflow_type}_workflow")
@@ -738,7 +727,7 @@ async def execute_workflow_async(
             "workflow_name": workflow_name,
             "request": request,
             "user_id": str(current_user.id),
-        }
+        },
     )
 
     # TODO: Start background task for workflow execution
@@ -755,10 +744,7 @@ async def execute_workflow_async(
 
 
 @router.get("/jobs/{job_id}", response_model=WorkflowJobResponse)
-async def get_workflow_job_status(
-    job_id: UUID,
-    current_user: User = Depends(get_current_user)
-):
+async def get_workflow_job_status(job_id: UUID, current_user: User = Depends(get_current_user)):
     """
     Get status of an async workflow job.
 
@@ -771,8 +757,7 @@ async def get_workflow_job_status(
     job = await workflow_job_store.get_job(str(job_id))
     if not job:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Workflow job {job_id} not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Workflow job {job_id} not found"
         )
 
     # Extract workflow metadata
