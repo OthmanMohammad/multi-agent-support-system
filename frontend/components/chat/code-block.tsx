@@ -17,7 +17,11 @@ interface CodeBlockProps {
  * Code Block Component with Copy Button
  * Enhanced code block with syntax highlighting and copy functionality
  */
-export function CodeBlock({ children, className, language }: CodeBlockProps): JSX.Element {
+export function CodeBlock({
+  children,
+  className,
+  language,
+}: CodeBlockProps): JSX.Element {
   const [isCopied, setIsCopied] = useState(false);
 
   // Extract language from className (format: "language-javascript")
