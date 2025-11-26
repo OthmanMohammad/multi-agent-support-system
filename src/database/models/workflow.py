@@ -1,10 +1,12 @@
 """
 Workflow automation models
 """
-from sqlalchemy import Column, String, Integer, Boolean, Text, ForeignKey, CheckConstraint, DateTime
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.orm import relationship
+
 import uuid
+
+from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, ForeignKey, String, Text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import relationship
 
 from src.database.models.base import BaseModel
 
@@ -27,13 +29,13 @@ class Workflow(BaseModel):
         "WorkflowExecution",
         back_populates="workflow",
         cascade="all, delete-orphan",
-        lazy="selectin"
+        lazy="selectin",
     )
 
     __table_args__ = (
         CheckConstraint(
             "trigger_type IN ('time_based', 'event_based', 'condition_based', 'manual')",
-            name="check_workflow_trigger_type"
+            name="check_workflow_trigger_type",
         ),
     )
 
@@ -56,7 +58,7 @@ class WorkflowExecution(BaseModel):
         UUID(as_uuid=True),
         ForeignKey("workflows.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
     status = Column(String(20), nullable=False, server_default="running", index=True)
     started_at = Column(DateTime(timezone=True), nullable=False)
@@ -71,7 +73,7 @@ class WorkflowExecution(BaseModel):
     __table_args__ = (
         CheckConstraint(
             "status IN ('running', 'completed', 'failed', 'canceled')",
-            name="check_workflow_execution_status"
+            name="check_workflow_execution_status",
         ),
     )
 
@@ -115,7 +117,8 @@ class ScheduledTask(BaseModel):
     @property
     def is_overdue(self) -> bool:
         """Check if task is overdue"""
-        from datetime import datetime
+        from datetime import UTC, datetime
+
         if not self.next_run_at or not self.is_active:
             return False
         return datetime.now(UTC) > self.next_run_at
