@@ -4,7 +4,7 @@ Tests for Customer Domain Specifications
 These tests verify business rules for customer operations.
 """
 import pytest
-from services.domain.customer.specifications import (
+from src.services.domain.customer.specifications import (
     CustomerIsActive,
     WithinRateLimit,
     HasValidPlan,
