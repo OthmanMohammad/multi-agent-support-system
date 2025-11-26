@@ -7,9 +7,9 @@ Includes startup scripts, health checks, and configuration management.
 Vast.ai GPU Orchestration
 """
 
-from typing import Dict, List, Optional
-from src.core.config import get_settings
 import structlog
+
+from src.core.config import get_settings
 
 logger = structlog.get_logger(__name__)
 settings = get_settings()
@@ -39,12 +39,12 @@ class VLLMDockerConfig:
 
     @staticmethod
     def get_vllm_args(
-        model: Optional[str] = None,
-        gpu_memory_utilization: Optional[float] = None,
-        max_model_len: Optional[int] = None,
+        model: str | None = None,
+        gpu_memory_utilization: float | None = None,
+        max_model_len: int | None = None,
         tensor_parallel_size: int = 1,
         port: int = 8000,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Generate vLLM server arguments.
 
@@ -64,13 +64,20 @@ class VLLMDockerConfig:
         max_len = max_model_len or settings.vastai.vllm_max_model_len
 
         args = [
-            "--model", model,
-            "--host", "0.0.0.0",
-            "--port", str(port),
-            "--tensor-parallel-size", str(tensor_parallel_size),
-            "--gpu-memory-utilization", str(gpu_mem),
-            "--max-model-len", str(max_len),
-            "--dtype", "auto",  # Automatic dtype selection
+            "--model",
+            model,
+            "--host",
+            "0.0.0.0",
+            "--port",
+            str(port),
+            "--tensor-parallel-size",
+            str(tensor_parallel_size),
+            "--gpu-memory-utilization",
+            str(gpu_mem),
+            "--max-model-len",
+            str(max_len),
+            "--dtype",
+            "auto",  # Automatic dtype selection
             "--disable-log-requests",  # Reduce log noise
             "--trust-remote-code",  # Required for some models
         ]
@@ -87,8 +94,8 @@ class VLLMDockerConfig:
 
     @staticmethod
     def get_docker_run_command(
-        image: Optional[str] = None,
-        model: Optional[str] = None,
+        image: str | None = None,
+        model: str | None = None,
         port: int = 8000,
         container_name: str = "vllm-server",
         shm_size: str = "8g",
@@ -124,7 +131,7 @@ class VLLMDockerConfig:
 
     @staticmethod
     def get_onstart_script(
-        model: Optional[str] = None,
+        model: str | None = None,
         port: int = 8000,
         container_name: str = "vllm-server",
     ) -> str:
@@ -230,8 +237,8 @@ exit 1
 
     @staticmethod
     def get_environment_variables(
-        hf_token: Optional[str] = None,
-    ) -> Dict[str, str]:
+        hf_token: str | None = None,
+    ) -> dict[str, str]:
         """
         Get environment variables for vLLM container.
 
@@ -252,7 +259,7 @@ exit 1
         return env_vars
 
     @staticmethod
-    def get_health_check_config() -> Dict[str, any]:
+    def get_health_check_config() -> dict[str, any]:
         """
         Get health check configuration for vLLM.
 
@@ -269,7 +276,7 @@ exit 1
         }
 
     @staticmethod
-    def get_model_cache_config() -> Dict[str, str]:
+    def get_model_cache_config() -> dict[str, str]:
         """
         Get model cache configuration.
 
@@ -302,23 +309,18 @@ exit 1
         # Validate model name format
         if "/" not in model:
             raise ValueError(
-                f"Invalid model name '{model}'. "
-                "Expected format: 'organization/model-name'"
+                f"Invalid model name '{model}'. Expected format: 'organization/model-name'"
             )
 
         # Validate GPU memory utilization
         if not 0.1 <= gpu_mem <= 1.0:
             raise ValueError(
-                f"Invalid GPU memory utilization: {gpu_mem}. "
-                "Must be between 0.1 and 1.0"
+                f"Invalid GPU memory utilization: {gpu_mem}. Must be between 0.1 and 1.0"
             )
 
         # Validate max model length
         if max_len < 512 or max_len > 32768:
-            raise ValueError(
-                f"Invalid max model length: {max_len}. "
-                "Must be between 512 and 32768"
-            )
+            raise ValueError(f"Invalid max model length: {max_len}. Must be between 512 and 32768")
 
         logger.info(
             "vllm_docker_config_validated",
@@ -359,5 +361,5 @@ except Exception as e:
     logger.warning(
         "vllm_docker_config_validation_failed",
         error=str(e),
-        message="Configuration will use defaults"
+        message="Configuration will use defaults",
     )
