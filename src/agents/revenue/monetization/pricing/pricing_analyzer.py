@@ -558,5 +558,9 @@ Optimization Impact:
 
 Generate a comprehensive pricing analysis."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # Pricing analysis uses metrics data
+        )
         return response
