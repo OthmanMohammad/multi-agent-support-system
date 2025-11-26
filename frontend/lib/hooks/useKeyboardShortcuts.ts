@@ -98,6 +98,7 @@ export const CHAT_SHORTCUTS = {
 /**
  * Format a shortcut definition to a human-readable string
  */
+// eslint-disable-next-line complexity -- Complex switch statement for key formatting
 export function formatShortcut(shortcut: ShortcutDefinition): string {
   const parts: string[] = [];
   const isMac =
@@ -165,6 +166,7 @@ export function useKeyboardShortcuts(
   const { shortcuts, enabled = true } = options;
 
   const handleKeyDown = useCallback(
+    // eslint-disable-next-line complexity -- Complex handler for multiple keyboard shortcuts
     (event: KeyboardEvent) => {
       if (!enabled) {
         return;
