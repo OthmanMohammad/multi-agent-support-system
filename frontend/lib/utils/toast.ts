@@ -4,7 +4,7 @@
  * Re-exports sonner's toast with consistent styling and custom helpers
  */
 
-import { toast as sonnerToast, type ExternalToast } from "sonner";
+import { type ExternalToast, toast as sonnerToast } from "sonner";
 
 /**
  * Re-export sonner toast with all methods
@@ -55,7 +55,9 @@ export const fileToast = {
    */
   uploadError: (fileName?: string) => {
     sonnerToast.error("Upload failed", {
-      description: fileName ? `Failed to upload ${fileName}` : "Please try again",
+      description: fileName
+        ? `Failed to upload ${fileName}`
+        : "Please try again",
     });
   },
 
