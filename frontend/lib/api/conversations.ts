@@ -117,6 +117,7 @@ export const conversationsAPI = {
   /**
    * Stream message response (SSE)
    */
+  // eslint-disable-next-line complexity -- Complex SSE streaming logic
   async streamMessage(
     conversationId: string,
     message: string,
@@ -173,15 +174,18 @@ export const conversationsAPI = {
 
         for (const line of lines) {
           if (line.startsWith("data: ")) {
+            // eslint-disable-next-line max-depth -- Necessary for SSE event parsing
             try {
               const data = JSON.parse(line.slice(6));
               const event = data as StreamEvent;
 
+              // eslint-disable-next-line max-depth -- Necessary for SSE event handling
               if (event.type === "error") {
                 onError?.(new Error(event.error || "Stream error"));
                 return;
               }
 
+              // eslint-disable-next-line max-depth -- Necessary for SSE event handling
               if (event.type === "done") {
                 onComplete?.();
                 return;
