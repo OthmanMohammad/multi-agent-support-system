@@ -5,12 +5,10 @@ This agent manages discount requests, auto-approving within limits and
 escalating larger requests to human agents.
 """
 
-from typing import Dict, Any, Optional
-
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("discount_negotiator", tier="essential", category="billing")
@@ -36,43 +34,43 @@ class DiscountNegotiator(BaseAgent):
             "percent": 20,
             "description": "Annual plan discount (20% off)",
             "auto_approve": True,
-            "requires_verification": False
+            "requires_verification": False,
         },
         "volume": {
             "percent": 15,
             "description": "Volume discount for 10+ seats",
             "auto_approve": True,
             "requires_verification": False,
-            "min_seats": 10
+            "min_seats": 10,
         },
         "nonprofit": {
             "percent": 50,
             "description": "Nonprofit organization discount",
             "auto_approve": False,  # Requires verification
             "requires_verification": True,
-            "verification_docs": ["501(c)(3) letter", "charity registration"]
+            "verification_docs": ["501(c)(3) letter", "charity registration"],
         },
         "student": {
             "percent": 50,
             "description": "Student/education discount",
             "auto_approve": False,
             "requires_verification": True,
-            "verification_docs": ["Student ID", "university email"]
+            "verification_docs": ["Student ID", "university email"],
         },
         "startup": {
             "percent": 30,
             "description": "Startup program (for companies <2 years old)",
             "auto_approve": True,
             "requires_verification": True,
-            "verification_docs": ["Company registration within 2 years"]
+            "verification_docs": ["Company registration within 2 years"],
         },
         "budget": {
             "percent": 20,
             "description": "Budget-friendly discount",
             "auto_approve": True,
             "requires_verification": False,
-            "max_months": 6
-        }
+            "max_months": 6,
+        },
     }
 
     def __init__(self):
@@ -80,12 +78,9 @@ class DiscountNegotiator(BaseAgent):
             name="discount_negotiator",
             type=AgentType.SPECIALIST,
             temperature=0.3,
-            capabilities=[
-                AgentCapability.KB_SEARCH,
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="billing",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -117,17 +112,13 @@ class DiscountNegotiator(BaseAgent):
             requested_percent=discount_details["requested_percent"],
             reason=discount_details["reason"],
             customer_id=state.get("customer_id"),
-            turn_count=state["turn_count"]
+            turn_count=state["turn_count"],
         )
 
         # Check if customer qualifies for the requested discount program
         if self._customer_qualifies(customer_metadata, discount_details):
             # Customer qualifies - approve the discount
-            response = await self._approve_discount(
-                customer_metadata,
-                discount_details,
-                state
-            )
+            response = await self._approve_discount(customer_metadata, discount_details, state)
             state["discount_approved"] = True
             state["discount_percent"] = discount_details["requested_percent"]
             state["discount_reason"] = discount_details["reason"]
@@ -136,16 +127,16 @@ class DiscountNegotiator(BaseAgent):
                 "discount_approved",
                 customer_id=state.get("customer_id"),
                 percent=discount_details["requested_percent"],
-                reason=discount_details["reason"]
+                reason=discount_details["reason"],
             )
 
-        elif discount_details["reason"] in self.AVAILABLE_DISCOUNTS and discount_details["reason"] != "general":
+        elif (
+            discount_details["reason"] in self.AVAILABLE_DISCOUNTS
+            and discount_details["reason"] != "general"
+        ):
             # Requested specific program (nonprofit, student, etc.) but doesn't qualify
             # Offer alternatives regardless of requested percentage
-            response = self._offer_alternative_discount(
-                customer_metadata,
-                discount_details
-            )
+            response = self._offer_alternative_discount(customer_metadata, discount_details)
             state["discount_approved"] = False
             state["alternative_offered"] = True
 
@@ -153,15 +144,12 @@ class DiscountNegotiator(BaseAgent):
                 "discount_denied_alternative_offered",
                 customer_id=state.get("customer_id"),
                 requested_percent=discount_details["requested_percent"],
-                reason=f"does_not_qualify_for_{discount_details['reason']}"
+                reason=f"does_not_qualify_for_{discount_details['reason']}",
             )
 
         elif discount_details["requested_percent"] <= self.MAX_AUTO_APPROVE_PERCENT:
             # General request within auto-approve limit - offer alternatives
-            response = self._offer_alternative_discount(
-                customer_metadata,
-                discount_details
-            )
+            response = self._offer_alternative_discount(customer_metadata, discount_details)
             state["discount_approved"] = False
             state["alternative_offered"] = True
 
@@ -169,7 +157,7 @@ class DiscountNegotiator(BaseAgent):
                 "discount_denied_alternative_offered",
                 customer_id=state.get("customer_id"),
                 requested_percent=discount_details["requested_percent"],
-                reason=discount_details["reason"]
+                reason=discount_details["reason"],
             )
 
         else:
@@ -183,7 +171,7 @@ class DiscountNegotiator(BaseAgent):
                 "discount_request_escalated",
                 customer_id=state.get("customer_id"),
                 requested_percent=discount_details["requested_percent"],
-                reason="above_approval_limit"
+                reason="above_approval_limit",
             )
 
         state["agent_response"] = response
@@ -193,11 +181,7 @@ class DiscountNegotiator(BaseAgent):
 
         return state
 
-    def _extract_discount_request(
-        self,
-        state: AgentState,
-        customer_metadata: Dict
-    ) -> Dict:
+    def _extract_discount_request(self, state: AgentState, customer_metadata: dict) -> dict:
         """
         Extract discount request details.
 
@@ -236,7 +220,7 @@ class DiscountNegotiator(BaseAgent):
         return {
             "requested_percent": requested_percent,
             "reason": reason,
-            "duration_months": duration_months
+            "duration_months": duration_months,
         }
 
     def _infer_reason_from_message(self, message: str) -> str:
@@ -264,11 +248,7 @@ class DiscountNegotiator(BaseAgent):
         else:
             return "general"
 
-    def _customer_qualifies(
-        self,
-        customer_metadata: Dict,
-        discount_details: Dict
-    ) -> bool:
+    def _customer_qualifies(self, customer_metadata: dict, discount_details: dict) -> bool:
         """
         Check if customer qualifies for requested discount.
 
@@ -284,9 +264,7 @@ class DiscountNegotiator(BaseAgent):
         # Check if reason matches a discount program
         if reason not in self.AVAILABLE_DISCOUNTS:
             # General requests may qualify for budget discount
-            if discount_details["requested_percent"] <= 20:
-                return True
-            return False
+            return discount_details["requested_percent"] <= 20
 
         discount_program = self.AVAILABLE_DISCOUNTS[reason]
 
@@ -295,7 +273,7 @@ class DiscountNegotiator(BaseAgent):
             self.logger.debug(
                 "discount_percent_exceeds_program",
                 requested=discount_details["requested_percent"],
-                program_max=discount_program["percent"]
+                program_max=discount_program["percent"],
             )
             return False
 
@@ -318,10 +296,7 @@ class DiscountNegotiator(BaseAgent):
             return False
 
     async def _approve_discount(
-        self,
-        customer_metadata: Dict,
-        discount_details: Dict,
-        state: AgentState
+        self, customer_metadata: dict, discount_details: dict, state: AgentState
     ) -> str:
         """
         Approve and apply discount.
@@ -342,7 +317,9 @@ class DiscountNegotiator(BaseAgent):
 
         # Check if verification required
         program_info = self.AVAILABLE_DISCOUNTS.get(reason)
-        requires_verification = program_info.get("requires_verification", False) if program_info else False
+        requires_verification = (
+            program_info.get("requires_verification", False) if program_info else False
+        )
 
         if requires_verification and not customer_metadata.get(f"verified_{reason}", False):
             # Need verification first
@@ -392,16 +369,12 @@ This discount will be applied to your next invoice{duration_text}. """
             "discount_approved_message_generated",
             percent=percent,
             reason=reason,
-            requires_verification=requires_verification
+            requires_verification=requires_verification,
         )
 
         return message
 
-    def _offer_alternative_discount(
-        self,
-        customer_metadata: Dict,
-        discount_details: Dict
-    ) -> str:
+    def _offer_alternative_discount(self, customer_metadata: dict, discount_details: dict) -> str:
         """
         Offer alternative discount options when customer doesn't qualify.
 
@@ -442,11 +415,7 @@ Which option interests you most? I'm happy to explain any of these in detail!"""
 
         return message
 
-    def _escalate_for_approval(
-        self,
-        discount_details: Dict,
-        customer_metadata: Dict
-    ) -> str:
+    def _escalate_for_approval(self, discount_details: dict, customer_metadata: dict) -> str:
         """
         Escalate large discount request to sales team.
 
@@ -465,7 +434,7 @@ Which option interests you most? I'm happy to explain any of these in detail!"""
 **Your request:**
 - Current price: ${mrr}/month
 - Requested discount: {percent}%
-- New price would be: ${mrr * (1 - percent/100):.2f}/month
+- New price would be: ${mrr * (1 - percent / 100):.2f}/month
 
 Let me connect you with our sales team who can review custom pricing for your needs. They have more flexibility for larger discounts and can discuss:
 - Custom contracts
@@ -492,6 +461,7 @@ Would you like me to:
 if __name__ == "__main__":
     # Test discount negotiator
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -504,45 +474,30 @@ if __name__ == "__main__":
         # Test 1: Auto-approve within limit (20%)
         state1 = create_initial_state(
             "Can I get a 20% discount? My budget is tight.",
-            context={
-                "customer_metadata": {
-                    "plan": "premium",
-                    "mrr": 100,
-                    "seats_total": 5
-                }
-            }
+            context={"customer_metadata": {"plan": "premium", "mrr": 100, "seats_total": 5}},
         )
-        state1["entities"] = {
-            "requested_discount_percent": 20,
-            "discount_reason": "budget"
-        }
+        state1["entities"] = {"requested_discount_percent": 20, "discount_reason": "budget"}
 
         result1 = await negotiator.process(state1)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("TEST 1: Auto-Approve (20% budget discount)")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Approved: {result1.get('discount_approved')}")
         print(f"Percent: {result1.get('discount_percent')}")
         print(f"\nResponse:\n{result1['agent_response']}")
 
         # Test 2: Escalate above limit (40%)
         state2 = create_initial_state(
-            "I need a 40% discount",
-            context={
-                "customer_metadata": {
-                    "plan": "premium",
-                    "mrr": 100
-                }
-            }
+            "I need a 40% discount", context={"customer_metadata": {"plan": "premium", "mrr": 100}}
         )
         state2["entities"] = {"requested_discount_percent": 40}
 
         result2 = await negotiator.process(state2)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("TEST 2: Escalate (40% above limit)")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Approved: {result2.get('discount_approved')}")
         print(f"Should escalate: {result2.get('should_escalate')}")
         print(f"\nResponse:\n{result2['agent_response'][:300]}...")
@@ -555,20 +510,17 @@ if __name__ == "__main__":
                     "plan": "basic",
                     "mrr": 50,
                     "is_nonprofit": True,
-                    "verified_nonprofit": False
+                    "verified_nonprofit": False,
                 }
-            }
+            },
         )
-        state3["entities"] = {
-            "requested_discount_percent": 50,
-            "discount_reason": "nonprofit"
-        }
+        state3["entities"] = {"requested_discount_percent": 50, "discount_reason": "nonprofit"}
 
         result3 = await negotiator.process(state3)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("TEST 3: Nonprofit (requires verification)")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Approved: {result3.get('discount_approved')}")
         print(f"\nResponse:\n{result3['agent_response'][:300]}...")
 
@@ -579,20 +531,17 @@ if __name__ == "__main__":
                 "customer_metadata": {
                     "plan": "premium",
                     "mrr": 375,  # 15 users * $25
-                    "seats_total": 15
+                    "seats_total": 15,
                 }
-            }
+            },
         )
-        state4["entities"] = {
-            "requested_discount_percent": 15,
-            "discount_reason": "volume"
-        }
+        state4["entities"] = {"requested_discount_percent": 15, "discount_reason": "volume"}
 
         result4 = await negotiator.process(state4)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("TEST 4: Volume Discount (15 users)")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Approved: {result4.get('discount_approved')}")
         print(f"\nResponse:\n{result4['agent_response'][:250]}...")
 
