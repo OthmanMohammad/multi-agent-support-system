@@ -5,14 +5,14 @@ Performs statistical analysis of A/B tests using Chi-square test and other metho
 Determines statistical significance (p<0.05) and provides actionable insights.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, UTC
 import math
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("ab_test_analyzer", tier="operational", category="analytics")
@@ -36,11 +36,7 @@ class ABTestAnalyzerAgent(BaseAgent):
     MINIMUM_CONVERSION_EVENTS = 10
 
     # Effect size thresholds (Cohen's h for proportions)
-    EFFECT_SIZE_THRESHOLDS = {
-        "small": 0.2,
-        "medium": 0.5,
-        "large": 0.8
-    }
+    EFFECT_SIZE_THRESHOLDS = {"small": 0.2, "medium": 0.5, "large": 0.8}
 
     def __init__(self):
         config = AgentConfig(
@@ -49,7 +45,7 @@ class ABTestAnalyzerAgent(BaseAgent):
             temperature=0.2,
             max_tokens=1500,
             capabilities=[AgentCapability.DATABASE_WRITE],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -72,13 +68,15 @@ class ABTestAnalyzerAgent(BaseAgent):
         test_name = state.get("entities", {}).get("test_name", "Unknown Test")
         variant_a = state.get("entities", {}).get("variant_a", {})
         variant_b = state.get("entities", {}).get("variant_b", {})
-        metric_type = state.get("entities", {}).get("metric_type", "conversion")  # conversion or continuous
+        metric_type = state.get("entities", {}).get(
+            "metric_type", "conversion"
+        )  # conversion or continuous
 
         self.logger.debug(
             "ab_test_analysis_details",
             test_name=test_name,
             metric_type=metric_type,
-            variant_a_size=variant_a.get("sample_size", 0)
+            variant_a_size=variant_a.get("sample_size", 0),
         )
 
         # Validate test data
@@ -101,15 +99,14 @@ class ABTestAnalyzerAgent(BaseAgent):
         effect_size = self._calculate_effect_size(variant_a, variant_b, metric_type)
 
         # Calculate confidence intervals
-        confidence_intervals = self._calculate_confidence_intervals(variant_a, variant_b, metric_type)
+        confidence_intervals = self._calculate_confidence_intervals(
+            variant_a, variant_b, metric_type
+        )
 
         # Determine winner and recommendations
         conclusion = self._determine_conclusion(test_results, effect_size)
         recommendations = self._generate_recommendations(
-            test_results,
-            effect_size,
-            variant_a,
-            variant_b
+            test_results, effect_size, variant_a, variant_b
         )
 
         # Format response
@@ -122,7 +119,7 @@ class ABTestAnalyzerAgent(BaseAgent):
             confidence_intervals,
             conclusion,
             recommendations,
-            metric_type
+            metric_type,
         )
 
         state["agent_response"] = response
@@ -139,17 +136,14 @@ class ABTestAnalyzerAgent(BaseAgent):
             "ab_test_analysis_completed",
             test_name=test_name,
             is_significant=test_results["is_significant"],
-            winner=conclusion.get("winner", "none")
+            winner=conclusion.get("winner", "none"),
         )
 
         return state
 
     def _validate_test_data(
-        self,
-        variant_a: Dict[str, Any],
-        variant_b: Dict[str, Any],
-        metric_type: str
-    ) -> Dict[str, Any]:
+        self, variant_a: dict[str, Any], variant_b: dict[str, Any], metric_type: str
+    ) -> dict[str, Any]:
         """
         Validate A/B test data.
 
@@ -168,10 +162,14 @@ class ABTestAnalyzerAgent(BaseAgent):
         sample_b = variant_b.get("sample_size", 0)
 
         if sample_a < self.MINIMUM_SAMPLE_SIZE:
-            issues.append(f"Variant A sample size ({sample_a}) below minimum ({self.MINIMUM_SAMPLE_SIZE})")
+            issues.append(
+                f"Variant A sample size ({sample_a}) below minimum ({self.MINIMUM_SAMPLE_SIZE})"
+            )
 
         if sample_b < self.MINIMUM_SAMPLE_SIZE:
-            issues.append(f"Variant B sample size ({sample_b}) below minimum ({self.MINIMUM_SAMPLE_SIZE})")
+            issues.append(
+                f"Variant B sample size ({sample_b}) below minimum ({self.MINIMUM_SAMPLE_SIZE})"
+            )
 
         # Check conversion events for conversion tests
         if metric_type == "conversion":
@@ -184,16 +182,11 @@ class ABTestAnalyzerAgent(BaseAgent):
             if conversions_b < self.MINIMUM_CONVERSION_EVENTS:
                 issues.append(f"Variant B has insufficient conversions ({conversions_b})")
 
-        return {
-            "valid": len(issues) == 0,
-            "issues": issues
-        }
+        return {"valid": len(issues) == 0, "issues": issues}
 
     def _perform_chi_square_test(
-        self,
-        variant_a: Dict[str, Any],
-        variant_b: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, variant_a: dict[str, Any], variant_b: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Perform Chi-square test for conversion rates.
 
@@ -220,7 +213,7 @@ class ABTestAnalyzerAgent(BaseAgent):
         pooled_probability = total_conversions / total_sample if total_sample > 0 else 0
 
         # Calculate standard error
-        se = math.sqrt(pooled_probability * (1 - pooled_probability) * (1/n_a + 1/n_b))
+        se = math.sqrt(pooled_probability * (1 - pooled_probability) * (1 / n_a + 1 / n_b))
 
         # Calculate z-score
         z_score = (rate_b - rate_a) / se if se > 0 else 0
@@ -241,14 +234,12 @@ class ABTestAnalyzerAgent(BaseAgent):
             "z_score": round(z_score, 3),
             "p_value": round(p_value, 4),
             "is_significant": is_significant,
-            "confidence_level": 95
+            "confidence_level": 95,
         }
 
     def _perform_t_test(
-        self,
-        variant_a: Dict[str, Any],
-        variant_b: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, variant_a: dict[str, Any], variant_b: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Perform t-test for continuous metrics.
 
@@ -273,7 +264,7 @@ class ABTestAnalyzerAgent(BaseAgent):
         pooled_std = math.sqrt(pooled_var)
 
         # Calculate standard error
-        se = pooled_std * math.sqrt(1/n_a + 1/n_b)
+        se = pooled_std * math.sqrt(1 / n_a + 1 / n_b)
 
         # Calculate t-statistic
         t_stat = (mean_b - mean_a) / se if se > 0 else 0
@@ -297,7 +288,7 @@ class ABTestAnalyzerAgent(BaseAgent):
             "degrees_of_freedom": df,
             "p_value": round(p_value, 4),
             "is_significant": is_significant,
-            "confidence_level": 95
+            "confidence_level": 95,
         }
 
     def _calculate_p_value_from_z(self, z: float) -> float:
@@ -318,16 +309,15 @@ class ABTestAnalyzerAgent(BaseAgent):
         # Approximate cumulative distribution
         t = 1 / (1 + 0.2316419 * z)
         d = 0.3989423 * math.exp(-z * z / 2)
-        prob = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))))
+        prob = (
+            d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))))
+        )
 
         return 2 * prob  # Two-tailed
 
     def _calculate_effect_size(
-        self,
-        variant_a: Dict[str, Any],
-        variant_b: Dict[str, Any],
-        metric_type: str
-    ) -> Dict[str, Any]:
+        self, variant_a: dict[str, Any], variant_b: dict[str, Any], metric_type: str
+    ) -> dict[str, Any]:
         """
         Calculate effect size.
 
@@ -385,15 +375,12 @@ class ABTestAnalyzerAgent(BaseAgent):
         return {
             "value": round(effect_size_value, 3),
             "magnitude": magnitude,
-            "interpretation": f"{magnitude.title()} practical significance"
+            "interpretation": f"{magnitude.title()} practical significance",
         }
 
     def _calculate_confidence_intervals(
-        self,
-        variant_a: Dict[str, Any],
-        variant_b: Dict[str, Any],
-        metric_type: str
-    ) -> Dict[str, Any]:
+        self, variant_a: dict[str, Any], variant_b: dict[str, Any], metric_type: str
+    ) -> dict[str, Any]:
         """
         Calculate confidence intervals for the difference.
 
@@ -426,7 +413,7 @@ class ABTestAnalyzerAgent(BaseAgent):
                 "difference": round(diff * 100, 2),
                 "lower_bound": round((diff - margin) * 100, 2),
                 "upper_bound": round((diff + margin) * 100, 2),
-                "confidence_level": 95
+                "confidence_level": 95,
             }
 
         else:
@@ -448,14 +435,12 @@ class ABTestAnalyzerAgent(BaseAgent):
                 "difference": round(diff, 2),
                 "lower_bound": round(diff - margin, 2),
                 "upper_bound": round(diff + margin, 2),
-                "confidence_level": 95
+                "confidence_level": 95,
             }
 
     def _determine_conclusion(
-        self,
-        test_results: Dict[str, Any],
-        effect_size: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, test_results: dict[str, Any], effect_size: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Determine test conclusion and winner.
 
@@ -473,7 +458,7 @@ class ABTestAnalyzerAgent(BaseAgent):
             return {
                 "winner": "none",
                 "decision": "No significant difference detected",
-                "action": "Continue testing or conclude no difference"
+                "action": "Continue testing or conclude no difference",
             }
 
         # Determine winner
@@ -486,7 +471,9 @@ class ABTestAnalyzerAgent(BaseAgent):
 
         # Consider effect size
         if effect_size["magnitude"] == "negligible":
-            action = "Statistically significant but practically negligible - consider business impact"
+            action = (
+                "Statistically significant but practically negligible - consider business impact"
+            )
         elif effect_size["magnitude"] == "small":
             action = "Small but significant effect - evaluate against implementation cost"
         else:
@@ -496,16 +483,16 @@ class ABTestAnalyzerAgent(BaseAgent):
             "winner": winner,
             "decision": decision,
             "action": action,
-            "effect_magnitude": effect_size["magnitude"]
+            "effect_magnitude": effect_size["magnitude"],
         }
 
     def _generate_recommendations(
         self,
-        test_results: Dict[str, Any],
-        effect_size: Dict[str, Any],
-        variant_a: Dict[str, Any],
-        variant_b: Dict[str, Any]
-    ) -> List[str]:
+        test_results: dict[str, Any],
+        effect_size: dict[str, Any],
+        variant_a: dict[str, Any],
+        variant_b: dict[str, Any],
+    ) -> list[str]:
         """Generate actionable recommendations."""
         recommendations = []
 
@@ -535,11 +522,7 @@ class ABTestAnalyzerAgent(BaseAgent):
 
         return recommendations
 
-    def _format_validation_error(
-        self,
-        test_name: str,
-        validation_result: Dict[str, Any]
-    ) -> str:
+    def _format_validation_error(self, test_name: str, validation_result: dict[str, Any]) -> str:
         """Format validation error message."""
         report = f"""**A/B Test Analysis: {test_name}**
 
@@ -551,23 +534,23 @@ The test data does not meet minimum requirements for statistical analysis:
         for issue in validation_result["issues"]:
             report += f"- {issue}\n"
 
-        report += f"\n**Recommendations:**\n"
-        report += f"- Continue collecting data until minimum sample sizes are met\n"
-        report += f"- Ensure sufficient conversion events for reliable analysis\n"
+        report += "\n**Recommendations:**\n"
+        report += "- Continue collecting data until minimum sample sizes are met\n"
+        report += "- Ensure sufficient conversion events for reliable analysis\n"
 
         return report
 
     def _format_ab_test_report(
         self,
         test_name: str,
-        variant_a: Dict[str, Any],
-        variant_b: Dict[str, Any],
-        test_results: Dict[str, Any],
-        effect_size: Dict[str, Any],
-        confidence_intervals: Dict[str, Any],
-        conclusion: Dict[str, Any],
-        recommendations: List[str],
-        metric_type: str
+        variant_a: dict[str, Any],
+        variant_b: dict[str, Any],
+        test_results: dict[str, Any],
+        effect_size: dict[str, Any],
+        confidence_intervals: dict[str, Any],
+        conclusion: dict[str, Any],
+        recommendations: list[str],
+        metric_type: str,
     ) -> str:
         """Format A/B test analysis report."""
         report = f"""**A/B Test Analysis: {test_name}**
@@ -578,8 +561,8 @@ The test data does not meet minimum requirements for statistical analysis:
 - Confidence Level: 95%
 
 **Sample Sizes:**
-- Variant A (Control): {variant_a.get('sample_size', 0):,}
-- Variant B (Treatment): {variant_b.get('sample_size', 0):,}
+- Variant A (Control): {variant_a.get("sample_size", 0):,}
+- Variant B (Treatment): {variant_b.get("sample_size", 0):,}
 
 **Results:**
 """
@@ -602,13 +585,13 @@ The test data does not meet minimum requirements for statistical analysis:
         report += f"- Significant: {'Yes' if test_results['is_significant'] else 'No'} (p {'<' if test_results['is_significant'] else '>='} 0.05)\n"
 
         # Effect size
-        report += f"\n**Effect Size:**\n"
+        report += "\n**Effect Size:**\n"
         report += f"- Magnitude: {effect_size['magnitude'].title()}\n"
         report += f"- Value: {effect_size['value']:.3f}\n"
         report += f"- Interpretation: {effect_size['interpretation']}\n"
 
         # Confidence interval
-        report += f"\n**95% Confidence Interval:**\n"
+        report += "\n**95% Confidence Interval:**\n"
         report += f"- Difference: {confidence_intervals['difference']}\n"
         report += f"- CI: [{confidence_intervals['lower_bound']}, {confidence_intervals['upper_bound']}]\n"
 
@@ -620,7 +603,7 @@ The test data does not meet minimum requirements for statistical analysis:
         report += f"- Recommended Action: {conclusion['action']}\n"
 
         # Recommendations
-        report += f"\n**Recommendations:**\n"
+        report += "\n**Recommendations:**\n"
         for rec in recommendations:
             report += f"- {rec}\n"
 
