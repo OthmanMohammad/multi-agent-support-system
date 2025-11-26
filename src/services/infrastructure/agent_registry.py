@@ -5,7 +5,6 @@ This module provides a centralized registry for all agents in the system,
 enabling dynamic discovery, instantiation, and management of agents.
 """
 
-from typing import Dict, Type, List, Optional
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -19,16 +18,11 @@ class AgentRegistry:
     Agents self-register using the @AgentRegistry.register decorator.
     """
 
-    _agents: Dict[str, Type] = {}
-    _metadata: Dict[str, Dict] = {}
+    _agents: dict[str, type] = {}
+    _metadata: dict[str, dict] = {}
 
     @classmethod
-    def register(
-        cls,
-        name: str,
-        tier: Optional[str] = None,
-        category: Optional[str] = None
-    ):
+    def register(cls, name: str, tier: str | None = None, category: str | None = None):
         """
         Decorator to register an agent.
 
@@ -42,13 +36,14 @@ class AgentRegistry:
             class MetaRouterAgent(BaseAgent):
                 ...
         """
-        def decorator(agent_class: Type):
+
+        def decorator(agent_class: type):
             if name in cls._agents:
                 logger.warning(
                     "agent_already_registered",
                     name=name,
                     existing_class=cls._agents[name].__name__,
-                    new_class=agent_class.__name__
+                    new_class=agent_class.__name__,
                 )
 
             cls._agents[name] = agent_class
@@ -56,7 +51,7 @@ class AgentRegistry:
                 "tier": tier,
                 "category": category,
                 "class_name": agent_class.__name__,
-                "module": agent_class.__module__
+                "module": agent_class.__module__,
             }
 
             logger.debug(
@@ -64,14 +59,15 @@ class AgentRegistry:
                 name=name,
                 tier=tier,
                 category=category,
-                class_name=agent_class.__name__
+                class_name=agent_class.__name__,
             )
 
             return agent_class
+
         return decorator
 
     @classmethod
-    def get_agent(cls, name: str) -> Optional[Type]:
+    def get_agent(cls, name: str) -> type | None:
         """
         Get agent class by name.
 
@@ -89,7 +85,7 @@ class AgentRegistry:
         return agent_class
 
     @classmethod
-    def get_all_agents(cls) -> Dict[str, Type]:
+    def get_all_agents(cls) -> dict[str, type]:
         """
         Get all registered agents.
 
@@ -99,7 +95,7 @@ class AgentRegistry:
         return cls._agents.copy()
 
     @classmethod
-    def get_agents_by_tier(cls, tier: str) -> List[str]:
+    def get_agents_by_tier(cls, tier: str) -> list[str]:
         """
         Get agents by tier.
 
@@ -109,13 +105,10 @@ class AgentRegistry:
         Returns:
             List of agent names in the tier
         """
-        return [
-            name for name, metadata in cls._metadata.items()
-            if metadata.get("tier") == tier
-        ]
+        return [name for name, metadata in cls._metadata.items() if metadata.get("tier") == tier]
 
     @classmethod
-    def get_agents_by_category(cls, category: str) -> List[str]:
+    def get_agents_by_category(cls, category: str) -> list[str]:
         """
         Get agents by category.
 
@@ -126,12 +119,11 @@ class AgentRegistry:
             List of agent names in the category
         """
         return [
-            name for name, metadata in cls._metadata.items()
-            if metadata.get("category") == category
+            name for name, metadata in cls._metadata.items() if metadata.get("category") == category
         ]
 
     @classmethod
-    def get_agent_metadata(cls, name: str) -> Optional[Dict]:
+    def get_agent_metadata(cls, name: str) -> dict | None:
         """
         Get agent metadata.
 
@@ -144,7 +136,7 @@ class AgentRegistry:
         return cls._metadata.get(name)
 
     @classmethod
-    def list_agents(cls) -> List[Dict]:
+    def list_agents(cls) -> list[dict]:
         """
         List all registered agents with metadata.
 
@@ -152,11 +144,7 @@ class AgentRegistry:
             List of dictionaries with agent information
         """
         return [
-            {
-                "name": name,
-                "class": agent_class.__name__,
-                **cls._metadata.get(name, {})
-            }
+            {"name": name, "class": agent_class.__name__, **cls._metadata.get(name, {})}
             for name, agent_class in cls._agents.items()
         ]
 
@@ -172,7 +160,7 @@ class AgentRegistry:
         logger.info("agent_registry_cleared")
 
     @classmethod
-    def get_tier_summary(cls) -> Dict[str, int]:
+    def get_tier_summary(cls) -> dict[str, int]:
         """
         Get summary of agents by tier.
 
@@ -186,7 +174,7 @@ class AgentRegistry:
         return summary
 
     @classmethod
-    def get_category_summary(cls) -> Dict[str, int]:
+    def get_category_summary(cls) -> dict[str, int]:
         """
         Get summary of agents by category.
 
