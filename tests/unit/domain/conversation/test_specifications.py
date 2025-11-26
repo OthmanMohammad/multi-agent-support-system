@@ -5,7 +5,7 @@ These tests verify business rules encapsulated as specifications.
 No database needed - just object state checking.
 """
 import pytest
-from services.domain.conversation.specifications import (
+from src.services.domain.conversation.specifications import (
     ConversationIsActive,
     ConversationIsResolved,
     ConversationIsEscalated,
