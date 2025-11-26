@@ -246,7 +246,11 @@ Current Customer Data:
 
 Return JSON with extracted fields: company_info, pain_points, use_cases, budget_signals, timeline, sentiment, competitors, next_steps, engagement_level, and any other relevant business data."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # CRM insights extraction uses message context
+        )
 
         # Parse LLM response
         try:
