@@ -5,13 +5,13 @@ Maintains feature comparison matrices, tracks competitor feature updates,
 identifies feature gaps, and generates battle cards.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("feature_comparator", tier="revenue", category="sales")
@@ -41,8 +41,8 @@ class FeatureComparator(BaseAgent):
                         "hubspot": "full",
                         "zendesk": "basic",
                         "intercom": "basic",
-                        "freshdesk": "basic"
-                    }
+                        "freshdesk": "basic",
+                    },
                 },
                 "deal_pipeline": {
                     "name": "Deal Pipeline",
@@ -52,8 +52,8 @@ class FeatureComparator(BaseAgent):
                         "hubspot": "full",
                         "zendesk": "none",
                         "intercom": "basic",
-                        "freshdesk": "none"
-                    }
+                        "freshdesk": "none",
+                    },
                 },
                 "activity_tracking": {
                     "name": "Activity Tracking",
@@ -63,10 +63,10 @@ class FeatureComparator(BaseAgent):
                         "hubspot": "full",
                         "zendesk": "basic",
                         "intercom": "basic",
-                        "freshdesk": "basic"
-                    }
-                }
-            }
+                        "freshdesk": "basic",
+                    },
+                },
+            },
         },
         "automation": {
             "category_name": "Automation & Workflows",
@@ -81,8 +81,8 @@ class FeatureComparator(BaseAgent):
                         "hubspot": "full",
                         "zendesk": "basic",
                         "intercom": "basic",
-                        "freshdesk": "basic"
-                    }
+                        "freshdesk": "basic",
+                    },
                 },
                 "ai_automation": {
                     "name": "AI-Powered Automation",
@@ -93,8 +93,8 @@ class FeatureComparator(BaseAgent):
                         "hubspot": "limited",
                         "zendesk": "limited",
                         "intercom": "limited",
-                        "freshdesk": "none"
-                    }
+                        "freshdesk": "none",
+                    },
                 },
                 "email_automation": {
                     "name": "Email Automation",
@@ -104,10 +104,10 @@ class FeatureComparator(BaseAgent):
                         "hubspot": "full",
                         "zendesk": "basic",
                         "intercom": "basic",
-                        "freshdesk": "basic"
-                    }
-                }
-            }
+                        "freshdesk": "basic",
+                    },
+                },
+            },
         },
         "analytics": {
             "category_name": "Analytics & Reporting",
@@ -122,8 +122,8 @@ class FeatureComparator(BaseAgent):
                         "hubspot": "limited_by_plan",
                         "zendesk": "basic",
                         "intercom": "basic",
-                        "freshdesk": "basic"
-                    }
+                        "freshdesk": "basic",
+                    },
                 },
                 "real_time_analytics": {
                     "name": "Real-time Analytics",
@@ -133,8 +133,8 @@ class FeatureComparator(BaseAgent):
                         "hubspot": "full",
                         "zendesk": "basic",
                         "intercom": "full",
-                        "freshdesk": "basic"
-                    }
+                        "freshdesk": "basic",
+                    },
                 },
                 "predictive_analytics": {
                     "name": "Predictive Analytics",
@@ -145,10 +145,10 @@ class FeatureComparator(BaseAgent):
                         "hubspot": "limited",
                         "zendesk": "none",
                         "intercom": "none",
-                        "freshdesk": "none"
-                    }
-                }
-            }
+                        "freshdesk": "none",
+                    },
+                },
+            },
         },
         "integrations": {
             "category_name": "Integrations & API",
@@ -163,8 +163,8 @@ class FeatureComparator(BaseAgent):
                         "hubspot": "full",
                         "zendesk": "full",
                         "intercom": "full",
-                        "freshdesk": "limited"
-                    }
+                        "freshdesk": "limited",
+                    },
                 },
                 "api_access": {
                     "name": "API Access",
@@ -175,8 +175,8 @@ class FeatureComparator(BaseAgent):
                         "hubspot": "limited_by_plan",
                         "zendesk": "limited_by_plan",
                         "intercom": "limited_by_plan",
-                        "freshdesk": "limited_by_plan"
-                    }
+                        "freshdesk": "limited_by_plan",
+                    },
                 },
                 "webhooks": {
                     "name": "Webhooks",
@@ -186,10 +186,10 @@ class FeatureComparator(BaseAgent):
                         "hubspot": "full",
                         "zendesk": "full",
                         "intercom": "full",
-                        "freshdesk": "basic"
-                    }
-                }
-            }
+                        "freshdesk": "basic",
+                    },
+                },
+            },
         },
         "collaboration": {
             "category_name": "Team Collaboration",
@@ -203,8 +203,8 @@ class FeatureComparator(BaseAgent):
                         "hubspot": "full",
                         "zendesk": "full",
                         "intercom": "full",
-                        "freshdesk": "full"
-                    }
+                        "freshdesk": "full",
+                    },
                 },
                 "internal_notes": {
                     "name": "Internal Notes & Comments",
@@ -214,8 +214,8 @@ class FeatureComparator(BaseAgent):
                         "hubspot": "full",
                         "zendesk": "full",
                         "intercom": "full",
-                        "freshdesk": "full"
-                    }
+                        "freshdesk": "full",
+                    },
                 },
                 "assignment_rules": {
                     "name": "Smart Assignment Rules",
@@ -226,10 +226,10 @@ class FeatureComparator(BaseAgent):
                         "hubspot": "full",
                         "zendesk": "full",
                         "intercom": "basic",
-                        "freshdesk": "basic"
-                    }
-                }
-            }
+                        "freshdesk": "basic",
+                    },
+                },
+            },
         },
         "mobile": {
             "category_name": "Mobile Experience",
@@ -243,8 +243,8 @@ class FeatureComparator(BaseAgent):
                         "hubspot": "full",
                         "zendesk": "full",
                         "intercom": "full",
-                        "freshdesk": "full"
-                    }
+                        "freshdesk": "full",
+                    },
                 },
                 "mobile_app_android": {
                     "name": "Android App",
@@ -254,8 +254,8 @@ class FeatureComparator(BaseAgent):
                         "hubspot": "full",
                         "zendesk": "full",
                         "intercom": "full",
-                        "freshdesk": "full"
-                    }
+                        "freshdesk": "full",
+                    },
                 },
                 "offline_mode": {
                     "name": "Offline Mode",
@@ -266,11 +266,11 @@ class FeatureComparator(BaseAgent):
                         "hubspot": "limited",
                         "zendesk": "none",
                         "intercom": "none",
-                        "freshdesk": "none"
-                    }
-                }
-            }
-        }
+                        "freshdesk": "none",
+                    },
+                },
+            },
+        },
     }
 
     # Feature status definitions
@@ -280,7 +280,7 @@ class FeatureComparator(BaseAgent):
         "limited": {"label": "Limited Support", "score": 1, "emoji": "⚠️"},
         "paid_addon": {"label": "Paid Add-on", "score": 1, "emoji": "💰"},
         "limited_by_plan": {"label": "Limited by Plan", "score": 1, "emoji": "💰"},
-        "none": {"label": "Not Available", "score": 0, "emoji": "❌"}
+        "none": {"label": "Not Available", "score": 0, "emoji": "❌"},
     }
 
     # Recent competitor feature updates (last 90 days)
@@ -291,7 +291,7 @@ class FeatureComparator(BaseAgent):
                 "feature": "Einstein GPT",
                 "category": "ai_automation",
                 "impact": "high",
-                "description": "New AI features but require expensive add-on"
+                "description": "New AI features but require expensive add-on",
             }
         ],
         "hubspot": [
@@ -300,7 +300,7 @@ class FeatureComparator(BaseAgent):
                 "feature": "Breeze AI",
                 "category": "ai_automation",
                 "impact": "medium",
-                "description": "AI assistant for content and prospecting"
+                "description": "AI assistant for content and prospecting",
             }
         ],
         "intercom": [
@@ -309,9 +309,9 @@ class FeatureComparator(BaseAgent):
                 "feature": "Fin AI Agent",
                 "category": "ai_automation",
                 "impact": "high",
-                "description": "AI chatbot but expensive add-on"
+                "description": "AI chatbot but expensive add-on",
             }
-        ]
+        ],
     }
 
     def __init__(self):
@@ -320,12 +320,9 @@ class FeatureComparator(BaseAgent):
             type=AgentType.ANALYZER,
             temperature=0.2,
             max_tokens=1500,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.KB_SEARCH
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.KB_SEARCH],
             kb_category="sales",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -337,7 +334,7 @@ class FeatureComparator(BaseAgent):
         state = self.update_state(state)
 
         message = state["current_message"]
-        customer_metadata = state.get("customer_metadata", {})
+        state.get("customer_metadata", {})
 
         # Identify competitors to compare
         competitors_to_compare = self._identify_competitors(message, state)
@@ -356,9 +353,7 @@ class FeatureComparator(BaseAgent):
 
         # Generate battle cards
         battle_cards = self._generate_battle_cards(
-            competitors_to_compare,
-            our_advantages,
-            their_gaps
+            competitors_to_compare, our_advantages, their_gaps
         )
 
         # Get recent competitor updates
@@ -366,10 +361,7 @@ class FeatureComparator(BaseAgent):
 
         # Generate recommendations
         recommendations = self._generate_recommendations(
-            our_advantages,
-            feature_gaps,
-            their_gaps,
-            recent_updates
+            our_advantages, feature_gaps, their_gaps, recent_updates
         )
 
         # Calculate confidence
@@ -390,12 +382,12 @@ class FeatureComparator(BaseAgent):
             "feature_comparator_completed",
             competitors_compared=len(competitors_to_compare),
             advantages_identified=len(our_advantages),
-            gaps_identified=len(feature_gaps)
+            gaps_identified=len(feature_gaps),
         )
 
         return state
 
-    def _identify_competitors(self, message: str, state: AgentState) -> List[str]:
+    def _identify_competitors(self, message: str, state: AgentState) -> list[str]:
         """Identify which competitors to compare"""
         message_lower = message.lower()
         competitors = []
@@ -416,7 +408,7 @@ class FeatureComparator(BaseAgent):
 
         return competitors
 
-    def _generate_feature_comparison(self, competitors: List[str]) -> Dict[str, Any]:
+    def _generate_feature_comparison(self, competitors: list[str]) -> dict[str, Any]:
         """Generate comprehensive feature comparison"""
         comparison = {
             "categories": [],
@@ -424,8 +416,8 @@ class FeatureComparator(BaseAgent):
                 "total_categories": len(self.FEATURE_MATRIX),
                 "total_features": 0,
                 "our_full_support": 0,
-                "competitors": {}
-            }
+                "competitors": {},
+            },
         }
 
         for competitor in competitors:
@@ -433,7 +425,7 @@ class FeatureComparator(BaseAgent):
                 "full_support": 0,
                 "basic_support": 0,
                 "none": 0,
-                "paid_addon": 0
+                "paid_addon": 0,
             }
 
         # Process each category
@@ -442,7 +434,7 @@ class FeatureComparator(BaseAgent):
                 "category": category_key,
                 "category_name": category_data["category_name"],
                 "importance": category_data["importance"],
-                "features": []
+                "features": [],
             }
 
             for feature_key, feature_data in category_data["features"].items():
@@ -453,7 +445,7 @@ class FeatureComparator(BaseAgent):
                     "feature_name": feature_data["name"],
                     "our_status": feature_data["our_status"],
                     "our_advantage": feature_data.get("our_advantage"),
-                    "competitor_status": {}
+                    "competitor_status": {},
                 }
 
                 # Track our full support
@@ -481,12 +473,12 @@ class FeatureComparator(BaseAgent):
 
         return comparison
 
-    def _identify_our_advantages(self, competitors: List[str]) -> List[Dict[str, Any]]:
+    def _identify_our_advantages(self, competitors: list[str]) -> list[dict[str, Any]]:
         """Identify features where we have clear advantages"""
         advantages = []
 
-        for category_key, category_data in self.FEATURE_MATRIX.items():
-            for feature_key, feature_data in category_data["features"].items():
+        for _category_key, category_data in self.FEATURE_MATRIX.items():
+            for _feature_key, feature_data in category_data["features"].items():
                 our_status = feature_data["our_status"]
 
                 # We must have full support to claim advantage
@@ -495,14 +487,16 @@ class FeatureComparator(BaseAgent):
 
                 # Check if we have an explicit advantage note
                 if feature_data.get("our_advantage"):
-                    advantages.append({
-                        "feature": feature_data["name"],
-                        "category": category_data["category_name"],
-                        "advantage": feature_data["our_advantage"],
-                        "advantage_type": "unique_capability",
-                        "importance": category_data["importance"],
-                        "competitors_behind": []
-                    })
+                    advantages.append(
+                        {
+                            "feature": feature_data["name"],
+                            "category": category_data["category_name"],
+                            "advantage": feature_data["our_advantage"],
+                            "advantage_type": "unique_capability",
+                            "importance": category_data["importance"],
+                            "competitors_behind": [],
+                        }
+                    )
                     continue
 
                 # Check if competitors are behind
@@ -510,30 +504,31 @@ class FeatureComparator(BaseAgent):
                 for competitor in competitors:
                     comp_status = feature_data["competitors"].get(competitor, "none")
                     if comp_status in ["basic", "limited", "none", "paid_addon", "limited_by_plan"]:
-                        competitors_behind.append({
-                            "competitor": competitor,
-                            "their_status": comp_status
-                        })
+                        competitors_behind.append(
+                            {"competitor": competitor, "their_status": comp_status}
+                        )
 
                 # If most competitors are behind, it's an advantage
                 if len(competitors_behind) >= len(competitors) * 0.6:  # 60%+ behind
-                    advantages.append({
-                        "feature": feature_data["name"],
-                        "category": category_data["category_name"],
-                        "advantage": f"Superior {feature_data['name'].lower()} compared to competitors",
-                        "advantage_type": "competitive_edge",
-                        "importance": category_data["importance"],
-                        "competitors_behind": competitors_behind
-                    })
+                    advantages.append(
+                        {
+                            "feature": feature_data["name"],
+                            "category": category_data["category_name"],
+                            "advantage": f"Superior {feature_data['name'].lower()} compared to competitors",
+                            "advantage_type": "competitive_edge",
+                            "importance": category_data["importance"],
+                            "competitors_behind": competitors_behind,
+                        }
+                    )
 
         return advantages
 
-    def _identify_feature_gaps(self, competitors: List[str]) -> List[Dict[str, Any]]:
+    def _identify_feature_gaps(self, competitors: list[str]) -> list[dict[str, Any]]:
         """Identify features where we're behind competitors"""
         gaps = []
 
-        for category_key, category_data in self.FEATURE_MATRIX.items():
-            for feature_key, feature_data in category_data["features"].items():
+        for _category_key, category_data in self.FEATURE_MATRIX.items():
+            for _feature_key, feature_data in category_data["features"].items():
                 our_status = feature_data["our_status"]
 
                 # Check if competitors are ahead
@@ -544,32 +539,35 @@ class FeatureComparator(BaseAgent):
                     comp_score = self.FEATURE_STATUS.get(comp_status, {}).get("score", 0)
 
                     if comp_score > our_score:
-                        competitors_ahead.append({
-                            "competitor": competitor,
-                            "their_status": comp_status
-                        })
+                        competitors_ahead.append(
+                            {"competitor": competitor, "their_status": comp_status}
+                        )
 
                 if competitors_ahead:
-                    gaps.append({
-                        "feature": feature_data["name"],
-                        "category": category_data["category_name"],
-                        "our_status": our_status,
-                        "importance": category_data["importance"],
-                        "competitors_ahead": competitors_ahead,
-                        "severity": "high" if category_data["importance"] == "critical" else "medium"
-                    })
+                    gaps.append(
+                        {
+                            "feature": feature_data["name"],
+                            "category": category_data["category_name"],
+                            "our_status": our_status,
+                            "importance": category_data["importance"],
+                            "competitors_ahead": competitors_ahead,
+                            "severity": "high"
+                            if category_data["importance"] == "critical"
+                            else "medium",
+                        }
+                    )
 
         return gaps
 
-    def _identify_their_gaps(self, competitors: List[str]) -> List[Dict[str, Any]]:
+    def _identify_their_gaps(self, competitors: list[str]) -> list[dict[str, Any]]:
         """Identify features where competitors are behind us"""
         their_gaps = []
 
         for competitor in competitors:
             competitor_gaps = []
 
-            for category_key, category_data in self.FEATURE_MATRIX.items():
-                for feature_key, feature_data in category_data["features"].items():
+            for _category_key, category_data in self.FEATURE_MATRIX.items():
+                for _feature_key, feature_data in category_data["features"].items():
                     our_status = feature_data["our_status"]
                     comp_status = feature_data["competitors"].get(competitor, "none")
 
@@ -577,29 +575,30 @@ class FeatureComparator(BaseAgent):
                     comp_score = self.FEATURE_STATUS.get(comp_status, {}).get("score", 0)
 
                     if our_score > comp_score:
-                        competitor_gaps.append({
-                            "feature": feature_data["name"],
-                            "category": category_data["category_name"],
-                            "their_status": comp_status,
-                            "our_status": our_status,
-                            "our_advantage": feature_data.get("our_advantage"),
-                            "importance": category_data["importance"]
-                        })
+                        competitor_gaps.append(
+                            {
+                                "feature": feature_data["name"],
+                                "category": category_data["category_name"],
+                                "their_status": comp_status,
+                                "our_status": our_status,
+                                "our_advantage": feature_data.get("our_advantage"),
+                                "importance": category_data["importance"],
+                            }
+                        )
 
-            their_gaps.append({
-                "competitor": competitor,
-                "gaps": competitor_gaps,
-                "total_gaps": len(competitor_gaps)
-            })
+            their_gaps.append(
+                {
+                    "competitor": competitor,
+                    "gaps": competitor_gaps,
+                    "total_gaps": len(competitor_gaps),
+                }
+            )
 
         return their_gaps
 
     def _generate_battle_cards(
-        self,
-        competitors: List[str],
-        our_advantages: List[Dict],
-        their_gaps: List[Dict]
-    ) -> List[Dict[str, Any]]:
+        self, competitors: list[str], our_advantages: list[dict], their_gaps: list[dict]
+    ) -> list[dict[str, Any]]:
         """Generate battle cards for each competitor"""
         battle_cards = []
 
@@ -609,7 +608,8 @@ class FeatureComparator(BaseAgent):
 
             # Get high-importance advantages against this competitor
             relevant_advantages = [
-                adv for adv in our_advantages
+                adv
+                for adv in our_advantages
                 if any(c["competitor"] == competitor for c in adv.get("competitors_behind", []))
             ]
 
@@ -617,21 +617,22 @@ class FeatureComparator(BaseAgent):
                 "competitor": competitor.title(),
                 "last_updated": datetime.now(UTC).isoformat(),
                 "feature_advantages": [
-                    {
-                        "feature": adv["feature"],
-                        "talking_point": adv["advantage"]
-                    }
+                    {"feature": adv["feature"], "talking_point": adv["advantage"]}
                     for adv in relevant_advantages[:5]  # Top 5
                 ],
                 "their_limitations": [
                     {
                         "feature": gap["feature"],
-                        "their_status": self.FEATURE_STATUS.get(gap["their_status"], {}).get("label", "Limited"),
-                        "our_status": "Full Support"
+                        "their_status": self.FEATURE_STATUS.get(gap["their_status"], {}).get(
+                            "label", "Limited"
+                        ),
+                        "our_status": "Full Support",
                     }
                     for gap in comp_gaps[:5]  # Top 5
                 ],
-                "key_talking_points": self._generate_talking_points(competitor, relevant_advantages, comp_gaps)
+                "key_talking_points": self._generate_talking_points(
+                    competitor, relevant_advantages, comp_gaps
+                ),
             }
 
             battle_cards.append(battle_card)
@@ -639,11 +640,8 @@ class FeatureComparator(BaseAgent):
         return battle_cards
 
     def _generate_talking_points(
-        self,
-        competitor: str,
-        advantages: List[Dict],
-        gaps: List[Dict]
-    ) -> List[str]:
+        self, competitor: str, advantages: list[dict], gaps: list[dict]
+    ) -> list[str]:
         """Generate key talking points for battle card"""
         talking_points = []
 
@@ -656,29 +654,35 @@ class FeatureComparator(BaseAgent):
         critical_gaps = [g for g in gaps if g["importance"] == "critical"]
         for gap in critical_gaps[:2]:
             status_label = self.FEATURE_STATUS.get(gap["their_status"], {}).get("label", "Limited")
-            talking_points.append(f"✗ {competitor.title()}: {status_label} for {gap['feature']}, We: Full Support")
+            talking_points.append(
+                f"✗ {competitor.title()}: {status_label} for {gap['feature']}, We: Full Support"
+            )
 
         # Add general positioning
         if len(gaps) >= 5:
-            talking_points.append(f"Overall: We offer superior capabilities in {len(gaps)} key features")
+            talking_points.append(
+                f"Overall: We offer superior capabilities in {len(gaps)} key features"
+            )
 
         return talking_points
 
-    def _get_recent_updates(self, competitors: List[str]) -> List[Dict[str, Any]]:
+    def _get_recent_updates(self, competitors: list[str]) -> list[dict[str, Any]]:
         """Get recent competitor feature updates"""
         updates = []
 
         for competitor in competitors:
             comp_updates = self.RECENT_UPDATES.get(competitor, [])
             for update in comp_updates:
-                updates.append({
-                    "competitor": competitor.title(),
-                    "date": update["date"],
-                    "feature": update["feature"],
-                    "category": update["category"],
-                    "impact": update["impact"],
-                    "description": update["description"]
-                })
+                updates.append(
+                    {
+                        "competitor": competitor.title(),
+                        "date": update["date"],
+                        "feature": update["feature"],
+                        "category": update["category"],
+                        "impact": update["impact"],
+                        "description": update["description"],
+                    }
+                )
 
         # Sort by date (most recent first)
         updates.sort(key=lambda x: x["date"], reverse=True)
@@ -687,16 +691,18 @@ class FeatureComparator(BaseAgent):
 
     def _generate_recommendations(
         self,
-        our_advantages: List[Dict],
-        feature_gaps: List[Dict],
-        their_gaps: List[Dict],
-        recent_updates: List[Dict]
-    ) -> List[str]:
+        our_advantages: list[dict],
+        feature_gaps: list[dict],
+        their_gaps: list[dict],
+        recent_updates: list[dict],
+    ) -> list[str]:
         """Generate feature-based recommendations"""
         recommendations = []
 
         # Leverage our advantages
-        high_importance_advantages = [a for a in our_advantages if a["importance"] in ["critical", "high"]]
+        high_importance_advantages = [
+            a for a in our_advantages if a["importance"] in ["critical", "high"]
+        ]
         if high_importance_advantages:
             recommendations.append(
                 f"Lead with our {len(high_importance_advantages)} high-importance feature advantages"
@@ -723,7 +729,9 @@ class FeatureComparator(BaseAgent):
             )
 
         # General recommendations
-        recommendations.append("Use feature comparison matrix in demos to show breadth of capabilities")
+        recommendations.append(
+            "Use feature comparison matrix in demos to show breadth of capabilities"
+        )
         recommendations.append("Highlight features included in base price vs competitor add-ons")
 
         return recommendations
@@ -743,24 +751,19 @@ if __name__ == "__main__":
         # Test case 1: Compare against Salesforce
         state1 = create_initial_state(
             "How do our features compare to Salesforce?",
-            context={
-                "customer_metadata": {
-                    "company": "Enterprise Corp",
-                    "industry": "technology"
-                }
-            }
+            context={"customer_metadata": {"company": "Enterprise Corp", "industry": "technology"}},
         )
 
         agent = FeatureComparator()
         result1 = await agent.process(state1)
 
-        print(f"\nTest 1 - Feature Comparison vs Salesforce")
-        comparison = result1['feature_comparison']
+        print("\nTest 1 - Feature Comparison vs Salesforce")
+        comparison = result1["feature_comparison"]
         print(f"Categories Compared: {comparison['summary']['total_categories']}")
         print(f"Total Features: {comparison['summary']['total_features']}")
         print(f"Our Full Support: {comparison['summary']['our_full_support']}")
-        print(f"\nCompetitor Summary:")
-        for comp, stats in comparison['summary']['competitors'].items():
+        print("\nCompetitor Summary:")
+        for comp, stats in comparison["summary"]["competitors"].items():
             print(f"  {comp.title()}:")
             print(f"    Full Support: {stats['full_support']}")
             print(f"    Basic/Limited: {stats['basic_support']}")
@@ -768,46 +771,44 @@ if __name__ == "__main__":
             print(f"    Not Available: {stats['none']}")
 
         print(f"\nOur Advantages: {len(result1['our_feature_advantages'])}")
-        for adv in result1['our_feature_advantages'][:3]:
+        for adv in result1["our_feature_advantages"][:3]:
             print(f"  • {adv['feature']}: {adv['advantage']}")
 
         # Test case 2: Battle card generation
-        state2 = create_initial_state(
-            "Generate battle cards for HubSpot and Intercom",
-            context={}
-        )
+        state2 = create_initial_state("Generate battle cards for HubSpot and Intercom", context={})
 
         result2 = await agent.process(state2)
 
-        print(f"\n\nTest 2 - Battle Card Generation")
+        print("\n\nTest 2 - Battle Card Generation")
         print(f"Battle Cards Generated: {len(result2['feature_battle_cards'])}")
-        for bc in result2['feature_battle_cards']:
+        for bc in result2["feature_battle_cards"]:
             print(f"\n{bc['competitor']} Battle Card:")
             print(f"  Feature Advantages: {len(bc['feature_advantages'])}")
-            for adv in bc['feature_advantages'][:2]:
+            for adv in bc["feature_advantages"][:2]:
                 print(f"    • {adv['feature']}: {adv['talking_point']}")
             print(f"  Their Limitations: {len(bc['their_limitations'])}")
-            for lim in bc['their_limitations'][:2]:
-                print(f"    • {lim['feature']}: They have {lim['their_status']}, We have {lim['our_status']}")
+            for lim in bc["their_limitations"][:2]:
+                print(
+                    f"    • {lim['feature']}: They have {lim['their_status']}, We have {lim['our_status']}"
+                )
 
         # Test case 3: Feature gap analysis
         state3 = create_initial_state(
-            "What are our feature gaps compared to competitors?",
-            context={}
+            "What are our feature gaps compared to competitors?", context={}
         )
 
         result3 = await agent.process(state3)
 
-        print(f"\n\nTest 3 - Feature Gap Analysis")
+        print("\n\nTest 3 - Feature Gap Analysis")
         print(f"Our Feature Gaps: {len(result3['our_feature_gaps'])}")
-        for gap in result3['our_feature_gaps'][:3]:
+        for gap in result3["our_feature_gaps"][:3]:
             print(f"  • {gap['feature']} ({gap['category']})")
             print(f"    Our Status: {gap['our_status']}")
             print(f"    Severity: {gap['severity']}")
             print(f"    Competitors Ahead: {len(gap['competitors_ahead'])}")
 
-        print(f"\nRecommendations:")
-        for rec in result3['feature_recommendations']:
+        print("\nRecommendations:")
+        for rec in result3["feature_recommendations"]:
             print(f"  • {rec}")
 
         print(f"\nConfidence: {result3['response_confidence']:.2f}")
