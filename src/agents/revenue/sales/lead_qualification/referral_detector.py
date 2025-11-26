@@ -393,8 +393,9 @@ Reward: ${rewards['referrer_credit']} account credit (pending deal closure)
 Express gratitude and mention the reward."""
 
             messages["referrer_message"] = await self.call_llm(
-                system_prompt_referrer,
-                user_prompt_referrer
+                system_prompt=system_prompt_referrer,
+                user_message=user_prompt_referrer,
+                conversation_history=[]  # Thank-you messages are standalone
             )
 
         # Generate referee welcome message
@@ -413,8 +414,9 @@ Discount: ${rewards['referee_discount']} on first purchase
 Welcome them and mention the discount."""
 
         messages["referee_message"] = await self.call_llm(
-            system_prompt_referee,
-            user_prompt_referee
+            system_prompt=system_prompt_referee,
+            user_message=user_prompt_referee,
+            conversation_history=[]  # Welcome messages are standalone
         )
 
         return messages
