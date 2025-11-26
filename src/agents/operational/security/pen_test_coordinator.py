@@ -5,18 +5,19 @@ Coordinates quarterly penetration testing and security assessments.
 Manages vendor coordination, scope definition, and remediation tracking.
 """
 
-from typing import Dict, Any, List, Optional, Set
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 from enum import Enum
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 class TestPhase(Enum):
     """Penetration test phases."""
+
     PLANNING = "planning"
     RECONNAISSANCE = "reconnaissance"
     SCANNING = "scanning"
@@ -29,6 +30,7 @@ class TestPhase(Enum):
 
 class TestType(Enum):
     """Types of penetration tests."""
+
     EXTERNAL = "external"  # External-facing systems
     INTERNAL = "internal"  # Internal network
     WEB_APP = "web_application"
@@ -76,7 +78,7 @@ class PenTestCoordinatorAgent(BaseAgent):
         TestType.CLOUD: 180,  # Bi-annually
         TestType.SOCIAL_ENGINEERING: 365,  # Annually
         TestType.WIRELESS: 365,  # Annually
-        TestType.PHYSICAL: 365  # Annually
+        TestType.PHYSICAL: 365,  # Annually
     }
 
     # Finding severity levels (aligned with CVSS)
@@ -85,7 +87,7 @@ class PenTestCoordinatorAgent(BaseAgent):
         "high": {"cvss_range": (7.0, 8.9), "remediation_sla_days": 30},
         "medium": {"cvss_range": (4.0, 6.9), "remediation_sla_days": 90},
         "low": {"cvss_range": (0.1, 3.9), "remediation_sla_days": 180},
-        "informational": {"cvss_range": (0.0, 0.0), "remediation_sla_days": 365}
+        "informational": {"cvss_range": (0.0, 0.0), "remediation_sla_days": 365},
     }
 
     # OWASP Top 10 2021
@@ -99,7 +101,7 @@ class PenTestCoordinatorAgent(BaseAgent):
         "A07:2021-Identification and Authentication Failures",
         "A08:2021-Software and Data Integrity Failures",
         "A09:2021-Security Logging and Monitoring Failures",
-        "A10:2021-Server-Side Request Forgery"
+        "A10:2021-Server-Side Request Forgery",
     ]
 
     def __init__(self):
@@ -110,7 +112,7 @@ class PenTestCoordinatorAgent(BaseAgent):
             temperature=0.1,
             max_tokens=3000,
             capabilities=[AgentCapability.DATABASE_READ, AgentCapability.DATABASE_WRITE],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -130,7 +132,9 @@ class PenTestCoordinatorAgent(BaseAgent):
         state = self.update_state(state)
 
         # Extract parameters
-        action = state.get("entities", {}).get("action", "schedule")  # schedule, findings_review, remediation_track
+        action = state.get("entities", {}).get(
+            "action", "schedule"
+        )  # schedule, findings_review, remediation_track
         test_type = state.get("entities", {}).get("test_type", TestType.EXTERNAL.value)
         test_scope = state.get("entities", {}).get("test_scope", {})
         findings = state.get("entities", {}).get("findings", [])
@@ -140,7 +144,7 @@ class PenTestCoordinatorAgent(BaseAgent):
             "pen_test_coordination_details",
             action=action,
             test_type=test_type,
-            findings_count=len(findings)
+            findings_count=len(findings),
         )
 
         # Process based on action
@@ -156,10 +160,7 @@ class PenTestCoordinatorAgent(BaseAgent):
             result = {"status": "error", "message": "Unknown action"}
 
         # Check compliance requirements
-        compliance_status = self._check_compliance_requirements(
-            test_type,
-            previous_tests
-        )
+        compliance_status = self._check_compliance_requirements(test_type, previous_tests)
 
         # Generate test plan if scheduling
         test_plan = None
@@ -171,21 +172,12 @@ class PenTestCoordinatorAgent(BaseAgent):
 
         # Generate recommendations
         recommendations = self._generate_recommendations(
-            action,
-            result,
-            compliance_status,
-            risk_metrics
+            action, result, compliance_status, risk_metrics
         )
 
         # Format response
         response = self._format_coordination_report(
-            action,
-            test_type,
-            result,
-            test_plan,
-            compliance_status,
-            risk_metrics,
-            recommendations
+            action, test_type, result, test_plan, compliance_status, risk_metrics, recommendations
         )
 
         state["agent_response"] = response
@@ -199,7 +191,9 @@ class PenTestCoordinatorAgent(BaseAgent):
         state["next_agent"] = None
 
         # Alert if compliance gap or critical findings
-        if not compliance_status.get("compliant") or (risk_metrics and risk_metrics.get("critical_count", 0) > 0):
+        if not compliance_status.get("compliant") or (
+            risk_metrics and risk_metrics.get("critical_count", 0) > 0
+        ):
             state["alert_pagerduty"] = True
             state["alert_severity"] = "high"
             state["alert_message"] = "Pen test compliance gap or critical findings"
@@ -208,17 +202,14 @@ class PenTestCoordinatorAgent(BaseAgent):
             "pen_test_coordination_completed",
             action=action,
             test_type=test_type,
-            status=result.get("status")
+            status=result.get("status"),
         )
 
         return state
 
     def _schedule_pen_test(
-        self,
-        test_type: str,
-        test_scope: Dict[str, Any],
-        previous_tests: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        self, test_type: str, test_scope: dict[str, Any], previous_tests: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """
         Schedule penetration test.
 
@@ -258,14 +249,10 @@ class PenTestCoordinatorAgent(BaseAgent):
             "scope": test_scope,
             "phases": [phase.value for phase in TestPhase],
             "estimated_duration_days": self._estimate_duration(test_type_enum),
-            "compliance_requirement": self._get_compliance_requirement(test_type_enum)
+            "compliance_requirement": self._get_compliance_requirement(test_type_enum),
         }
 
-    def _review_findings(
-        self,
-        findings: List[Dict[str, Any]],
-        test_type: str
-    ) -> Dict[str, Any]:
+    def _review_findings(self, findings: list[dict[str, Any]], test_type: str) -> dict[str, Any]:
         """
         Review and triage pen test findings.
 
@@ -277,35 +264,32 @@ class PenTestCoordinatorAgent(BaseAgent):
             Review results
         """
         # Categorize findings by severity
-        categorized = {
-            "critical": [],
-            "high": [],
-            "medium": [],
-            "low": [],
-            "informational": []
-        }
+        categorized = {"critical": [], "high": [], "medium": [], "low": [], "informational": []}
 
         for finding in findings:
-            severity = finding.get("severity", "informational")
+            finding.get("severity", "informational")
             cvss_score = finding.get("cvss_score", 0.0)
 
             # Validate severity matches CVSS
             validated_severity = self._validate_severity(cvss_score)
 
             categorized_finding = {
-                "finding_id": finding.get("id", f"FIND-{len(categorized[validated_severity])+1}"),
+                "finding_id": finding.get("id", f"FIND-{len(categorized[validated_severity]) + 1}"),
                 "title": finding.get("title", "Unknown finding"),
                 "severity": validated_severity,
                 "cvss_score": cvss_score,
                 "description": finding.get("description", ""),
                 "affected_systems": finding.get("affected_systems", []),
                 "remediation": finding.get("remediation", ""),
-                "remediation_sla_days": self.SEVERITY_LEVELS[validated_severity]["remediation_sla_days"],
+                "remediation_sla_days": self.SEVERITY_LEVELS[validated_severity][
+                    "remediation_sla_days"
+                ],
                 "remediation_deadline": (
-                    datetime.now(UTC) + timedelta(
+                    datetime.now(UTC)
+                    + timedelta(
                         days=self.SEVERITY_LEVELS[validated_severity]["remediation_sla_days"]
                     )
-                ).isoformat()
+                ).isoformat(),
             }
 
             categorized[validated_severity].append(categorized_finding)
@@ -321,10 +305,10 @@ class PenTestCoordinatorAgent(BaseAgent):
             },
             "categorized_findings": categorized,
             "owasp_mapping": owasp_mapping,
-            "reviewed_at": datetime.now(UTC).isoformat()
+            "reviewed_at": datetime.now(UTC).isoformat(),
         }
 
-    def _track_remediation(self, findings: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _track_remediation(self, findings: list[dict[str, Any]]) -> dict[str, Any]:
         """
         Track remediation progress.
 
@@ -334,17 +318,14 @@ class PenTestCoordinatorAgent(BaseAgent):
         Returns:
             Remediation tracking results
         """
-        remediation_status = {
-            "completed": [],
-            "in_progress": [],
-            "not_started": [],
-            "overdue": []
-        }
+        remediation_status = {"completed": [], "in_progress": [], "not_started": [], "overdue": []}
 
         for finding in findings:
             finding_id = finding.get("id", "unknown")
             status = finding.get("remediation_status", "not_started")
-            deadline = datetime.fromisoformat(finding.get("remediation_deadline", datetime.now(UTC).isoformat()))
+            deadline = datetime.fromisoformat(
+                finding.get("remediation_deadline", datetime.now(UTC).isoformat())
+            )
 
             tracking_item = {
                 "finding_id": finding_id,
@@ -352,7 +333,7 @@ class PenTestCoordinatorAgent(BaseAgent):
                 "severity": finding.get("severity", "informational"),
                 "status": status,
                 "deadline": deadline.isoformat(),
-                "days_until_deadline": (deadline - datetime.now(UTC)).days
+                "days_until_deadline": (deadline - datetime.now(UTC)).days,
             }
 
             if status == "completed":
@@ -377,14 +358,10 @@ class PenTestCoordinatorAgent(BaseAgent):
             "completion_percentage": round(completion_percentage, 1),
             "remediation_status": remediation_status,
             "overdue_count": len(remediation_status["overdue"]),
-            "tracked_at": datetime.now(UTC).isoformat()
+            "tracked_at": datetime.now(UTC).isoformat(),
         }
 
-    def _coordinate_retest(
-        self,
-        findings: List[Dict[str, Any]],
-        test_type: str
-    ) -> Dict[str, Any]:
+    def _coordinate_retest(self, findings: list[dict[str, Any]], test_type: str) -> dict[str, Any]:
         """
         Coordinate retest of remediated findings.
 
@@ -396,10 +373,7 @@ class PenTestCoordinatorAgent(BaseAgent):
             Retest coordination results
         """
         # Filter findings that claim to be remediated
-        remediated_findings = [
-            f for f in findings
-            if f.get("remediation_status") == "completed"
-        ]
+        remediated_findings = [f for f in findings if f.get("remediation_status") == "completed"]
 
         retest_id = f"RETEST-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}"
         retest_date = datetime.now(UTC) + timedelta(days=7)  # Schedule retest in 1 week
@@ -412,19 +386,14 @@ class PenTestCoordinatorAgent(BaseAgent):
             "findings_to_retest": len(remediated_findings),
             "retest_scope": [f.get("id") for f in remediated_findings],
             "estimated_duration_days": 2,
-            "success_criteria": "All remediated findings must be verified as fixed"
+            "success_criteria": "All remediated findings must be verified as fixed",
         }
 
     def _get_last_test_date(
-        self,
-        test_type: str,
-        previous_tests: List[Dict[str, Any]]
-    ) -> Optional[datetime]:
+        self, test_type: str, previous_tests: list[dict[str, Any]]
+    ) -> datetime | None:
         """Get date of last test of this type."""
-        matching_tests = [
-            t for t in previous_tests
-            if t.get("test_type") == test_type
-        ]
+        matching_tests = [t for t in previous_tests if t.get("test_type") == test_type]
 
         if not matching_tests:
             return None
@@ -432,7 +401,7 @@ class PenTestCoordinatorAgent(BaseAgent):
         # Get most recent test
         most_recent = max(
             matching_tests,
-            key=lambda t: datetime.fromisoformat(t.get("completion_date", "2000-01-01"))
+            key=lambda t: datetime.fromisoformat(t.get("completion_date", "2000-01-01")),
         )
 
         return datetime.fromisoformat(most_recent.get("completion_date"))
@@ -448,7 +417,7 @@ class PenTestCoordinatorAgent(BaseAgent):
             TestType.CLOUD: 7,
             TestType.SOCIAL_ENGINEERING: 10,
             TestType.WIRELESS: 3,
-            TestType.PHYSICAL: 2
+            TestType.PHYSICAL: 2,
         }
         return durations.get(test_type, 5)
 
@@ -469,9 +438,9 @@ class PenTestCoordinatorAgent(BaseAgent):
                 return severity
         return "informational"
 
-    def _map_to_owasp(self, findings: List[Dict[str, Any]]) -> Dict[str, int]:
+    def _map_to_owasp(self, findings: list[dict[str, Any]]) -> dict[str, int]:
         """Map findings to OWASP Top 10 categories."""
-        owasp_count = {category: 0 for category in self.OWASP_TOP_10}
+        owasp_count = dict.fromkeys(self.OWASP_TOP_10, 0)
 
         for finding in findings:
             # Simple keyword matching (in production, use more sophisticated mapping)
@@ -493,10 +462,8 @@ class PenTestCoordinatorAgent(BaseAgent):
         return {k: v for k, v in owasp_count.items() if v > 0}
 
     def _check_compliance_requirements(
-        self,
-        test_type: str,
-        previous_tests: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        self, test_type: str, previous_tests: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Check if testing meets compliance requirements."""
         try:
             test_type_enum = TestType(test_type)
@@ -510,7 +477,7 @@ class PenTestCoordinatorAgent(BaseAgent):
             return {
                 "compliant": False,
                 "reason": "No previous tests found",
-                "action_required": "Schedule initial pen test"
+                "action_required": "Schedule initial pen test",
             }
 
         days_since_last_test = (datetime.now(UTC) - last_test_date).days
@@ -523,14 +490,10 @@ class PenTestCoordinatorAgent(BaseAgent):
             "last_test_date": last_test_date.isoformat(),
             "days_since_last_test": days_since_last_test,
             "overdue": overdue,
-            "next_test_due": (last_test_date + timedelta(days=schedule_days)).isoformat()
+            "next_test_due": (last_test_date + timedelta(days=schedule_days)).isoformat(),
         }
 
-    def _generate_test_plan(
-        self,
-        test_type: str,
-        test_scope: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _generate_test_plan(self, test_type: str, test_scope: dict[str, Any]) -> dict[str, Any]:
         """Generate detailed test plan."""
         return {
             "test_type": test_type,
@@ -540,47 +503,45 @@ class PenTestCoordinatorAgent(BaseAgent):
                 {
                     "phase": TestPhase.RECONNAISSANCE.value,
                     "duration_days": 1,
-                    "activities": ["Information gathering", "OSINT", "Footprinting"]
+                    "activities": ["Information gathering", "OSINT", "Footprinting"],
                 },
                 {
                     "phase": TestPhase.SCANNING.value,
                     "duration_days": 1,
-                    "activities": ["Port scanning", "Service enumeration", "Vulnerability scanning"]
+                    "activities": [
+                        "Port scanning",
+                        "Service enumeration",
+                        "Vulnerability scanning",
+                    ],
                 },
                 {
                     "phase": TestPhase.EXPLOITATION.value,
                     "duration_days": 2,
-                    "activities": ["Exploit vulnerable services", "Gain initial access"]
+                    "activities": ["Exploit vulnerable services", "Gain initial access"],
                 },
                 {
                     "phase": TestPhase.POST_EXPLOITATION.value,
                     "duration_days": 1,
-                    "activities": ["Privilege escalation", "Lateral movement", "Data access"]
+                    "activities": ["Privilege escalation", "Lateral movement", "Data access"],
                 },
                 {
                     "phase": TestPhase.REPORTING.value,
                     "duration_days": 2,
-                    "activities": ["Finding documentation", "Report generation", "Presentation"]
-                }
+                    "activities": ["Finding documentation", "Report generation", "Presentation"],
+                },
             ],
             "scope": test_scope,
             "rules_of_engagement": {
                 "testing_hours": "Business hours only",
                 "dos_testing": "Prohibited",
                 "social_engineering": "Pre-approved targets only",
-                "data_handling": "No exfiltration of real data"
-            }
+                "data_handling": "No exfiltration of real data",
+            },
         }
 
-    def _calculate_risk_metrics(self, findings: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _calculate_risk_metrics(self, findings: list[dict[str, Any]]) -> dict[str, Any]:
         """Calculate risk metrics from findings."""
-        severity_counts = {
-            "critical": 0,
-            "high": 0,
-            "medium": 0,
-            "low": 0,
-            "informational": 0
-        }
+        severity_counts = {"critical": 0, "high": 0, "medium": 0, "low": 0, "informational": 0}
 
         total_cvss = 0.0
 
@@ -593,10 +554,10 @@ class PenTestCoordinatorAgent(BaseAgent):
 
         # Calculate overall risk score (weighted)
         risk_score = (
-            severity_counts["critical"] * 10 +
-            severity_counts["high"] * 5 +
-            severity_counts["medium"] * 2 +
-            severity_counts["low"] * 1
+            severity_counts["critical"] * 10
+            + severity_counts["high"] * 5
+            + severity_counts["medium"] * 2
+            + severity_counts["low"] * 1
         )
 
         return {
@@ -608,16 +569,20 @@ class PenTestCoordinatorAgent(BaseAgent):
             "informational_count": severity_counts["informational"],
             "average_cvss": round(avg_cvss, 1),
             "risk_score": risk_score,
-            "risk_level": "critical" if risk_score > 50 else "high" if risk_score > 20 else "medium"
+            "risk_level": "critical"
+            if risk_score > 50
+            else "high"
+            if risk_score > 20
+            else "medium",
         }
 
     def _generate_recommendations(
         self,
         action: str,
-        result: Dict[str, Any],
-        compliance_status: Dict[str, Any],
-        risk_metrics: Optional[Dict[str, Any]]
-    ) -> List[str]:
+        result: dict[str, Any],
+        compliance_status: dict[str, Any],
+        risk_metrics: dict[str, Any] | None,
+    ) -> list[str]:
         """Generate pen test recommendations."""
         recommendations = []
 
@@ -646,12 +611,11 @@ class PenTestCoordinatorAgent(BaseAgent):
                 "Coordinate with vendor and internal teams."
             )
 
-        if action == "remediation_track":
-            if result.get("overdue_count", 0) > 0:
-                recommendations.append(
-                    f"{result['overdue_count']} findings overdue for remediation. "
-                    "Escalate to engineering leadership."
-                )
+        if action == "remediation_track" and result.get("overdue_count", 0) > 0:
+            recommendations.append(
+                f"{result['overdue_count']} findings overdue for remediation. "
+                "Escalate to engineering leadership."
+            )
 
         recommendations.append(
             "Maintain pen test artifacts for compliance audits (SOC 2, ISO 27001)"
@@ -663,40 +627,40 @@ class PenTestCoordinatorAgent(BaseAgent):
         self,
         action: str,
         test_type: str,
-        result: Dict[str, Any],
-        test_plan: Optional[Dict[str, Any]],
-        compliance_status: Dict[str, Any],
-        risk_metrics: Optional[Dict[str, Any]],
-        recommendations: List[str]
+        result: dict[str, Any],
+        test_plan: dict[str, Any] | None,
+        compliance_status: dict[str, Any],
+        risk_metrics: dict[str, Any] | None,
+        recommendations: list[str],
     ) -> str:
         """Format pen test coordination report."""
         compliance_icon = "✅" if compliance_status.get("compliant") else "⚠️"
 
         report = f"""**Penetration Test Coordination Report**
 
-**Action:** {action.upper().replace('_', ' ')}
+**Action:** {action.upper().replace("_", " ")}
 **Test Type:** {test_type}
-**Compliance Status:** {compliance_icon} {"COMPLIANT" if compliance_status.get('compliant') else "GAP DETECTED"}
+**Compliance Status:** {compliance_icon} {"COMPLIANT" if compliance_status.get("compliant") else "GAP DETECTED"}
 
 """
 
         # Scheduling details
         if action == "schedule":
-            report += f"**Test Scheduled:**\n"
+            report += "**Test Scheduled:**\n"
             report += f"- Test ID: {result.get('test_id')}\n"
             report += f"- Scheduled Date: {result.get('scheduled_date', 'unknown')[:10]}\n"
             report += f"- Duration: {result.get('estimated_duration_days')} days\n"
             report += f"- Frequency: Every {result.get('schedule_frequency_days')} days\n\n"
 
             if test_plan:
-                report += f"**Test Plan:**\n"
+                report += "**Test Plan:**\n"
                 report += f"- Methodology: {test_plan['methodology']}\n"
                 report += f"- Frameworks: {', '.join(test_plan['frameworks'])}\n"
                 report += f"- Phases: {len(test_plan['phases'])}\n\n"
 
         # Findings review
         if action == "findings_review" and risk_metrics:
-            report += f"**Findings Summary:**\n"
+            report += "**Findings Summary:**\n"
             report += f"- Total: {risk_metrics['total_findings']}\n"
             report += f"- 🔴 Critical: {risk_metrics['critical_count']}\n"
             report += f"- ⚠️ High: {risk_metrics['high_count']}\n"
@@ -707,25 +671,27 @@ class PenTestCoordinatorAgent(BaseAgent):
 
         # Remediation tracking
         if action == "remediation_track":
-            report += f"**Remediation Progress:**\n"
+            report += "**Remediation Progress:**\n"
             report += f"- Completion: {result.get('completion_percentage', 0)}%\n"
-            report += f"- Completed: {result.get('completed', 0)}/{result.get('total_findings', 0)}\n"
+            report += (
+                f"- Completed: {result.get('completed', 0)}/{result.get('total_findings', 0)}\n"
+            )
             report += f"- Overdue: {result.get('overdue_count', 0)}\n\n"
 
         # Compliance
         if not compliance_status.get("compliant"):
-            report += f"**Compliance Gap:**\n"
+            report += "**Compliance Gap:**\n"
             report += f"- {compliance_status.get('reason')}\n"
             report += f"- Last Test: {compliance_status.get('last_test_date', 'None')[:10]}\n"
             report += f"- Next Due: {compliance_status.get('next_test_due', 'unknown')[:10]}\n\n"
 
         # Recommendations
         if recommendations:
-            report += f"**Recommendations:**\n"
+            report += "**Recommendations:**\n"
             for rec in recommendations:
                 report += f"- {rec}\n"
 
         report += f"\n*Coordination completed at {datetime.now(UTC).isoformat()}*"
-        report += f"\n*Compliance: SOC 2, ISO 27001, PCI-DSS*"
+        report += "\n*Compliance: SOC 2, ISO 27001, PCI-DSS*"
 
         return report
