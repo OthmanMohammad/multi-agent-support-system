@@ -4,8 +4,7 @@ Service Dependencies for FastAPI Dependency Injection
 Provides application service instances for route handlers.
 """
 
-from typing import AsyncGenerator
-from fastapi import Depends
+from collections.abc import AsyncGenerator
 from functools import lru_cache
 
 from src.database.connection import get_db_session
@@ -14,13 +13,13 @@ from src.services.application.conversation_service import ConversationApplicatio
 from src.services.application.customer_service import CustomerApplicationService
 from src.services.domain.conversation.domain_service import ConversationDomainService
 from src.services.domain.customer.domain_service import CustomerDomainService
-from src.services.infrastructure.customer_service import CustomerInfrastructureService
 from src.services.infrastructure.analytics_service import AnalyticsService
+from src.services.infrastructure.customer_service import CustomerInfrastructureService
 from src.workflow.engine import AgentWorkflowEngine
 
 
 # Cached workflow engine - created once and reused across requests
-@lru_cache()
+@lru_cache
 def get_cached_workflow_engine() -> AgentWorkflowEngine:
     """
     Returns a cached workflow engine instance.
@@ -31,7 +30,9 @@ def get_cached_workflow_engine() -> AgentWorkflowEngine:
     return AgentWorkflowEngine()
 
 
-async def get_conversation_application_service() -> AsyncGenerator[ConversationApplicationService, None]:
+async def get_conversation_application_service() -> AsyncGenerator[
+    ConversationApplicationService, None
+]:
     """
     Dependency that provides ConversationApplicationService instance.
 
@@ -56,7 +57,7 @@ async def get_conversation_application_service() -> AsyncGenerator[ConversationA
             domain_service=domain_service,
             customer_service=customer_service,
             workflow_engine=workflow_engine,
-            analytics_service=analytics_service
+            analytics_service=analytics_service,
         )
 
         try:
@@ -80,9 +81,7 @@ async def get_customer_application_service() -> AsyncGenerator[CustomerApplicati
         infrastructure_service = CustomerInfrastructureService(uow)
 
         service = CustomerApplicationService(
-            uow=uow,
-            domain_service=domain_service,
-            infrastructure_service=infrastructure_service
+            uow=uow, domain_service=domain_service, infrastructure_service=infrastructure_service
         )
 
         try:
@@ -107,4 +106,3 @@ async def get_analytics_service() -> AsyncGenerator[AnalyticsService, None]:
             yield service
         finally:
             pass
-    
