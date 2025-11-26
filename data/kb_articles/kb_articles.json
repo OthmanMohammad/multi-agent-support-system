@@ -1,0 +1,320 @@
+{
+  "table": "kb_articles",
+  "records": [
+    {
+      "title": "Understanding ProjectFlow Plans: Free vs Basic vs Premium vs Enterprise",
+      "category": "billing",
+      "content": "# Understanding ProjectFlow Plans\n\nProjectFlow offers four distinct pricing tiers designed to serve businesses at every stage of growth.\n\n## Free Plan\nThe Free plan is perfect for individuals and small teams just getting started with project management. It includes 3 user seats, 5 projects, and 100MB of storage. This plan gives you access to core features like task creation, basic team collaboration, and simple reporting. The Free plan is ideal for evaluating whether ProjectFlow is right for your organization before committing to a paid subscription.\n\n## Basic Plan\nAt $12 per user per month, the Basic plan is designed for small teams that need more resources than the Free tier. You get 10 projects, 5GB of storage, and access to time tracking functionality. The Basic plan also includes basic reporting capabilities and integrations with popular third-party tools like Slack and email. This plan works well for teams of 5-15 people who want structured project management without the premium features.\n\n## Premium Plan\nThe Premium plan ($24/user/month) removes most limitations and adds powerful advanced features. Enjoy unlimited projects, 50GB of storage, advanced analytics, automation rules, and custom integrations. The Premium plan includes our robust API access, priority email support, and integrations with Salesforce, GitHub, Jira, and more. This is ideal for growing teams that need sophisticated workflows and detailed insights.\n\n## Enterprise Plan\nOur Enterprise plan ($45/user/month, with volume discounts available) includes everything in Premium plus dedicated support, Single Sign-On (SSO), custom integrations, advanced security features, and SLA guarantees. Enterprise customers receive a dedicated account manager, custom training, and white-label options. Contact our sales team for a personalized quote.\n\n## Choosing the Right Plan\nStart by assessing your team size and project complexity. Most organizations grow from Free \u2192 Basic \u2192 Premium as their needs evolve. You can upgrade or downgrade at any time, with prorated billing applied to your next invoice.",
+      "tags": [
+        "plans",
+        "pricing",
+        "comparison",
+        "features"
+      ],
+      "url": "https://docs.projectflow.com/billing/understanding-plans",
+      "id": "afc8d724-f1ec-4580-812c-731a195d1c38",
+      "quality_score": 91.0,
+      "is_active": 1
+    },
+    {
+      "title": "How to Upgrade Your ProjectFlow Plan",
+      "category": "billing",
+      "content": "# Upgrading Your ProjectFlow Plan\n\nReady to unlock more features? Upgrading is quick and straightforward.\n\n## Step-by-Step Upgrade Process\n\n### Step 1: Navigate to Billing Settings\nGo to Account Settings and select the Billing tab. You'll see your current plan displayed prominently with an \"Upgrade\" button.\n\n### Step 2: Select Your New Plan\nClick the \"Upgrade\" button and review the available plans. Select the tier that best fits your needs.\n\n### Step 3: Configure Your Seats\nFor Basic and Premium plans, you'll need to specify how many user seats you want. Seat counts can be adjusted anytime. Enterprise customers should contact sales for custom seat arrangements.\n\n### Step 4: Review Billing Details\nYou'll see a preview of your new subscription cost, including any prorated charges or credits. Most upgrades are immediately applied, with your next invoice reflecting the change.\n\n### Step 5: Confirm and Complete\nClick \"Confirm Upgrade\" and authorize the payment with your saved payment method. You'll receive an email confirmation and can start using new features immediately.\n\n## Important Notes\n- Upgrades take effect immediately\n- Your next billing cycle invoice will reflect the new plan price (prorated if mid-cycle)\n- Unused basic plan credits carry over to your new plan\n- You can continue using your current plan's features during the transition\n\n## Questions About Upgrading?\nIf you have questions about which plan is right for your team, our sales team is happy to help. Email sales@projectflow.com or chat with our team in-app.",
+      "tags": [
+        "upgrade",
+        "billing",
+        "subscription",
+        "howto"
+      ],
+      "url": "https://docs.projectflow.com/billing/upgrade-plan",
+      "id": "57f5a06b-536a-4b5f-b7ae-0c534a1ec965",
+      "quality_score": 93.9,
+      "is_active": 1
+    },
+    {
+      "title": "Understanding Billing Cycles and Invoicing",
+      "category": "billing",
+      "content": "# Billing Cycles and Invoicing\n\n## Billing Cycle Basics\nProjectFlow offers two billing cycle options: monthly and annual. You choose your preference when setting up your subscription.\n\n### Monthly Billing\nWith monthly billing, you're charged on the same day each month for the upcoming month's service. This provides flexibility and allows you to adjust your team size or plan throughout the year. Monthly billing is perfect if you anticipate changes to your subscription.\n\n### Annual Billing\nAnnual billing provides a 15-20% discount compared to monthly pricing. You're charged once per year for 12 months of service. Annual billing is ideal if you have a stable team size and want to commit to ProjectFlow for a year.\n\n## Prorated Billing\nWhen you upgrade, downgrade, or change your seat count mid-cycle, we calculate a prorated amount. This is the difference between your old plan cost and new plan cost for the remaining days in your billing period. Prorated adjustments appear on your next invoice.\n\n## Invoices and Receipts\nInvoices are sent automatically on your billing date. You can also access all past invoices in your Billing section. Each invoice includes:\n- Invoice number and date\n- Your current plan and seat count\n- Itemized costs\n- Any credits or promotions applied\n- Payment method used\n- Due date (usually 30 days)\n\n## Managing Your Subscription\nYou can upgrade, downgrade, or cancel your subscription anytime through your billing settings. Changes take effect on your next billing date unless you specify otherwise.",
+      "tags": [
+        "billing",
+        "invoicing",
+        "cycles",
+        "proration"
+      ],
+      "url": "https://docs.projectflow.com/billing/billing-cycles",
+      "id": "14723957-0a61-4d8a-ae97-813e0f5aeefc",
+      "quality_score": 84.9,
+      "is_active": 1
+    },
+    {
+      "title": "Troubleshooting Login Issues and Password Recovery",
+      "category": "technical",
+      "content": "# Troubleshooting Login Issues\n\nCan't get into your ProjectFlow account? Follow these steps to resolve common login problems.\n\n## Forgot Your Password\nIf you don't remember your password, the login page has a \"Forgot Password?\" link.\n\n1. Click \"Forgot Password?\" on the login page\n2. Enter the email address associated with your account\n3. Check your email (including spam/junk folder) for the password reset link\n4. Click the link in your email - it expires after 24 hours\n5. Create a new password (minimum 12 characters, mix of upper/lowercase, numbers, special characters)\n6. Log in with your new password\n\n## Password Reset Email Not Arriving\nIf you don't receive the reset email within a few minutes:\n- Check your spam/junk folder - sometimes our emails get filtered\n- Make sure you're using the correct email address\n- Try requesting a new link (you can request up to 5 reset links)\n- Contact support if the issue persists\n\n## Two-Factor Authentication (2FA) Issues\nIf you've enabled 2FA and can't receive codes:\n\n**Authenticator App Issues**: Make sure your device time is synchronized. Open your authenticator app (Google Authenticator, Authy, etc.) and verify the code displayed. Codes refresh every 30 seconds.\n\n**SMS Code Not Arriving**: SMS delivery can occasionally be delayed. Wait a few minutes and request a new code. If you've used all your backup codes, contact support to disable 2FA temporarily.\n\n## Account Locked After Failed Attempts\nAfter 5 failed login attempts, your account is temporarily locked for 15 minutes for security. Wait 15 minutes and try again.\n\n## Still Can't Log In?\nContact our support team at support@projectflow.com with your email address and a description of the issue. We can help reset your account or investigate access problems.",
+      "tags": [
+        "login",
+        "password",
+        "authentication",
+        "2fa",
+        "troubleshooting"
+      ],
+      "url": "https://docs.projectflow.com/technical/login-troubleshooting",
+      "id": "6590d929-665c-4f03-814d-9fb81bb41abc",
+      "quality_score": 86.7,
+      "is_active": 1
+    },
+    {
+      "title": "Resolving Sync Conflicts Between Devices",
+      "category": "technical",
+      "content": "# Resolving Sync Conflicts\n\nWhen you work on projects from multiple devices, occasionally sync conflicts can occur. Here's how to identify and resolve them.\n\n## What is a Sync Conflict?\nA sync conflict happens when the same project element (task, comment, file) is modified on different devices before they can synchronize. This creates two versions of the data that need to be reconciled.\n\n## How to Identify a Conflict\n- You see a \"Conflict Detected\" notification\n- A task or comment shows multiple versions\n- Your changes don't appear on other devices\n- You see a yellow warning banner on a task or project\n\n## Resolving Conflicts\n\n### Option 1: Keep Your Changes\nChoose to keep your local version. Tap \"Keep Mine\" and your version becomes the authoritative copy on all devices.\n\n### Option 2: Use the Server Version\nSelect \"Use Latest\" to accept the version saved on ProjectFlow's servers. This discards your local changes.\n\n### Option 3: Manual Merge\nFor complex conflicts, you can manually merge changes:\n1. Review both versions side-by-side\n2. Incorporate important changes from both\n3. Save the merged version\n4. Confirm the merge across devices\n\n## Prevention Tips\n- Keep your devices synced by checking ProjectFlow regularly\n- Avoid editing the same task simultaneously on multiple devices\n- Use the \"Lock Task\" feature when making significant changes\n- Enable \"Auto-sync\" in settings (recommended)\n\n## If Conflicts Persist\nForce a complete resync by:\n1. Go to Settings \u2192 Advanced\n2. Click \"Force Full Resync\"\n3. Wait for completion (may take several minutes)\n\nFor persistent issues, contact support@projectflow.com with a description of affected projects.",
+      "tags": [
+        "sync",
+        "conflicts",
+        "devices",
+        "troubleshooting"
+      ],
+      "url": "https://docs.projectflow.com/technical/sync-conflicts",
+      "id": "5a5965fb-2c29-4930-a772-31234315bcc0",
+      "quality_score": 84.8,
+      "is_active": 1
+    },
+    {
+      "title": "Improving ProjectFlow Performance and Speed",
+      "category": "technical",
+      "content": "# Optimizing ProjectFlow Performance\n\nIf ProjectFlow is running slowly, these optimization tips can help improve your experience.\n\n## Clear Browser Cache and Cookies\n- Chrome: Ctrl+Shift+Delete (Windows) or Cmd+Shift+Delete (Mac)\n- Safari: Preferences \u2192 Privacy \u2192 Remove All Website Data\n- Firefox: Ctrl+Shift+Delete (Windows) or Cmd+Shift+Delete (Mac)\nSelect \"All time\" and confirm\n\n## Update Your Browser\nOutdated browsers can impact performance. Update to the latest version:\n- Chrome: Chrome menu \u2192 Help \u2192 About Google Chrome\n- Safari: App Store \u2192 Updates\n- Firefox: Help \u2192 About Firefox\n- Edge: Help and feedback \u2192 About Microsoft Edge\n\n## Browser Extensions and Plugins\nToo many extensions can slow down performance. Disable unused extensions or use private/incognito mode to test.\n\n## Optimize Your Projects\n- Archive old or completed projects (improves load times)\n- Remove unnecessary custom fields\n- Delete old files and attachments\n- Limit Gantt chart view to 500 tasks\n\n## Check Your Internet Connection\nUse speedtest.net to verify your connection. ProjectFlow works best with 5+ Mbps download speed. Mobile users should use WiFi when possible.\n\n## Device Storage\nMobile apps can slow down if your device's storage is full. Free up space by:\n- Clearing app cache (Settings \u2192 [App Name] \u2192 Storage)\n- Deleting old photos/videos\n- Uninstalling unused apps\n\n## Contact Support\nIf you've tried these steps and ProjectFlow is still slow, contact support@projectflow.com with:\n- Your browser and version\n- Device type and OS\n- Description of what's slow\n- Your account size (number of projects/tasks)\n",
+      "tags": [
+        "performance",
+        "speed",
+        "optimization",
+        "troubleshooting"
+      ],
+      "url": "https://docs.projectflow.com/technical/performance-optimization",
+      "id": "3838496a-e640-4003-9f61-43f013cf42fc",
+      "quality_score": 91.1,
+      "is_active": 1
+    },
+    {
+      "title": "Getting Started with ProjectFlow: Your First Project",
+      "category": "usage",
+      "content": "# Getting Started with ProjectFlow\n\nWelcome to ProjectFlow! This guide will help you create your first project and start collaborating with your team.\n\n## Creating Your First Project\n\n### Step 1: Access the Dashboard\nAfter logging in, you'll see the ProjectFlow dashboard. Click the \"New Project\" button (blue button in the top right).\n\n### Step 2: Name Your Project\nGive your project a clear, descriptive name (e.g., \"Marketing Campaign Q1\", \"Website Redesign\", \"Product Launch\"). You'll create a URL slug - keep this short and descriptive.\n\n### Step 3: Add a Description\nWrite a brief project description explaining the goals and scope. This helps team members understand what the project is about.\n\n### Step 4: Configure Basic Settings\n- **Visibility**: Private (only invited members) or Public (visible to all team members)\n- **Template**: Start from scratch or use a template (Agile, Kanban, Waterfall)\n\n### Step 5: Invite Team Members\nClick \"Invite Team\" and add your team members by email. You can assign roles (Admin, Editor, Viewer) to control permissions.\n\n## Your First Tasks\nOnce your project is created:\n1. Click \"New Task\" to create your first task\n2. Give it a clear title and description\n3. Assign it to a team member\n4. Set a due date\n5. Add it to a section (To Do, In Progress, Done)\n\n## Choosing a View\nSelect how you want to organize your work:\n- **List**: Simple task list view\n- **Board**: Kanban-style board (drag tasks between columns)\n- **Timeline**: Gantt chart for schedule planning\n- **Calendar**: Month or week view\n\nYou can switch between views anytime - they all show the same data.\n\n## Next Steps\n- Invite your full team\n- Set up recurring tasks\n- Create custom fields for your workflow\n- Configure notifications\n\nYou're ready to start collaborating!",
+      "tags": [
+        "getting-started",
+        "projects",
+        "setup",
+        "tutorial"
+      ],
+      "url": "https://docs.projectflow.com/usage/getting-started",
+      "id": "0465ffc7-d516-4487-b4af-4a48178e0329",
+      "quality_score": 97.9,
+      "is_active": 1
+    },
+    {
+      "title": "Mastering Kanban Boards in ProjectFlow",
+      "category": "usage",
+      "content": "# Using Kanban Boards\n\nKanban boards provide a visual way to manage your workflow with columns and cards.\n\n## Understanding Your Kanban Board\nYour board is organized into columns representing different workflow stages. Default columns are:\n- **Backlog**: Work not yet started\n- **To Do**: Ready to start\n- **In Progress**: Currently being worked on\n- **Done**: Completed work\n\nYou can customize these columns to match your specific workflow.\n\n## Working with Cards\nEach card represents a task or work item.\n\n### Creating Tasks on the Board\n- Click \"+\" in any column to create a new task\n- Click an existing card to view details, add assignees, set due dates, or add comments\n\n### Moving Tasks\nDrag and drop tasks between columns to update their status. The system automatically records the status change and notifies relevant team members.\n\n### Customizing Card Display\nEach card can show:\n- Task title\n- Assignee avatar\n- Due date\n- Labels/tags\n- Priority indicator\n- Custom field values\n\nEdit your board layout in Board Settings.\n\n## Advanced Kanban Features\n\n### Swimlanes\nGroup tasks by assignee, priority, or custom field. Click \"Add Swimlane\" to organize your board vertically.\n\n### Card Filters\nFilter cards by assignee, label, priority, or due date. Click the filter icon and select your criteria.\n\n### WIP Limits\nSet Work In Progress limits for each column to prevent overloading. When a column reaches its limit, it highlights in yellow as a visual indicator.\n\n### Automation\nSet up rules to automatically move cards:\n- Move to \"Done\" when all subtasks are complete\n- Move to \"In Progress\" when assigned\n- Move to \"Blocked\" if status is updated\n\n## Tips for Kanban Success\n- Keep your columns focused on your workflow\n- Use consistent naming and categorization\n- Review the board daily as a team\n- Use labels for additional context\n- Set realistic WIP limits\n\nFor detailed automation setup, see our advanced features guide.",
+      "tags": [
+        "kanban",
+        "board",
+        "workflow",
+        "usage"
+      ],
+      "url": "https://docs.projectflow.com/usage/kanban-boards",
+      "id": "c47841f8-4822-464c-8d93-88db553466c8",
+      "quality_score": 83.8,
+      "is_active": 1
+    },
+    {
+      "title": "Time Tracking in ProjectFlow",
+      "category": "usage",
+      "content": "# Time Tracking Guide\n\nTrack time spent on tasks to better understand project effort and resource allocation.\n\n## Starting Time Tracking\nOpen any task and click the \"Start Timer\" button. The timer will begin counting immediately. You'll see the elapsed time in the task header.\n\n## Logging Time\nTo stop the timer and log time:\n1. Click the timer to open the time tracking panel\n2. Click \"Stop\" to pause\n3. Review the elapsed time\n4. Click \"Log Time\" to save\n\nYou can also manually enter time by clicking \"Log Custom Amount\" and typing the hours or minutes.\n\n## Time Estimates\nSet time estimates when creating tasks. Estimates help teams forecast project duration and track velocity.\n\n1. Click \"Estimate\" on a task\n2. Enter hours or days\n3. ProjectFlow displays actual vs. estimated time\n\n## Time Tracking Rules\n- Time logged is permanent once saved\n- You can edit logged time within 24 hours\n- Admins can edit others' time logs\n- Time is associated with the logging user by default\n\n## Viewing Time Reports\nAccess reports to see:\n- Total time by person\n- Total time by task\n- Time tracking accuracy (estimated vs. actual)\n- Weekly and monthly summaries\n\nVisit Reports section to generate custom time tracking reports.\n\n## Privacy and Permissions\n- Users can see their own logged time\n- Project admins can see all project time logs\n- Time data is included in billing for some plans\n- Time tracking respects task permissions\n\n## Best Practices\n- Log time regularly (daily is ideal)\n- Add notes to time logs explaining work\n- Use consistent rounding\n- Review weekly to catch discrepancies\n- Use estimates to improve forecasting\n\nFor team time tracking settings, see your account admin.",
+      "tags": [
+        "time-tracking",
+        "timers",
+        "reporting",
+        "productivity"
+      ],
+      "url": "https://docs.projectflow.com/usage/time-tracking",
+      "id": "c8c0371b-598f-4224-a6ee-061159d49a97",
+      "quality_score": 91.2,
+      "is_active": 1
+    },
+    {
+      "title": "Setting Up Two-Factor Authentication (2FA)",
+      "category": "account",
+      "content": "# Two-Factor Authentication (2FA) Setup\n\nTwo-factor authentication adds an extra layer of security to your account by requiring both your password and a second verification method.\n\n## Why Use 2FA?\nEven if someone obtains your password, they can't access your account without the second authentication factor. This dramatically improves your account security.\n\n## Supported 2FA Methods\nProjectFlow supports three 2FA methods:\n1. **Authenticator App** (Google Authenticator, Authy, Microsoft Authenticator)\n2. **SMS Text Message**\n3. **Email Codes**\n\n## Setting Up 2FA\n\n### Step 1: Go to Security Settings\nLog in and navigate to Account Settings \u2192 Security. Click \"Enable Two-Factor Authentication\".\n\n### Step 2: Choose Your Method\n\n**Using an Authenticator App** (Recommended):\n1. Open your authenticator app\n2. Scan the QR code shown in ProjectFlow\n3. Your app generates a 6-digit code\n4. Enter the code to verify\n5. Save backup codes in a secure location\n\n**Using SMS**:\n1. Enter your phone number\n2. Receive a test code via SMS\n3. Enter the code to confirm\n4. Save backup codes\n\n**Using Email**:\n1. Confirm your email address\n2. Check your email for a code\n3. Enter the code to verify\n\n### Step 3: Save Backup Codes\nYou'll be given 10 backup codes. Each code can be used once if you lose access to your primary 2FA method. Store these securely (password manager, physical safe, etc.).\n\n## Using 2FA at Login\nWhen 2FA is enabled, you'll need to:\n1. Enter your email and password\n2. Enter your 6-digit code from your authenticator app, SMS, or email\n3. Gain access to your account\n\n## Losing Access to Your 2FA Device\nIf you lose your phone or no longer have access to your 2FA method:\n1. Use one of your backup codes during login\n2. If you've used all backup codes, contact support@projectflow.com\n3. We can disable 2FA after verifying your identity\n\n## Disabling 2FA\nTo disable 2FA, go to Settings \u2192 Security and click \"Disable 2FA\". You'll need to verify your identity.\n\n## Best Practices\n- Use an authenticator app instead of SMS (more secure)\n- Keep backup codes in a secure location\n- Don't share backup codes with anyone\n- Regenerate backup codes periodically\n- Test your 2FA method before relying on it\n\nFor questions about 2FA, contact support@projectflow.com.",
+      "tags": [
+        "security",
+        "2fa",
+        "authentication",
+        "setup"
+      ],
+      "url": "https://docs.projectflow.com/account/two-factor-authentication",
+      "id": "86da141b-4774-47a2-99cf-bbd7c7d2e4e6",
+      "quality_score": 96.8,
+      "is_active": 1
+    },
+    {
+      "title": "Managing Team Roles and Permissions",
+      "category": "account",
+      "content": "# Team Roles and Permissions\n\nControl what team members can see and do by assigning appropriate roles.\n\n## Available Roles\n\n### Owner\n- Full access to everything\n- Can invite/remove team members\n- Can change billing and plan\n- Can delete the workspace\n- Can configure workspace settings\n\nOnly one Owner per workspace, but can transfer ownership.\n\n### Admin\n- Full access to projects\n- Can invite/remove members\n- Can create and delete projects\n- Can manage team roles\n- Cannot access billing (unless Owner)\n\nYou can have multiple Admins.\n\n### Editor\n- Can create and edit projects they're assigned to\n- Can create and edit tasks\n- Can invite guests to specific projects\n- Cannot create workspace-level resources\n\n### Viewer\n- Can view all projects\n- Read-only access to tasks and files\n- Can add comments\n- Cannot edit or create anything\n\n### Guest\n- Access to specific projects only\n- Limited to assigned projects\n- Cannot access workspace or other projects\n- Ideal for external collaborators\n\n## Changing Roles\n\n1. Go to Team Settings\n2. Click the member's name\n3. Select their new role from the dropdown\n4. Click \"Save\"\n\nChanges take effect immediately.\n\n## Permissions by Feature\n\n| Feature | Owner | Admin | Editor | Viewer | Guest |\n|---------|-------|-------|--------|--------|-------|\n| Create Projects | \u2713 | \u2713 | \u2717 | \u2717 | \u2717 |\n| Edit Projects | \u2713 | \u2713 | \u2713* | \u2717 | \u2717 |\n| Create Tasks | \u2713 | \u2713 | \u2713* | \u2713** | \u2717 |\n| Edit Tasks | \u2713 | \u2713 | \u2713* | \u2717 | \u2717 |\n| Manage Team | \u2713 | \u2713 | \u2717 | \u2717 | \u2717 |\n| Billing | \u2713 | \u2717 | \u2717 | \u2717 | \u2717 |\n| Settings | \u2713 | \u2713 | \u2717 | \u2717 | \u2717 |\n\n*Only in assigned projects\n**Comments only\n\n## Best Practices\n- Give people the minimum role they need\n- Regularly audit team permissions\n- Remove inactive team members\n- Use Guest role for external stakeholders\n- Document your permission structure\n\nFor complex permission needs, consider using project-level roles.",
+      "tags": [
+        "team",
+        "permissions",
+        "roles",
+        "access-control"
+      ],
+      "url": "https://docs.projectflow.com/account/roles-permissions",
+      "id": "172608c3-364e-46a4-93ce-cbd6e67189a1",
+      "quality_score": 81.6,
+      "is_active": 1
+    },
+    {
+      "title": "Slack Integration: Setup and Usage",
+      "category": "integration",
+      "content": "# ProjectFlow Slack Integration\n\nConnect ProjectFlow to Slack to get notifications and manage tasks without leaving Slack.\n\n## Setup Instructions\n\n### Step 1: Authorize the Integration\n1. In ProjectFlow, go to Settings \u2192 Integrations\n2. Click \"Slack\" and select \"Connect\"\n3. Click \"Authorize\" - you'll be taken to Slack\n4. Select your workspace and click \"Allow\"\n5. You'll be returned to ProjectFlow\n\n### Step 2: Configure Notifications\nBack in Integrations, configure:\n- Which Slack channel to use (or create a new one)\n- Which events trigger notifications:\n  - Task assigned\n  - Task due today\n  - Task completed\n  - Comment mentions\n  - Project updates\n\n### Step 3: Invite the Bot\nInvite @ProjectFlow to your Slack channels where you want notifications.\n\n## Using ProjectFlow in Slack\n\n### Slash Commands\nProjectFlow provides slash commands for common actions:\n\n`/pf task` - Create a new task\n`/pf list` - View your assigned tasks\n`/pf status` - Check project status\n\n### Slack Shortcuts\nIn message actions menu, click \"Create ProjectFlow Task\" to quickly turn messages into tasks.\n\n### Rich Previews\nShare ProjectFlow links in Slack to get rich previews with task details, due dates, and assignees.\n\n## Notification Settings\nYou can customize notifications:\n- Mention vs. digest (hourly, daily)\n- Which users/projects to include\n- Priority level filters\n\n## Troubleshooting\n\n**Missing notifications**: Check channel membership and notification settings\n\n**Can't create tasks from Slack**: Verify the OAuth scope is correct\n\n**Notifications in wrong channel**: Edit integration settings to select the correct channel\n\n## Disconnecting Slack\nRemove the integration at any time in Settings \u2192 Integrations \u2192 Slack \u2192 Disconnect.\n\nFor support, contact support@projectflow.com or visit our Slack community.",
+      "tags": [
+        "slack",
+        "integration",
+        "notifications",
+        "automation"
+      ],
+      "url": "https://docs.projectflow.com/integration/slack",
+      "id": "5bc8f4d4-1a6a-48e7-ac15-5152a213a5bd",
+      "quality_score": 88.8,
+      "is_active": 1
+    },
+    {
+      "title": "GitHub Integration Guide",
+      "category": "integration",
+      "content": "# GitHub Integration\n\nConnect your GitHub repositories to ProjectFlow to link code commits to project tasks.\n\n## Features\n- Link PRs and commits to tasks\n- Auto-close tasks when code is merged\n- View deployment status in ProjectFlow\n- Assign tasks to developers based on code ownership\n\n## Setup\n\n### Step 1: Add Integration\nGo to Settings \u2192 Integrations \u2192 GitHub \u2192 \"Connect\"\n\n### Step 2: Authorize GitHub\nClick \"Authorize\" and sign in to your GitHub account. Grant ProjectFlow access to your repositories.\n\n### Step 3: Select Repositories\nChoose which repositories to connect. You can add more repositories later.\n\n### Step 4: Configure Automation\nSet up rules for automatic task updates:\n- Auto-close when PR is merged\n- Add labels based on task status\n- Notify when related PRs are opened\n\n## Linking Tasks to Code\n\n### In GitHub\nWhen creating a commit or PR, reference your ProjectFlow task:\n```\n#task-123: Add authentication system\nFixes #task-456\n```\n\n### In ProjectFlow\nLink a task to a GitHub PR by clicking \"Link PR\" and selecting the PR from the list.\n\n## Viewing GitHub Activity\nIn tasks, you'll see:\n- Linked commits and PRs\n- Deployment status\n- Code reviews and discussions\n- Merge status\n\n## Configuration Options\nCustomize the integration:\n- Which repositories sync\n- Auto-close task behavior\n- Notification preferences\n- Custom field mappings\n\n## Disconnecting\nRemove GitHub access at any time in Settings \u2192 Integrations \u2192 GitHub \u2192 Disconnect.\n\nThis removes future syncing but keeps existing links for reference.",
+      "tags": [
+        "github",
+        "integration",
+        "code",
+        "development"
+      ],
+      "url": "https://docs.projectflow.com/integration/github",
+      "id": "4dc8ca39-df5f-47ad-bef7-b17d196d97d7",
+      "quality_score": 90.0,
+      "is_active": 1
+    },
+    {
+      "title": "Setting Up Salesforce Integration",
+      "category": "integration",
+      "content": "# Salesforce Integration\n\nSync Salesforce opportunities and accounts with ProjectFlow projects for end-to-end visibility.\n\n## What You Can Sync\n- Opportunities \u2194 ProjectFlow projects\n- Accounts \u2194 ProjectFlow customers\n- Contacts \u2194 ProjectFlow team members\n- Activities \u2194 ProjectFlow tasks\n\n## Setup Process\n\n### Step 1: Enable Integration\nGo to Settings \u2192 Integrations \u2192 Salesforce \u2192 \"Connect\"\n\n### Step 2: Authorize Salesforce\nSign in to your Salesforce account and grant ProjectFlow access to your data.\n\n### Step 3: Map Fields\nConfigure which Salesforce fields map to ProjectFlow fields:\n- Opportunity Name \u2192 Project Name\n- Account Name \u2192 Customer Name\n- Close Date \u2192 Due Date\n- Stage \u2192 Project Status\n\n### Step 4: Set Sync Direction\nChoose whether to sync:\n- One-way (Salesforce \u2192 ProjectFlow only)\n- Two-way (bidirectional sync)\n\n### Step 5: Test the Sync\nCreate a test opportunity in Salesforce. You should see it appear in ProjectFlow within minutes.\n\n## Ongoing Use\nOnce configured, the integration automatically:\n- Syncs new opportunities/projects\n- Updates changes in both systems\n- Maintains data consistency\n- Logs all sync activities\n\n## Troubleshooting Sync Issues\n\n**Data not syncing**: Check that field mappings are correct and both systems are accessible\n\n**Duplicate projects**: Verify that sync deduplication is enabled\n\n**Lost data**: Check the sync log for errors\n\n## Disconnecting\nRemove the integration in Settings \u2192 Integrations \u2192 Salesforce \u2192 Disconnect.\n\nThis stops future syncing but preserves all existing data.\n\nFor complex setups or custom field mappings, contact our support team.",
+      "tags": [
+        "salesforce",
+        "integration",
+        "crm",
+        "sync"
+      ],
+      "url": "https://docs.projectflow.com/integration/salesforce",
+      "id": "1394e052-fd4c-4fa8-b07a-09ba8d54cd32",
+      "quality_score": 84.8,
+      "is_active": 1
+    },
+    {
+      "title": "Product Overview: What is ProjectFlow?",
+      "category": "sales",
+      "content": "# ProductFlow: The Ultimate Project Management Platform\n\nProjectFlow is a modern, cloud-based project management platform designed for teams of all sizes, from startups to enterprises.\n\n## Core Capabilities\n\n### Project Organization\nCreate projects for every initiative. Organize with custom fields, labels, and templates. Manage unlimited projects on Premium and Enterprise plans.\n\n### Flexible Views\nSwitch between List, Board (Kanban), Timeline (Gantt), and Calendar views. All views show the same data - choose what works best for your team.\n\n### Collaboration Features\nWork together in real-time with comments, @mentions, file attachments, and activity feeds. See who's working on what and when.\n\n### Time Tracking\nLog time against tasks to track effort and generate productivity reports. Built-in timers make it easy to track active work.\n\n### Automation\nSet up rules to automate repetitive work:\n- Move tasks between statuses\n- Assign tasks based on conditions\n- Send notifications automatically\n- Update custom fields based on triggers\n\n### Integrations\nConnect to tools your team already uses: Slack, Jira, GitHub, Salesforce, Google Workspace, Microsoft Teams, Zapier, and more.\n\n### Reporting and Analytics\nGenerate insights with built-in reports:\n- Project status and progress\n- Team workload and utilization\n- Time tracking analysis\n- Burndown charts\n- Custom reports\n\n## Why Choose ProjectFlow?\n\n**Ease of Use**: Intuitive interface requires minimal training\n**Flexibility**: Adapts to your workflow, not the other way around\n**Scalability**: Grows from 3 users to enterprise across departments\n**Affordability**: Pricing that works for businesses at every stage\n**Security**: Enterprise-grade security with SSO, encryption, SOC2 compliance\n\n## Who Uses ProjectFlow?\n- Marketing teams managing campaigns and content\n- Engineering teams coordinating development\n- Agencies delivering client projects\n- Product teams shipping features\n- Remote teams collaborating globally\n- Enterprises managing complex initiatives\n\n## Getting Started\nStart free with up to 3 team members. No credit card required.\n\nCompare our plans to find the perfect fit for your team.",
+      "tags": [
+        "product",
+        "overview",
+        "features",
+        "introduction"
+      ],
+      "url": "https://docs.projectflow.com/sales/product-overview",
+      "id": "c91d282f-9afd-4b8f-9cfd-2e10ccb83807",
+      "quality_score": 88.2,
+      "is_active": 1
+    },
+    {
+      "title": "Use Case: Marketing Teams",
+      "category": "sales",
+      "content": "# ProjectFlow for Marketing Teams\n\nManage campaigns, content calendars, and launches with ProjectFlow.\n\n## Marketing Workflow\nMarketing teams typically manage:\n- Campaign planning and execution\n- Content calendars and editorial schedules\n- Social media management\n- Email marketing campaigns\n- Event planning and promotion\n- Asset management and approvals\n- Performance reporting\n\n## ProjectFlow for Marketing\n\n### Campaign Projects\nCreate a project for each campaign with phases:\n- Planning\n- Execution\n- Promotion\n- Analysis\n\n### Content Calendar\nUse Timeline view to manage your editorial calendar with drag-and-drop scheduling.\n\n### Task Management\nBreak down campaigns into tasks:\n- Copywriting\n- Design\n- Approvals\n- Publishing\n- Promotion\n\nAssign to team members and set due dates.\n\n### Collaboration\nKeep everyone aligned with:\n- Comments and feedback\n- File attachments for assets\n- Activity feeds showing updates\n- @mentions for urgent items\n\n### Automation\nAutomate repetitive marketing work:\n- Move tasks when content is approved\n- Notify channels when deadlines approach\n- Log time by task to understand effort\n- Sync campaigns with your CRM\n\n### Reporting\nMeasure campaign performance:\n- Campaign timeline vs. actual\n- Team productivity metrics\n- Time spent by activity type\n- Workload distribution\n\n## Example Marketing Template\nProjectFlow includes pre-built templates for:\n- Product launch campaigns\n- Content marketing plans\n- Social media campaigns\n- Email marketing sequences\n\n## Success Story\nTechFlow Marketing increased campaign velocity by 40% after implementing ProjectFlow. They reduced planning overhead from 20% to 5% of project time and improved cross-team collaboration.\n\nReady to transform your marketing workflow? Start your free ProjectFlow trial today.",
+      "tags": [
+        "marketing",
+        "usecase",
+        "workflow",
+        "campaigns"
+      ],
+      "url": "https://docs.projectflow.com/sales/marketing-teams",
+      "id": "e3f489db-72b3-4be6-bbf6-7aa7d8f5017d",
+      "quality_score": 97.9,
+      "is_active": 1
+    },
+    {
+      "title": "Use Case: Engineering Teams",
+      "category": "sales",
+      "content": "# ProjectFlow for Engineering Teams\n\nCoordinate development, sprints, and deployments with ProjectFlow.\n\n## Engineering Workflow\nEngineering teams need to:\n- Plan and prioritize features\n- Manage sprint cycles\n- Track bugs and issues\n- Coordinate code reviews\n- Monitor deployments\n- Document technical decisions\n\n## ProjectFlow for Engineering\n\n### Sprint Planning\nCreate projects for each sprint with:\n- Backlog of prioritized tasks\n- Sprint goals and commitments\n- Daily standups using timeline view\n- Sprint retrospectives\n\n### GitHub Integration\nLink tasks to:\n- Code commits\n- Pull requests\n- Deployment status\n- Code reviews\n\n### Bug Tracking\nCreate tasks for bugs with:\n- Priority levels\n- Assignee and reviewer\n- Steps to reproduce\n- Related code/commits\n\n### Kanban Workflow\nUse Kanban boards for continuous deployment:\n- Backlog \u2192 In Review \u2192 In Progress \u2192 Testing \u2192 Done\n- WIP limits prevent bottlenecks\n- Auto-move cards based on code status\n\n### Collaboration\nTechnical discussions happen in task comments with:\n- Code snippets\n- Screenshots\n- Design documents\n- Architectural decisions\n\n### Automation\nAutomate development workflow:\n- Create tasks from GitHub issues\n- Auto-close when PR is merged\n- Update status based on CI/CD results\n- Notify team of deployments\n\n### Reporting\nTrack engineering metrics:\n- Sprint velocity\n- Bug resolution time\n- Code review turnaround\n- Deployment frequency\n\n## Example Engineering Template\nProjectFlow includes templates for:\n- Agile/Scrum sprints\n- Kanban development\n- Bug triage and resolution\n- Feature development\n\n## Success Story\nDevStack Engineering improved deployment frequency from monthly to weekly using ProjectFlow, reducing sprint planning overhead and improving code review communication.\n\nReady to streamline your engineering workflow? Try ProjectFlow free today.",
+      "tags": [
+        "engineering",
+        "development",
+        "usecase",
+        "agile"
+      ],
+      "url": "https://docs.projectflow.com/sales/engineering-teams",
+      "id": "fdf9f93f-cddc-4878-968a-d616cf83338c",
+      "quality_score": 83.3,
+      "is_active": 1
+    },
+    {
+      "title": "Adoption Best Practices: Getting Your Team Using ProjectFlow",
+      "category": "success",
+      "content": "# Driving ProjectFlow Adoption\n\nThe most successful ProjectFlow implementations have high team adoption. Here's how to ensure your team embraces the platform.\n\n## Pre-Launch Preparation\n\n### Define Your Workflow\nBefore launching ProjectFlow, decide:\n- What projects will you manage?\n- How will tasks be categorized?\n- What statuses do you need?\n- Who owns what?\n\nDocument this so team members understand the plan.\n\n### Choose a Champion\nDesignate someone on your team to be the ProjectFlow expert. They'll:\n- Lead rollout and training\n- Answer team questions\n- Provide feedback to management\n\n### Set Clear Expectations\nCommunicate to your team:\n- Why you're implementing ProjectFlow\n- How it will improve their work\n- When they need to start using it\n- Who to contact with questions\n\n## Launch Phase\n\n### Start with a Pilot\nLaunch with one team or department first. Use their feedback to refine your setup before rolling out enterprise-wide.\n\n### Provide Training\nDon't assume people will figure it out. Provide:\n- Recorded video training\n- Live group training sessions\n- One-on-one onboarding\n- Written documentation and guides\n\n### Migrate Initial Data\nHelp teams get their existing projects and tasks into ProjectFlow. This usually needs to be:\n- Manually migrated (for small amounts)\n- Imported via CSV (for bulk data)\n- Integrated from existing tools\n\n### Go Live\nPick a specific date for launch. Make it an event - send calendar invites, celebrate the launch, and be available for questions.\n\n## Post-Launch Success\n\n### Regular Check-ins\nWeek 1-2: Daily check-ins for issues and questions\nWeek 3-4: Weekly check-ins\nMonth 2+: Monthly pulse checks\n\n### Celebrate Wins\nShare adoption metrics and success stories. Recognize early adopters.\n\n### Gather Feedback\nAsk teams what's working and what could be better. Make quick improvements to increase adoption.\n\n### Address Resistance\nSome team members may resist change. Understand their concerns and show how ProjectFlow solves their pain points.\n\n### Optimize Workflows\nAs teams use ProjectFlow, refine processes:\n- Adjust status columns\n- Simplify custom fields\n- Automate common tasks\n- Integrate with other tools\n\n## Key Adoption Metrics\nTrack these to measure success:\n- % of team logging in daily\n- % of team with assigned tasks\n- # of comments per task\n- Time to complete tasks\n- User engagement over time\n\n## Common Adoption Mistakes\n- Launching too fast without proper training\n- Assuming people will adopt without encouragement\n- Not customizing for your specific workflow\n- Ignoring early feedback\n- Not providing ongoing support\n\n## Long-Term Adoption\nKeep adoption strong by:\n- Regularly highlighting new features\n- Sharing productivity insights\n- Celebrating team successes\n- Continuing to optimize workflows\n- Training new team members\n\nRemember: adoption is a journey, not a destination. Keep supporting your team and refining your implementation.\n\nNeed help with adoption? Our Customer Success team can provide guidance and training.",
+      "tags": [
+        "adoption",
+        "implementation",
+        "training",
+        "success"
+      ],
+      "url": "https://docs.projectflow.com/success/adoption-best-practices",
+      "id": "0f6dd418-a47b-4c2c-8cac-fdf702618e42",
+      "quality_score": 80.4,
+      "is_active": 1
+    },
+    {
+      "title": "Quarterly Business Review (QBR) Preparation",
+      "category": "success",
+      "content": "# Preparing for Your Quarterly Business Review\n\nYour Quarterly Business Review (QBR) is a strategic conversation with your ProjectFlow customer success manager to review progress, align on goals, and plan for the future.\n\n## Before Your QBR\n\n### Gather Data\nCollect metrics from the past quarter:\n- ProjectFlow adoption metrics\n- Team productivity improvements\n- Time savings achieved\n- Process improvements made\n- Integration utilization\n- ROI/value realization\n\n### Generate Reports\nUse ProjectFlow Reports to create:\n- Project status reports\n- Team workload and utilization\n- Time tracking analysis\n- Velocity metrics (if using Agile)\n\nExport these reports for discussion.\n\n### Identify Challenges\nDocument:\n- Features you wish ProjectFlow had\n- Integrations that would help\n- Workflow inefficiencies\n- Team adoption concerns\n- Training needs\n\n### Plan for Next Quarter\nThink about your goals for the coming quarter:\n- New projects or teams to onboard\n- Process improvements to implement\n- Team size/plan changes\n- Integration roadmap\n\n## During Your QBR\n\n### Review Key Metrics\nWalk through adoption, usage, and value metrics together.\n\n### Discuss Successes\nShare stories of how ProjectFlow is helping your team.\n\n### Address Challenges\nDiscuss any issues or concerns. Your CSM can often provide solutions or workarounds.\n\n### Plan Next Steps\nWork together to identify:\n- New initiatives for next quarter\n- Training or optimization needs\n- Feature requests to explore\n- Success metrics to track\n\n### Action Items\nDocument decisions and assign owners. Your CSM will follow up.\n\n## After Your QBR\n\n### Implement Improvements\nAct on agreed-upon changes and optimizations.\n\n### Track Progress\nMonitor the metrics and goals you discussed.\n\n### Stay in Touch\nMaintain regular communication with your CSM between QBRs. They're there to help you succeed.\n\n## QBR Success Tips\n- Come prepared with data and goals\n- Be honest about challenges\n- Think strategically about future needs\n- Involve key stakeholders (team leads, managers)\n- Document action items and owners\n\nYour QBR is your opportunity to ensure ProjectFlow is delivering maximum value. Make the most of it!\n\nQuestions about your upcoming QBR? Reach out to your customer success manager.",
+      "tags": [
+        "customer-success",
+        "qbr",
+        "review",
+        "planning"
+      ],
+      "url": "https://docs.projectflow.com/success/qbr-preparation",
+      "id": "a81fe5ab-9dc8-49b7-a5ab-8463482f8ab4",
+      "quality_score": 88.2,
+      "is_active": 1
+    },
+    {
+      "title": "ProjectFlow API Getting Started",
+      "category": "api",
+      "content": "# ProjectFlow API Documentation\n\nThe ProjectFlow API lets you programmatically access and manage projects, tasks, and team data.\n\n## API Basics\n\n### Base URL\n```\nhttps://api.projectflow.com/v1\n```\n\n### Authentication\nAll API requests require authentication using an API key.\n\nGet your API key from Settings \u2192 API Keys. Keep your key secret and never commit it to version control.\n\nInclude your API key in every request:\n```\nAuthorization: Bearer YOUR_API_KEY\n```\n\n## Core Concepts\n\n### Resources\nThe API provides access to these core resources:\n- Projects\n- Tasks\n- Users\n- Teams\n- Comments\n- Time entries\n- Custom fields\n\n### REST Endpoints\nThe API follows RESTful conventions:\n- GET /projects - List projects\n- POST /projects - Create project\n- GET /projects/{id} - Get project details\n- PUT /projects/{id} - Update project\n- DELETE /projects/{id} - Delete project\n\n### Response Format\nAll responses are JSON. Successful requests return a 200-299 status with response body. Errors return 400+ status with error details.\n\n### Pagination\nList endpoints return 20 results by default. Use ?limit=50&offset=0 for pagination.\n\n## Authentication Methods\n\n### API Key (Recommended)\nSend in Authorization header:\n```\nAuthorization: Bearer sk_live_XXXXXXXXX\n```\n\n### OAuth 2.0\nFor applications that need user authorization:\n1. Redirect user to authorization endpoint\n2. User grants permission\n3. Receive authorization code\n4. Exchange code for access token\n5. Use token to make requests\n\n## Rate Limiting\nThe API enforces rate limits:\n- 1000 requests per minute per API key\n- Rate limit headers indicate remaining requests\n\nIf you exceed limits, requests return 429 status. Wait before retrying.\n\n## Example Request\n```\ncurl -H \"Authorization: Bearer YOUR_KEY\" \\\n  https://api.projectflow.com/v1/projects\n```\n\n## SDKs\nWe provide official SDKs for:\n- Python\n- JavaScript/Node.js\n- Ruby\n- Go\n- Java\n\n## API Keys Management\nFrom Settings \u2192 API Keys:\n- Create multiple keys for different apps\n- Rotate keys regularly\n- Delete unused keys\n- Set IP restrictions\n- Monitor key usage\n\n## Error Handling\nAlways handle errors gracefully:\n```\nHTTP/1.1 400 Bad Request\n{\n  \"error\": \"invalid_request\",\n  \"message\": \"Missing required field: name\"\n}\n```\n\n## Support\nFor API questions:\n- Check the API docs\n- Review code examples\n- Contact api-support@projectflow.com\n\nGet started with the API today!",
+      "tags": [
+        "api",
+        "developers",
+        "integration",
+        "getting-started"
+      ],
+      "url": "https://docs.projectflow.com/api/getting-started",
+      "id": "d09ade5c-e49e-49c1-949d-fd058e18b066",
+      "quality_score": 93.0,
+      "is_active": 1
+    },
+    {
+      "title": "API Rate Limiting and Best Practices",
+      "category": "api",
+      "content": "# API Rate Limiting\n\nUnderstand how rate limiting works and best practices for API usage.\n\n## Rate Limit Basics\n\n### Current Limits\n- **Standard**: 1000 requests/minute\n- **Enterprise**: Custom limits available\n\nRate limits apply per API key, not per account.\n\n### How It Works\n1. You make API requests\n2. Your request count increments\n3. At the end of each minute, count resets\n4. Exceed the limit \u2192 429 status\n\n## Handling Rate Limits\n\n### Rate Limit Headers\nEvery response includes headers:\n```\nX-RateLimit-Limit: 1000\nX-RateLimit-Remaining: 850\nX-RateLimit-Reset: 1234567890\n```\n\nCheck these headers to track usage.\n\n### When You Hit the Limit\nYou'll receive:\n```\nHTTP/1.1 429 Too Many Requests\nRetry-After: 60\n```\n\nWait the specified seconds before retrying.\n\n## Best Practices\n\n### Batch Operations\nInstead of many individual requests:\n```\n// Bad - 10 requests\nfor (let id of ids) {\n  GET /tasks/{id}\n}\n\n// Good - 1 request\nGET /tasks?ids=1,2,3,4,5,6,7,8,9,10\n```\n\n### Caching\nCache responses to reduce requests:\n```\n// Cache project data for 1 hour\nconst cached = cache.get('projects');\nif (cached) return cached;\n```\n\n### Webhooks Over Polling\nUse webhooks instead of polling:\n```\n// Bad - poll every minute\nsetInterval(() => GET /projects, 60000)\n\n// Good - receive updates via webhook\nPOST /webhooks/projects/updated\n```\n\n### Pagination\nFetch results in batches:\n```\nGET /tasks?limit=100&offset=0\nGET /tasks?limit=100&offset=100\n```\n\n## Enterprise Rate Limits\nEnterprise customers can request higher limits based on needs:\n- Dedicated rate limit pool\n- Custom limits per endpoint\n- Burst allowance for spikes\n\nContact sales@projectflow.com to discuss enterprise limits.\n\n## Monitoring Usage\nTrack your API usage:\n- Settings \u2192 API Keys \u2192 View Usage\n- See requests per endpoint\n- Identify inefficient calls\n- Plan capacity\n\n## Increasing Limits\nFree/Basic accounts have standard limits. Upgrade to Premium or Enterprise for higher limits.\n\n## Support\nQuestions about rate limiting?\n- Check error messages for guidance\n- Review API docs\n- Contact api-support@projectflow.com\n\nBuild better integrations with smart API usage!",
+      "tags": [
+        "api",
+        "rate-limiting",
+        "best-practices"
+      ],
+      "url": "https://docs.projectflow.com/api/rate-limiting",
+      "id": "7db0cf8d-0181-46db-9724-58f674a97063",
+      "quality_score": 92.5,
+      "is_active": 1
+    }
+  ]
+}
