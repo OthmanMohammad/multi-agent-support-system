@@ -5,13 +5,13 @@ Enforces data retention and deletion policies for compliance.
 Automates data lifecycle management per GDPR, CCPA, and SOC 2 requirements.
 """
 
-from typing import Dict, Any, List, Optional, Set
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("data_retention_enforcer", tier="operational", category="security")
@@ -43,32 +43,32 @@ class DataRetentionEnforcerAgent(BaseAgent):
         "user_data": {
             "default_days": 2555,  # 7 years
             "after_deletion_request": 30,  # Grace period
-            "inactive_account": 730  # 2 years of inactivity
+            "inactive_account": 730,  # 2 years of inactivity
         },
         "audit_logs": {
             "security_events": 2555,  # 7 years
             "access_logs": 730,  # 2 years
-            "system_logs": 365  # 1 year
+            "system_logs": 365,  # 1 year
         },
         "payment_data": {
             "transaction_records": 2555,  # 7 years (tax)
             "credit_card_info": 0,  # Never store (PCI-DSS)
-            "billing_history": 2555  # 7 years
+            "billing_history": 2555,  # 7 years
         },
         "communication": {
             "support_tickets": 730,  # 2 years
             "emails": 730,  # 2 years
-            "chat_logs": 365  # 1 year
+            "chat_logs": 365,  # 1 year
         },
         "session_data": {
             "active_sessions": 1,  # 24 hours
-            "session_history": 90  # 90 days
+            "session_history": 90,  # 90 days
         },
         "temporary_data": {
             "cache": 7,  # 7 days
             "uploads": 30,  # 30 days
-            "drafts": 90  # 90 days
-        }
+            "drafts": 90,  # 90 days
+        },
     }
 
     # Data classification
@@ -76,7 +76,7 @@ class DataRetentionEnforcerAgent(BaseAgent):
         "public": 365,  # 1 year default
         "internal": 730,  # 2 years default
         "confidential": 2555,  # 7 years default
-        "restricted": 2555  # 7 years default
+        "restricted": 2555,  # 7 years default
     }
 
     # Deletion methods
@@ -84,7 +84,7 @@ class DataRetentionEnforcerAgent(BaseAgent):
         "standard": "Marked as deleted, purged after grace period",
         "immediate": "Immediate permanent deletion",
         "secure_wipe": "Cryptographic secure deletion",
-        "anonymize": "PII removed, statistical data retained"
+        "anonymize": "PII removed, statistical data retained",
     }
 
     def __init__(self):
@@ -95,7 +95,7 @@ class DataRetentionEnforcerAgent(BaseAgent):
             temperature=0.1,
             max_tokens=2500,
             capabilities=[AgentCapability.DATABASE_WRITE],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -115,7 +115,9 @@ class DataRetentionEnforcerAgent(BaseAgent):
         state = self.update_state(state)
 
         # Extract parameters
-        enforcement_mode = state.get("entities", {}).get("enforcement_mode", "audit")  # audit, enforce, report
+        enforcement_mode = state.get("entities", {}).get(
+            "enforcement_mode", "audit"
+        )  # audit, enforce, report
         data_inventory = state.get("entities", {}).get("data_inventory", [])
         deletion_requests = state.get("entities", {}).get("deletion_requests", [])
         legal_holds = state.get("entities", {}).get("legal_holds", [])
@@ -125,45 +127,31 @@ class DataRetentionEnforcerAgent(BaseAgent):
             "retention_enforcement_details",
             mode=enforcement_mode,
             data_records=len(data_inventory),
-            deletion_requests=len(deletion_requests)
+            deletion_requests=len(deletion_requests),
         )
 
         # Scan data inventory for retention compliance
         compliance_results = self._scan_data_inventory(
-            data_inventory,
-            legal_holds,
-            override_policies
+            data_inventory, legal_holds, override_policies
         )
 
         # Identify expired data
         expired_data = self._identify_expired_data(compliance_results)
 
         # Process deletion requests (GDPR Right to Erasure)
-        deletion_results = self._process_deletion_requests(
-            deletion_requests,
-            legal_holds
-        )
+        deletion_results = self._process_deletion_requests(deletion_requests, legal_holds)
 
         # Execute deletions if in enforcement mode
         deletion_actions = []
         if enforcement_mode == "enforce":
-            deletion_actions = self._execute_deletions(
-                expired_data,
-                deletion_results
-            )
+            deletion_actions = self._execute_deletions(expired_data, deletion_results)
 
         # Check legal hold compliance
-        legal_hold_violations = self._check_legal_holds(
-            expired_data,
-            deletion_actions,
-            legal_holds
-        )
+        legal_hold_violations = self._check_legal_holds(expired_data, deletion_actions, legal_holds)
 
         # Generate retention report
         retention_report = self._generate_retention_report(
-            compliance_results,
-            expired_data,
-            deletion_actions
+            compliance_results, expired_data, deletion_actions
         )
 
         # Calculate compliance score
@@ -171,10 +159,7 @@ class DataRetentionEnforcerAgent(BaseAgent):
 
         # Generate recommendations
         recommendations = self._generate_recommendations(
-            compliance_results,
-            expired_data,
-            deletion_results,
-            legal_hold_violations
+            compliance_results, expired_data, deletion_results, legal_hold_violations
         )
 
         # Format response
@@ -186,7 +171,7 @@ class DataRetentionEnforcerAgent(BaseAgent):
             deletion_results,
             compliance_score,
             legal_hold_violations,
-            recommendations
+            recommendations,
         )
 
         state["agent_response"] = response
@@ -213,17 +198,17 @@ class DataRetentionEnforcerAgent(BaseAgent):
             mode=enforcement_mode,
             expired_count=len(expired_data),
             deletions=len(deletion_actions),
-            compliance_score=compliance_score
+            compliance_score=compliance_score,
         )
 
         return state
 
     def _scan_data_inventory(
         self,
-        data_inventory: List[Dict[str, Any]],
-        legal_holds: List[Dict[str, Any]],
-        override_policies: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        data_inventory: list[dict[str, Any]],
+        legal_holds: list[dict[str, Any]],
+        override_policies: dict[str, Any],
+    ) -> list[dict[str, Any]]:
         """
         Scan data inventory for retention compliance.
 
@@ -240,15 +225,13 @@ class DataRetentionEnforcerAgent(BaseAgent):
         for record in data_inventory:
             data_type = record.get("data_type", "unknown")
             category = record.get("category", "user_data")
-            created_at = datetime.fromisoformat(record.get("created_at", datetime.now(UTC).isoformat()))
-            last_accessed = datetime.fromisoformat(record.get("last_accessed", created_at.isoformat()))
+            created_at = datetime.fromisoformat(
+                record.get("created_at", datetime.now(UTC).isoformat())
+            )
+            datetime.fromisoformat(record.get("last_accessed", created_at.isoformat()))
 
             # Get retention period
-            retention_days = self._get_retention_period(
-                data_type,
-                category,
-                override_policies
-            )
+            retention_days = self._get_retention_period(data_type, category, override_policies)
 
             # Calculate expiry
             expiry_date = created_at + timedelta(days=retention_days)
@@ -267,26 +250,25 @@ class DataRetentionEnforcerAgent(BaseAgent):
             else:
                 status = "compliant"
 
-            results.append({
-                "record_id": record.get("id"),
-                "data_type": data_type,
-                "category": category,
-                "created_at": created_at.isoformat(),
-                "retention_days": retention_days,
-                "expiry_date": expiry_date.isoformat(),
-                "days_until_expiry": days_until_expiry,
-                "status": status,
-                "on_legal_hold": on_legal_hold,
-                "data_size_mb": record.get("size_mb", 0)
-            })
+            results.append(
+                {
+                    "record_id": record.get("id"),
+                    "data_type": data_type,
+                    "category": category,
+                    "created_at": created_at.isoformat(),
+                    "retention_days": retention_days,
+                    "expiry_date": expiry_date.isoformat(),
+                    "days_until_expiry": days_until_expiry,
+                    "status": status,
+                    "on_legal_hold": on_legal_hold,
+                    "data_size_mb": record.get("size_mb", 0),
+                }
+            )
 
         return results
 
     def _get_retention_period(
-        self,
-        data_type: str,
-        category: str,
-        override_policies: Dict[str, Any]
+        self, data_type: str, category: str, override_policies: dict[str, Any]
     ) -> int:
         """Get retention period for data type."""
         # Check for override
@@ -304,11 +286,7 @@ class DataRetentionEnforcerAgent(BaseAgent):
         # Default: 1 year
         return 365
 
-    def _is_on_legal_hold(
-        self,
-        record: Dict[str, Any],
-        legal_holds: List[Dict[str, Any]]
-    ) -> bool:
+    def _is_on_legal_hold(self, record: dict[str, Any], legal_holds: list[dict[str, Any]]) -> bool:
         """Check if record is on legal hold."""
         record_id = record.get("id")
 
@@ -331,20 +309,18 @@ class DataRetentionEnforcerAgent(BaseAgent):
         return False
 
     def _identify_expired_data(
-        self,
-        compliance_results: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, compliance_results: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Identify expired data that should be deleted."""
         return [
-            record for record in compliance_results
+            record
+            for record in compliance_results
             if record["status"] == "expired" and not record["on_legal_hold"]
         ]
 
     def _process_deletion_requests(
-        self,
-        deletion_requests: List[Dict[str, Any]],
-        legal_holds: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, deletion_requests: list[dict[str, Any]], legal_holds: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """
         Process user deletion requests (GDPR Right to Erasure).
 
@@ -359,14 +335,13 @@ class DataRetentionEnforcerAgent(BaseAgent):
 
         for request in deletion_requests:
             user_id = request.get("user_id")
-            request_date = datetime.fromisoformat(request.get("request_date", datetime.now(UTC).isoformat()))
+            request_date = datetime.fromisoformat(
+                request.get("request_date", datetime.now(UTC).isoformat())
+            )
             data_categories = request.get("categories", ["all"])
 
             # Check if data is on legal hold
-            legal_hold_applies = any(
-                user_id in hold.get("user_ids", [])
-                for hold in legal_holds
-            )
+            legal_hold_applies = any(user_id in hold.get("user_ids", []) for hold in legal_holds)
 
             if legal_hold_applies:
                 status = "deferred_legal_hold"
@@ -378,22 +353,22 @@ class DataRetentionEnforcerAgent(BaseAgent):
                 status = "scheduled"
                 reason = "Right to erasure request approved"
 
-            results.append({
-                "user_id": user_id,
-                "request_date": request_date.isoformat(),
-                "categories": data_categories,
-                "status": status,
-                "deletion_date": deletion_date.isoformat() if deletion_date else None,
-                "reason": reason
-            })
+            results.append(
+                {
+                    "user_id": user_id,
+                    "request_date": request_date.isoformat(),
+                    "categories": data_categories,
+                    "status": status,
+                    "deletion_date": deletion_date.isoformat() if deletion_date else None,
+                    "reason": reason,
+                }
+            )
 
         return results
 
     def _execute_deletions(
-        self,
-        expired_data: List[Dict[str, Any]],
-        deletion_results: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, expired_data: list[dict[str, Any]], deletion_results: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """
         Execute data deletions.
 
@@ -415,7 +390,7 @@ class DataRetentionEnforcerAgent(BaseAgent):
                 "deleted_at": datetime.now(UTC).isoformat(),
                 "reason": "retention_period_expired",
                 "data_size_mb": record.get("data_size_mb", 0),
-                "status": "deleted"
+                "status": "deleted",
             }
             actions.append(action)
 
@@ -430,7 +405,7 @@ class DataRetentionEnforcerAgent(BaseAgent):
                         "deletion_method": "secure_wipe",
                         "deleted_at": datetime.now(UTC).isoformat(),
                         "reason": "right_to_erasure",
-                        "status": "deleted"
+                        "status": "deleted",
                     }
                     actions.append(action)
 
@@ -449,10 +424,10 @@ class DataRetentionEnforcerAgent(BaseAgent):
 
     def _check_legal_holds(
         self,
-        expired_data: List[Dict[str, Any]],
-        deletion_actions: List[Dict[str, Any]],
-        legal_holds: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        expired_data: list[dict[str, Any]],
+        deletion_actions: list[dict[str, Any]],
+        legal_holds: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
         """Check for legal hold violations."""
         violations = []
 
@@ -462,20 +437,19 @@ class DataRetentionEnforcerAgent(BaseAgent):
 
             for hold in legal_holds:
                 if record_id in hold.get("record_ids", []):
-                    violations.append({
-                        "record_id": record_id,
-                        "legal_hold_id": hold.get("hold_id"),
-                        "violation_type": "deleted_data_on_hold",
-                        "severity": "critical",
-                        "detected_at": datetime.now(UTC).isoformat()
-                    })
+                    violations.append(
+                        {
+                            "record_id": record_id,
+                            "legal_hold_id": hold.get("hold_id"),
+                            "violation_type": "deleted_data_on_hold",
+                            "severity": "critical",
+                            "detected_at": datetime.now(UTC).isoformat(),
+                        }
+                    )
 
         return violations
 
-    def _calculate_compliance_score(
-        self,
-        compliance_results: List[Dict[str, Any]]
-    ) -> float:
+    def _calculate_compliance_score(self, compliance_results: list[dict[str, Any]]) -> float:
         """Calculate retention compliance score (0-100)."""
         if not compliance_results:
             return 100.0
@@ -495,10 +469,10 @@ class DataRetentionEnforcerAgent(BaseAgent):
 
     def _generate_retention_report(
         self,
-        compliance_results: List[Dict[str, Any]],
-        expired_data: List[Dict[str, Any]],
-        deletion_actions: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        compliance_results: list[dict[str, Any]],
+        expired_data: list[dict[str, Any]],
+        deletion_actions: list[dict[str, Any]],
+    ) -> dict[str, Any]:
         """Generate comprehensive retention report."""
         total_size_mb = sum(r.get("data_size_mb", 0) for r in compliance_results)
         expired_size_mb = sum(r.get("data_size_mb", 0) for r in expired_data)
@@ -513,16 +487,18 @@ class DataRetentionEnforcerAgent(BaseAgent):
             "expired_size_mb": round(expired_size_mb, 2),
             "records_deleted": len(deletion_actions),
             "storage_freed_mb": round(deleted_size_mb, 2),
-            "expiring_30_days": len([r for r in compliance_results if r["status"] == "expiring_soon"])
+            "expiring_30_days": len(
+                [r for r in compliance_results if r["status"] == "expiring_soon"]
+            ),
         }
 
     def _generate_recommendations(
         self,
-        compliance_results: List[Dict[str, Any]],
-        expired_data: List[Dict[str, Any]],
-        deletion_results: List[Dict[str, Any]],
-        legal_hold_violations: List[Dict[str, Any]]
-    ) -> List[str]:
+        compliance_results: list[dict[str, Any]],
+        expired_data: list[dict[str, Any]],
+        deletion_results: list[dict[str, Any]],
+        legal_hold_violations: list[dict[str, Any]],
+    ) -> list[str]:
         """Generate retention recommendations."""
         recommendations = []
 
@@ -568,17 +544,21 @@ class DataRetentionEnforcerAgent(BaseAgent):
     def _format_enforcement_report(
         self,
         enforcement_mode: str,
-        compliance_results: List[Dict[str, Any]],
-        expired_data: List[Dict[str, Any]],
-        deletion_actions: List[Dict[str, Any]],
-        deletion_results: List[Dict[str, Any]],
+        compliance_results: list[dict[str, Any]],
+        expired_data: list[dict[str, Any]],
+        deletion_actions: list[dict[str, Any]],
+        deletion_results: list[dict[str, Any]],
         compliance_score: float,
-        legal_hold_violations: List[Dict[str, Any]],
-        recommendations: List[str]
+        legal_hold_violations: list[dict[str, Any]],
+        recommendations: list[str],
     ) -> str:
         """Format retention enforcement report."""
-        mode_icon = "🔍" if enforcement_mode == "audit" else "⚙️" if enforcement_mode == "enforce" else "📊"
-        compliance_icon = "✅" if compliance_score >= 90 else "⚠️" if compliance_score >= 70 else "❌"
+        mode_icon = (
+            "🔍" if enforcement_mode == "audit" else "⚙️" if enforcement_mode == "enforce" else "📊"
+        )
+        compliance_icon = (
+            "✅" if compliance_score >= 90 else "⚠️" if compliance_score >= 70 else "❌"
+        )
 
         report = f"""**Data Retention Enforcement Report**
 
@@ -623,11 +603,13 @@ class DataRetentionEnforcerAgent(BaseAgent):
 
         # Recommendations
         if recommendations:
-            report += f"\n**Recommendations:**\n"
+            report += "\n**Recommendations:**\n"
             for rec in recommendations:
                 report += f"- {rec}\n"
 
         report += f"\n*Retention enforcement completed at {datetime.now(UTC).isoformat()}*"
-        report += f"\n*Next enforcement: {(datetime.now(UTC) + timedelta(days=7)).isoformat()[:10]}*"
+        report += (
+            f"\n*Next enforcement: {(datetime.now(UTC) + timedelta(days=7)).isoformat()[:10]}*"
+        )
 
         return report
