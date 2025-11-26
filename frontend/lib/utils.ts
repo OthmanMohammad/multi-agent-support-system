@@ -2,7 +2,7 @@
  * Utility functions for the frontend
  */
 
-import { clsx, type ClassValue } from "clsx";
+import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 /**
@@ -34,10 +34,18 @@ export function formatRelativeTime(date: Date | string): string {
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - d.getTime()) / 1000);
 
-  if (diffInSeconds < 60) return "just now";
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  if (diffInSeconds < 60) {
+    return "just now";
+  }
+  if (diffInSeconds < 3600) {
+    return `${Math.floor(diffInSeconds / 60)}m ago`;
+  }
+  if (diffInSeconds < 86400) {
+    return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  }
+  if (diffInSeconds < 604800) {
+    return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  }
   return formatDate(d);
 }
 
@@ -45,8 +53,10 @@ export function formatRelativeTime(date: Date | string): string {
  * Truncate a string to a maximum length
  */
 export function truncate(str: string, maxLength: number): string {
-  if (str.length <= maxLength) return str;
-  return str.slice(0, maxLength - 3) + "...";
+  if (str.length <= maxLength) {
+    return str;
+  }
+  return `${str.slice(0, maxLength - 3)}...`;
 }
 
 /**
@@ -72,7 +82,9 @@ export function debounce<T extends (...args: Parameters<T>) => ReturnType<T>>(
 ): (...args: Parameters<T>) => void {
   let timeout: ReturnType<typeof setTimeout> | null = null;
   return function (...args: Parameters<T>) {
-    if (timeout) clearTimeout(timeout);
+    if (timeout) {
+      clearTimeout(timeout);
+    }
     timeout = setTimeout(() => func(...args), wait);
   };
 }
