@@ -503,5 +503,9 @@ Value Propositions:
 
 Generate a personalized add-on recommendation."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # Recommendation context is built from customer data
+        )
         return response
