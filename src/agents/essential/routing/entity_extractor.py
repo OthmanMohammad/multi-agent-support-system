@@ -7,16 +7,16 @@ integrations, tech stack, actions, and problems from user messages.
 Part of: STORY-01 Routing & Orchestration Swarm (TASK-103)
 """
 
-from typing import Dict, Any, Optional, List
 import json
 import re
-from datetime import datetime, timedelta
+from typing import Any
+
 import structlog
 
-from src.agents.base.base_agent import BaseAgent, AgentConfig
-from src.agents.base.agent_types import AgentType, AgentCapability
-from src.workflow.state import AgentState
+from src.agents.base.agent_types import AgentCapability, AgentType
+from src.agents.base.base_agent import AgentConfig, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.workflow.state import AgentState
 
 logger = structlog.get_logger(__name__)
 
@@ -42,22 +42,59 @@ class EntityExtractor(BaseAgent):
     # Valid values for constrained entity types
     VALID_PLANS = ["free", "basic", "premium", "enterprise"]
     VALID_ACTIONS = [
-        "upgrade", "downgrade", "cancel", "pause", "reactivate",
-        "export", "import", "create", "delete", "update",
-        "share", "invite", "compare", "schedule"
+        "upgrade",
+        "downgrade",
+        "cancel",
+        "pause",
+        "reactivate",
+        "export",
+        "import",
+        "create",
+        "delete",
+        "update",
+        "share",
+        "invite",
+        "compare",
+        "schedule",
     ]
     VALID_FEATURES = [
-        "api", "webhooks", "reports", "sso", "audit_logs",
-        "export", "import", "analytics", "collaboration",
-        "automation", "integrations", "security", "backup"
+        "api",
+        "webhooks",
+        "reports",
+        "sso",
+        "audit_logs",
+        "export",
+        "import",
+        "analytics",
+        "collaboration",
+        "automation",
+        "integrations",
+        "security",
+        "backup",
     ]
     KNOWN_COMPETITORS = [
-        "asana", "monday", "clickup", "jira", "trello",
-        "notion", "basecamp", "wrike", "smartsheet", "airtable"
+        "asana",
+        "monday",
+        "clickup",
+        "jira",
+        "trello",
+        "notion",
+        "basecamp",
+        "wrike",
+        "smartsheet",
+        "airtable",
     ]
     KNOWN_INTEGRATIONS = [
-        "slack", "salesforce", "github", "zapier", "google calendar",
-        "microsoft teams", "jira", "confluence", "hubspot", "zendesk"
+        "slack",
+        "salesforce",
+        "github",
+        "zapier",
+        "google calendar",
+        "microsoft teams",
+        "jira",
+        "confluence",
+        "hubspot",
+        "zendesk",
     ]
 
     def __init__(self, **kwargs):
@@ -65,16 +102,13 @@ class EntityExtractor(BaseAgent):
         config = AgentConfig(
             name="entity_extractor",
             type=AgentType.ANALYZER,
-             # Fast and accurate
+            # Fast and accurate
             temperature=0.1,  # Low for consistent extraction
             max_tokens=300,  # Moderate for entity lists
-            capabilities=[
-                AgentCapability.ENTITY_EXTRACTION,
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.ENTITY_EXTRACTION, AgentCapability.CONTEXT_AWARE],
             system_prompt_template=self._get_system_prompt(),
             tier="essential",
-            role="entity_extractor"
+            role="entity_extractor",
         )
         super().__init__(config=config, **kwargs)
         self.logger = logger.bind(agent="entity_extractor", agent_type="analyzer")
@@ -175,7 +209,7 @@ Output ONLY valid JSON with the extracted entities. If no entities found, return
             response = await self.call_llm(
                 system_prompt=self._get_system_prompt(),
                 user_message=f"Extract entities from this message:\n\n{message}",
-                conversation_history=conversation_history
+                conversation_history=conversation_history,
             )
 
             # Parse response
@@ -194,23 +228,19 @@ Output ONLY valid JSON with the extracted entities. If no entities found, return
                 "entities_extracted",
                 count=len(entities),
                 entity_types=list(entities.keys()),
-                message_preview=message[:50]
+                message_preview=message[:50],
             )
 
             return state
 
         except Exception as e:
-            self.logger.error(
-                "entity_extraction_failed",
-                error=str(e),
-                error_type=type(e).__name__
-            )
+            self.logger.error("entity_extraction_failed", error=str(e), error_type=type(e).__name__)
 
             # Fallback to empty entities
             state["extracted_entities"] = {}
             return state
 
-    def _parse_response(self, response: str) -> Dict[str, Any]:
+    def _parse_response(self, response: str) -> dict[str, Any]:
         """
         Parse LLM response into entities dictionary.
 
@@ -226,8 +256,7 @@ Output ONLY valid JSON with the extracted entities. If no entities found, return
             if cleaned_response.startswith("```"):
                 lines = cleaned_response.split("\n")
                 cleaned_response = "\n".join(
-                    line for line in lines
-                    if not line.strip().startswith("```")
+                    line for line in lines if not line.strip().startswith("```")
                 )
 
             # Fix double braces (LLM sometimes returns {{ instead of {)
@@ -241,23 +270,18 @@ Output ONLY valid JSON with the extracted entities. If no entities found, return
 
             # Ensure it's a dict
             if not isinstance(entities, dict):
-                self.logger.warning(
-                    "entity_extractor_invalid_type",
-                    type=type(entities).__name__
-                )
+                self.logger.warning("entity_extractor_invalid_type", type=type(entities).__name__)
                 return {}
 
             return entities
 
         except json.JSONDecodeError as e:
             self.logger.warning(
-                "entity_extractor_invalid_json",
-                response_preview=response[:100],
-                error=str(e)
+                "entity_extractor_invalid_json", response_preview=response[:100], error=str(e)
             )
             return {}
 
-    def _validate_entities(self, entities: Dict[str, Any]) -> Dict[str, Any]:
+    def _validate_entities(self, entities: dict[str, Any]) -> dict[str, Any]:
         """
         Validate and normalize extracted entities.
 
@@ -282,7 +306,7 @@ Output ONLY valid JSON with the extracted entities. If no entities found, return
                 team_size = entities["team_size"]
                 if isinstance(team_size, str):
                     # Extract numbers from string
-                    numbers = re.findall(r'\d+', team_size)
+                    numbers = re.findall(r"\d+", team_size)
                     if numbers:
                         team_size = int(numbers[0])
                 validated["team_size"] = int(team_size)
@@ -336,11 +360,7 @@ Output ONLY valid JSON with the extracted entities. If no entities found, return
 
         return validated
 
-    def _parse_special_entities(
-        self,
-        entities: Dict[str, Any],
-        message: str
-    ) -> Dict[str, Any]:
+    def _parse_special_entities(self, entities: dict[str, Any], message: str) -> dict[str, Any]:
         """
         Parse special entities that need additional processing.
 
@@ -355,7 +375,7 @@ Output ONLY valid JSON with the extracted entities. If no entities found, return
         """
         # Add billing_cycle if amount is mentioned with period
         if "amount" in entities:
-            amount_str = entities["amount"]
+            entities["amount"]
             if "month" in message.lower() or "/mo" in message.lower():
                 entities["billing_cycle"] = "monthly"
             elif "year" in message.lower() or "/yr" in message.lower():
@@ -392,6 +412,7 @@ def create_entity_extractor(**kwargs) -> EntityExtractor:
 # Example usage (for development/testing)
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test_entity_extractor():
@@ -406,40 +427,31 @@ if __name__ == "__main__":
         test_cases = [
             {
                 "message": "I want to upgrade to Premium for 25 users next month",
-                "expected": ["plan_name", "team_size", "date", "action"]
+                "expected": ["plan_name", "team_size", "date", "action"],
             },
             {
                 "message": "Compare your $99/month plan to Asana's pricing",
-                "expected": ["amount", "competitor", "action"]
+                "expected": ["amount", "competitor", "action"],
             },
             {
                 "message": "Our React app crashes when using the Slack integration",
-                "expected": ["tech_stack", "integration", "problem"]
+                "expected": ["tech_stack", "integration", "problem"],
             },
-            {
-                "message": "How do I export data to CSV?",
-                "expected": ["action", "feature"]
-            },
-            {
-                "message": "Cancel my subscription please",
-                "expected": ["action"]
-            },
+            {"message": "How do I export data to CSV?", "expected": ["action", "feature"]},
+            {"message": "Cancel my subscription please", "expected": ["action"]},
         ]
 
         for i, test in enumerate(test_cases, 1):
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"TEST CASE {i}: {test['message']}")
-            print(f"{'='*60}")
+            print(f"{'=' * 60}")
 
-            state = create_initial_state(
-                message=test["message"],
-                context={}
-            )
+            state = create_initial_state(message=test["message"], context={})
 
             result = await extractor.process(state)
             entities = result.get("extracted_entities", {})
 
-            print(f"\n✓ Extracted Entities:")
+            print("\n✓ Extracted Entities:")
             for key, value in entities.items():
                 print(f"  {key}: {value}")
 
@@ -448,7 +460,7 @@ if __name__ == "__main__":
             expected_types = set(test["expected"])
 
             if expected_types.issubset(found_types):
-                print(f"\n✓ PASS: Found all expected entity types")
+                print("\n✓ PASS: Found all expected entity types")
             else:
                 missing = expected_types - found_types
                 print(f"\n⚠ PARTIAL: Missing entity types: {missing}")
