@@ -5,14 +5,12 @@ Calculates and presents ROI for expansion opportunities, generates compelling
 business cases, and quantifies value realization for customer decision-makers.
 """
 
-from typing import Dict, Any, Optional, List, Tuple
-from datetime import datetime, timedelta
-from decimal import Decimal
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("expansion_roi", tier="revenue", category="customer_success")
@@ -35,28 +33,28 @@ class ExpansionROIAgent(BaseAgent):
         "cost_savings": {
             "weight": 30,
             "typical_range": (0.10, 0.40),  # 10-40% cost reduction
-            "metrics": ["reduced_manual_work", "lower_error_rates", "decreased_support_costs"]
+            "metrics": ["reduced_manual_work", "lower_error_rates", "decreased_support_costs"],
         },
         "productivity_gains": {
             "weight": 25,
             "typical_range": (0.15, 0.50),  # 15-50% productivity increase
-            "metrics": ["time_saved", "faster_processes", "automation_value"]
+            "metrics": ["time_saved", "faster_processes", "automation_value"],
         },
         "revenue_impact": {
             "weight": 25,
             "typical_range": (0.05, 0.25),  # 5-25% revenue increase
-            "metrics": ["faster_sales_cycles", "increased_conversion", "upsell_opportunities"]
+            "metrics": ["faster_sales_cycles", "increased_conversion", "upsell_opportunities"],
         },
         "risk_reduction": {
             "weight": 12,
             "typical_range": (0.08, 0.30),  # 8-30% risk mitigation
-            "metrics": ["compliance_value", "security_improvements", "reduced_downtime"]
+            "metrics": ["compliance_value", "security_improvements", "reduced_downtime"],
         },
         "strategic_value": {
             "weight": 8,
             "typical_range": (0.05, 0.20),  # 5-20% strategic value
-            "metrics": ["competitive_advantage", "innovation_enablement", "scalability"]
-        }
+            "metrics": ["competitive_advantage", "innovation_enablement", "scalability"],
+        },
     }
 
     # Industry benchmarks (typical payback periods in months)
@@ -66,7 +64,7 @@ class ExpansionROIAgent(BaseAgent):
         "healthcare": {"payback_months": 12, "typical_roi": 150},
         "retail": {"payback_months": 8, "typical_roi": 200},
         "manufacturing": {"payback_months": 10, "typical_roi": 170},
-        "professional_services": {"payback_months": 7, "typical_roi": 220}
+        "professional_services": {"payback_months": 7, "typical_roi": 220},
     }
 
     # Expansion types and typical impact
@@ -75,7 +73,7 @@ class ExpansionROIAgent(BaseAgent):
         "seat_expansion": {"complexity": "low", "time_to_value": 30},
         "department_expansion": {"complexity": "medium", "time_to_value": 90},
         "product_cross_sell": {"complexity": "high", "time_to_value": 120},
-        "usage_increase": {"complexity": "low", "time_to_value": 30}
+        "usage_increase": {"complexity": "low", "time_to_value": 30},
     }
 
     def __init__(self):
@@ -84,12 +82,9 @@ class ExpansionROIAgent(BaseAgent):
             type=AgentType.SPECIALIST,
             temperature=0.3,
             max_tokens=800,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.KB_SEARCH
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.KB_SEARCH],
             kb_category="customer_success",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -118,52 +113,35 @@ class ExpansionROIAgent(BaseAgent):
             "expansion_roi_calculation_details",
             customer_id=customer_id,
             expansion_type=expansion_opportunity.get("type", "unknown"),
-            expansion_cost=expansion_opportunity.get("cost", 0)
+            expansion_cost=expansion_opportunity.get("cost", 0),
         )
 
         # Calculate financial ROI
         financial_roi = self._calculate_financial_roi(
-            expansion_opportunity,
-            contract_data,
-            customer_metadata
+            expansion_opportunity, contract_data, customer_metadata
         )
 
         # Quantify value drivers
         value_analysis = self._quantify_value_drivers(
-            expansion_opportunity,
-            usage_data,
-            customer_metadata
+            expansion_opportunity, usage_data, customer_metadata
         )
 
         # Calculate TCO (Total Cost of Ownership)
-        tco_analysis = self._calculate_tco(
-            expansion_opportunity,
-            contract_data,
-            value_analysis
-        )
+        tco_analysis = self._calculate_tco(expansion_opportunity, contract_data, value_analysis)
 
         # Benchmark against industry
         benchmark_analysis = self._benchmark_against_industry(
-            financial_roi,
-            tco_analysis,
-            customer_metadata
+            financial_roi, tco_analysis, customer_metadata
         )
 
         # Generate business case
         business_case = self._generate_business_case(
-            expansion_opportunity,
-            financial_roi,
-            value_analysis,
-            tco_analysis,
-            benchmark_analysis
+            expansion_opportunity, financial_roi, value_analysis, tco_analysis, benchmark_analysis
         )
 
         # Create executive summary
         executive_summary = self._create_executive_summary(
-            expansion_opportunity,
-            financial_roi,
-            value_analysis,
-            business_case
+            expansion_opportunity, financial_roi, value_analysis, business_case
         )
 
         # Format response
@@ -174,7 +152,7 @@ class ExpansionROIAgent(BaseAgent):
             tco_analysis,
             benchmark_analysis,
             business_case,
-            executive_summary
+            executive_summary,
         )
 
         state["agent_response"] = response
@@ -192,17 +170,17 @@ class ExpansionROIAgent(BaseAgent):
             customer_id=customer_id,
             roi_percentage=financial_roi["roi_percentage"],
             payback_months=financial_roi["payback_months"],
-            recommendation=business_case["recommendation"]
+            recommendation=business_case["recommendation"],
         )
 
         return state
 
     def _calculate_financial_roi(
         self,
-        expansion_opportunity: Dict[str, Any],
-        contract_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        expansion_opportunity: dict[str, Any],
+        contract_data: dict[str, Any],
+        customer_metadata: dict[str, Any],
+    ) -> dict[str, Any]:
         """
         Calculate financial ROI metrics.
 
@@ -221,9 +199,7 @@ class ExpansionROIAgent(BaseAgent):
 
         # Calculate implementation costs
         implementation_cost = self._estimate_implementation_cost(
-            expansion_type,
-            expansion_cost,
-            customer_metadata
+            expansion_type, expansion_cost, customer_metadata
         )
 
         # Total investment
@@ -237,13 +213,12 @@ class ExpansionROIAgent(BaseAgent):
         total_benefit_3yr = year1_benefit + year2_benefit + year3_benefit
 
         # Net value
-        net_value_3yr = total_benefit_3yr - (total_investment + (expansion_cost * 2))  # 3 years of costs
+        net_value_3yr = total_benefit_3yr - (
+            total_investment + (expansion_cost * 2)
+        )  # 3 years of costs
 
         # ROI percentage
-        if total_investment > 0:
-            roi_percentage = (net_value_3yr / total_investment) * 100
-        else:
-            roi_percentage = 0
+        roi_percentage = net_value_3yr / total_investment * 100 if total_investment > 0 else 0
 
         # Payback period
         cumulative = -total_investment
@@ -283,14 +258,11 @@ class ExpansionROIAgent(BaseAgent):
             "net_value_3yr": int(net_value_3yr),
             "roi_percentage": round(roi_percentage, 1),
             "payback_months": payback_months,
-            "npv": int(npv)
+            "npv": int(npv),
         }
 
     def _estimate_implementation_cost(
-        self,
-        expansion_type: str,
-        expansion_cost: int,
-        customer_metadata: Dict[str, Any]
+        self, expansion_type: str, expansion_cost: int, customer_metadata: dict[str, Any]
     ) -> int:
         """Estimate one-time implementation costs."""
         type_config = self.EXPANSION_TYPES.get(expansion_type, {})
@@ -298,9 +270,9 @@ class ExpansionROIAgent(BaseAgent):
 
         # Implementation as % of expansion cost
         complexity_multipliers = {
-            "low": 0.05,      # 5% for simple expansions
-            "medium": 0.15,   # 15% for moderate complexity
-            "high": 0.30      # 30% for complex expansions
+            "low": 0.05,  # 5% for simple expansions
+            "medium": 0.15,  # 15% for moderate complexity
+            "high": 0.30,  # 30% for complex expansions
         }
 
         multiplier = complexity_multipliers.get(complexity, 0.15)
@@ -316,10 +288,10 @@ class ExpansionROIAgent(BaseAgent):
 
     def _quantify_value_drivers(
         self,
-        expansion_opportunity: Dict[str, Any],
-        usage_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        expansion_opportunity: dict[str, Any],
+        usage_data: dict[str, Any],
+        customer_metadata: dict[str, Any],
+    ) -> dict[str, Any]:
         """
         Quantify value across different categories.
 
@@ -339,68 +311,50 @@ class ExpansionROIAgent(BaseAgent):
 
         # Cost savings
         cost_savings = self._calculate_cost_savings(
-            expansion_opportunity,
-            total_employees,
-            avg_salary
+            expansion_opportunity, total_employees, avg_salary
         )
         value_drivers["cost_savings"] = cost_savings
 
         # Productivity gains
         productivity_gains = self._calculate_productivity_gains(
-            expansion_opportunity,
-            total_employees,
-            avg_salary,
-            usage_data
+            expansion_opportunity, total_employees, avg_salary, usage_data
         )
         value_drivers["productivity_gains"] = productivity_gains
 
         # Revenue impact
         revenue_impact = self._calculate_revenue_impact(
-            expansion_opportunity,
-            annual_revenue,
-            usage_data
+            expansion_opportunity, annual_revenue, usage_data
         )
         value_drivers["revenue_impact"] = revenue_impact
 
         # Risk reduction
-        risk_reduction = self._calculate_risk_reduction(
-            expansion_opportunity,
-            annual_revenue
-        )
+        risk_reduction = self._calculate_risk_reduction(expansion_opportunity, annual_revenue)
         value_drivers["risk_reduction"] = risk_reduction
 
         # Strategic value
-        strategic_value = self._calculate_strategic_value(
-            expansion_opportunity,
-            customer_metadata
-        )
+        strategic_value = self._calculate_strategic_value(expansion_opportunity, customer_metadata)
         value_drivers["strategic_value"] = strategic_value
 
         # Calculate total value
-        total_annual_value = sum(
-            driver["annual_value"]
-            for driver in value_drivers.values()
-        )
+        total_annual_value = sum(driver["annual_value"] for driver in value_drivers.values())
 
         return {
             "value_drivers": value_drivers,
             "total_annual_value": int(total_annual_value),
             "value_breakdown": {
-                category: driver["annual_value"]
-                for category, driver in value_drivers.items()
-            }
+                category: driver["annual_value"] for category, driver in value_drivers.items()
+            },
         }
 
     def _calculate_cost_savings(
-        self,
-        expansion_opportunity: Dict[str, Any],
-        total_employees: int,
-        avg_salary: int
-    ) -> Dict[str, Any]:
+        self, expansion_opportunity: dict[str, Any], total_employees: int, avg_salary: int
+    ) -> dict[str, Any]:
         """Calculate cost savings value."""
         # Estimate time saved per employee per week
         hours_saved_per_week = expansion_opportunity.get("estimated_hours_saved", 2)
-        affected_employees = expansion_opportunity.get("affected_employees", int(total_employees * 0.3))
+        affected_employees = expansion_opportunity.get(
+            "affected_employees", int(total_employees * 0.3)
+        )
 
         # Calculate hourly rate
         hourly_rate = avg_salary / 2080  # 52 weeks * 40 hours
@@ -416,21 +370,23 @@ class ExpansionROIAgent(BaseAgent):
             "metrics": [
                 f"{hours_saved_per_week} hours saved per employee per week",
                 f"{affected_employees} employees impacted",
-                f"${annual_value:,} in labor cost savings"
-            ]
+                f"${annual_value:,} in labor cost savings",
+            ],
         }
 
     def _calculate_productivity_gains(
         self,
-        expansion_opportunity: Dict[str, Any],
+        expansion_opportunity: dict[str, Any],
         total_employees: int,
         avg_salary: int,
-        usage_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        usage_data: dict[str, Any],
+    ) -> dict[str, Any]:
         """Calculate productivity improvement value."""
         # Productivity increase percentage
         productivity_increase_pct = expansion_opportunity.get("productivity_increase_pct", 15)
-        affected_employees = expansion_opportunity.get("affected_employees", int(total_employees * 0.4))
+        affected_employees = expansion_opportunity.get(
+            "affected_employees", int(total_employees * 0.4)
+        )
 
         # Value of productivity increase
         employee_value = avg_salary * 1.4  # Include benefits
@@ -443,16 +399,13 @@ class ExpansionROIAgent(BaseAgent):
             "metrics": [
                 f"{productivity_increase_pct}% productivity increase",
                 f"{affected_employees} employees more efficient",
-                f"${annual_value:,} in productivity gains"
-            ]
+                f"${annual_value:,} in productivity gains",
+            ],
         }
 
     def _calculate_revenue_impact(
-        self,
-        expansion_opportunity: Dict[str, Any],
-        annual_revenue: int,
-        usage_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, expansion_opportunity: dict[str, Any], annual_revenue: int, usage_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Calculate revenue impact value."""
         # Revenue increase percentage
         revenue_increase_pct = expansion_opportunity.get("revenue_increase_pct", 5)
@@ -468,15 +421,13 @@ class ExpansionROIAgent(BaseAgent):
             "metrics": [
                 f"{max_impact_pct}% revenue growth enabled",
                 f"${annual_value:,} in incremental revenue",
-                "Faster sales cycles and higher conversion"
-            ]
+                "Faster sales cycles and higher conversion",
+            ],
         }
 
     def _calculate_risk_reduction(
-        self,
-        expansion_opportunity: Dict[str, Any],
-        annual_revenue: int
-    ) -> Dict[str, Any]:
+        self, expansion_opportunity: dict[str, Any], annual_revenue: int
+    ) -> dict[str, Any]:
         """Calculate risk reduction value."""
         # Risk categories
         compliance_value = expansion_opportunity.get("compliance_value", 0)
@@ -502,14 +453,12 @@ class ExpansionROIAgent(BaseAgent):
             "compliance_value": compliance_value,
             "security_value": security_value,
             "downtime_value": downtime_value,
-            "metrics": metrics if metrics else ["Risk mitigation value"]
+            "metrics": metrics if metrics else ["Risk mitigation value"],
         }
 
     def _calculate_strategic_value(
-        self,
-        expansion_opportunity: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, expansion_opportunity: dict[str, Any], customer_metadata: dict[str, Any]
+    ) -> dict[str, Any]:
         """Calculate strategic value (harder to quantify)."""
         # Strategic value is often estimated as % of total investment
         expansion_cost = expansion_opportunity.get("cost", 0)
@@ -523,16 +472,16 @@ class ExpansionROIAgent(BaseAgent):
             "metrics": [
                 "Competitive advantage in market",
                 "Future innovation enablement",
-                "Scalability for growth"
-            ]
+                "Scalability for growth",
+            ],
         }
 
     def _calculate_tco(
         self,
-        expansion_opportunity: Dict[str, Any],
-        contract_data: Dict[str, Any],
-        value_analysis: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        expansion_opportunity: dict[str, Any],
+        contract_data: dict[str, Any],
+        value_analysis: dict[str, Any],
+    ) -> dict[str, Any]:
         """Calculate Total Cost of Ownership."""
         expansion_cost = expansion_opportunity.get("cost", 0)
 
@@ -547,10 +496,7 @@ class ExpansionROIAgent(BaseAgent):
         total_benefit_3yr = value_analysis["total_annual_value"] * 2.85  # Year 1 ramp + years 2-3
 
         # TCO ratio (benefit / cost)
-        if total_cost_3yr > 0:
-            tco_ratio = total_benefit_3yr / total_cost_3yr
-        else:
-            tco_ratio = 0
+        tco_ratio = total_benefit_3yr / total_cost_3yr if total_cost_3yr > 0 else 0
 
         return {
             "year1_cost": year1_cost,
@@ -559,25 +505,26 @@ class ExpansionROIAgent(BaseAgent):
             "total_cost_3yr": total_cost_3yr,
             "total_benefit_3yr": int(total_benefit_3yr),
             "tco_ratio": round(tco_ratio, 2),
-            "net_benefit_3yr": int(total_benefit_3yr - total_cost_3yr)
+            "net_benefit_3yr": int(total_benefit_3yr - total_cost_3yr),
         }
 
     def _benchmark_against_industry(
         self,
-        financial_roi: Dict[str, Any],
-        tco_analysis: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        financial_roi: dict[str, Any],
+        tco_analysis: dict[str, Any],
+        customer_metadata: dict[str, Any],
+    ) -> dict[str, Any]:
         """Benchmark ROI against industry standards."""
         industry = customer_metadata.get("industry", "technology")
-        benchmark = self.INDUSTRY_BENCHMARKS.get(
-            industry,
-            self.INDUSTRY_BENCHMARKS["technology"]
-        )
+        benchmark = self.INDUSTRY_BENCHMARKS.get(industry, self.INDUSTRY_BENCHMARKS["technology"])
 
         # Compare metrics
-        payback_comparison = "faster" if financial_roi["payback_months"] < benchmark["payback_months"] else "slower"
-        roi_comparison = "higher" if financial_roi["roi_percentage"] > benchmark["typical_roi"] else "lower"
+        payback_comparison = (
+            "faster" if financial_roi["payback_months"] < benchmark["payback_months"] else "slower"
+        )
+        roi_comparison = (
+            "higher" if financial_roi["roi_percentage"] > benchmark["typical_roi"] else "lower"
+        )
 
         return {
             "industry": industry,
@@ -588,17 +535,19 @@ class ExpansionROIAgent(BaseAgent):
             "payback_comparison": payback_comparison,
             "roi_comparison": roi_comparison,
             "payback_vs_benchmark": financial_roi["payback_months"] - benchmark["payback_months"],
-            "roi_vs_benchmark": round(financial_roi["roi_percentage"] - benchmark["typical_roi"], 1)
+            "roi_vs_benchmark": round(
+                financial_roi["roi_percentage"] - benchmark["typical_roi"], 1
+            ),
         }
 
     def _generate_business_case(
         self,
-        expansion_opportunity: Dict[str, Any],
-        financial_roi: Dict[str, Any],
-        value_analysis: Dict[str, Any],
-        tco_analysis: Dict[str, Any],
-        benchmark_analysis: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        expansion_opportunity: dict[str, Any],
+        financial_roi: dict[str, Any],
+        value_analysis: dict[str, Any],
+        tco_analysis: dict[str, Any],
+        benchmark_analysis: dict[str, Any],
+    ) -> dict[str, Any]:
         """Generate comprehensive business case."""
         # Determine recommendation strength
         if financial_roi["roi_percentage"] > 200 and financial_roi["payback_months"] <= 12:
@@ -624,10 +573,12 @@ class ExpansionROIAgent(BaseAgent):
             selling_points.append(f"Exceptional ROI: {financial_roi['roi_percentage']:.0f}%")
 
         if tco_analysis["tco_ratio"] > 3:
-            selling_points.append(f"Strong value ratio: {tco_analysis['tco_ratio']:.1f}x return on investment")
+            selling_points.append(
+                f"Strong value ratio: {tco_analysis['tco_ratio']:.1f}x return on investment"
+            )
 
         if benchmark_analysis["payback_comparison"] == "faster":
-            selling_points.append(f"Faster payback than industry average")
+            selling_points.append("Faster payback than industry average")
 
         # Risk factors
         risk_factors = []
@@ -646,46 +597,46 @@ class ExpansionROIAgent(BaseAgent):
             "decision_criteria": [
                 f"ROI: {financial_roi['roi_percentage']:.0f}% over 3 years",
                 f"Payback: {financial_roi['payback_months']} months",
-                f"Net Value: ${financial_roi['net_value_3yr']:,} over 3 years"
-            ]
+                f"Net Value: ${financial_roi['net_value_3yr']:,} over 3 years",
+            ],
         }
 
     def _create_executive_summary(
         self,
-        expansion_opportunity: Dict[str, Any],
-        financial_roi: Dict[str, Any],
-        value_analysis: Dict[str, Any],
-        business_case: Dict[str, Any]
+        expansion_opportunity: dict[str, Any],
+        financial_roi: dict[str, Any],
+        value_analysis: dict[str, Any],
+        business_case: dict[str, Any],
     ) -> str:
         """Create executive summary for business case."""
-        expansion_type = expansion_opportunity.get("type", "expansion").replace("_", " ").title()
+        expansion_opportunity.get("type", "expansion").replace("_", " ").title()
 
         summary = f"""
-**Investment:** ${financial_roi['total_investment']:,}
-**3-Year Return:** ${financial_roi['total_benefit_3yr']:,}
-**Net Value:** ${financial_roi['net_value_3yr']:,}
-**ROI:** {financial_roi['roi_percentage']:.0f}%
-**Payback:** {financial_roi['payback_months']} months
+**Investment:** ${financial_roi["total_investment"]:,}
+**3-Year Return:** ${financial_roi["total_benefit_3yr"]:,}
+**Net Value:** ${financial_roi["net_value_3yr"]:,}
+**ROI:** {financial_roi["roi_percentage"]:.0f}%
+**Payback:** {financial_roi["payback_months"]} months
 
-**Recommendation:** {business_case['recommendation'].replace('_', ' ').title()}
+**Recommendation:** {business_case["recommendation"].replace("_", " ").title()}
 
 **Key Value Drivers:**
-- Cost Savings: ${value_analysis['value_breakdown']['cost_savings']:,}/year
-- Productivity Gains: ${value_analysis['value_breakdown']['productivity_gains']:,}/year
-- Revenue Impact: ${value_analysis['value_breakdown']['revenue_impact']:,}/year
+- Cost Savings: ${value_analysis["value_breakdown"]["cost_savings"]:,}/year
+- Productivity Gains: ${value_analysis["value_breakdown"]["productivity_gains"]:,}/year
+- Revenue Impact: ${value_analysis["value_breakdown"]["revenue_impact"]:,}/year
         """.strip()
 
         return summary
 
     def _format_roi_report(
         self,
-        expansion_opportunity: Dict[str, Any],
-        financial_roi: Dict[str, Any],
-        value_analysis: Dict[str, Any],
-        tco_analysis: Dict[str, Any],
-        benchmark_analysis: Dict[str, Any],
-        business_case: Dict[str, Any],
-        executive_summary: str
+        expansion_opportunity: dict[str, Any],
+        financial_roi: dict[str, Any],
+        value_analysis: dict[str, Any],
+        tco_analysis: dict[str, Any],
+        benchmark_analysis: dict[str, Any],
+        business_case: dict[str, Any],
+        executive_summary: str,
     ) -> str:
         """Format comprehensive ROI report."""
         expansion_type = expansion_opportunity.get("type", "expansion").replace("_", " ").title()
@@ -694,7 +645,7 @@ class ExpansionROIAgent(BaseAgent):
             "strongly_recommended": "????",
             "recommended": "????",
             "favorable": "????",
-            "needs_analysis": "????"
+            "needs_analysis": "????",
         }
 
         report = f"""**???? Expansion ROI Analysis: {expansion_type}**
@@ -703,34 +654,36 @@ class ExpansionROIAgent(BaseAgent):
 {executive_summary}
 
 **???? Financial Analysis:**
-- Investment Required: ${financial_roi['total_investment']:,}
-  - Expansion Cost: ${financial_roi['expansion_cost']:,}
-  - Implementation: ${financial_roi['implementation_cost']:,}
+- Investment Required: ${financial_roi["total_investment"]:,}
+  - Expansion Cost: ${financial_roi["expansion_cost"]:,}
+  - Implementation: ${financial_roi["implementation_cost"]:,}
 
 **3-Year Projection:**
-- Year 1 Benefit: ${financial_roi['year1_benefit']:,}
-- Year 2 Benefit: ${financial_roi['year2_benefit']:,}
-- Year 3 Benefit: ${financial_roi['year3_benefit']:,}
-- Total Benefit: ${financial_roi['total_benefit_3yr']:,}
-- Net Value: ${financial_roi['net_value_3yr']:,}
+- Year 1 Benefit: ${financial_roi["year1_benefit"]:,}
+- Year 2 Benefit: ${financial_roi["year2_benefit"]:,}
+- Year 3 Benefit: ${financial_roi["year3_benefit"]:,}
+- Total Benefit: ${financial_roi["total_benefit_3yr"]:,}
+- Net Value: ${financial_roi["net_value_3yr"]:,}
 
 **Key Metrics:**
-- ROI: {financial_roi['roi_percentage']:.1f}%
-- Payback Period: {financial_roi['payback_months']} months
-- NPV: ${financial_roi['npv']:,}
+- ROI: {financial_roi["roi_percentage"]:.1f}%
+- Payback Period: {financial_roi["payback_months"]} months
+- NPV: ${financial_roi["npv"]:,}
 
 **???? Value Drivers (Annual):**
 """
 
         for category, driver in value_analysis["value_drivers"].items():
-            report += f"\n**{category.replace('_', ' ').title()}:** ${driver['annual_value']:,}/year\n"
+            report += (
+                f"\n**{category.replace('_', ' ').title()}:** ${driver['annual_value']:,}/year\n"
+            )
             for metric in driver["metrics"][:3]:
                 report += f"  - {metric}\n"
 
         report += f"\n**Total Annual Value:** ${value_analysis['total_annual_value']:,}\n"
 
         # TCO Analysis
-        report += f"\n**???? TCO Analysis (3 Years):**\n"
+        report += "\n**???? TCO Analysis (3 Years):**\n"
         report += f"- Total Cost: ${tco_analysis['total_cost_3yr']:,}\n"
         report += f"- Total Benefit: ${tco_analysis['total_benefit_3yr']:,}\n"
         report += f"- Benefit/Cost Ratio: {tco_analysis['tco_ratio']:.2f}x\n"
@@ -738,13 +691,15 @@ class ExpansionROIAgent(BaseAgent):
 
         # Industry benchmark
         report += f"\n**???? Industry Benchmark ({benchmark_analysis['industry'].title()}):**\n"
-        report += f"- Industry Avg Payback: {benchmark_analysis['benchmark_payback_months']} months\n"
+        report += (
+            f"- Industry Avg Payback: {benchmark_analysis['benchmark_payback_months']} months\n"
+        )
         report += f"- Your Payback: {benchmark_analysis['actual_payback_months']} months ({benchmark_analysis['payback_comparison'].title()})\n"
         report += f"- Industry Avg ROI: {benchmark_analysis['benchmark_roi']}%\n"
         report += f"- Your ROI: {benchmark_analysis['actual_roi']:.0f}% ({benchmark_analysis['roi_comparison'].title()})\n"
 
         # Business case recommendation
-        rec_emoji = recommendation_emoji.get(business_case['recommendation'], '???')
+        rec_emoji = recommendation_emoji.get(business_case["recommendation"], "???")
         report += f"\n**??? Business Case Recommendation** {rec_emoji}\n"
         report += f"**Decision:** {business_case['recommendation'].replace('_', ' ').title()}\n"
         report += f"**Confidence:** {business_case['confidence'].title()}\n\n"
@@ -768,6 +723,7 @@ class ExpansionROIAgent(BaseAgent):
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -790,9 +746,9 @@ if __name__ == "__main__":
                     "total_employees": 200,
                     "avg_employee_salary": 85000,
                     "annual_revenue": 25000000,
-                    "company_size": "medium"
-                }
-            }
+                    "company_size": "medium",
+                },
+            },
         )
         state1["entities"] = {
             "expansion_opportunity": {
@@ -804,12 +760,10 @@ if __name__ == "__main__":
                 "productivity_increase_pct": 20,
                 "revenue_increase_pct": 8,
                 "compliance_value": 15000,
-                "downtime_reduction_hours": 100
+                "downtime_reduction_hours": 100,
             },
-            "contract_data": {
-                "contract_value": 100000
-            },
-            "usage_data": {}
+            "contract_data": {"contract_value": 100000},
+            "usage_data": {},
         }
 
         result1 = await agent.process(state1)
@@ -834,9 +788,9 @@ if __name__ == "__main__":
                     "total_employees": 500,
                     "avg_employee_salary": 70000,
                     "annual_revenue": 50000000,
-                    "company_size": "large"
-                }
-            }
+                    "company_size": "large",
+                },
+            },
         )
         state2["entities"] = {
             "expansion_opportunity": {
@@ -846,12 +800,10 @@ if __name__ == "__main__":
                 "estimated_hours_saved": 3,
                 "affected_employees": 100,
                 "productivity_increase_pct": 12,
-                "revenue_increase_pct": 4
+                "revenue_increase_pct": 4,
             },
-            "contract_data": {
-                "contract_value": 150000
-            },
-            "usage_data": {}
+            "contract_data": {"contract_value": 150000},
+            "usage_data": {},
         }
 
         result2 = await agent.process(state2)
