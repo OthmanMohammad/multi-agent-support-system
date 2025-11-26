@@ -5,13 +5,13 @@ Ensures response compliance with company policies, legal requirements,
 and brand guidelines. Uses Claude Sonnet for nuanced policy interpretation.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("policy_checker", tier="operational", category="qa")
@@ -37,30 +37,21 @@ class PolicyCheckerAgent(BaseAgent):
             "professional_tone",
             "no_guarantees",
             "appropriate_language",
-            "brand_voice"
+            "brand_voice",
         ],
         "legal": [
             "privacy_compliance",
             "data_protection",
             "regulatory_compliance",
-            "liability_limitation"
+            "liability_limitation",
         ],
-        "business": [
-            "sla_accuracy",
-            "pricing_accuracy",
-            "refund_policy",
-            "warranty_terms"
-        ],
-        "security": [
-            "no_credential_sharing",
-            "secure_practices",
-            "vulnerability_disclosure"
-        ],
+        "business": ["sla_accuracy", "pricing_accuracy", "refund_policy", "warranty_terms"],
+        "security": ["no_credential_sharing", "secure_practices", "vulnerability_disclosure"],
         "customer_service": [
             "response_time_commitments",
             "escalation_procedures",
-            "complaint_handling"
-        ]
+            "complaint_handling",
+        ],
     }
 
     # Prohibited content patterns
@@ -72,7 +63,7 @@ class PolicyCheckerAgent(BaseAgent):
         "absolutely secure",
         "hack-proof",
         "no bugs",
-        "perfect solution"
+        "perfect solution",
     ]
 
     # Required disclaimers for certain topics
@@ -80,7 +71,7 @@ class PolicyCheckerAgent(BaseAgent):
         "legal_advice": "Note: This is not legal advice. Consult with legal counsel.",
         "medical_advice": "Note: This is not medical advice. Consult with healthcare professional.",
         "financial_advice": "Note: This is not financial advice. Consult with financial advisor.",
-        "security_vulnerability": "Note: Please report security issues via security@company.com"
+        "security_vulnerability": "Note: Please report security issues via security@company.com",
     }
 
     def __init__(self):
@@ -91,7 +82,7 @@ class PolicyCheckerAgent(BaseAgent):
             temperature=0.1,
             max_tokens=2000,
             capabilities=[AgentCapability.DATABASE_READ],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -111,14 +102,14 @@ class PolicyCheckerAgent(BaseAgent):
         state = self.update_state(state)
 
         # Extract parameters
-        response_text = state.get("entities", {}).get("response_text", state.get("agent_response", ""))
+        response_text = state.get("entities", {}).get(
+            "response_text", state.get("agent_response", "")
+        )
         policies = state.get("entities", {}).get("policies", {})
         strict_mode = state.get("entities", {}).get("strict_mode", True)
 
         self.logger.debug(
-            "policy_checking_details",
-            response_length=len(response_text),
-            strict_mode=strict_mode
+            "policy_checking_details", response_length=len(response_text), strict_mode=strict_mode
         )
 
         # Check all policy categories
@@ -135,10 +126,7 @@ class PolicyCheckerAgent(BaseAgent):
 
         # Aggregate all violations
         all_violations = self._aggregate_violations(
-            policy_violations,
-            prohibited_content,
-            missing_disclaimers,
-            privacy_issues
+            policy_violations, prohibited_content, missing_disclaimers, privacy_issues
         )
 
         # Generate recommendations
@@ -152,10 +140,7 @@ class PolicyCheckerAgent(BaseAgent):
 
         # Format response
         response = self._format_policy_report(
-            all_violations,
-            recommendations,
-            compliance_score,
-            passed
+            all_violations, recommendations, compliance_score, passed
         )
 
         state["agent_response"] = response
@@ -171,16 +156,14 @@ class PolicyCheckerAgent(BaseAgent):
             "policy_checking_completed",
             violations_found=len(all_violations),
             compliance_score=compliance_score,
-            passed=passed
+            passed=passed,
         )
 
         return state
 
     def _check_all_policies(
-        self,
-        response_text: str,
-        policies: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        self, response_text: str, policies: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """
         Check response against all policy categories.
 
@@ -196,41 +179,47 @@ class PolicyCheckerAgent(BaseAgent):
 
         # Check communication policies
         if "we guarantee" in text_lower or "guaranteed" in text_lower:
-            violations.append({
-                "category": "communication",
-                "policy": "no_guarantees",
-                "severity": "high",
-                "message": "Response contains guarantees which violate policy",
-                "snippet": self._extract_snippet(response_text, ["guarantee", "guaranteed"])
-            })
+            violations.append(
+                {
+                    "category": "communication",
+                    "policy": "no_guarantees",
+                    "severity": "high",
+                    "message": "Response contains guarantees which violate policy",
+                    "snippet": self._extract_snippet(response_text, ["guarantee", "guaranteed"]),
+                }
+            )
 
         # Check for unprofessional language
         unprofessional_words = ["stupid", "dumb", "idiot", "moron", "sucks", "crap"]
         for word in unprofessional_words:
             if word in text_lower:
-                violations.append({
-                    "category": "communication",
-                    "policy": "professional_tone",
-                    "severity": "critical",
-                    "message": f"Unprofessional language detected: '{word}'",
-                    "snippet": self._extract_snippet(response_text, [word])
-                })
+                violations.append(
+                    {
+                        "category": "communication",
+                        "policy": "professional_tone",
+                        "severity": "critical",
+                        "message": f"Unprofessional language detected: '{word}'",
+                        "snippet": self._extract_snippet(response_text, [word]),
+                    }
+                )
 
         # Check for overpromising
         overpromise_phrases = ["100%", "always works", "never fails", "perfect"]
         for phrase in overpromise_phrases:
             if phrase in text_lower:
-                violations.append({
-                    "category": "business",
-                    "policy": "sla_accuracy",
-                    "severity": "high",
-                    "message": f"Overpromising detected: '{phrase}'",
-                    "snippet": self._extract_snippet(response_text, [phrase])
-                })
+                violations.append(
+                    {
+                        "category": "business",
+                        "policy": "sla_accuracy",
+                        "severity": "high",
+                        "message": f"Overpromising detected: '{phrase}'",
+                        "snippet": self._extract_snippet(response_text, [phrase]),
+                    }
+                )
 
         return violations
 
-    def _check_prohibited_content(self, response_text: str) -> List[Dict[str, Any]]:
+    def _check_prohibited_content(self, response_text: str) -> list[dict[str, Any]]:
         """
         Check for prohibited content patterns.
 
@@ -245,17 +234,19 @@ class PolicyCheckerAgent(BaseAgent):
 
         for pattern in self.PROHIBITED_PATTERNS:
             if pattern in text_lower:
-                violations.append({
-                    "category": "prohibited_content",
-                    "policy": "prohibited_language",
-                    "severity": "high",
-                    "message": f"Prohibited pattern detected: '{pattern}'",
-                    "snippet": self._extract_snippet(response_text, [pattern])
-                })
+                violations.append(
+                    {
+                        "category": "prohibited_content",
+                        "policy": "prohibited_language",
+                        "severity": "high",
+                        "message": f"Prohibited pattern detected: '{pattern}'",
+                        "snippet": self._extract_snippet(response_text, [pattern]),
+                    }
+                )
 
         return violations
 
-    def _check_disclaimers(self, response_text: str) -> List[Dict[str, Any]]:
+    def _check_disclaimers(self, response_text: str) -> list[dict[str, Any]]:
         """
         Check if required disclaimers are present.
 
@@ -272,29 +263,35 @@ class PolicyCheckerAgent(BaseAgent):
         legal_keywords = ["legal", "lawsuit", "contract", "liability", "sue"]
         if any(keyword in text_lower for keyword in legal_keywords):
             if "not legal advice" not in text_lower:
-                violations.append({
-                    "category": "legal",
-                    "policy": "disclaimer_requirement",
-                    "severity": "medium",
-                    "message": "Legal discussion without required disclaimer",
-                    "required_disclaimer": self.DISCLAIMER_REQUIREMENTS["legal_advice"]
-                })
+                violations.append(
+                    {
+                        "category": "legal",
+                        "policy": "disclaimer_requirement",
+                        "severity": "medium",
+                        "message": "Legal discussion without required disclaimer",
+                        "required_disclaimer": self.DISCLAIMER_REQUIREMENTS["legal_advice"],
+                    }
+                )
 
         # Check if discussing security without proper handling
         security_keywords = ["vulnerability", "exploit", "security bug", "hack"]
         if any(keyword in text_lower for keyword in security_keywords):
             if "security@" not in text_lower:
-                violations.append({
-                    "category": "security",
-                    "policy": "vulnerability_disclosure",
-                    "severity": "high",
-                    "message": "Security issue discussion without proper disclosure channel",
-                    "required_disclaimer": self.DISCLAIMER_REQUIREMENTS["security_vulnerability"]
-                })
+                violations.append(
+                    {
+                        "category": "security",
+                        "policy": "vulnerability_disclosure",
+                        "severity": "high",
+                        "message": "Security issue discussion without proper disclosure channel",
+                        "required_disclaimer": self.DISCLAIMER_REQUIREMENTS[
+                            "security_vulnerability"
+                        ],
+                    }
+                )
 
         return violations
 
-    def _check_privacy_compliance(self, response_text: str) -> List[Dict[str, Any]]:
+    def _check_privacy_compliance(self, response_text: str) -> list[dict[str, Any]]:
         """
         Check for privacy and data protection compliance.
 
@@ -312,38 +309,42 @@ class PolicyCheckerAgent(BaseAgent):
             "send me your password",
             "share your credit card",
             "provide your ssn",
-            "send your api key"
+            "send your api key",
         ]
 
         for pattern in pii_patterns:
             if pattern in text_lower:
-                violations.append({
-                    "category": "security",
-                    "policy": "no_credential_sharing",
-                    "severity": "critical",
-                    "message": f"Requesting sensitive information: '{pattern}'",
-                    "snippet": self._extract_snippet(response_text, [pattern])
-                })
+                violations.append(
+                    {
+                        "category": "security",
+                        "policy": "no_credential_sharing",
+                        "severity": "critical",
+                        "message": f"Requesting sensitive information: '{pattern}'",
+                        "snippet": self._extract_snippet(response_text, [pattern]),
+                    }
+                )
 
         # Check for data retention promises
         if "we never delete your data" in text_lower or "permanent storage" in text_lower:
-            violations.append({
-                "category": "legal",
-                "policy": "data_protection",
-                "severity": "medium",
-                "message": "Data retention statement may conflict with GDPR/CCPA",
-                "snippet": self._extract_snippet(response_text, ["never delete", "permanent"])
-            })
+            violations.append(
+                {
+                    "category": "legal",
+                    "policy": "data_protection",
+                    "severity": "medium",
+                    "message": "Data retention statement may conflict with GDPR/CCPA",
+                    "snippet": self._extract_snippet(response_text, ["never delete", "permanent"]),
+                }
+            )
 
         return violations
 
     def _aggregate_violations(
         self,
-        policy_violations: List[Dict[str, Any]],
-        prohibited_content: List[Dict[str, Any]],
-        missing_disclaimers: List[Dict[str, Any]],
-        privacy_issues: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        policy_violations: list[dict[str, Any]],
+        prohibited_content: list[dict[str, Any]],
+        missing_disclaimers: list[dict[str, Any]],
+        privacy_issues: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
         """
         Aggregate all violations.
 
@@ -357,10 +358,7 @@ class PolicyCheckerAgent(BaseAgent):
             Combined list of violations
         """
         all_violations = (
-            policy_violations +
-            prohibited_content +
-            missing_disclaimers +
-            privacy_issues
+            policy_violations + prohibited_content + missing_disclaimers + privacy_issues
         )
 
         # Add timestamps
@@ -373,7 +371,7 @@ class PolicyCheckerAgent(BaseAgent):
 
         return all_violations
 
-    def _generate_recommendations(self, violations: List[Dict[str, Any]]) -> List[str]:
+    def _generate_recommendations(self, violations: list[dict[str, Any]]) -> list[str]:
         """
         Generate recommendations for policy compliance.
 
@@ -405,12 +403,10 @@ class PolicyCheckerAgent(BaseAgent):
             )
 
         if medium:
-            recommendations.append(
-                f"REVIEW: {len(medium)} medium-severity policy issues."
-            )
+            recommendations.append(f"REVIEW: {len(medium)} medium-severity policy issues.")
 
         # Category-specific recommendations
-        categories = set(v["category"] for v in violations)
+        categories = {v["category"] for v in violations}
 
         if "security" in categories:
             recommendations.append(
@@ -418,9 +414,7 @@ class PolicyCheckerAgent(BaseAgent):
             )
 
         if "legal" in categories:
-            recommendations.append(
-                "Add required disclaimers for legal/compliance topics."
-            )
+            recommendations.append("Add required disclaimers for legal/compliance topics.")
 
         if "communication" in categories:
             recommendations.append(
@@ -429,7 +423,7 @@ class PolicyCheckerAgent(BaseAgent):
 
         return recommendations
 
-    def _calculate_compliance_score(self, violations: List[Dict[str, Any]]) -> float:
+    def _calculate_compliance_score(self, violations: list[dict[str, Any]]) -> float:
         """
         Calculate compliance score (0-100).
 
@@ -448,21 +442,12 @@ class PolicyCheckerAgent(BaseAgent):
         # Deduct based on severity
         for violation in violations:
             severity = violation["severity"]
-            deductions = {
-                "critical": 30.0,
-                "high": 15.0,
-                "medium": 7.0,
-                "low": 2.0
-            }
+            deductions = {"critical": 30.0, "high": 15.0, "medium": 7.0, "low": 2.0}
             score -= deductions.get(severity, 0)
 
         return max(0.0, round(score, 1))
 
-    def _determine_pass_fail(
-        self,
-        violations: List[Dict[str, Any]],
-        strict_mode: bool
-    ) -> bool:
+    def _determine_pass_fail(self, violations: list[dict[str, Any]], strict_mode: bool) -> bool:
         """
         Determine if policy check passes.
 
@@ -483,7 +468,7 @@ class PolicyCheckerAgent(BaseAgent):
             # Standard: only critical violations fail
             return len(critical) == 0
 
-    def _extract_snippet(self, text: str, patterns: List[str]) -> str:
+    def _extract_snippet(self, text: str, patterns: list[str]) -> str:
         """
         Extract snippet containing pattern.
 
@@ -510,10 +495,10 @@ class PolicyCheckerAgent(BaseAgent):
 
     def _format_policy_report(
         self,
-        violations: List[Dict[str, Any]],
-        recommendations: List[str],
+        violations: list[dict[str, Any]],
+        recommendations: list[str],
         compliance_score: float,
-        passed: bool
+        passed: bool,
     ) -> str:
         """Format policy compliance report."""
         status_icon = "✅" if passed else "❌"
@@ -540,9 +525,11 @@ class PolicyCheckerAgent(BaseAgent):
 
         # List violations
         if violations:
-            report += f"\n**Detected Violations:**\n"
+            report += "\n**Detected Violations:**\n"
             for v in violations[:5]:  # Top 5
-                icon = "🔴" if v["severity"] == "critical" else "⚠️" if v["severity"] == "high" else "ℹ️"
+                icon = (
+                    "🔴" if v["severity"] == "critical" else "⚠️" if v["severity"] == "high" else "ℹ️"
+                )
                 report += f"{icon} [{v['severity'].upper()}] {v['message']}\n"
                 report += f"   Category: {v['category']} | Policy: {v['policy']}\n"
 
@@ -551,7 +538,7 @@ class PolicyCheckerAgent(BaseAgent):
 
         # Recommendations
         if recommendations:
-            report += f"\n**Recommendations:**\n"
+            report += "\n**Recommendations:**\n"
             for rec in recommendations:
                 report += f"- {rec}\n"
 
