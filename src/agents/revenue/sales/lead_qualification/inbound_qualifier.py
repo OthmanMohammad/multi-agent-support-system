@@ -5,13 +5,12 @@ Qualifies inbound leads from demo requests, trials, website forms.
 Handles initial qualification using BANT framework and scores leads.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("inbound_qualifier", tier="revenue", category="sales")
@@ -34,55 +33,55 @@ class InboundQualifier(BaseAgent):
         "pricing_page": "Pricing page inquiry",
         "content_download": "Whitepaper/ebook download",
         "webinar": "Webinar registration/attendance",
-        "referral": "Customer referral"
+        "referral": "Customer referral",
     }
 
     QUALIFICATION_QUESTIONS = {
         "budget": [
             "What's your budget range for this type of solution?",
             "Have you allocated budget for this initiative?",
-            "When does your budget cycle reset?"
+            "When does your budget cycle reset?",
         ],
         "authority": [
             "Who else will be involved in the decision?",
             "What's the approval process at your company?",
-            "Are you the decision maker for this purchase?"
+            "Are you the decision maker for this purchase?",
         ],
         "need": [
             "What's driving your interest in our product?",
             "What tools are you using today?",
-            "What would success look like for you?"
+            "What would success look like for you?",
         ],
         "timeline": [
             "When are you looking to make a decision?",
             "What's your timeline for implementation?",
-            "Is there a specific deadline driving this?"
-        ]
+            "Is there a specific deadline driving this?",
+        ],
     }
 
     # Scoring thresholds
     SCORE_SALES_READY = 70  # >= 70 = route to sales (SQL)
-    SCORE_NURTURE = 40      # 40-69 = nurture (MQL)
-    SCORE_DISQUALIFY = 39   # < 40 = disqualify or self-serve
+    SCORE_NURTURE = 40  # 40-69 = nurture (MQL)
+    SCORE_DISQUALIFY = 39  # < 40 = disqualify or self-serve
 
     # Title scoring (Authority signals)
     TITLE_SCORES = {
-        "c_level": 20,      # CEO, CTO, CFO, COO
-        "vp": 15,           # VP, Vice President
-        "director": 12,     # Director
-        "manager": 10,      # Manager
-        "lead": 8,          # Team Lead
-        "specialist": 5,    # Specialist, Analyst
-        "other": 3          # Other titles
+        "c_level": 20,  # CEO, CTO, CFO, COO
+        "vp": 15,  # VP, Vice President
+        "director": 12,  # Director
+        "manager": 10,  # Manager
+        "lead": 8,  # Team Lead
+        "specialist": 5,  # Specialist, Analyst
+        "other": 3,  # Other titles
     }
 
     # Company size scoring
     COMPANY_SIZE_SCORES = {
-        "enterprise": 20,   # 1000+ employees
-        "mid_market": 15,   # 200-999 employees
-        "smb": 10,          # 50-199 employees
-        "small": 5,         # 10-49 employees
-        "micro": 2          # 1-9 employees
+        "enterprise": 20,  # 1000+ employees
+        "mid_market": 15,  # 200-999 employees
+        "smb": 10,  # 50-199 employees
+        "small": 5,  # 10-49 employees
+        "micro": 2,  # 1-9 employees
     }
 
     def __init__(self):
@@ -94,10 +93,10 @@ class InboundQualifier(BaseAgent):
             capabilities=[
                 AgentCapability.KB_SEARCH,
                 AgentCapability.CONTEXT_AWARE,
-                AgentCapability.ENTITY_EXTRACTION
+                AgentCapability.ENTITY_EXTRACTION,
             ],
             kb_category="sales",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -125,7 +124,7 @@ class InboundQualifier(BaseAgent):
         self.logger.debug(
             "inbound_qualifier_details",
             message_preview=message[:100],
-            turn_count=state["turn_count"]
+            turn_count=state["turn_count"],
         )
 
         # Extract lead information from message and entities
@@ -138,21 +137,12 @@ class InboundQualifier(BaseAgent):
         qualification_status = self._determine_qualification_status(lead_score)
 
         # Search knowledge base for relevant resources
-        kb_results = await self.search_knowledge_base(
-            message,
-            category="sales",
-            limit=3
-        )
+        kb_results = await self.search_knowledge_base(message, category="sales", limit=3)
         state["kb_results"] = kb_results
 
         # Generate appropriate response with conversation context
         response = await self._generate_qualification_response(
-            message,
-            lead_info,
-            lead_score,
-            qualification_status,
-            kb_results,
-            state
+            message, lead_info, lead_score, qualification_status, kb_results, state
         )
 
         # Determine next action
@@ -171,17 +161,14 @@ class InboundQualifier(BaseAgent):
             "inbound_qualifier_completed",
             lead_score=lead_score,
             qualification_status=qualification_status,
-            next_action=next_action
+            next_action=next_action,
         )
 
         return state
 
     def _extract_lead_info(
-        self,
-        message: str,
-        entities: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, message: str, entities: dict[str, Any], customer_metadata: dict[str, Any]
+    ) -> dict[str, Any]:
         """Extract lead information from message and metadata"""
         lead_info = {
             "company": customer_metadata.get("company", entities.get("company", "Unknown")),
@@ -192,7 +179,7 @@ class InboundQualifier(BaseAgent):
             "industry": customer_metadata.get("industry", entities.get("industry", "Unknown")),
             "current_tool": None,
             "pain_points": [],
-            "timeline": None
+            "timeline": None,
         }
 
         # Extract pain points from message
@@ -203,7 +190,7 @@ class InboundQualifier(BaseAgent):
             "expensive": "High costs",
             "difficult": "Usability issues",
             "integration": "Integration challenges",
-            "scale": "Scaling problems"
+            "scale": "Scaling problems",
         }
 
         for keyword, pain_point in pain_point_keywords.items():
@@ -220,7 +207,7 @@ class InboundQualifier(BaseAgent):
             "this month": "This month",
             "this quarter": "This quarter",
             "next quarter": "Next quarter",
-            "exploring": "6+ months"
+            "exploring": "6+ months",
         }
 
         for keyword, timeline in timeline_keywords.items():
@@ -237,7 +224,7 @@ class InboundQualifier(BaseAgent):
 
         return lead_info
 
-    def _calculate_lead_score(self, lead_info: Dict[str, Any]) -> int:
+    def _calculate_lead_score(self, lead_info: dict[str, Any]) -> int:
         """
         Calculate lead score (0-100) based on firmographic and behavioral signals.
 
@@ -288,7 +275,7 @@ class InboundQualifier(BaseAgent):
             "website_form": 15,
             "webinar": 15,
             "pricing_page": 12,
-            "content_download": 10
+            "content_download": 10,
         }
         score += source_scores.get(lead_source, 10)
 
@@ -305,7 +292,7 @@ class InboundQualifier(BaseAgent):
             "This month": 15,
             "This quarter": 12,
             "Next quarter": 8,
-            "6+ months": 5
+            "6+ months": 5,
         }
         score += timeline_scores.get(timeline, 10)
 
@@ -340,11 +327,11 @@ class InboundQualifier(BaseAgent):
     async def _generate_qualification_response(
         self,
         message: str,
-        lead_info: Dict[str, Any],
+        lead_info: dict[str, Any],
         lead_score: int,
         qualification_status: str,
-        kb_results: List[Dict],
-        state: AgentState
+        kb_results: list[dict],
+        state: AgentState,
     ) -> str:
         """Generate personalized qualification response using Claude"""
 
@@ -362,8 +349,8 @@ class InboundQualifier(BaseAgent):
         system_prompt = f"""You are a helpful sales assistant.
 
 Customer info:
-- Company: {lead_info.get('company', 'Unknown')}
-- Title: {lead_info.get('title', 'Unknown')}
+- Company: {lead_info.get("company", "Unknown")}
+- Title: {lead_info.get("title", "Unknown")}
 
 CRITICAL RULES:
 1. NEVER use placeholder text like "[Agent Name]", "[Your Name]", or similar. Just speak naturally without introducing yourself by name.
@@ -388,9 +375,7 @@ Respond directly and helpfully to what the customer is asking. If they have a sp
 
         # Call Claude with conversation history for multi-turn context
         response = await self.call_llm(
-            system_prompt,
-            user_prompt,
-            conversation_history=conversation_history
+            system_prompt, user_prompt, conversation_history=conversation_history
         )
 
         return response
@@ -416,15 +401,15 @@ if __name__ == "__main__":
                     "title": "CTO",
                     "company_size": 500,
                     "email": "cto@acmecorp.com",
-                    "lead_source": "website_form"
+                    "lead_source": "website_form",
                 }
-            }
+            },
         )
 
         agent = InboundQualifier()
         result1 = await agent.process(state1)
 
-        print(f"\nTest 1 - Enterprise CTO Demo Request")
+        print("\nTest 1 - Enterprise CTO Demo Request")
         print(f"Lead Score: {result1['lead_score']}/100")
         print(f"Qualification Status: {result1['qualification_status']}")
         print(f"Next Action: {result1['next_action']}")
@@ -438,14 +423,14 @@ if __name__ == "__main__":
                     "company": "Startup Inc",
                     "title": "Product Manager",
                     "company_size": 15,
-                    "lead_source": "trial_signup"
+                    "lead_source": "trial_signup",
                 }
-            }
+            },
         )
 
         result2 = await agent.process(state2)
 
-        print(f"\nTest 2 - Small Company Trial Signup")
+        print("\nTest 2 - Small Company Trial Signup")
         print(f"Lead Score: {result2['lead_score']}/100")
         print(f"Qualification Status: {result2['qualification_status']}")
         print(f"Next Action: {result2['next_action']}")
