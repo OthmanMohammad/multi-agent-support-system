@@ -272,7 +272,8 @@ Return ONLY valid JSON with this structure:
             response = await self.call_llm(
                 system_prompt=system_prompt,
                 user_message=user_prompt,
-                max_tokens=512
+                max_tokens=512,
+                conversation_history=[]  # Gap detection is standalone, no conversation context
             )
 
             # Parse JSON response
