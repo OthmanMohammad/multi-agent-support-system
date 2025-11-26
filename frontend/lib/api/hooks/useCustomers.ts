@@ -4,19 +4,19 @@
  * Provides customer data and management functionality.
  */
 
-'use client';
+"use client";
 
-import { useCallback, useState } from 'react';
-import useSWR from 'swr';
-import { customersAPI } from '../customers';
-import type { Customer } from '@/lib/types/api';
+import { useCallback, useState } from "react";
+import useSWR from "swr";
+import { customersAPI } from "../customers";
+import type { Customer } from "@/lib/types/api";
 
 // =============================================================================
 // USE CUSTOMERS (List)
 // =============================================================================
 
 export function useCustomers(params?: {
-  plan?: 'free' | 'basic' | 'premium' | 'enterprise';
+  plan?: "free" | "basic" | "premium" | "enterprise";
   limit?: number;
 }) {
   const {
@@ -25,7 +25,7 @@ export function useCustomers(params?: {
     mutate,
     isLoading,
   } = useSWR<Customer[]>(
-    ['customers', params],
+    ["customers", params],
     async () => {
       const result = await customersAPI.list(params);
       if (result.success) {
@@ -57,13 +57,15 @@ export function useCustomer(customerId: string | null) {
     error,
     mutate,
     isLoading,
-  } = useSWR<Customer & {
-    total_conversations: number;
-    active_conversations: number;
-    lifetime_value: number;
-    health_score: number;
-  }>(
-    customerId ? ['customer', customerId] : null,
+  } = useSWR<
+    Customer & {
+      total_conversations: number;
+      active_conversations: number;
+      lifetime_value: number;
+      health_score: number;
+    }
+  >(
+    customerId ? ["customer", customerId] : null,
     async ([, id]: [string, string]) => {
       const result = await customersAPI.get(id);
       if (result.success) {
@@ -115,7 +117,7 @@ export function useCreateCustomer() {
     async (data: {
       email: string;
       name?: string;
-      plan?: 'free' | 'basic' | 'premium' | 'enterprise';
+      plan?: "free" | "basic" | "premium" | "enterprise";
     }) => {
       setIsCreating(true);
       setError(null);
