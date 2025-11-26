@@ -5,13 +5,12 @@ Crafts tailored value propositions for prospects.
 Explains "why us" vs competitors, highlights differentiators, and matches benefits to goals.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("value_proposition", tier="revenue", category="sales")
@@ -35,9 +34,9 @@ class ValueProposition(BaseAgent):
             "proof_points": [
                 "Average setup time: 3 days vs 4-6 weeks for competitors",
                 "93% of users proficient within first week",
-                "No-code configuration for 80% of use cases"
+                "No-code configuration for 80% of use cases",
             ],
-            "best_for": ["small", "medium"]
+            "best_for": ["small", "medium"],
         },
         "enterprise_grade": {
             "headline": "Enterprise-grade security and compliance",
@@ -45,9 +44,9 @@ class ValueProposition(BaseAgent):
             "proof_points": [
                 "SOC 2 Type II, HIPAA, and GDPR compliant",
                 "99.99% uptime SLA",
-                "Enterprise SSO and advanced access controls"
+                "Enterprise SSO and advanced access controls",
             ],
-            "best_for": ["large", "enterprise"]
+            "best_for": ["large", "enterprise"],
         },
         "innovation": {
             "headline": "Most innovative AI-powered platform",
@@ -55,9 +54,9 @@ class ValueProposition(BaseAgent):
             "proof_points": [
                 "AI-powered automation saves 10x more time",
                 "Predictive analytics built-in",
-                "Continuous innovation with monthly releases"
+                "Continuous innovation with monthly releases",
             ],
-            "best_for": ["technology", "finance"]
+            "best_for": ["technology", "finance"],
         },
         "integration": {
             "headline": "Connects to everything you use",
@@ -65,9 +64,9 @@ class ValueProposition(BaseAgent):
             "proof_points": [
                 "200+ native integrations vs avg 50 for competitors",
                 "Full REST API with 99.9% reliability",
-                "Real-time bidirectional sync"
+                "Real-time bidirectional sync",
             ],
-            "best_for": ["all"]
+            "best_for": ["all"],
         },
         "support": {
             "headline": "White-glove support that cares",
@@ -75,9 +74,9 @@ class ValueProposition(BaseAgent):
             "proof_points": [
                 "Average response time: 2 minutes",
                 "98% customer satisfaction score",
-                "Dedicated success manager for every account"
+                "Dedicated success manager for every account",
             ],
-            "best_for": ["all"]
+            "best_for": ["all"],
         },
         "roi": {
             "headline": "Proven ROI in under 6 months",
@@ -85,10 +84,10 @@ class ValueProposition(BaseAgent):
             "proof_points": [
                 "Average ROI: 312% in first year",
                 "Payback period: 4.2 months average",
-                "Customer success rate: 96%"
+                "Customer success rate: 96%",
             ],
-            "best_for": ["all"]
-        }
+            "best_for": ["all"],
+        },
     }
 
     # Competitive differentiators by competitor
@@ -99,8 +98,8 @@ class ValueProposition(BaseAgent):
                 "Modern UI that users love (vs their 90s-era interface)",
                 "50% lower pricing with transparent per-user model",
                 "No long-term contracts required",
-                "Setup in days vs their 3-month implementation"
-            ]
+                "Setup in days vs their 3-month implementation",
+            ],
         },
         "competitor_b": {
             "name": "Fast-Growing Startup",
@@ -108,8 +107,8 @@ class ValueProposition(BaseAgent):
                 "Enterprise-grade reliability (99.99% vs their 98%)",
                 "Proven at scale (5000+ enterprise customers)",
                 "24/7 support vs business hours only",
-                "SOC 2 Type II certified (they're still working on it)"
-            ]
+                "SOC 2 Type II certified (they're still working on it)",
+            ],
         },
         "competitor_c": {
             "name": "Budget Option",
@@ -117,9 +116,9 @@ class ValueProposition(BaseAgent):
                 "Full feature set (not limited 'lite' version)",
                 "Scales with you (no painful migrations later)",
                 "Real support team vs community forums",
-                "Better long-term value despite higher initial price"
-            ]
-        }
+                "Better long-term value despite higher initial price",
+            ],
+        },
     }
 
     # Goal-to-benefit mapping
@@ -127,38 +126,38 @@ class ValueProposition(BaseAgent):
         "reduce_costs": [
             "60% reduction in manual labor costs",
             "Eliminate redundant tools (average 3-5 tools replaced)",
-            "Reduce errors that cost money"
+            "Reduce errors that cost money",
         ],
         "save_time": [
             "5-10 hours saved per user per week",
             "Automated workflows handle routine tasks",
-            "Faster decision-making with real-time data"
+            "Faster decision-making with real-time data",
         ],
         "improve_quality": [
             "95% reduction in errors",
             "Consistent processes across teams",
-            "Audit trail for accountability"
+            "Audit trail for accountability",
         ],
         "scale_operations": [
             "Handle 10x volume without adding headcount",
             "Proven at enterprise scale (Fortune 500 customers)",
-            "Infrastructure that grows with you"
+            "Infrastructure that grows with you",
         ],
         "ensure_compliance": [
             "Automated compliance workflows",
             "Always audit-ready",
-            "Reduce compliance risk by 80%"
+            "Reduce compliance risk by 80%",
         ],
         "improve_customer_satisfaction": [
             "Faster response times to customers",
             "Better data for personalization",
-            "Consistent customer experience"
+            "Consistent customer experience",
         ],
         "increase_revenue": [
             "Sell more with better insights",
             "Faster time-to-market for new products",
-            "Higher conversion rates"
-        ]
+            "Higher conversion rates",
+        ],
     }
 
     # Industry-specific value props
@@ -167,7 +166,7 @@ class ValueProposition(BaseAgent):
         "healthcare": "HIPAA-compliant, secure, and purpose-built for healthcare workflows.",
         "finance": "Bank-grade security with SOX compliance built-in. Trusted by top financial institutions.",
         "retail": "Omnichannel ready. Integrate POS, inventory, and customer data seamlessly.",
-        "manufacturing": "IoT-ready platform. Real-time visibility from shop floor to top floor."
+        "manufacturing": "IoT-ready platform. Real-time visibility from shop floor to top floor.",
     }
 
     def __init__(self):
@@ -179,10 +178,10 @@ class ValueProposition(BaseAgent):
             capabilities=[
                 AgentCapability.KB_SEARCH,
                 AgentCapability.CONTEXT_AWARE,
-                AgentCapability.MULTI_TURN
+                AgentCapability.MULTI_TURN,
             ],
             kb_category="sales",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -207,10 +206,7 @@ class ValueProposition(BaseAgent):
         benefit_mapping = self._map_benefits_to_goals(identified_goals)
 
         # Generate competitive positioning
-        competitive_positioning = self._generate_competitive_positioning(
-            message,
-            customer_metadata
-        )
+        competitive_positioning = self._generate_competitive_positioning(message, customer_metadata)
 
         # Create industry-specific angle
         industry_angle = self._get_industry_value_prop(customer_metadata)
@@ -222,7 +218,7 @@ class ValueProposition(BaseAgent):
         kb_results = await self.search_knowledge_base(
             f"customer testimonial success story {customer_metadata.get('industry', '')}",
             category="sales",
-            limit=5
+            limit=5,
         )
         state["kb_results"] = kb_results
 
@@ -237,7 +233,7 @@ class ValueProposition(BaseAgent):
             differentiators,
             kb_results,
             customer_metadata,
-            state
+            state,
         )
 
         # Update state
@@ -253,16 +249,12 @@ class ValueProposition(BaseAgent):
         self.logger.info(
             "value_proposition_completed",
             goals_count=len(identified_goals),
-            pillars_count=len(selected_pillars)
+            pillars_count=len(selected_pillars),
         )
 
         return state
 
-    def _identify_goals(
-        self,
-        message: str,
-        conversation_history: List[Dict]
-    ) -> List[str]:
+    def _identify_goals(self, message: str, conversation_history: list[dict]) -> list[str]:
         """Identify prospect's business goals"""
         goals = []
 
@@ -280,7 +272,7 @@ class ValueProposition(BaseAgent):
             "scale_operations": ["scale", "growth", "growing", "expand", "capacity"],
             "ensure_compliance": ["compliance", "audit", "regulatory", "hipaa", "sox", "gdpr"],
             "improve_customer_satisfaction": ["customer", "satisfaction", "experience", "service"],
-            "increase_revenue": ["revenue", "sales", "grow business", "profits", "conversion"]
+            "increase_revenue": ["revenue", "sales", "grow business", "profits", "conversion"],
         }
 
         for goal, keywords in goal_keywords.items():
@@ -294,10 +286,8 @@ class ValueProposition(BaseAgent):
         return goals
 
     def _select_value_pillars(
-        self,
-        customer_metadata: Dict,
-        goals: List[str]
-    ) -> List[Dict[str, Any]]:
+        self, customer_metadata: dict, goals: list[str]
+    ) -> list[dict[str, Any]]:
         """Select most relevant value pillars"""
         company_size = customer_metadata.get("company_size", 0)
         industry = customer_metadata.get("industry", "other").lower()
@@ -330,7 +320,7 @@ class ValueProposition(BaseAgent):
         # Limit to top 4 pillars
         return selected[:4]
 
-    def _map_benefits_to_goals(self, goals: List[str]) -> Dict[str, List[str]]:
+    def _map_benefits_to_goals(self, goals: list[str]) -> dict[str, list[str]]:
         """Map specific benefits to identified goals"""
         mapping = {}
 
@@ -341,10 +331,8 @@ class ValueProposition(BaseAgent):
         return mapping
 
     def _generate_competitive_positioning(
-        self,
-        message: str,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, message: str, customer_metadata: dict
+    ) -> dict[str, Any]:
         """Generate competitive positioning"""
         message_lower = message.lower()
 
@@ -365,21 +353,20 @@ class ValueProposition(BaseAgent):
                     "Faster time to value (days vs months)",
                     "Better price-to-performance ratio",
                     "Superior customer support and satisfaction",
-                    "More flexible and easier to use"
-                ]
+                    "More flexible and easier to use",
+                ],
             }
 
         return positioning
 
-    def _get_industry_value_prop(self, customer_metadata: Dict) -> str:
+    def _get_industry_value_prop(self, customer_metadata: dict) -> str:
         """Get industry-specific value proposition"""
         industry = customer_metadata.get("industry", "technology").lower()
         return self.INDUSTRY_VALUE_PROPS.get(
-            industry,
-            "Purpose-built for your industry with proven results."
+            industry, "Purpose-built for your industry with proven results."
         )
 
-    def _build_differentiators(self, selected_pillars: List[Dict]) -> List[str]:
+    def _build_differentiators(self, selected_pillars: list[dict]) -> list[str]:
         """Build list of unique differentiators"""
         differentiators = []
 
@@ -392,15 +379,15 @@ class ValueProposition(BaseAgent):
     async def _generate_value_prop_response(
         self,
         message: str,
-        goals: List[str],
-        pillars: List[Dict],
-        benefit_mapping: Dict,
-        competitive_positioning: Dict,
+        goals: list[str],
+        pillars: list[dict],
+        benefit_mapping: dict,
+        competitive_positioning: dict,
         industry_angle: str,
-        differentiators: List[str],
-        kb_results: List[Dict],
-        customer_metadata: Dict,
-        state: AgentState
+        differentiators: list[str],
+        kb_results: list[dict],
+        customer_metadata: dict,
+        state: AgentState,
     ) -> str:
         """Generate tailored value proposition response"""
 
@@ -435,14 +422,14 @@ class ValueProposition(BaseAgent):
         system_prompt = f"""You are a Value Proposition specialist crafting compelling "why us" messaging.
 
 Prospect Profile:
-- Industry: {customer_metadata.get('industry', 'Unknown').title()}
-- Company Size: {customer_metadata.get('company_size', 'Unknown')}
-- Title: {customer_metadata.get('title', 'Unknown')}
-- Goals: {', '.join([g.replace('_', ' ').title() for g in goals])}
+- Industry: {customer_metadata.get("industry", "Unknown").title()}
+- Company Size: {customer_metadata.get("company_size", "Unknown")}
+- Title: {customer_metadata.get("title", "Unknown")}
+- Goals: {", ".join([g.replace("_", " ").title() for g in goals])}
 
 Industry Positioning: {industry_angle}
 
-Unique Differentiators: {', '.join(differentiators)}
+Unique Differentiators: {", ".join(differentiators)}
 
 Your response should:
 1. Lead with the most compelling value pillar for their situation
@@ -464,9 +451,7 @@ Your response should:
 Generate a compelling, tailored value proposition response."""
 
         response = await self.call_llm(
-            system_prompt,
-            user_prompt,
-            conversation_history=conversation_history
+            system_prompt, user_prompt, conversation_history=conversation_history
         )
         return response
 
@@ -474,6 +459,7 @@ Generate a compelling, tailored value proposition response."""
 if __name__ == "__main__":
     """Test harness for ValueProposition"""
     import asyncio
+
     from src.workflow.state import AgentState
 
     async def test_value_proposition():
@@ -485,10 +471,10 @@ if __name__ == "__main__":
             customer_metadata={
                 "title": "VP Operations",
                 "industry": "manufacturing",
-                "company_size": 500
+                "company_size": 500,
             },
             messages=[],
-            status="pending"
+            status="pending",
         )
 
         result1 = await agent.process(state1)
@@ -501,13 +487,9 @@ if __name__ == "__main__":
         # Test case 2: Competitive situation
         state2 = AgentState(
             current_message="We're currently evaluating you against Legacy Leader. What makes you different?",
-            customer_metadata={
-                "title": "CTO",
-                "industry": "technology",
-                "company_size": 1200
-            },
+            customer_metadata={"title": "CTO", "industry": "technology", "company_size": 1200},
             messages=[],
-            status="pending"
+            status="pending",
         )
 
         result2 = await agent.process(state2)
