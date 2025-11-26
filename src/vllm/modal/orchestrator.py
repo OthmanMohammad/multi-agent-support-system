@@ -20,11 +20,12 @@ Part of Phase 3: GPU Orchestration (Modal migration)
 
 import asyncio
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Any
+
 import structlog
 
-from src.vllm.modal.client import ModalVLLMClient
 from src.core.config import get_settings
+from src.vllm.modal.client import ModalVLLMClient
 
 logger = structlog.get_logger(__name__)
 settings = get_settings()
@@ -51,7 +52,7 @@ class ModalOrchestrator:
         >>> # No need to destroy - Modal auto-scales down
     """
 
-    def __init__(self, modal_web_url: Optional[str] = None):
+    def __init__(self, modal_web_url: str | None = None):
         """
         Initialize Modal orchestrator.
 
@@ -73,7 +74,7 @@ class ModalOrchestrator:
 
         # Tracking
         self.startup_time = datetime.utcnow()
-        self.last_health_check: Optional[Dict[str, Any]] = None
+        self.last_health_check: dict[str, Any] | None = None
         self.total_requests = 0
 
         logger.info(
@@ -135,7 +136,7 @@ class ModalOrchestrator:
         """
         return self.client.get_endpoint_url()
 
-    async def get_status(self) -> Dict[str, Any]:
+    async def get_status(self) -> dict[str, Any]:
         """
         Get comprehensive orchestrator status.
 
@@ -191,7 +192,7 @@ class ModalOrchestrator:
         model: str = "Qwen/Qwen2.5-7B-Instruct",
         temperature: float = 0.7,
         max_tokens: int = 2048,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Make chat completion request to Modal vLLM.
 
@@ -227,7 +228,7 @@ class ModalOrchestrator:
 
         return response
 
-    async def get_models(self) -> Dict[str, Any]:
+    async def get_models(self) -> dict[str, Any]:
         """
         Get list of available models.
 
@@ -247,7 +248,7 @@ class ModalOrchestrator:
 # =============================================================================
 
 # This will be initialized when Modal URL is configured
-modal_orchestrator: Optional[ModalOrchestrator] = None
+modal_orchestrator: ModalOrchestrator | None = None
 
 
 def init_modal_orchestrator(modal_web_url: str) -> ModalOrchestrator:
@@ -293,6 +294,7 @@ def get_modal_orchestrator() -> ModalOrchestrator:
 # MIGRATION HELPER
 # =============================================================================
 
+
 def is_modal_configured() -> bool:
     """
     Check if Modal is configured (for migration from Vast.ai).
@@ -309,6 +311,7 @@ def is_modal_configured() -> bool:
 # =============================================================================
 # TESTING
 # =============================================================================
+
 
 async def _test_orchestrator():
     """Test Modal orchestrator (requires deployed Modal endpoint)."""
@@ -330,9 +333,9 @@ async def _test_orchestrator():
     print("[Test 1] Validate health...")
     healthy = await orchestrator.validate_health()
     if healthy:
-        print(f"✅ Health validation passed\n")
+        print("✅ Health validation passed\n")
     else:
-        print(f"❌ Health validation failed\n")
+        print("❌ Health validation failed\n")
         return
 
     # Test 2: Get status
@@ -378,9 +381,9 @@ async def _test_orchestrator():
     status = await orchestrator.get_status()
     print(f"✅ Total requests: {status['total_requests']}\n")
 
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
     print("✅ All tests passed!")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
 
 if __name__ == "__main__":
