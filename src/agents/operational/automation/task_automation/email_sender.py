@@ -284,7 +284,11 @@ Customer: {customer_metadata.get('customer_name', 'Unknown')}
 
 Return JSON with extracted parameters relevant to the email template."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # Email parameter extraction uses message context
+        )
 
         # Parse LLM response
         try:
