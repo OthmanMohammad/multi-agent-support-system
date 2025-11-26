@@ -4,23 +4,17 @@ Customer intelligence provider.
 Fetches customer profile data, business metrics, and key indicators from the database.
 """
 
-from typing import Dict, Any, Optional
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID
-from sqlalchemy import select, func
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.services.infrastructure.context_enrichment.providers.base_provider import BaseContextProvider
-from src.database.models import (
-    Customer,
-    CustomerHealthEvent,
-    CustomerSegment,
-    CustomerNote,
-    CustomerContact,
-    Subscription
-)
-from src.database.unit_of_work import UnitOfWork
 from src.database.connection import get_db_session
+from src.database.unit_of_work import UnitOfWork
+from src.services.infrastructure.context_enrichment.providers.base_provider import (
+    BaseContextProvider,
+)
 
 
 class CustomerIntelligenceProvider(BaseContextProvider):
@@ -38,11 +32,8 @@ class CustomerIntelligenceProvider(BaseContextProvider):
     """
 
     async def fetch(
-        self,
-        customer_id: str,
-        conversation_id: Optional[str] = None,
-        **kwargs
-    ) -> Dict[str, Any]:
+        self, customer_id: str, conversation_id: str | None = None, **kwargs
+    ) -> dict[str, Any]:
         """
         Fetch customer intelligence from database.
 
@@ -72,11 +63,7 @@ class CustomerIntelligenceProvider(BaseContextProvider):
             async for session in get_db_session():
                 return await self._fetch_with_session(cust_uuid, session)
 
-    async def _fetch_with_session(
-        self,
-        customer_id: UUID,
-        session: AsyncSession
-    ) -> Dict[str, Any]:
+    async def _fetch_with_session(self, customer_id: UUID, session: AsyncSession) -> dict[str, Any]:
         """
         Fetch customer intelligence using provided session.
 
@@ -98,7 +85,7 @@ class CustomerIntelligenceProvider(BaseContextProvider):
 
             # Fetch segments
             segments = await uow.customer_segments.find_by(customer_id=customer_id)
-            segment_names = [seg.segment_name for seg in segments if hasattr(seg, 'segment_name')]
+            segment_names = [seg.segment_name for seg in segments if hasattr(seg, "segment_name")]
 
             # Fetch recent health events
             health_events = await self._fetch_recent_health_events(uow, customer_id)
@@ -113,30 +100,40 @@ class CustomerIntelligenceProvider(BaseContextProvider):
             key_notes = await self._fetch_key_notes(uow, customer_id)
 
             # Calculate metrics
-            mrr = float(subscription.mrr) if subscription and hasattr(subscription, 'mrr') else 0.0
-            arr = float(subscription.arr) if subscription and hasattr(subscription, 'arr') else mrr * 12
+            mrr = float(subscription.mrr) if subscription and hasattr(subscription, "mrr") else 0.0
+            arr = (
+                float(subscription.arr)
+                if subscription and hasattr(subscription, "arr")
+                else mrr * 12
+            )
 
             # Calculate LTV (simple: ARR * 3 years)
             ltv = arr * 3 if arr > 0 else 0.0
 
             # Get health score from metadata or calculate
-            health_score = customer.extra_metadata.get('health_score', 50) if customer.extra_metadata else 50
+            health_score = (
+                customer.extra_metadata.get("health_score", 50) if customer.extra_metadata else 50
+            )
 
             # Calculate churn risk (inverse of health score with some adjustments)
             churn_risk = max(0.05, min(0.95, (100 - health_score) / 100.0))
 
             # Get NPS score from metadata
-            nps_score = customer.extra_metadata.get('nps_score') if customer.extra_metadata else None
+            nps_score = (
+                customer.extra_metadata.get("nps_score") if customer.extra_metadata else None
+            )
 
             # Calculate account age
-            customer_since = customer.created_at if hasattr(customer, 'created_at') else None
+            customer_since = customer.created_at if hasattr(customer, "created_at") else None
             account_age_days = 0
             if customer_since:
                 account_age_days = (datetime.now(UTC) - customer_since.replace(tzinfo=None)).days
 
             # Extract company size and industry from metadata
-            company_size = customer.extra_metadata.get('company_size') if customer.extra_metadata else None
-            industry = customer.extra_metadata.get('industry') if customer.extra_metadata else None
+            company_size = (
+                customer.extra_metadata.get("company_size") if customer.extra_metadata else None
+            )
+            industry = customer.extra_metadata.get("industry") if customer.extra_metadata else None
 
             # Determine health trend
             health_trend = self._calculate_health_trend(health_events)
@@ -146,29 +143,23 @@ class CustomerIntelligenceProvider(BaseContextProvider):
                 "company_name": customer.name or f"Customer {str(customer_id)[:8]}",
                 "industry": industry,
                 "company_size": company_size,
-
                 # Plan and revenue
                 "plan": customer.plan,
                 "mrr": mrr,
                 "arr": arr,
                 "ltv": ltv,
-
                 # Health metrics
                 "health_score": health_score,
                 "health_trend": health_trend,
                 "churn_risk": churn_risk,
                 "nps_score": nps_score,
-
                 # Tenure
                 "customer_since": customer_since,
                 "account_age_days": account_age_days,
-
                 # Segmentation
                 "segments": segment_names,
-
                 # Contact info
                 "primary_contact": primary_contact,
-
                 # Key notes
                 "key_notes": key_notes,
             }
@@ -178,15 +169,12 @@ class CustomerIntelligenceProvider(BaseContextProvider):
                 "fetch_failed",
                 customer_id=str(customer_id),
                 error=str(e),
-                error_type=type(e).__name__
+                error_type=type(e).__name__,
             )
             return self._get_fallback_data(str(customer_id))
 
     async def _fetch_recent_health_events(
-        self,
-        uow: UnitOfWork,
-        customer_id: UUID,
-        limit: int = 5
+        self, uow: UnitOfWork, customer_id: UUID, limit: int = 5
     ) -> list:
         """
         Fetch recent health events for customer.
@@ -200,26 +188,20 @@ class CustomerIntelligenceProvider(BaseContextProvider):
             List of recent health events
         """
         try:
-            events = await uow.customer_health_events.find_by(
-                customer_id=customer_id
-            )
+            events = await uow.customer_health_events.find_by(customer_id=customer_id)
             # Sort by created_at descending and limit
             if events:
                 events = sorted(
                     events,
-                    key=lambda e: e.created_at if hasattr(e, 'created_at') else datetime.min,
-                    reverse=True
+                    key=lambda e: e.created_at if hasattr(e, "created_at") else datetime.min,
+                    reverse=True,
                 )[:limit]
             return events
         except Exception as e:
             self.logger.warning("failed_to_fetch_health_events", error=str(e))
             return []
 
-    async def _fetch_active_subscription(
-        self,
-        uow: UnitOfWork,
-        customer_id: UUID
-    ) -> Optional[Any]:
+    async def _fetch_active_subscription(self, uow: UnitOfWork, customer_id: UUID) -> Any | None:
         """
         Fetch active subscription for customer.
 
@@ -232,8 +214,7 @@ class CustomerIntelligenceProvider(BaseContextProvider):
         """
         try:
             subscriptions = await uow.subscriptions.find_by(
-                customer_id=customer_id,
-                status="active"
+                customer_id=customer_id, status="active"
             )
             return subscriptions[0] if subscriptions else None
         except Exception as e:
@@ -241,10 +222,8 @@ class CustomerIntelligenceProvider(BaseContextProvider):
             return None
 
     async def _fetch_primary_contact(
-        self,
-        uow: UnitOfWork,
-        customer_id: UUID
-    ) -> Optional[Dict[str, Any]]:
+        self, uow: UnitOfWork, customer_id: UUID
+    ) -> dict[str, Any] | None:
         """
         Fetch primary contact for customer.
 
@@ -260,25 +239,19 @@ class CustomerIntelligenceProvider(BaseContextProvider):
             if contacts:
                 # Find primary contact or use first one
                 primary = next(
-                    (c for c in contacts if hasattr(c, 'is_primary') and c.is_primary),
-                    contacts[0]
+                    (c for c in contacts if hasattr(c, "is_primary") and c.is_primary), contacts[0]
                 )
                 return {
-                    "name": primary.name if hasattr(primary, 'name') else None,
-                    "email": primary.email if hasattr(primary, 'email') else None,
-                    "title": primary.title if hasattr(primary, 'title') else None,
+                    "name": primary.name if hasattr(primary, "name") else None,
+                    "email": primary.email if hasattr(primary, "email") else None,
+                    "title": primary.title if hasattr(primary, "title") else None,
                 }
             return None
         except Exception as e:
             self.logger.warning("failed_to_fetch_primary_contact", error=str(e))
             return None
 
-    async def _fetch_key_notes(
-        self,
-        uow: UnitOfWork,
-        customer_id: UUID,
-        limit: int = 3
-    ) -> list:
+    async def _fetch_key_notes(self, uow: UnitOfWork, customer_id: UUID, limit: int = 3) -> list:
         """
         Fetch key customer notes.
 
@@ -296,13 +269,10 @@ class CustomerIntelligenceProvider(BaseContextProvider):
                 # Sort by created_at descending
                 notes = sorted(
                     notes,
-                    key=lambda n: n.created_at if hasattr(n, 'created_at') else datetime.min,
-                    reverse=True
+                    key=lambda n: n.created_at if hasattr(n, "created_at") else datetime.min,
+                    reverse=True,
                 )[:limit]
-                return [
-                    note.content if hasattr(note, 'content') else str(note)
-                    for note in notes
-                ]
+                return [note.content if hasattr(note, "content") else str(note) for note in notes]
             return []
         except Exception as e:
             self.logger.warning("failed_to_fetch_notes", error=str(e))
@@ -323,8 +293,9 @@ class CustomerIntelligenceProvider(BaseContextProvider):
 
         # Get last two health score changes
         score_changes = [
-            event for event in health_events
-            if hasattr(event, 'event_type') and event.event_type == "health_score_change"
+            event
+            for event in health_events
+            if hasattr(event, "event_type") and event.event_type == "health_score_change"
         ][:2]
 
         if len(score_changes) < 2:
@@ -332,7 +303,7 @@ class CustomerIntelligenceProvider(BaseContextProvider):
 
         # Compare old_value to new_value
         recent = score_changes[0]
-        if hasattr(recent, 'old_value') and hasattr(recent, 'new_value'):
+        if hasattr(recent, "old_value") and hasattr(recent, "new_value"):
             if recent.new_value and recent.old_value:
                 change = float(recent.new_value) - float(recent.old_value)
                 if change > 5:
@@ -342,7 +313,7 @@ class CustomerIntelligenceProvider(BaseContextProvider):
 
         return "stable"
 
-    def _get_fallback_data(self, customer_id: str) -> Dict[str, Any]:
+    def _get_fallback_data(self, customer_id: str) -> dict[str, Any]:
         """
         Get fallback data when database query fails.
 
