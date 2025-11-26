@@ -803,7 +803,11 @@ Strategy Framework:
 
 Generate a consultative upsell response focused on value."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # Upsell analysis uses account/usage context
+        )
         return response
 
 
