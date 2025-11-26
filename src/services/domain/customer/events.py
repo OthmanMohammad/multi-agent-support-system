@@ -4,12 +4,14 @@ Customer Domain Events - Event definitions
 
 from dataclasses import dataclass, field
 from uuid import UUID
+
 from src.core.events import DomainEvent
 
 
 @dataclass
 class CustomerCreatedEvent(DomainEvent):
     """Customer account was created"""
+
     customer_id: UUID = field(default=None)
     email: str = field(default="")
     plan: str = field(default="free")
@@ -18,6 +20,7 @@ class CustomerCreatedEvent(DomainEvent):
 @dataclass
 class CustomerPlanUpgradedEvent(DomainEvent):
     """Customer upgraded their plan"""
+
     customer_id: UUID = field(default=None)
     email: str = field(default="")
     old_plan: str = field(default="")
@@ -28,6 +31,7 @@ class CustomerPlanUpgradedEvent(DomainEvent):
 @dataclass
 class CustomerPlanDowngradedEvent(DomainEvent):
     """Customer downgraded their plan"""
+
     customer_id: UUID = field(default=None)
     email: str = field(default="")
     old_plan: str = field(default="")
@@ -38,6 +42,7 @@ class CustomerPlanDowngradedEvent(DomainEvent):
 @dataclass
 class RateLimitExceededEvent(DomainEvent):
     """Customer exceeded rate limit"""
+
     customer_id: UUID = field(default=None)
     email: str = field(default="")
     plan: str = field(default="")
@@ -48,6 +53,7 @@ class RateLimitExceededEvent(DomainEvent):
 @dataclass
 class CustomerBlockedEvent(DomainEvent):
     """Customer account was blocked"""
+
     customer_id: UUID = field(default=None)
     email: str = field(default="")
     reason: str = field(default="")
