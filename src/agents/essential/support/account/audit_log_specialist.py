@@ -2,11 +2,10 @@
 Audit Log Specialist Agent - Helps search, explain, and analyze audit logs.
 """
 
-from typing import Dict, Any
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("audit_log_specialist", tier="essential", category="account")
@@ -21,15 +20,10 @@ class AuditLogSpecialist(BaseAgent):
         "security": "Security events (failed logins)",
         "api": "API access and key usage",
         "billing": "Billing changes",
-        "settings": "Account settings changes"
+        "settings": "Account settings changes",
     }
 
-    RETENTION_PERIODS = {
-        "free": 30,
-        "basic": 30,
-        "premium": 90,
-        "enterprise": 365
-    }
+    RETENTION_PERIODS = {"free": 30, "basic": 30, "premium": 90, "enterprise": 365}
 
     def __init__(self):
         config = AgentConfig(
@@ -38,7 +32,7 @@ class AuditLogSpecialist(BaseAgent):
             temperature=0.3,
             capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="account",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -46,23 +40,23 @@ class AuditLogSpecialist(BaseAgent):
     async def process(self, state: AgentState) -> AgentState:
         self.logger.info("audit_log_processing_started")
         state = self.update_state(state)
-        
+
         message = state["current_message"]
         customer_context = state.get("customer_metadata", {})
         plan = customer_context.get("plan", "free")
         action = self._detect_audit_action(message)
-        
+
         kb_results = await self.search_knowledge_base(message, category="account", limit=2)
         state["kb_results"] = kb_results
-        
+
         response = self._generate_audit_guide(action, plan)
-        
+
         state["agent_response"] = response
         state["audit_action"] = action
         state["response_confidence"] = 0.85
         state["next_agent"] = None
         state["status"] = "resolved"
-        
+
         self.logger.info("audit_processing_completed", action=action)
         return state
 
@@ -337,7 +331,7 @@ Create your own alert conditions
 Settings > Security > Alerts > Enable All"""
 
         elif action == "summary":
-            return f"""**📊 Security Summary - Last 30 Days**
+            return """**📊 Security Summary - Last 30 Days**
 
 **Overview:**
 - Total Events: 2,450
@@ -480,15 +474,16 @@ Audit access grants
 - Setup automated alerts
 - Export for compliance"""
 
+
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
         agent = AuditLogSpecialist()
         state = create_initial_state(
-            "How do I search audit logs?",
-            context={"customer_metadata": {"plan": "premium"}}
+            "How do I search audit logs?", context={"customer_metadata": {"plan": "premium"}}
         )
         result = await agent.process(state)
         print(f"Action: {result.get('audit_action')}")
