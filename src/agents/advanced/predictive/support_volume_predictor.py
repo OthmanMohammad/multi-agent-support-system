@@ -5,13 +5,13 @@ Forecasts support ticket volume for staffing optimization using ARIMA time serie
 Provides 7-day and 30-day forecasts with staffing recommendations.
 """
 
-from typing import Dict, Any, List
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("support_volume_predictor", tier="advanced", category="predictive")
@@ -25,7 +25,7 @@ class SupportVolumePredictorAgent(BaseAgent):
             temperature=0.1,
             max_tokens=1200,
             capabilities=[AgentCapability.DATABASE_READ],
-            tier="advanced"
+            tier="advanced",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -47,31 +47,34 @@ class SupportVolumePredictorAgent(BaseAgent):
             forecast=forecast,
             status="resolved",
             response_confidence=0.82,
-            next_agent=None
+            next_agent=None,
         )
 
-    def _generate_forecast(self, days: int) -> List[Dict[str, Any]]:
+    def _generate_forecast(self, days: int) -> list[dict[str, Any]]:
         """Generate volume forecast."""
         import random
+
         base_volume = 150
         forecast = []
 
         for i in range(days):
-            date = datetime.now(UTC) + timedelta(days=i+1)
+            date = datetime.now(UTC) + timedelta(days=i + 1)
             # Simulate forecast with some variation
             predicted = int(base_volume * (1 + random.uniform(-0.15, 0.15)))
 
-            forecast.append({
-                "date": date.strftime("%Y-%m-%d"),
-                "predicted_tickets": predicted,
-                "confidence_lower": int(predicted * 0.85),
-                "confidence_upper": int(predicted * 1.15),
-                "agents_needed": max(8, int(predicted / 15))
-            })
+            forecast.append(
+                {
+                    "date": date.strftime("%Y-%m-%d"),
+                    "predicted_tickets": predicted,
+                    "confidence_lower": int(predicted * 0.85),
+                    "confidence_upper": int(predicted * 1.15),
+                    "agents_needed": max(8, int(predicted / 15)),
+                }
+            )
 
         return forecast
 
-    def _format_forecast_report(self, forecast: List[Dict[str, Any]]) -> str:
+    def _format_forecast_report(self, forecast: list[dict[str, Any]]) -> str:
         """Format forecast report."""
         report = "**Support Volume Forecast**\n\n"
 
