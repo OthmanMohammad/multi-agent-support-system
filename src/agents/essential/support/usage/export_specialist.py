@@ -4,12 +4,10 @@ Export Specialist Agent - Helps with data exports.
 Specialist for exporting data in various formats (CSV, PDF, JSON, Excel).
 """
 
-from typing import Dict, Any, Optional
-
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("export_specialist", tier="essential", category="usage")
@@ -34,7 +32,7 @@ class ExportSpecialist(BaseAgent):
             "file_extension": ".csv",
             "max_size": "Unlimited",
             "pros": ["Universal compatibility", "Lightweight", "Easy to edit"],
-            "cons": ["No formatting", "No formulas", "Plain text only"]
+            "cons": ["No formatting", "No formulas", "Plain text only"],
         },
         "pdf": {
             "name": "PDF (Portable Document Format)",
@@ -43,7 +41,7 @@ class ExportSpecialist(BaseAgent):
             "file_extension": ".pdf",
             "max_size": "50 MB per file",
             "pros": ["Professional appearance", "Preserves formatting", "Shareable"],
-            "cons": ["Not editable", "Larger file size", "Limited to 50MB"]
+            "cons": ["Not editable", "Larger file size", "Limited to 50MB"],
         },
         "json": {
             "name": "JSON (JavaScript Object Notation)",
@@ -52,7 +50,7 @@ class ExportSpecialist(BaseAgent):
             "file_extension": ".json",
             "max_size": "Unlimited",
             "pros": ["Machine-readable", "Preserves structure", "API-friendly"],
-            "cons": ["Not human-friendly", "Requires technical knowledge"]
+            "cons": ["Not human-friendly", "Requires technical knowledge"],
         },
         "xlsx": {
             "name": "Excel (XLSX)",
@@ -61,7 +59,7 @@ class ExportSpecialist(BaseAgent):
             "file_extension": ".xlsx",
             "max_size": "100 MB per file",
             "pros": ["Preserves formulas", "Multiple sheets", "Rich formatting"],
-            "cons": ["Requires Excel or compatible app", "Larger than CSV"]
+            "cons": ["Requires Excel or compatible app", "Larger than CSV"],
         },
         "xml": {
             "name": "XML (Extensible Markup Language)",
@@ -70,8 +68,8 @@ class ExportSpecialist(BaseAgent):
             "file_extension": ".xml",
             "max_size": "Unlimited",
             "pros": ["Industry standard", "Hierarchical data", "Self-describing"],
-            "cons": ["Verbose", "Requires parsing", "Technical"]
-        }
+            "cons": ["Verbose", "Requires parsing", "Technical"],
+        },
     }
 
     EXPORT_TYPES = {
@@ -81,7 +79,7 @@ class ExportSpecialist(BaseAgent):
         "time_tracking": "Time entries and activity logs",
         "comments": "All comments and discussions",
         "attachments": "Files and documents (links only in CSV/JSON)",
-        "everything": "Complete account backup (all data)"
+        "everything": "Complete account backup (all data)",
     }
 
     def __init__(self):
@@ -89,12 +87,9 @@ class ExportSpecialist(BaseAgent):
             name="export_specialist",
             type=AgentType.SPECIALIST,
             temperature=0.3,
-            capabilities=[
-                AgentCapability.KB_SEARCH,
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="usage",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -110,18 +105,14 @@ class ExportSpecialist(BaseAgent):
         self.logger.debug(
             "export_processing_started",
             message_preview=message[:100],
-            turn_count=state["turn_count"]
+            turn_count=state["turn_count"],
         )
 
         # Extract export intent
         export_type = self._extract_export_type(message)
         data_to_export = self._extract_data_type(message)
 
-        self.logger.info(
-            "export_intent_detected",
-            format=export_type,
-            data_type=data_to_export
-        )
+        self.logger.info("export_intent_detected", format=export_type, data_type=data_to_export)
 
         # Generate appropriate response
         if export_type == "help" or (not export_type and not data_to_export):
@@ -137,17 +128,12 @@ class ExportSpecialist(BaseAgent):
 
         # Search KB for export documentation
         kb_results = await self.search_knowledge_base(
-            "data export guide",
-            category="usage",
-            limit=2
+            "data export guide", category="usage", limit=2
         )
         state["kb_results"] = kb_results
 
         if kb_results:
-            self.logger.info(
-                "export_kb_articles_found",
-                count=len(kb_results)
-            )
+            self.logger.info("export_kb_articles_found", count=len(kb_results))
             response += "\n\n**📚 Export documentation:**\n"
             for i, article in enumerate(kb_results, 1):
                 response += f"{i}. {article['title']}\n"
@@ -163,19 +149,21 @@ class ExportSpecialist(BaseAgent):
             "export_guidance_completed",
             format=export_type,
             data_type=data_to_export,
-            status="resolved"
+            status="resolved",
         )
 
         return state
 
-    def _extract_export_type(self, message: str) -> Optional[str]:
+    def _extract_export_type(self, message: str) -> str | None:
         """Extract export format from message"""
         message_lower = message.lower()
 
-        if any(word in message_lower for word in ["help", "what formats", "which format", "options"]):
+        if any(
+            word in message_lower for word in ["help", "what formats", "which format", "options"]
+        ):
             return "help"
 
-        for format_key in self.EXPORT_FORMATS.keys():
+        for format_key in self.EXPORT_FORMATS:
             if format_key in message_lower:
                 return format_key
 
@@ -187,11 +175,11 @@ class ExportSpecialist(BaseAgent):
 
         return None
 
-    def _extract_data_type(self, message: str) -> Optional[str]:
+    def _extract_data_type(self, message: str) -> str | None:
         """Extract data type to export from message"""
         message_lower = message.lower()
 
-        for data_key in self.EXPORT_TYPES.keys():
+        for data_key in self.EXPORT_TYPES:
             if data_key in message_lower:
                 return data_key
 
@@ -207,18 +195,19 @@ class ExportSpecialist(BaseAgent):
 
     def _explain_export_options(self) -> str:
         """Explain available export formats and data types"""
-        formats = "\n".join([
-            f"**{info['name']}** ({key.upper()})\n"
-            f"   • {info['description']}\n"
-            f"   • Best for: {info['use_case']}\n"
-            f"   • Max size: {info['max_size']}"
-            for key, info in self.EXPORT_FORMATS.items()
-        ])
+        formats = "\n".join(
+            [
+                f"**{info['name']}** ({key.upper()})\n"
+                f"   • {info['description']}\n"
+                f"   • Best for: {info['use_case']}\n"
+                f"   • Max size: {info['max_size']}"
+                for key, info in self.EXPORT_FORMATS.items()
+            ]
+        )
 
-        data_types = "\n".join([
-            f"• **{key.title()}** - {desc}"
-            for key, desc in self.EXPORT_TYPES.items()
-        ])
+        data_types = "\n".join(
+            [f"• **{key.title()}** - {desc}" for key, desc in self.EXPORT_TYPES.items()]
+        )
 
         return f"""**📤 Data Export Guide**
 
@@ -245,15 +234,15 @@ class ExportSpecialist(BaseAgent):
         format_info = self.EXPORT_FORMATS.get(export_format, {})
         data_desc = self.EXPORT_TYPES.get(data_type, "selected data")
 
-        return f"""**📤 Exporting {data_type.title()} as {format_info.get('name', export_format.upper())}**
+        return f"""**📤 Exporting {data_type.title()} as {format_info.get("name", export_format.upper())}**
 
 **What you're exporting:**
 {data_desc}
 
 **Format details:**
-• File type: {format_info.get('name', export_format.upper())}
-• Extension: {format_info.get('file_extension', '')}
-• Max size: {format_info.get('max_size', 'Unlimited')}
+• File type: {format_info.get("name", export_format.upper())}
+• Extension: {format_info.get("file_extension", "")}
+• Max size: {format_info.get("max_size", "Unlimited")}
 
 **Step-by-step instructions:**
 
@@ -267,7 +256,7 @@ class ExportSpecialist(BaseAgent):
    • Apply any filters (optional)
 
 3. **Choose format**
-   • Select **"{format_info.get('name', export_format.upper())}"** from format dropdown
+   • Select **"{format_info.get("name", export_format.upper())}"** from format dropdown
    • Configure export options (if available)
 
 4. **Generate export**
@@ -304,23 +293,22 @@ class ExportSpecialist(BaseAgent):
         """Explain format and ask what data to export"""
         format_info = self.EXPORT_FORMATS.get(export_format, {})
 
-        data_options = "\n".join([
-            f"• **{key.title()}** - {desc}"
-            for key, desc in self.EXPORT_TYPES.items()
-        ])
+        data_options = "\n".join(
+            [f"• **{key.title()}** - {desc}" for key, desc in self.EXPORT_TYPES.items()]
+        )
 
-        return f"""**You've chosen {format_info.get('name', export_format.upper())} format** ✓
+        return f"""**You've chosen {format_info.get("name", export_format.upper())} format** ✓
 
 **Format details:**
-• {format_info.get('description', '')}
-• Best for: {format_info.get('use_case', '')}
-• File size limit: {format_info.get('max_size', 'Unlimited')}
+• {format_info.get("description", "")}
+• Best for: {format_info.get("use_case", "")}
+• File size limit: {format_info.get("max_size", "Unlimited")}
 
 **Pros:**
-{chr(10).join(['  ✓ ' + pro for pro in format_info.get('pros', [])])}
+{chr(10).join(["  ✓ " + pro for pro in format_info.get("pros", [])])}
 
 **Cons:**
-{chr(10).join(['  ✗ ' + con for con in format_info.get('cons', [])])}
+{chr(10).join(["  ✗ " + con for con in format_info.get("cons", [])])}
 
 **What would you like to export?**
 
@@ -333,10 +321,12 @@ Just tell me what you want to export, and I'll provide detailed instructions!
         """Explain data type and ask which format"""
         data_desc = self.EXPORT_TYPES.get(data_type, "data")
 
-        formats = "\n".join([
-            f"• **{info['name']}** - {info['use_case']}"
-            for key, info in self.EXPORT_FORMATS.items()
-        ])
+        formats = "\n".join(
+            [
+                f"• **{info['name']}** - {info['use_case']}"
+                for key, info in self.EXPORT_FORMATS.items()
+            ]
+        )
 
         return f"""**You want to export: {data_type.title()}** ✓
 
@@ -359,6 +349,7 @@ Let me know your preferred format!
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
