@@ -7,19 +7,19 @@ feature requests, and product changes.
 Part of: STORY-002 Knowledge Base Swarm (TASK-208)
 """
 
-from typing import List, Dict, Optional
 from collections import Counter
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
+
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
-from src.agents.base.base_agent import BaseAgent
-from src.agents.base.agent_types import AgentType
 from src.agents.base import AgentConfig
-from src.workflow.state import AgentState
+from src.agents.base.agent_types import AgentType
+from src.agents.base.base_agent import BaseAgent
 from src.database.connection import get_db_session
 from src.database.models import Conversation
 from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 class KBSuggester(BaseAgent):
@@ -40,7 +40,7 @@ class KBSuggester(BaseAgent):
             type=AgentType.SPECIALIST,
             temperature=0.3,
             max_tokens=512,
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -62,39 +62,24 @@ class KBSuggester(BaseAgent):
         limit = state.get("suggestion_limit", 10)
 
         self.logger.info(
-            "kb_suggestion_generation_started",
-            gaps_count=len(kb_gaps),
-            days=days,
-            limit=limit
+            "kb_suggestion_generation_started", gaps_count=len(kb_gaps), days=days, limit=limit
         )
 
         # Generate suggestions
-        suggestions = await self.generate_suggestions(
-            kb_gaps=kb_gaps,
-            days=days,
-            limit=limit
-        )
+        suggestions = await self.generate_suggestions(kb_gaps=kb_gaps, days=days, limit=limit)
 
         # Update state
         state = self.update_state(
-            state,
-            kb_suggestions=suggestions,
-            suggestions_count=len(suggestions)
+            state, kb_suggestions=suggestions, suggestions_count=len(suggestions)
         )
 
-        self.logger.info(
-            "kb_suggestion_generation_completed",
-            suggestions_count=len(suggestions)
-        )
+        self.logger.info("kb_suggestion_generation_completed", suggestions_count=len(suggestions))
 
         return state
 
     async def generate_suggestions(
-        self,
-        kb_gaps: List[Dict] = None,
-        days: int = 30,
-        limit: int = 10
-    ) -> List[Dict]:
+        self, kb_gaps: list[dict] | None = None, days: int = 30, limit: int = 10
+    ) -> list[dict]:
         """
         Generate KB article suggestions.
 
@@ -111,16 +96,18 @@ class KBSuggester(BaseAgent):
         # Source 1: KB gaps (highest priority)
         if kb_gaps:
             for gap in kb_gaps[:5]:  # Top 5 gaps
-                suggestions.append({
-                    "title": gap["suggested_article_title"],
-                    "category": gap["category"],
-                    "reason": f"Frequently asked ({gap['frequency']} times)",
-                    "priority": self._map_gap_priority(gap["priority_score"]),
-                    "target_audience": "all_users",
-                    "estimated_length": "medium",
-                    "should_include": gap.get("key_questions", []),
-                    "source": "gap_detection"
-                })
+                suggestions.append(
+                    {
+                        "title": gap["suggested_article_title"],
+                        "category": gap["category"],
+                        "reason": f"Frequently asked ({gap['frequency']} times)",
+                        "priority": self._map_gap_priority(gap["priority_score"]),
+                        "target_audience": "all_users",
+                        "estimated_length": "medium",
+                        "should_include": gap.get("key_questions", []),
+                        "source": "gap_detection",
+                    }
+                )
 
         # Source 2: High-volume ticket topics
         ticket_suggestions = await self._suggest_from_tickets(days)
@@ -132,7 +119,7 @@ class KBSuggester(BaseAgent):
 
         return suggestions[:limit]
 
-    async def _suggest_from_tickets(self, days: int) -> List[Dict]:
+    async def _suggest_from_tickets(self, days: int) -> list[dict]:
         """
         Suggest articles based on support ticket patterns.
 
@@ -148,18 +135,12 @@ class KBSuggester(BaseAgent):
             async with get_db_session() as session:
                 # Get conversations
                 result = await session.execute(
-                    select(Conversation).where(
-                        Conversation.created_at >= cutoff
-                    )
+                    select(Conversation).where(Conversation.created_at >= cutoff)
                 )
                 convos = result.scalars().all()
 
                 # Count primary intents
-                intent_counts = Counter([
-                    c.primary_intent
-                    for c in convos
-                    if c.primary_intent
-                ])
+                intent_counts = Counter([c.primary_intent for c in convos if c.primary_intent])
 
                 # Top 3 most common intents
                 top_intents = intent_counts.most_common(3)
@@ -167,29 +148,26 @@ class KBSuggester(BaseAgent):
                 suggestions = []
                 for intent, count in top_intents:
                     if count >= 10:  # Significant volume
-                        suggestions.append({
-                            "title": self._intent_to_title(intent),
-                            "category": self._intent_to_category(intent),
-                            "reason": f"Common support topic ({count} tickets)",
-                            "priority": "medium",
-                            "target_audience": "all_users",
-                            "estimated_length": "short",
-                            "should_include": ["Quick steps", "Common issues"],
-                            "source": "support_tickets"
-                        })
+                        suggestions.append(
+                            {
+                                "title": self._intent_to_title(intent),
+                                "category": self._intent_to_category(intent),
+                                "reason": f"Common support topic ({count} tickets)",
+                                "priority": "medium",
+                                "target_audience": "all_users",
+                                "estimated_length": "short",
+                                "should_include": ["Quick steps", "Common issues"],
+                                "source": "support_tickets",
+                            }
+                        )
 
-                self.logger.info(
-                    "ticket_suggestions_generated",
-                    suggestions_count=len(suggestions)
-                )
+                self.logger.info("ticket_suggestions_generated", suggestions_count=len(suggestions))
 
                 return suggestions
 
         except SQLAlchemyError as e:
             self.logger.error(
-                "ticket_suggestions_failed",
-                error=str(e),
-                error_type=type(e).__name__
+                "ticket_suggestions_failed", error=str(e), error_type=type(e).__name__
             )
             return []
 
@@ -217,12 +195,9 @@ class KBSuggester(BaseAgent):
             "feature_export": "Exporting Your Data",
             "integration_api": "API Integration Guide",
             "integration_webhook": "Setting Up Webhooks",
-            "account_login": "Login and Authentication Help"
+            "account_login": "Login and Authentication Help",
         }
-        return intent_titles.get(
-            intent,
-            f"Guide to {intent.replace('_', ' ').title()}"
-        )
+        return intent_titles.get(intent, f"Guide to {intent.replace('_', ' ').title()}")
 
     def _intent_to_category(self, intent: str) -> str:
         """
@@ -264,7 +239,7 @@ class KBSuggester(BaseAgent):
         else:
             return "low"
 
-    def _deduplicate_suggestions(self, suggestions: List[Dict]) -> List[Dict]:
+    def _deduplicate_suggestions(self, suggestions: list[dict]) -> list[dict]:
         """
         Remove duplicate suggestions.
 
@@ -284,7 +259,7 @@ class KBSuggester(BaseAgent):
 
         return unique
 
-    def _prioritize_suggestions(self, suggestions: List[Dict]) -> List[Dict]:
+    def _prioritize_suggestions(self, suggestions: list[dict]) -> list[dict]:
         """
         Sort suggestions by priority.
 
@@ -299,7 +274,7 @@ class KBSuggester(BaseAgent):
         suggestions.sort(
             key=lambda x: (
                 priority_order.get(x.get("priority", "low"), 3),
-                x.get("source", "z")  # Prefer gap_detection over others
+                x.get("source", "z"),  # Prefer gap_detection over others
             )
         )
 
@@ -309,6 +284,7 @@ class KBSuggester(BaseAgent):
 if __name__ == "__main__":
     # Test KB Suggester
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -325,23 +301,19 @@ if __name__ == "__main__":
                 "category": "api",
                 "frequency": 25,
                 "priority_score": 85,
-                "key_questions": ["How to authenticate?", "API key setup?"]
+                "key_questions": ["How to authenticate?", "API key setup?"],
             },
             {
                 "suggested_article_title": "Data Export Tutorial",
                 "category": "usage",
                 "frequency": 15,
                 "priority_score": 65,
-                "key_questions": ["How to export?", "Export formats?"]
-            }
+                "key_questions": ["How to export?", "Export formats?"],
+            },
         ]
 
         print("\nTest 1: Generate suggestions from gaps")
-        suggestions = await suggester.generate_suggestions(
-            kb_gaps=test_gaps,
-            days=30,
-            limit=5
-        )
+        suggestions = await suggester.generate_suggestions(kb_gaps=test_gaps, days=30, limit=5)
 
         print(f"Generated {len(suggestions)} suggestions:")
         for i, suggestion in enumerate(suggestions, 1):
