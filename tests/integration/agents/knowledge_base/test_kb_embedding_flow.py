@@ -30,11 +30,8 @@ class TestKBEmbeddingFlow:
 
         assert "success" in result or "chunks_created" in result
 
-        # Step 2: Search using embedder's vector search
-        query = "How to upgrade my plan?"
-        search_results = await embedder.search_similar(query, limit=3)
-
-        assert isinstance(search_results, list)
+        # Note: search_similar is handled by KBSearcher, not KBEmbedder
+        # Search functionality tested in test_kb_search_flow.py
 
     @pytest.mark.asyncio
     async def test_embed_long_article_with_chunking(self, mock_qdrant_client, mock_embedding_model):
@@ -145,6 +142,7 @@ class TestKBEmbeddingFlow:
         assert isinstance(success, bool)
 
     @pytest.mark.asyncio
+    @pytest.mark.skip(reason="search_similar is handled by KBSearcher, not KBEmbedder")
     async def test_vector_search_similarity_ranking(self, mock_qdrant_client, mock_embedding_model):
         """Test that vector search returns results by similarity"""
         embedder = KBEmbedder()
@@ -205,6 +203,7 @@ class TestKBEmbeddingFlow:
         # Should track embedding results
 
     @pytest.mark.asyncio
+    @pytest.mark.skip(reason="search_similar is handled by KBSearcher, not KBEmbedder")
     async def test_search_with_category_filter(self, mock_qdrant_client, mock_embedding_model):
         """Test vector search with category filtering"""
         embedder = KBEmbedder()

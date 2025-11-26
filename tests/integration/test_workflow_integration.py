@@ -10,6 +10,19 @@ from src.workflow.patterns.parallel import ParallelWorkflow, ParallelAgent, Aggr
 from src.workflow.state import create_initial_state
 
 
+# Mock agent executor for testing workflows
+async def mock_agent_executor(agent_name: str, state: dict) -> dict:
+    """Mock executor that simulates agent processing"""
+    state = state.copy()
+    if "agent_history" not in state:
+        state["agent_history"] = []
+    state["agent_history"].append(agent_name)
+    state["current_agent"] = agent_name
+    state["agent_response"] = f"Response from {agent_name}"
+    state["response_confidence"] = 0.85
+    return state
+
+
 # =============================================================================
 # SEQUENTIAL WORKFLOW INTEGRATION TESTS
 # =============================================================================
@@ -18,6 +31,7 @@ from src.workflow.state import create_initial_state
 async def test_sequential_workflow_with_routing_agents():
     """Test sequential workflow with routing agents"""
     workflow = SequentialWorkflow(
+        name="test_routing_workflow",
         steps=[
             SequentialStep(agent_name="meta_router"),
         ]
@@ -28,18 +42,19 @@ async def test_sequential_workflow_with_routing_agents():
         conversation_id="test-seq-001"
     )
 
-    result = await workflow.execute(state)
+    result = await workflow.execute(state, mock_agent_executor)
 
     # Verify workflow completed
     assert result is not None
-    assert "agent_history" in result
-    assert len(result["agent_history"]) >= 1
+    assert result.success
+    assert len(result.steps_executed) >= 1
 
 
 @pytest.mark.asyncio
 async def test_sequential_workflow_multi_step():
     """Test multi-step sequential workflow"""
     workflow = SequentialWorkflow(
+        name="test_multi_step_workflow",
         steps=[
             SequentialStep(agent_name="meta_router"),
             SequentialStep(agent_name="intent_classifier"),
@@ -51,11 +66,12 @@ async def test_sequential_workflow_multi_step():
         conversation_id="test-seq-002"
     )
 
-    result = await workflow.execute(state)
+    result = await workflow.execute(state, mock_agent_executor)
 
     # Verify both steps executed
     assert result is not None
-    assert "agent_history" in result
+    assert result.success
+    assert len(result.steps_executed) == 2
 
 
 # =============================================================================
@@ -66,9 +82,10 @@ async def test_sequential_workflow_multi_step():
 async def test_parallel_workflow_with_analysis_agents():
     """Test parallel workflow with multiple analysis agents"""
     workflow = ParallelWorkflow(
+        name="test_parallel_analysis",
         agents=[
-            ParallelAgent(name="intent_classifier"),
-            ParallelAgent(name="sentiment_analyzer"),
+            ParallelAgent(agent_name="intent_classifier"),
+            ParallelAgent(agent_name="sentiment_analyzer"),
         ],
         aggregation_strategy=AggregationStrategy.MERGE
     )
@@ -78,11 +95,12 @@ async def test_parallel_workflow_with_analysis_agents():
         conversation_id="test-par-001"
     )
 
-    result = await workflow.execute(state)
+    result = await workflow.execute(state, mock_agent_executor)
 
     # Verify parallel execution
     assert result is not None
-    assert "agent_responses" in result or "agent_history" in result
+    assert result.success
+    assert len(result.agents_completed) == 2
 
 
 # =============================================================================
@@ -92,7 +110,11 @@ async def test_parallel_workflow_with_analysis_agents():
 @pytest.mark.asyncio
 async def test_sequential_workflow_handles_missing_agent():
     """Test that sequential workflow handles missing agent gracefully"""
+    async def failing_executor(agent_name: str, state: dict) -> dict:
+        raise ValueError(f"Agent {agent_name} not found")
+
     workflow = SequentialWorkflow(
+        name="test_error_handling",
         steps=[
             SequentialStep(agent_name="nonexistent_agent"),
         ]
@@ -103,15 +125,17 @@ async def test_sequential_workflow_handles_missing_agent():
         conversation_id="test-err-001"
     )
 
-    # Should handle error gracefully
-    with pytest.raises(Exception):
-        await workflow.execute(state)
+    # Should handle error and return failure result
+    result = await workflow.execute(state, failing_executor)
+    assert not result.success
+    assert result.error is not None
 
 
 @pytest.mark.asyncio
 async def test_workflow_with_timeout():
     """Test workflow execution with timeout"""
     workflow = SequentialWorkflow(
+        name="test_timeout_workflow",
         steps=[
             SequentialStep(agent_name="meta_router", timeout=30),
         ]
@@ -123,8 +147,9 @@ async def test_workflow_with_timeout():
     )
 
     # Should complete within timeout
-    result = await workflow.execute(state)
+    result = await workflow.execute(state, mock_agent_executor)
     assert result is not None
+    assert result.success
 
 
 # =============================================================================
@@ -135,6 +160,7 @@ async def test_workflow_with_timeout():
 async def test_workflow_preserves_conversation_id():
     """Test that workflows preserve conversation ID through execution"""
     workflow = SequentialWorkflow(
+        name="test_preserve_id",
         steps=[
             SequentialStep(agent_name="meta_router"),
         ]
@@ -146,16 +172,18 @@ async def test_workflow_preserves_conversation_id():
         conversation_id=conversation_id
     )
 
-    result = await workflow.execute(state)
+    result = await workflow.execute(state, mock_agent_executor)
 
     assert result is not None
-    assert result.get("conversation_id") == conversation_id
+    assert result.success
+    assert result.final_state.get("conversation_id") == conversation_id
 
 
 @pytest.mark.asyncio
 async def test_workflow_accumulates_agent_history():
     """Test that workflows accumulate agent history"""
     workflow = SequentialWorkflow(
+        name="test_history_accumulation",
         steps=[
             SequentialStep(agent_name="meta_router"),
             SequentialStep(agent_name="intent_classifier"),
@@ -167,12 +195,12 @@ async def test_workflow_accumulates_agent_history():
         conversation_id="test-history-001"
     )
 
-    result = await workflow.execute(state)
+    result = await workflow.execute(state, mock_agent_executor)
 
     # Should have history from both agents
     assert result is not None
-    assert "agent_history" in result
-    # Note: Actual history length depends on implementation
+    assert result.success
+    assert len(result.steps_executed) == 2
 
 
 # =============================================================================
@@ -183,6 +211,7 @@ async def test_workflow_accumulates_agent_history():
 async def test_workflow_with_context_enrichment():
     """Test workflow execution with context enrichment"""
     workflow = SequentialWorkflow(
+        name="test_context_enrichment",
         steps=[
             SequentialStep(agent_name="meta_router"),
         ]
@@ -200,11 +229,12 @@ async def test_workflow_with_context_enrichment():
         }
     )
 
-    result = await workflow.execute(state)
+    result = await workflow.execute(state, mock_agent_executor)
 
     # Verify context was preserved
     assert result is not None
-    assert result.get("customer_id") == "cust_123"
+    assert result.success
+    assert result.final_state.get("customer_id") == "cust_123"
 
 
 # =============================================================================
@@ -217,6 +247,7 @@ async def test_workflow_execution_performance():
     import time
 
     workflow = SequentialWorkflow(
+        name="test_performance",
         steps=[
             SequentialStep(agent_name="meta_router"),
         ]
@@ -228,11 +259,12 @@ async def test_workflow_execution_performance():
     )
 
     start_time = time.time()
-    result = await workflow.execute(state)
+    result = await workflow.execute(state, mock_agent_executor)
     execution_time = time.time() - start_time
 
     # Should complete in under 10 seconds for simple workflow
     assert result is not None
+    assert result.success
     assert execution_time < 10.0
 
 
@@ -248,6 +280,7 @@ async def test_workflow_with_shared_fixtures(job_store):
 
     # Create a simple workflow
     workflow = SequentialWorkflow(
+        name="test_fixtures",
         steps=[
             SequentialStep(agent_name="meta_router"),
         ]
@@ -258,5 +291,6 @@ async def test_workflow_with_shared_fixtures(job_store):
         conversation_id="test-fixture-001"
     )
 
-    result = await workflow.execute(state)
+    result = await workflow.execute(state, mock_agent_executor)
     assert result is not None
+    assert result.success
