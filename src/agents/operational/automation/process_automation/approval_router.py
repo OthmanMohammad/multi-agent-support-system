@@ -5,13 +5,12 @@ Auto-routes approval requests to appropriate approvers based on rules,
 amount thresholds, and organizational hierarchy.
 """
 
-from typing import Dict, Any, List
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("approval_router", tier="operational", category="automation")
@@ -21,7 +20,7 @@ class ApprovalRouterAgent(BaseAgent):
     APPROVAL_RULES = {
         "discount": {"threshold": 15, "approver": "sales_manager", "escalate_threshold": 25},
         "refund": {"threshold": 1000, "approver": "cs_manager", "escalate_threshold": 5000},
-        "contract": {"threshold": 10000, "approver": "vp_sales", "escalate_threshold": 50000}
+        "contract": {"threshold": 10000, "approver": "vp_sales", "escalate_threshold": 50000},
     }
 
     def __init__(self):
@@ -31,7 +30,7 @@ class ApprovalRouterAgent(BaseAgent):
             temperature=0.1,
             max_tokens=600,
             capabilities=[AgentCapability.DATABASE_WRITE],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -56,18 +55,18 @@ class ApprovalRouterAgent(BaseAgent):
             "approver": approver["approver"],
             "requires_escalation": approver["requires_escalation"],
             "status": "pending",
-            "created_at": datetime.now(UTC).isoformat()
+            "created_at": datetime.now(UTC).isoformat(),
         }
 
         # Send to approver
-        notification_sent = await self._notify_approver(approval_request, approver)
+        await self._notify_approver(approval_request, approver)
 
         response = f"""**Approval Request Routed**
 
-Request ID: {approval_request['id']}
+Request ID: {approval_request["id"]}
 Type: {approval_type.title()}
 Amount: ${amount:,.2f}
-Approver: {approver['approver'].replace('_', ' ').title()}
+Approver: {approver["approver"].replace("_", " ").title()}
 Status: Pending Approval
 
 Notification sent to approver."""
@@ -77,18 +76,26 @@ Notification sent to approver."""
         state["response_confidence"] = 0.96
         state["status"] = "resolved"
 
-        self.logger.info("approval_routed", approval_id=approval_request['id'])
+        self.logger.info("approval_routed", approval_id=approval_request["id"])
         return state
 
-    def _determine_approver(self, approval_type: str, amount: float) -> Dict:
+    def _determine_approver(self, approval_type: str, amount: float) -> dict:
         """Determine appropriate approver based on rules."""
         rules = self.APPROVAL_RULES.get(approval_type, self.APPROVAL_RULES["discount"])
 
         if amount >= rules["escalate_threshold"]:
-            return {"approver": "ceo", "requires_escalation": True, "threshold": rules["escalate_threshold"]}
+            return {
+                "approver": "ceo",
+                "requires_escalation": True,
+                "threshold": rules["escalate_threshold"],
+            }
         else:
-            return {"approver": rules["approver"], "requires_escalation": False, "threshold": rules["threshold"]}
+            return {
+                "approver": rules["approver"],
+                "requires_escalation": False,
+                "threshold": rules["threshold"],
+            }
 
-    async def _notify_approver(self, request: Dict, approver: Dict) -> bool:
+    async def _notify_approver(self, request: dict, approver: dict) -> bool:
         """Notify approver of pending request."""
         return True
