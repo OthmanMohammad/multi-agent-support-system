@@ -4,26 +4,33 @@
  * Provides analytics data for dashboards.
  */
 
-'use client';
+"use client";
 
-import useSWR from 'swr';
-import { analyticsAPI } from '../analytics';
-import type { AnalyticsOverview, AgentPerformance } from '@/lib/types/api';
+import useSWR from "swr";
+import { analyticsAPI } from "../analytics";
+import type { AgentPerformance, AnalyticsOverview } from "@/lib/types/api";
 
 // =============================================================================
 // USE ANALYTICS OVERVIEW
 // =============================================================================
 
-type PeriodString = '24h' | '7d' | '30d' | '90d';
+type PeriodString = "24h" | "7d" | "30d" | "90d";
 
 function periodToDays(period: number | PeriodString): number {
-  if (typeof period === 'number') return period;
+  if (typeof period === "number") {
+    return period;
+  }
   switch (period) {
-    case '24h': return 1;
-    case '7d': return 7;
-    case '30d': return 30;
-    case '90d': return 90;
-    default: return 7;
+    case "24h":
+      return 1;
+    case "7d":
+      return 7;
+    case "30d":
+      return 30;
+    case "90d":
+      return 90;
+    default:
+      return 7;
   }
 }
 
@@ -35,7 +42,7 @@ export function useAnalyticsOverview(period: number | PeriodString = 7) {
     mutate,
     isLoading,
   } = useSWR<AnalyticsOverview>(
-    ['analytics/overview', days],
+    ["analytics/overview", days],
     async () => {
       const result = await analyticsAPI.getOverview(days);
       if (result.success) {
@@ -69,7 +76,7 @@ export function useAgentPerformance(days = 7) {
     mutate,
     isLoading,
   } = useSWR<AgentPerformance[]>(
-    ['analytics/agents', days],
+    ["analytics/agents", days],
     async () => {
       const result = await analyticsAPI.getAgentPerformance(days);
       if (result.success) {
@@ -104,7 +111,7 @@ export function useConversationAnalytics(days = 7) {
     mutate,
     isLoading,
   } = useSWR<AnalyticsOverview>(
-    ['analytics/conversations', days],
+    ["analytics/conversations", days],
     async () => {
       const result = await analyticsAPI.getOverview(days);
       if (result.success) {
