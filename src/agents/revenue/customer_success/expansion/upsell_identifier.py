@@ -5,14 +5,13 @@ Identifies upsell opportunities based on usage patterns, calculates expansion po
 and recommends strategic upsell approaches to grow account value.
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta, UTC
-from decimal import Decimal
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("upsell_identifier", tier="revenue", category="customer_success")
@@ -34,18 +33,18 @@ class UpsellIdentifierAgent(BaseAgent):
         "basic": {
             "next_tier": "professional",
             "avg_uplift_pct": 150,
-            "key_features": ["advanced_analytics", "automation", "api_access"]
+            "key_features": ["advanced_analytics", "automation", "api_access"],
         },
         "professional": {
             "next_tier": "enterprise",
             "avg_uplift_pct": 200,
-            "key_features": ["custom_integrations", "dedicated_support", "sla", "sso"]
+            "key_features": ["custom_integrations", "dedicated_support", "sla", "sso"],
         },
         "enterprise": {
             "next_tier": "enterprise_plus",
             "avg_uplift_pct": 125,
-            "key_features": ["white_label", "priority_support", "custom_contracts"]
-        }
+            "key_features": ["white_label", "priority_support", "custom_contracts"],
+        },
     }
 
     # Upsell readiness thresholds
@@ -53,7 +52,7 @@ class UpsellIdentifierAgent(BaseAgent):
         "high": {"score_min": 75, "conversion_rate": 45},
         "medium": {"score_min": 50, "conversion_rate": 25},
         "low": {"score_min": 25, "conversion_rate": 10},
-        "not_ready": {"score_min": 0, "conversion_rate": 2}
+        "not_ready": {"score_min": 0, "conversion_rate": 2},
     }
 
     # Usage-based signals
@@ -62,7 +61,7 @@ class UpsellIdentifierAgent(BaseAgent):
         "feature_ceiling": {"threshold": 85, "weight": 25},
         "team_growth": {"threshold": 20, "weight": 20},
         "high_engagement": {"threshold": 75, "weight": 15},
-        "support_requests": {"threshold": 5, "weight": 10}
+        "support_requests": {"threshold": 5, "weight": 10},
     }
 
     def __init__(self):
@@ -71,12 +70,9 @@ class UpsellIdentifierAgent(BaseAgent):
             type=AgentType.SPECIALIST,
             temperature=0.4,
             max_tokens=800,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.KB_SEARCH
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.KB_SEARCH],
             kb_category="customer_success",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -104,42 +100,28 @@ class UpsellIdentifierAgent(BaseAgent):
             "upsell_identification_details",
             customer_id=customer_id,
             current_tier=contract_data.get("tier", "unknown"),
-            current_value=contract_data.get("contract_value", 0)
+            current_value=contract_data.get("contract_value", 0),
         )
 
         # Analyze usage patterns for upsell signals
-        usage_analysis = self._analyze_usage_patterns(
-            usage_data,
-            contract_data,
-            customer_metadata
-        )
+        usage_analysis = self._analyze_usage_patterns(usage_data, contract_data, customer_metadata)
 
         # Calculate upsell readiness score
         readiness_score = self._calculate_upsell_readiness(
-            usage_analysis,
-            contract_data,
-            customer_metadata
+            usage_analysis, contract_data, customer_metadata
         )
 
         # Identify specific upsell opportunities
         upsell_opportunities = self._identify_upsell_opportunities(
-            usage_analysis,
-            readiness_score,
-            contract_data,
-            customer_metadata
+            usage_analysis, readiness_score, contract_data, customer_metadata
         )
 
         # Calculate revenue potential
-        revenue_potential = self._calculate_revenue_potential(
-            upsell_opportunities,
-            contract_data
-        )
+        revenue_potential = self._calculate_revenue_potential(upsell_opportunities, contract_data)
 
         # Generate upsell strategy
         upsell_strategy = self._generate_upsell_strategy(
-            upsell_opportunities,
-            readiness_score,
-            customer_metadata
+            upsell_opportunities, readiness_score, customer_metadata
         )
 
         # Format response
@@ -148,7 +130,7 @@ class UpsellIdentifierAgent(BaseAgent):
             readiness_score,
             upsell_opportunities,
             revenue_potential,
-            upsell_strategy
+            upsell_strategy,
         )
 
         state["agent_response"] = response
@@ -166,17 +148,17 @@ class UpsellIdentifierAgent(BaseAgent):
             customer_id=customer_id,
             readiness_level=readiness_score["readiness_level"],
             opportunities_found=len(upsell_opportunities),
-            revenue_potential=revenue_potential["total_potential"]
+            revenue_potential=revenue_potential["total_potential"],
         )
 
         return state
 
     def _analyze_usage_patterns(
         self,
-        usage_data: Dict[str, Any],
-        contract_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        usage_data: dict[str, Any],
+        contract_data: dict[str, Any],
+        customer_metadata: dict[str, Any],
+    ) -> dict[str, Any]:
         """
         Analyze usage patterns for upsell indicators.
 
@@ -208,7 +190,9 @@ class UpsellIdentifierAgent(BaseAgent):
         # Check for feature ceiling (using premium features heavily)
         premium_features = usage_data.get("premium_features_used", [])
         total_features = len(usage_data.get("features_used", []))
-        feature_ceiling_reached = len(premium_features) >= total_features * 0.7 if total_features > 0 else False
+        feature_ceiling_reached = (
+            len(premium_features) >= total_features * 0.7 if total_features > 0 else False
+        )
 
         # Calculate engagement score
         login_frequency = usage_data.get("login_frequency_score", 50)
@@ -223,7 +207,10 @@ class UpsellIdentifierAgent(BaseAgent):
             signals_detected.append("power_user_behavior")
             signal_scores["power_user"] = self.USAGE_SIGNALS["power_user"]["weight"]
 
-        if feature_ceiling_reached or usage_rate >= self.USAGE_SIGNALS["feature_ceiling"]["threshold"]:
+        if (
+            feature_ceiling_reached
+            or usage_rate >= self.USAGE_SIGNALS["feature_ceiling"]["threshold"]
+        ):
             signals_detected.append("feature_ceiling_reached")
             signal_scores["feature_ceiling"] = self.USAGE_SIGNALS["feature_ceiling"]["weight"]
 
@@ -253,15 +240,15 @@ class UpsellIdentifierAgent(BaseAgent):
             "signal_scores": signal_scores,
             "total_signal_score": sum(signal_scores.values()),
             "premium_features_used": len(premium_features),
-            "analyzed_at": datetime.now(UTC).isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat(),
         }
 
     def _calculate_upsell_readiness(
         self,
-        usage_analysis: Dict[str, Any],
-        contract_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        usage_analysis: dict[str, Any],
+        contract_data: dict[str, Any],
+        customer_metadata: dict[str, Any],
+    ) -> dict[str, Any]:
         """
         Calculate customer's readiness for upsell.
 
@@ -312,9 +299,7 @@ class UpsellIdentifierAgent(BaseAgent):
         # Determine readiness level
         readiness_level = "not_ready"
         for level, config in sorted(
-            self.READINESS_THRESHOLDS.items(),
-            key=lambda x: x[1]["score_min"],
-            reverse=True
+            self.READINESS_THRESHOLDS.items(), key=lambda x: x[1]["score_min"], reverse=True
         ):
             if overall_score >= config["score_min"]:
                 readiness_level = level
@@ -349,10 +334,10 @@ class UpsellIdentifierAgent(BaseAgent):
             "conversion_probability": conversion_probability,
             "readiness_factors": readiness_factors,
             "blockers": blockers,
-            "recommended_timing": self._recommend_timing(readiness_level, usage_analysis)
+            "recommended_timing": self._recommend_timing(readiness_level, usage_analysis),
         }
 
-    def _recommend_timing(self, readiness_level: str, usage_analysis: Dict[str, Any]) -> str:
+    def _recommend_timing(self, readiness_level: str, usage_analysis: dict[str, Any]) -> str:
         """Recommend optimal timing for upsell approach."""
         if readiness_level == "high":
             return "Immediate - customer is ready for upsell conversation"
@@ -367,11 +352,11 @@ class UpsellIdentifierAgent(BaseAgent):
 
     def _identify_upsell_opportunities(
         self,
-        usage_analysis: Dict[str, Any],
-        readiness_score: Dict[str, Any],
-        contract_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        usage_analysis: dict[str, Any],
+        readiness_score: dict[str, Any],
+        contract_data: dict[str, Any],
+        customer_metadata: dict[str, Any],
+    ) -> list[dict[str, Any]]:
         """
         Identify specific upsell opportunities.
 
@@ -404,7 +389,9 @@ class UpsellIdentifierAgent(BaseAgent):
                 "incremental_revenue": projected_value - current_value,
                 "key_features": tier_info["key_features"],
                 "priority": "high" if readiness_score["readiness_level"] == "high" else "medium",
-                "business_case": self._build_tier_upgrade_case(usage_analysis, tier_info, customer_metadata)
+                "business_case": self._build_tier_upgrade_case(
+                    usage_analysis, tier_info, customer_metadata
+                ),
             }
             opportunities.append(opportunity)
 
@@ -414,52 +401,65 @@ class UpsellIdentifierAgent(BaseAgent):
             recommended_seats = int(current_seats * 1.25)  # 25% expansion
             seat_price = contract_data.get("per_seat_price", 100)
 
-            opportunities.append({
-                "opportunity_type": "seat_expansion",
-                "current_seats": current_seats,
-                "recommended_seats": recommended_seats,
-                "additional_seats": recommended_seats - current_seats,
-                "incremental_revenue": (recommended_seats - current_seats) * seat_price,
-                "priority": "high" if usage_analysis["usage_rate"] > 90 else "medium",
-                "business_case": f"Current usage at {usage_analysis['usage_rate']}% - proactive expansion recommended"
-            })
+            opportunities.append(
+                {
+                    "opportunity_type": "seat_expansion",
+                    "current_seats": current_seats,
+                    "recommended_seats": recommended_seats,
+                    "additional_seats": recommended_seats - current_seats,
+                    "incremental_revenue": (recommended_seats - current_seats) * seat_price,
+                    "priority": "high" if usage_analysis["usage_rate"] > 90 else "medium",
+                    "business_case": f"Current usage at {usage_analysis['usage_rate']}% - proactive expansion recommended",
+                }
+            )
 
         # Premium features add-on
         signals = usage_analysis.get("signals_detected", [])
         if "requesting_advanced_features" in signals or "power_user_behavior" in signals:
-            opportunities.append({
-                "opportunity_type": "premium_add_ons",
-                "recommended_add_ons": ["advanced_analytics", "api_access", "custom_integrations"],
-                "estimated_value": 5000,
-                "incremental_revenue": 5000,
-                "priority": "medium",
-                "business_case": "Power users requesting advanced capabilities"
-            })
+            opportunities.append(
+                {
+                    "opportunity_type": "premium_add_ons",
+                    "recommended_add_ons": [
+                        "advanced_analytics",
+                        "api_access",
+                        "custom_integrations",
+                    ],
+                    "estimated_value": 5000,
+                    "incremental_revenue": 5000,
+                    "priority": "medium",
+                    "business_case": "Power users requesting advanced capabilities",
+                }
+            )
 
         # Professional services
         if usage_analysis["engagement_score"] >= 70 and readiness_score["overall_score"] >= 60:
-            opportunities.append({
-                "opportunity_type": "professional_services",
-                "services": ["custom_implementation", "advanced_training", "dedicated_csm"],
-                "estimated_value": 10000,
-                "incremental_revenue": 10000,
-                "priority": "low",
-                "business_case": "High engagement suggests readiness for enhanced support"
-            })
+            opportunities.append(
+                {
+                    "opportunity_type": "professional_services",
+                    "services": ["custom_implementation", "advanced_training", "dedicated_csm"],
+                    "estimated_value": 10000,
+                    "incremental_revenue": 10000,
+                    "priority": "low",
+                    "business_case": "High engagement suggests readiness for enhanced support",
+                }
+            )
 
         # Sort by priority and incremental revenue
         priority_order = {"high": 0, "medium": 1, "low": 2}
         opportunities.sort(
-            key=lambda x: (priority_order.get(x.get("priority", "low"), 3), -x.get("incremental_revenue", 0))
+            key=lambda x: (
+                priority_order.get(x.get("priority", "low"), 3),
+                -x.get("incremental_revenue", 0),
+            )
         )
 
         return opportunities
 
     def _build_tier_upgrade_case(
         self,
-        usage_analysis: Dict[str, Any],
-        tier_info: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
+        usage_analysis: dict[str, Any],
+        tier_info: dict[str, Any],
+        customer_metadata: dict[str, Any],
     ) -> str:
         """Build business case for tier upgrade."""
         signals = usage_analysis.get("signals_detected", [])
@@ -474,10 +474,8 @@ class UpsellIdentifierAgent(BaseAgent):
             return f"Usage patterns indicate need for {tier_info['next_tier']} features"
 
     def _calculate_revenue_potential(
-        self,
-        opportunities: List[Dict[str, Any]],
-        contract_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, opportunities: list[dict[str, Any]], contract_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Calculate total revenue potential from opportunities.
 
@@ -491,15 +489,13 @@ class UpsellIdentifierAgent(BaseAgent):
         total_potential = sum(opp.get("incremental_revenue", 0) for opp in opportunities)
         current_arr = contract_data.get("contract_value", 0)
 
-        if current_arr > 0:
-            expansion_percentage = (total_potential / current_arr) * 100
-        else:
-            expansion_percentage = 0
+        expansion_percentage = total_potential / current_arr * 100 if current_arr > 0 else 0
 
         # Calculate weighted potential (by priority)
         priority_weights = {"high": 1.0, "medium": 0.6, "low": 0.3}
         weighted_potential = sum(
-            opp.get("incremental_revenue", 0) * priority_weights.get(opp.get("priority", "low"), 0.3)
+            opp.get("incremental_revenue", 0)
+            * priority_weights.get(opp.get("priority", "low"), 0.3)
             for opp in opportunities
         )
 
@@ -512,18 +508,18 @@ class UpsellIdentifierAgent(BaseAgent):
                 {
                     "type": opp["opportunity_type"],
                     "value": opp.get("incremental_revenue", 0),
-                    "priority": opp.get("priority", "medium")
+                    "priority": opp.get("priority", "medium"),
                 }
                 for opp in opportunities[:5]
-            ]
+            ],
         }
 
     def _generate_upsell_strategy(
         self,
-        opportunities: List[Dict[str, Any]],
-        readiness_score: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        opportunities: list[dict[str, Any]],
+        readiness_score: dict[str, Any],
+        customer_metadata: dict[str, Any],
+    ) -> dict[str, Any]:
         """
         Generate strategic approach for upsell.
 
@@ -540,7 +536,7 @@ class UpsellIdentifierAgent(BaseAgent):
                 "strategy": "nurture",
                 "approach": "Focus on adoption and value realization",
                 "tactics": ["Monitor usage patterns", "Provide training resources"],
-                "timeline": "ongoing"
+                "timeline": "ongoing",
             }
 
         top_opportunity = opportunities[0]
@@ -552,7 +548,7 @@ class UpsellIdentifierAgent(BaseAgent):
             "tactics": [],
             "timeline": readiness_score["recommended_timing"],
             "key_message": "",
-            "stakeholders": []
+            "stakeholders": [],
         }
 
         # Define approach based on readiness
@@ -562,7 +558,7 @@ class UpsellIdentifierAgent(BaseAgent):
                 "Schedule business review with decision maker",
                 "Present ROI analysis and expansion proposal",
                 "Demonstrate premium features addressing current limitations",
-                "Offer limited-time incentive for commitment"
+                "Offer limited-time incentive for commitment",
             ]
             strategy["stakeholders"] = ["CSM", "Account Executive", "VP Customer Success"]
         elif readiness_level == "medium":
@@ -571,7 +567,7 @@ class UpsellIdentifierAgent(BaseAgent):
                 "Share case studies of similar customers who upgraded",
                 "Provide trial access to premium features",
                 "Host demo of advanced capabilities",
-                "Gather feedback on feature needs"
+                "Gather feedback on feature needs",
             ]
             strategy["stakeholders"] = ["CSM", "Account Executive"]
         else:
@@ -580,15 +576,19 @@ class UpsellIdentifierAgent(BaseAgent):
                 "Focus on driving adoption of current features",
                 "Schedule regular success reviews",
                 "Monitor for readiness signals",
-                "Educate on product roadmap"
+                "Educate on product roadmap",
             ]
             strategy["stakeholders"] = ["CSM"]
 
         # Set key message based on opportunity
         if top_opportunity["opportunity_type"] == "tier_upgrade":
-            strategy["key_message"] = f"Unlock {top_opportunity['to_tier']} capabilities to support your growth"
+            strategy["key_message"] = (
+                f"Unlock {top_opportunity['to_tier']} capabilities to support your growth"
+            )
         elif top_opportunity["opportunity_type"] == "seat_expansion":
-            strategy["key_message"] = f"Expand from {top_opportunity['current_seats']} to {top_opportunity['recommended_seats']} seats for growing team"
+            strategy["key_message"] = (
+                f"Expand from {top_opportunity['current_seats']} to {top_opportunity['recommended_seats']} seats for growing team"
+            )
         else:
             strategy["key_message"] = "Enhance your capabilities with advanced features"
 
@@ -596,35 +596,30 @@ class UpsellIdentifierAgent(BaseAgent):
 
     def _format_upsell_report(
         self,
-        usage_analysis: Dict[str, Any],
-        readiness_score: Dict[str, Any],
-        opportunities: List[Dict[str, Any]],
-        revenue_potential: Dict[str, Any],
-        strategy: Dict[str, Any]
+        usage_analysis: dict[str, Any],
+        readiness_score: dict[str, Any],
+        opportunities: list[dict[str, Any]],
+        revenue_potential: dict[str, Any],
+        strategy: dict[str, Any],
     ) -> str:
         """Format upsell identification report."""
         readiness_level = readiness_score["readiness_level"]
 
-        readiness_emoji = {
-            "high": "????",
-            "medium": "????",
-            "low": "????",
-            "not_ready": "????"
-        }
+        readiness_emoji = {"high": "????", "medium": "????", "low": "????", "not_ready": "????"}
 
         report = f"""**???? Upsell Opportunity Analysis**
 
-**Upsell Readiness:** {readiness_level.upper().replace('_', ' ')} {readiness_emoji.get(readiness_level, '???')}
-**Readiness Score:** {readiness_score['overall_score']}/100
-**Conversion Probability:** {readiness_score['conversion_probability']}%
-**Recommended Timing:** {readiness_score['recommended_timing']}
+**Upsell Readiness:** {readiness_level.upper().replace("_", " ")} {readiness_emoji.get(readiness_level, "???")}
+**Readiness Score:** {readiness_score["overall_score"]}/100
+**Conversion Probability:** {readiness_score["conversion_probability"]}%
+**Recommended Timing:** {readiness_score["recommended_timing"]}
 
 **Usage Analysis:**
-- Active Users: {usage_analysis['active_users']} (Growth: {usage_analysis['user_growth_pct']:+.1f}%)
-- Usage Rate: {usage_analysis['usage_rate']}%
-- Power Users: {usage_analysis['power_users_count']} ({usage_analysis['power_user_pct']:.0f}%)
-- Engagement Score: {usage_analysis['engagement_score']}/100
-- Premium Features Used: {usage_analysis['premium_features_used']}
+- Active Users: {usage_analysis["active_users"]} (Growth: {usage_analysis["user_growth_pct"]:+.1f}%)
+- Usage Rate: {usage_analysis["usage_rate"]}%
+- Power Users: {usage_analysis["power_users_count"]} ({usage_analysis["power_user_pct"]:.0f}%)
+- Engagement Score: {usage_analysis["engagement_score"]}/100
+- Premium Features Used: {usage_analysis["premium_features_used"]}
 
 **Upsell Signals Detected:**
 """
@@ -651,22 +646,30 @@ class UpsellIdentifierAgent(BaseAgent):
         if opportunities:
             report += f"\n**???? Upsell Opportunities ({len(opportunities)} identified):**\n"
             for i, opp in enumerate(opportunities[:3], 1):
-                priority_icon = "????" if opp["priority"] == "high" else "????" if opp["priority"] == "medium" else "????"
+                priority_icon = (
+                    "????"
+                    if opp["priority"] == "high"
+                    else "????"
+                    if opp["priority"] == "medium"
+                    else "????"
+                )
                 report += f"\n{i}. **{opp['opportunity_type'].replace('_', ' ').title()}** {priority_icon}\n"
                 report += f"   - Incremental Revenue: ${opp.get('incremental_revenue', 0):,}\n"
                 report += f"   - Business Case: {opp.get('business_case', 'N/A')}\n"
 
         # Revenue potential
-        report += f"\n**???? Revenue Potential:**\n"
+        report += "\n**???? Revenue Potential:**\n"
         report += f"- Total Potential: ${revenue_potential['total_potential']:,}\n"
         report += f"- Weighted Potential: ${revenue_potential['weighted_potential']:,}\n"
         report += f"- Current ARR: ${revenue_potential['current_arr']:,}\n"
         report += f"- Potential Expansion: {revenue_potential['expansion_percentage']:.1f}%\n"
 
         # Strategy
-        report += f"\n**???? Recommended Strategy:**\n"
+        report += "\n**???? Recommended Strategy:**\n"
         report += f"**Approach:** {strategy['approach']}\n"
-        report += f"**Primary Focus:** {strategy['primary_opportunity'].replace('_', ' ').title()}\n"
+        report += (
+            f"**Primary Focus:** {strategy['primary_opportunity'].replace('_', ' ').title()}\n"
+        )
         report += f"**Key Message:** {strategy['key_message']}\n\n"
         report += "**Tactics:**\n"
         for tactic in strategy["tactics"][:4]:
@@ -679,6 +682,7 @@ class UpsellIdentifierAgent(BaseAgent):
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -700,9 +704,9 @@ if __name__ == "__main__":
                     "plan": "professional",
                     "industry": "technology",
                     "health_score": 85,
-                    "nps_score": 9
-                }
-            }
+                    "nps_score": 9,
+                },
+            },
         )
         state1["entities"] = {
             "usage_data": {
@@ -711,14 +715,17 @@ if __name__ == "__main__":
                 "previous_month_users": 35,
                 "power_user_threshold": 100,
                 "feature_usage_frequency": {
-                    "feature_1": 120, "feature_2": 150, "feature_3": 110,
-                    "feature_4": 95, "feature_5": 88
+                    "feature_1": 120,
+                    "feature_2": 150,
+                    "feature_3": 110,
+                    "feature_4": 95,
+                    "feature_5": 88,
                 },
                 "premium_features_used": ["analytics", "automation", "api"],
                 "features_used": ["analytics", "automation", "api", "basic"],
                 "login_frequency_score": 85,
                 "avg_session_duration_minutes": 45,
-                "advanced_feature_support_tickets": 6
+                "advanced_feature_support_tickets": 6,
             },
             "contract_data": {
                 "tier": "professional",
@@ -726,8 +733,8 @@ if __name__ == "__main__":
                 "contracted_users": 40,
                 "per_seat_price": 1250,
                 "months_as_customer": 14,
-                "payment_status": "current"
-            }
+                "payment_status": "current",
+            },
         }
 
         result1 = await agent.process(state1)
@@ -751,9 +758,9 @@ if __name__ == "__main__":
                     "plan": "basic",
                     "industry": "retail",
                     "health_score": 45,
-                    "nps_score": 5
-                }
-            }
+                    "nps_score": 5,
+                },
+            },
         )
         state2["entities"] = {
             "usage_data": {
@@ -765,7 +772,7 @@ if __name__ == "__main__":
                 "features_used": ["feature_1", "feature_2"],
                 "login_frequency_score": 30,
                 "avg_session_duration_minutes": 15,
-                "advanced_feature_support_tickets": 0
+                "advanced_feature_support_tickets": 0,
             },
             "contract_data": {
                 "tier": "basic",
@@ -773,8 +780,8 @@ if __name__ == "__main__":
                 "contracted_users": 10,
                 "per_seat_price": 1200,
                 "months_as_customer": 2,
-                "payment_status": "current"
-            }
+                "payment_status": "current",
+            },
         }
 
         result2 = await agent.process(state2)
