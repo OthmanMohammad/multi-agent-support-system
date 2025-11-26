@@ -17,18 +17,18 @@ These services are thin wrappers that:
 Business logic belongs in domain services.
 """
 
+from src.services.infrastructure.analytics_service import AnalyticsService
+from src.services.infrastructure.caching_service import CachingService
 from src.services.infrastructure.customer_service import CustomerInfrastructureService
 from src.services.infrastructure.knowledge_base_service import KnowledgeBaseService
-from src.services.infrastructure.analytics_service import AnalyticsService
 from src.services.infrastructure.notification_service import NotificationService
-from src.services.infrastructure.caching_service import CachingService
 
 __version__ = "1.0.0"
 
 __all__ = [
+    "AnalyticsService",
+    "CachingService",
     "CustomerInfrastructureService",
     "KnowledgeBaseService",
-    "AnalyticsService",
     "NotificationService",
-    "CachingService",
 ]
