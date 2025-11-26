@@ -97,6 +97,7 @@ export function ConversationSidebar(): JSX.Element {
 
           {/* Conversation List */}
           <ScrollArea className="flex-1">
+            {/* eslint-disable-next-line no-nested-ternary -- Loading/empty/data conditional */}
             {isLoading ? (
               <div className="space-y-2 p-2">
                 {Array.from({ length: 5 }).map((_, i) => (
