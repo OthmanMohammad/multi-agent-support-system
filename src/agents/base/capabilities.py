@@ -5,8 +5,8 @@ This module provides reusable capability mixins that agents can inherit
 to gain specific functionalities like KB search, collaboration, etc.
 """
 
-from typing import Dict, Any, List, Optional
 from abc import ABC
+from typing import Any
 
 
 class KBSearchCapability(ABC):
@@ -18,10 +18,7 @@ class KBSearchCapability(ABC):
     """
 
     async def search_and_synthesize(
-        self,
-        query: str,
-        category: Optional[str] = None,
-        limit: int = 3
+        self, query: str, category: str | None = None, limit: int = 3
     ) -> str:
         """
         Search KB and synthesize answer from results.
@@ -34,7 +31,7 @@ class KBSearchCapability(ABC):
         Returns:
             Synthesized KB context string
         """
-        if not hasattr(self, 'search_knowledge_base'):
+        if not hasattr(self, "search_knowledge_base"):
             return ""
 
         results = await self.search_knowledge_base(query, category, limit)
@@ -43,18 +40,15 @@ class KBSearchCapability(ABC):
             return ""
 
         # Format results for LLM consumption
-        kb_context = "\n\n".join([
-            f"Article: {r['title']}\n{r['content'][:500]}..."
-            for r in results
-        ])
+        kb_context = "\n\n".join(
+            [f"Article: {r['title']}\n{r['content'][:500]}..." for r in results]
+        )
 
         return kb_context
 
     async def get_top_article(
-        self,
-        query: str,
-        category: Optional[str] = None
-    ) -> Optional[Dict[str, Any]]:
+        self, query: str, category: str | None = None
+    ) -> dict[str, Any] | None:
         """
         Get the single most relevant KB article.
 
@@ -65,7 +59,7 @@ class KBSearchCapability(ABC):
         Returns:
             Top matching article or None
         """
-        if not hasattr(self, 'search_knowledge_base'):
+        if not hasattr(self, "search_knowledge_base"):
             return None
 
         results = await self.search_knowledge_base(query, category, limit=1)
@@ -82,11 +76,8 @@ class CollaborationCapability(ABC):
     """
 
     async def request_collaboration(
-        self,
-        agent_names: List[str],
-        pattern: str,
-        context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, agent_names: list[str], pattern: str, context: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Request collaboration from other agents.
 
@@ -105,11 +96,8 @@ class CollaborationCapability(ABC):
         )
 
     async def handoff_to_agent(
-        self,
-        target_agent: str,
-        context: Dict[str, Any],
-        reason: str
-    ) -> Dict[str, Any]:
+        self, target_agent: str, context: dict[str, Any], reason: str
+    ) -> dict[str, Any]:
         """
         Handoff conversation to another agent.
 
@@ -125,15 +113,12 @@ class CollaborationCapability(ABC):
             "target_agent": target_agent,
             "context": context,
             "reason": reason,
-            "status": "handoff_initiated"
+            "status": "handoff_initiated",
         }
 
     async def request_expert_panel(
-        self,
-        topic: str,
-        experts: List[str],
-        question: str
-    ) -> Dict[str, Any]:
+        self, topic: str, experts: list[str], question: str
+    ) -> dict[str, Any]:
         """
         Request an expert panel discussion.
 
@@ -145,12 +130,7 @@ class CollaborationCapability(ABC):
         Returns:
             Panel discussion results
         """
-        return {
-            "topic": topic,
-            "experts": experts,
-            "question": question,
-            "pattern": "expert_panel"
-        }
+        return {"topic": topic, "experts": experts, "question": question, "pattern": "expert_panel"}
 
 
 class DatabaseWriteCapability(ABC):
@@ -161,11 +141,7 @@ class DatabaseWriteCapability(ABC):
     including audit logs, analytics, and conversation history.
     """
 
-    async def write_to_db(
-        self,
-        table: str,
-        data: Dict[str, Any]
-    ) -> bool:
+    async def write_to_db(self, table: str, data: dict[str, Any]) -> bool:
         """
         Write data to database.
 
@@ -178,15 +154,9 @@ class DatabaseWriteCapability(ABC):
         """
         # This would interface with the database service
         # For now, this is a placeholder that subclasses can override
-        raise NotImplementedError(
-            "Database write capability requires database service integration"
-        )
+        raise NotImplementedError("Database write capability requires database service integration")
 
-    async def log_agent_action(
-        self,
-        action: str,
-        metadata: Dict[str, Any]
-    ) -> bool:
+    async def log_agent_action(self, action: str, metadata: dict[str, Any]) -> bool:
         """
         Log an agent action to audit log.
 
@@ -197,14 +167,10 @@ class DatabaseWriteCapability(ABC):
         Returns:
             True if logged successfully
         """
-        if not hasattr(self, 'config'):
+        if not hasattr(self, "config"):
             return False
 
-        log_data = {
-            "agent_name": self.config.name,
-            "action": action,
-            "metadata": metadata
-        }
+        log_data = {"agent_name": self.config.name, "action": action, "metadata": metadata}
 
         return await self.write_to_db("agent_audit_log", log_data)
 
@@ -218,11 +184,8 @@ class ContextEnrichmentCapability(ABC):
     """
 
     async def enrich_customer_context(
-        self,
-        customer_id: str,
-        include_history: bool = True,
-        include_preferences: bool = True
-    ) -> Dict[str, Any]:
+        self, customer_id: str, include_history: bool = True, include_preferences: bool = True
+    ) -> dict[str, Any]:
         """
         Enrich context with customer data.
 
@@ -234,7 +197,7 @@ class ContextEnrichmentCapability(ABC):
         Returns:
             Enriched context dictionary
         """
-        if not hasattr(self, 'get_enriched_context'):
+        if not hasattr(self, "get_enriched_context"):
             return {}
 
         return await self.get_enriched_context(customer_id)
@@ -248,10 +211,7 @@ class SentimentAnalysisCapability(ABC):
     and emotional tone.
     """
 
-    async def analyze_sentiment(
-        self,
-        text: str
-    ) -> Dict[str, Any]:
+    async def analyze_sentiment(self, text: str) -> dict[str, Any]:
         """
         Analyze sentiment of text.
 
@@ -266,7 +226,7 @@ class SentimentAnalysisCapability(ABC):
         return {
             "score": 0.0,  # -1 (negative) to 1 (positive)
             "classification": "neutral",
-            "confidence": 0.5
+            "confidence": 0.5,
         }
 
 
@@ -278,11 +238,7 @@ class EntityExtractionCapability(ABC):
     from unstructured text.
     """
 
-    async def extract_entities(
-        self,
-        text: str,
-        entity_types: List[str]
-    ) -> Dict[str, List[str]]:
+    async def extract_entities(self, text: str, entity_types: list[str]) -> dict[str, list[str]]:
         """
         Extract entities from text.
 
