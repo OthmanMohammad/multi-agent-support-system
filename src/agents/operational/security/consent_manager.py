@@ -5,13 +5,13 @@ Manages GDPR/CCPA consent and data subject rights.
 Handles consent tracking, opt-out mechanisms, and data access requests.
 """
 
-from typing import Dict, Any, List, Optional, Set
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("consent_manager", tier="operational", category="security")
@@ -43,50 +43,47 @@ class ConsentManagerAgent(BaseAgent):
             "name": "Essential Services",
             "description": "Required for service functionality",
             "required": True,
-            "default": True
+            "default": True,
         },
         "analytics": {
             "name": "Analytics & Performance",
             "description": "Usage analytics and performance monitoring",
             "required": False,
-            "default": False
+            "default": False,
         },
         "marketing": {
             "name": "Marketing Communications",
             "description": "Promotional emails and offers",
             "required": False,
-            "default": False
+            "default": False,
         },
         "personalization": {
             "name": "Personalization",
             "description": "Personalized content and recommendations",
             "required": False,
-            "default": False
+            "default": False,
         },
         "third_party_sharing": {
             "name": "Third-Party Sharing",
             "description": "Sharing data with partners",
             "required": False,
-            "default": False
-        }
+            "default": False,
+        },
     }
 
     # Data subject rights
     DATA_SUBJECT_RIGHTS = [
-        "access",          # GDPR Article 15
-        "rectification",   # GDPR Article 16
-        "erasure",         # GDPR Article 17 (Right to be forgotten)
-        "portability",     # GDPR Article 20
-        "restriction",     # GDPR Article 18
-        "objection",       # GDPR Article 21
-        "opt_out_sale"     # CCPA
+        "access",  # GDPR Article 15
+        "rectification",  # GDPR Article 16
+        "erasure",  # GDPR Article 17 (Right to be forgotten)
+        "portability",  # GDPR Article 20
+        "restriction",  # GDPR Article 18
+        "objection",  # GDPR Article 21
+        "opt_out_sale",  # CCPA
     ]
 
     # DSAR response timeline
-    DSAR_RESPONSE_SLA = {
-        "GDPR": timedelta(days=30),
-        "CCPA": timedelta(days=45)
-    }
+    DSAR_RESPONSE_SLA = {"GDPR": timedelta(days=30), "CCPA": timedelta(days=45)}
 
     def __init__(self):
         config = AgentConfig(
@@ -96,7 +93,7 @@ class ConsentManagerAgent(BaseAgent):
             temperature=0.1,
             max_tokens=2500,
             capabilities=[AgentCapability.DATABASE_READ, AgentCapability.DATABASE_WRITE],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -126,7 +123,7 @@ class ConsentManagerAgent(BaseAgent):
             "consent_management_details",
             request_type=request_type,
             user_id=user_id,
-            jurisdiction=jurisdiction
+            jurisdiction=jurisdiction,
         )
 
         # Process based on request type
@@ -148,19 +145,10 @@ class ConsentManagerAgent(BaseAgent):
         compliance_check = self._check_compliance(result, jurisdiction)
 
         # Generate audit trail
-        audit_entry = self._create_audit_entry(
-            request_type,
-            user_id,
-            result,
-            jurisdiction
-        )
+        audit_entry = self._create_audit_entry(request_type, user_id, result, jurisdiction)
 
         # Generate recommendations
-        recommendations = self._generate_recommendations(
-            request_type,
-            result,
-            compliance_check
-        )
+        recommendations = self._generate_recommendations(request_type, result, compliance_check)
 
         # Format response
         response = self._format_consent_report(
@@ -170,7 +158,7 @@ class ConsentManagerAgent(BaseAgent):
             consent_valid,
             compliance_check,
             audit_entry,
-            recommendations
+            recommendations,
         )
 
         state["agent_response"] = response
@@ -187,16 +175,14 @@ class ConsentManagerAgent(BaseAgent):
             "consent_management_completed",
             request_type=request_type,
             user_id=user_id,
-            status=result.get("status")
+            status=result.get("status"),
         )
 
         return state
 
     def _process_consent_update(
-        self,
-        user_id: str,
-        consent_preferences: Dict[str, bool]
-    ) -> Dict[str, Any]:
+        self, user_id: str, consent_preferences: dict[str, bool]
+    ) -> dict[str, Any]:
         """
         Process consent preference update.
 
@@ -218,14 +204,14 @@ class ConsentManagerAgent(BaseAgent):
                     return {
                         "status": "error",
                         "message": f"Cannot withdraw consent for essential purpose: {purpose}",
-                        "purpose": purpose
+                        "purpose": purpose,
                     }
 
                 updated_consents[purpose] = {
                     "granted": granted,
                     "timestamp": datetime.now(UTC).isoformat(),
                     "purpose": purpose_def["name"],
-                    "description": purpose_def["description"]
+                    "description": purpose_def["description"],
                 }
 
         return {
@@ -233,14 +219,12 @@ class ConsentManagerAgent(BaseAgent):
             "message": "Consent preferences updated",
             "user_id": user_id,
             "consents": updated_consents,
-            "updated_at": datetime.now(UTC).isoformat()
+            "updated_at": datetime.now(UTC).isoformat(),
         }
 
     def _process_consent_withdrawal(
-        self,
-        user_id: str,
-        purposes: Dict[str, bool]
-    ) -> Dict[str, Any]:
+        self, user_id: str, purposes: dict[str, bool]
+    ) -> dict[str, Any]:
         """
         Process consent withdrawal.
 
@@ -261,11 +245,13 @@ class ConsentManagerAgent(BaseAgent):
                 if purpose_def["required"]:
                     cannot_withdraw.append(purpose)
                 else:
-                    withdrawn.append({
-                        "purpose": purpose,
-                        "withdrawn_at": datetime.now(UTC).isoformat(),
-                        "effect": self._get_withdrawal_effect(purpose)
-                    })
+                    withdrawn.append(
+                        {
+                            "purpose": purpose,
+                            "withdrawn_at": datetime.now(UTC).isoformat(),
+                            "effect": self._get_withdrawal_effect(purpose),
+                        }
+                    )
 
         return {
             "status": "success",
@@ -273,15 +259,10 @@ class ConsentManagerAgent(BaseAgent):
             "user_id": user_id,
             "withdrawn": withdrawn,
             "cannot_withdraw": cannot_withdraw,
-            "processed_at": datetime.now(UTC).isoformat()
+            "processed_at": datetime.now(UTC).isoformat(),
         }
 
-    def _process_dsar(
-        self,
-        user_id: str,
-        dsar_type: str,
-        jurisdiction: str
-    ) -> Dict[str, Any]:
+    def _process_dsar(self, user_id: str, dsar_type: str, jurisdiction: str) -> dict[str, Any]:
         """
         Process Data Subject Access Request.
 
@@ -304,19 +285,13 @@ class ConsentManagerAgent(BaseAgent):
         elif dsar_type == "portability":
             result = self._process_portability_request(user_id, request_id, deadline)
         else:
-            result = {
-                "status": "error",
-                "message": f"Unknown DSAR type: {dsar_type}"
-            }
+            result = {"status": "error", "message": f"Unknown DSAR type: {dsar_type}"}
 
         return result
 
     def _process_access_request(
-        self,
-        user_id: str,
-        request_id: str,
-        deadline: datetime
-    ) -> Dict[str, Any]:
+        self, user_id: str, request_id: str, deadline: datetime
+    ) -> dict[str, Any]:
         """Process right of access request (GDPR Article 15)."""
         return {
             "status": "accepted",
@@ -330,19 +305,16 @@ class ConsentManagerAgent(BaseAgent):
                 "account_data",
                 "communication_history",
                 "usage_analytics",
-                "consent_records"
+                "consent_records",
             ],
             "format": "JSON",
             "delivery_method": "secure_download",
-            "estimated_completion": deadline.isoformat()
+            "estimated_completion": deadline.isoformat(),
         }
 
     def _process_erasure_request(
-        self,
-        user_id: str,
-        request_id: str,
-        deadline: datetime
-    ) -> Dict[str, Any]:
+        self, user_id: str, request_id: str, deadline: datetime
+    ) -> dict[str, Any]:
         """Process right to erasure request (GDPR Article 17)."""
         return {
             "status": "accepted",
@@ -355,22 +327,19 @@ class ConsentManagerAgent(BaseAgent):
                 "personal_data",
                 "account_information",
                 "communication_logs",
-                "preferences"
+                "preferences",
             ],
             "retained_data": [
                 "transaction_records",  # Legal obligation (7 years)
-                "audit_logs"  # Legitimate interest
+                "audit_logs",  # Legitimate interest
             ],
             "retention_reason": "Legal and regulatory compliance",
-            "estimated_completion": deadline.isoformat()
+            "estimated_completion": deadline.isoformat(),
         }
 
     def _process_portability_request(
-        self,
-        user_id: str,
-        request_id: str,
-        deadline: datetime
-    ) -> Dict[str, Any]:
+        self, user_id: str, request_id: str, deadline: datetime
+    ) -> dict[str, Any]:
         """Process right to data portability (GDPR Article 20)."""
         return {
             "status": "accepted",
@@ -383,27 +352,23 @@ class ConsentManagerAgent(BaseAgent):
                 "profile_data",
                 "preferences",
                 "user_generated_content",
-                "communication_history"
+                "communication_history",
             ],
             "format": "JSON",
             "machine_readable": True,
-            "estimated_completion": deadline.isoformat()
+            "estimated_completion": deadline.isoformat(),
         }
 
-    def _process_opt_out(self, user_id: str, jurisdiction: str) -> Dict[str, Any]:
+    def _process_opt_out(self, user_id: str, jurisdiction: str) -> dict[str, Any]:
         """Process CCPA opt-out of sale request."""
         return {
             "status": "success",
             "user_id": user_id,
             "message": "Opt-out of data sale processed",
             "jurisdiction": jurisdiction,
-            "opt_out_scope": [
-                "third_party_sharing",
-                "data_sale",
-                "targeted_advertising"
-            ],
+            "opt_out_scope": ["third_party_sharing", "data_sale", "targeted_advertising"],
             "effective_date": datetime.now(UTC).isoformat(),
-            "processed_at": datetime.now(UTC).isoformat()
+            "processed_at": datetime.now(UTC).isoformat(),
         }
 
     def _get_withdrawal_effect(self, purpose: str) -> str:
@@ -412,15 +377,11 @@ class ConsentManagerAgent(BaseAgent):
             "analytics": "Usage analytics will be disabled",
             "marketing": "No marketing emails will be sent",
             "personalization": "Personalized features will be disabled",
-            "third_party_sharing": "Data will not be shared with partners"
+            "third_party_sharing": "Data will not be shared with partners",
         }
         return effects.get(purpose, "Consent withdrawn for this purpose")
 
-    def _validate_consent_state(
-        self,
-        user_id: str,
-        result: Dict[str, Any]
-    ) -> bool:
+    def _validate_consent_state(self, user_id: str, result: dict[str, Any]) -> bool:
         """Validate that consent state is valid."""
         # Essential consent must always be granted
         if "consents" in result:
@@ -430,11 +391,7 @@ class ConsentManagerAgent(BaseAgent):
 
         return result.get("status") in ["success", "accepted"]
 
-    def _check_compliance(
-        self,
-        result: Dict[str, Any],
-        jurisdiction: str
-    ) -> Dict[str, Any]:
+    def _check_compliance(self, result: dict[str, Any], jurisdiction: str) -> dict[str, Any]:
         """Check compliance with regulations."""
         compliant = True
         issues = []
@@ -458,28 +415,23 @@ class ConsentManagerAgent(BaseAgent):
                     issues.append("DSAR response deadline exceeds GDPR 30-day requirement")
 
         # Check CCPA requirements
-        if jurisdiction == "CCPA":
-            if "deadline" in result:
-                deadline = datetime.fromisoformat(result["deadline"])
-                max_deadline = datetime.now(UTC) + timedelta(days=45)
-                if deadline > max_deadline:
-                    compliant = False
-                    issues.append("DSAR response deadline exceeds CCPA 45-day requirement")
+        if jurisdiction == "CCPA" and "deadline" in result:
+            deadline = datetime.fromisoformat(result["deadline"])
+            max_deadline = datetime.now(UTC) + timedelta(days=45)
+            if deadline > max_deadline:
+                compliant = False
+                issues.append("DSAR response deadline exceeds CCPA 45-day requirement")
 
         return {
             "compliant": compliant,
             "jurisdiction": jurisdiction,
             "issues": issues,
-            "checked_at": datetime.now(UTC).isoformat()
+            "checked_at": datetime.now(UTC).isoformat(),
         }
 
     def _create_audit_entry(
-        self,
-        request_type: str,
-        user_id: str,
-        result: Dict[str, Any],
-        jurisdiction: str
-    ) -> Dict[str, Any]:
+        self, request_type: str, user_id: str, result: dict[str, Any], jurisdiction: str
+    ) -> dict[str, Any]:
         """Create audit trail entry."""
         return {
             "audit_id": f"CONSENT-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}",
@@ -490,22 +442,17 @@ class ConsentManagerAgent(BaseAgent):
             "jurisdiction": jurisdiction,
             "request_id": result.get("request_id"),
             "compliance_flags": [jurisdiction, "consent_tracking"],
-            "retention_period_years": 7  # Legal requirement
+            "retention_period_years": 7,  # Legal requirement
         }
 
     def _generate_recommendations(
-        self,
-        request_type: str,
-        result: Dict[str, Any],
-        compliance_check: Dict[str, Any]
-    ) -> List[str]:
+        self, request_type: str, result: dict[str, Any], compliance_check: dict[str, Any]
+    ) -> list[str]:
         """Generate consent management recommendations."""
         recommendations = []
 
         if not compliance_check["compliant"]:
-            recommendations.append(
-                "COMPLIANCE ISSUE: " + "; ".join(compliance_check["issues"])
-            )
+            recommendations.append("COMPLIANCE ISSUE: " + "; ".join(compliance_check["issues"]))
 
         if request_type == "dsar":
             recommendations.append(
@@ -537,11 +484,11 @@ class ConsentManagerAgent(BaseAgent):
         self,
         request_type: str,
         user_id: str,
-        result: Dict[str, Any],
+        result: dict[str, Any],
         consent_valid: bool,
-        compliance_check: Dict[str, Any],
-        audit_entry: Dict[str, Any],
-        recommendations: List[str]
+        compliance_check: dict[str, Any],
+        audit_entry: dict[str, Any],
+        recommendations: list[str],
     ) -> str:
         """Format consent management report."""
         status_icon = "✅" if result.get("status") in ["success", "accepted"] else "❌"
@@ -549,18 +496,18 @@ class ConsentManagerAgent(BaseAgent):
 
         report = f"""**Consent Management Report**
 
-**Request Type:** {request_type.replace('_', ' ').upper()}
+**Request Type:** {request_type.replace("_", " ").upper()}
 **User ID:** {user_id}
-**Status:** {status_icon} {result.get('status', 'unknown').upper()}
-**Jurisdiction:** {compliance_check['jurisdiction']}
-**Compliance:** {compliance_icon} {"COMPLIANT" if compliance_check['compliant'] else "ISSUES FOUND"}
+**Status:** {status_icon} {result.get("status", "unknown").upper()}
+**Jurisdiction:** {compliance_check["jurisdiction"]}
+**Compliance:** {compliance_icon} {"COMPLIANT" if compliance_check["compliant"] else "ISSUES FOUND"}
 
 """
 
         # Consent updates
         if "consents" in result:
-            report += f"**Consent Preferences Updated:**\n"
-            for purpose, consent_info in result["consents"].items():
+            report += "**Consent Preferences Updated:**\n"
+            for _purpose, consent_info in result["consents"].items():
                 granted_icon = "✅" if consent_info["granted"] else "❌"
                 report += f"{granted_icon} {consent_info['purpose']}\n"
                 report += f"   {consent_info['description']}\n"
@@ -568,7 +515,7 @@ class ConsentManagerAgent(BaseAgent):
 
         # DSAR details
         if "request_id" in result:
-            report += f"**DSAR Details:**\n"
+            report += "**DSAR Details:**\n"
             report += f"- Request ID: {result['request_id']}\n"
             report += f"- Type: {result.get('request_type', 'unknown')}\n"
             report += f"- Deadline: {result.get('deadline', 'unknown')[:10]}\n"
@@ -583,20 +530,20 @@ class ConsentManagerAgent(BaseAgent):
 
         # Compliance issues
         if not compliance_check["compliant"]:
-            report += f"**Compliance Issues:**\n"
+            report += "**Compliance Issues:**\n"
             for issue in compliance_check["issues"]:
                 report += f"⚠️ {issue}\n"
             report += "\n"
 
         # Audit trail
-        report += f"**Audit Trail:**\n"
+        report += "**Audit Trail:**\n"
         report += f"- Audit ID: {audit_entry['audit_id']}\n"
         report += f"- Timestamp: {audit_entry['timestamp']}\n"
         report += f"- Retention: {audit_entry['retention_period_years']} years\n\n"
 
         # Recommendations
         if recommendations:
-            report += f"**Recommendations:**\n"
+            report += "**Recommendations:**\n"
             for rec in recommendations:
                 report += f"- {rec}\n"
 
