@@ -1,0 +1,165 @@
+{
+  "table": "employees",
+  "records": [
+    {
+      "id": "f7e69951-6864-4272-803d-6013fd7f47c5",
+      "email": "mark.lee@projectflow.com",
+      "name": "Mark Lee",
+      "role": "support_agent",
+      "department": "support",
+      "is_active": true
+    },
+    {
+      "id": "4ac9635f-85dd-4320-83a0-2cbfe3bdab4a",
+      "email": "jessica.anderson@projectflow.com",
+      "name": "Jessica Anderson",
+      "role": "csm",
+      "department": "customer_success",
+      "is_active": true
+    },
+    {
+      "id": "e2ce8ed0-7e45-4370-ba9b-98af5dd00bef",
+      "email": "jessica.garcia@projectflow.com",
+      "name": "Jessica Garcia",
+      "role": "csm",
+      "department": "customer_success",
+      "is_active": true
+    },
+    {
+      "id": "7443f3e6-f24c-4930-b8a0-40c3a64ce744",
+      "email": "joseph.hernandez@projectflow.com",
+      "name": "Joseph Hernandez",
+      "role": "sales_manager",
+      "department": "sales",
+      "is_active": true
+    },
+    {
+      "id": "9f3f9700-0fbb-4cb8-a16a-1276aa858fca",
+      "email": "charles.hernandez@projectflow.com",
+      "name": "Charles Hernandez",
+      "role": "sales_manager",
+      "department": "sales",
+      "is_active": true
+    },
+    {
+      "id": "e67155ae-5131-4b77-8c0d-4a036bfe9943",
+      "email": "william.thomas@projectflow.com",
+      "name": "William Thomas",
+      "role": "support_agent",
+      "department": "support",
+      "is_active": true
+    },
+    {
+      "id": "35344684-6bdc-4c13-a756-3889058dd3b7",
+      "email": "james.hall@projectflow.com",
+      "name": "James Hall",
+      "role": "sales_rep",
+      "department": "sales",
+      "is_active": true
+    },
+    {
+      "id": "3788ae45-2876-406b-b3b0-79bc814321fc",
+      "email": "lisa.martin@projectflow.com",
+      "name": "Lisa Martin",
+      "role": "sales_rep",
+      "department": "sales",
+      "is_active": true
+    },
+    {
+      "id": "918c57d8-1a6d-44cd-aa68-593578538e05",
+      "email": "lisa.hernandez@projectflow.com",
+      "name": "Lisa Hernandez",
+      "role": "csm",
+      "department": "customer_success",
+      "is_active": true
+    },
+    {
+      "id": "58b4c1de-6062-4865-b492-25bdf841b3fa",
+      "email": "lisa.jackson@projectflow.com",
+      "name": "Lisa Jackson",
+      "role": "csm",
+      "department": "customer_success",
+      "is_active": true
+    },
+    {
+      "id": "b3b69280-bce6-4bfd-aa1a-19d27dcd2f48",
+      "email": "jessica.jackson@projectflow.com",
+      "name": "Jessica Jackson",
+      "role": "csm",
+      "department": "customer_success",
+      "is_active": true
+    },
+    {
+      "id": "35bd0790-a9c9-40d9-bd45-7d0ba237bc80",
+      "email": "jessica.brown@projectflow.com",
+      "name": "Jessica Brown",
+      "role": "csm",
+      "department": "customer_success",
+      "is_active": true
+    },
+    {
+      "id": "ba7e4cf9-8afa-470f-8835-07d18ea4ef8d",
+      "email": "robert.lee@projectflow.com",
+      "name": "Robert Lee",
+      "role": "support_manager",
+      "department": "support",
+      "is_active": false
+    },
+    {
+      "id": "d5cb2e54-d560-4018-8161-0aff846e85f3",
+      "email": "jessica.moore@projectflow.com",
+      "name": "Jessica Moore",
+      "role": "support_manager",
+      "department": "support",
+      "is_active": true
+    },
+    {
+      "id": "3127dfb2-c8d0-438f-a726-516ffa5d6c02",
+      "email": "jessica.hernandez@projectflow.com",
+      "name": "Jessica Hernandez",
+      "role": "support_manager",
+      "department": "support",
+      "is_active": true
+    },
+    {
+      "id": "62ae69fc-1b2e-4c84-a339-3b443e996dce",
+      "email": "joseph.walker@projectflow.com",
+      "name": "Joseph Walker",
+      "role": "support_agent",
+      "department": "support",
+      "is_active": false
+    },
+    {
+      "id": "7c0c3185-94de-431b-a7e3-b8b393e23f68",
+      "email": "lisa.brown@projectflow.com",
+      "name": "Lisa Brown",
+      "role": "sales_rep",
+      "department": "sales",
+      "is_active": true
+    },
+    {
+      "id": "cb8fa834-a734-4211-8883-bf0d4be839b8",
+      "email": "thomas.rodriguez@projectflow.com",
+      "name": "Thomas Rodriguez",
+      "role": "sales_manager",
+      "department": "sales",
+      "is_active": true
+    },
+    {
+      "id": "4c22e9f4-25b7-407e-bfe3-7ad4f2cb04bc",
+      "email": "michael.lee@projectflow.com",
+      "name": "Michael Lee",
+      "role": "sales_manager",
+      "department": "sales",
+      "is_active": true
+    },
+    {
+      "id": "6447f031-2f44-4e59-8e8b-f3c5c0a6af1f",
+      "email": "mark.smith@projectflow.com",
+      "name": "Mark Smith",
+      "role": "sales_rep",
+      "department": "sales",
+      "is_active": true
+    }
+  ]
+}
