@@ -1,0 +1,1045 @@
+{
+  "table": "customer_integrations",
+  "records": [
+    {
+      "id": "28791da2-e2e7-47c3-b997-d46512f74c41",
+      "customer_id": "382cb212-0142-4811-975b-82bd28dd04a0",
+      "integration_type": "zapier",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_828598",
+        "channel": "#support"
+      },
+      "last_sync_at": "2025-11-26T05:15:36.229308",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "a6173c03-5532-402b-80ba-8c98661e41d8",
+      "customer_id": "e9399822-e4f9-432b-8fe8-c2f4e6a25259",
+      "integration_type": "microsoft_teams",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_140981",
+        "channel": "#engineering"
+      },
+      "last_sync_at": "2025-11-25T15:15:36.229326",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "bf243ec5-4eab-4bcc-aa6f-a80c99c705c4",
+      "customer_id": "ce9779e1-b478-4069-ab51-05488ba8f36a",
+      "integration_type": "salesforce",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_296754",
+        "channel": "#general"
+      },
+      "last_sync_at": "2025-11-25T04:15:36.229348",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "69a52433-9728-4d8c-9313-87e2c21b767f",
+      "customer_id": "b693f076-984d-42c8-8e97-196d9c4c58a4",
+      "integration_type": "microsoft_teams",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_816754",
+        "channel": "#engineering"
+      },
+      "last_sync_at": "2025-11-24T09:15:36.229361",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "abf86080-cded-4d31-82ca-92be60ddc1fc",
+      "customer_id": "137e51a3-cc91-42a0-a6b5-a07ecd725b35",
+      "integration_type": "salesforce",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_257497",
+        "channel": "#support"
+      },
+      "last_sync_at": "2025-11-26T05:15:36.229371",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "1dbad1d6-909d-4a59-8c33-26e3a25aa79b",
+      "customer_id": "6706f9be-94cb-478e-84a7-2e885c21a11f",
+      "integration_type": "salesforce",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_592148",
+        "channel": "#support"
+      },
+      "last_sync_at": "2025-11-24T14:15:36.229380",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "c679f023-35b3-43bf-b3db-bcc160f2ee4f",
+      "customer_id": "c4d3518d-55cb-4a80-9bb6-ae7bf8a3dee2",
+      "integration_type": "salesforce",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_725963",
+        "channel": "#sales"
+      },
+      "last_sync_at": "2025-11-25T12:15:36.229390",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "90aed843-4bea-49a8-b09f-3d0cc251aa90",
+      "customer_id": "c4794fd0-5ff6-49ef-9f53-8688cc248c94",
+      "integration_type": "github",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_352467",
+        "channel": "#sales"
+      },
+      "last_sync_at": "2025-11-25T17:15:36.229399",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "1f13ddeb-6ffa-4ac7-b96c-a04761475e0d",
+      "customer_id": "0c4f9845-20cf-44a7-92b1-c72428709668",
+      "integration_type": "hubspot",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_214727",
+        "channel": "#support"
+      },
+      "last_sync_at": "2025-11-25T16:15:36.229409",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "39f07f5d-69dc-470c-8b12-be8ef166cc2b",
+      "customer_id": "1d3ed106-ff41-4c25-be06-7545e9d4cadc",
+      "integration_type": "zapier",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_819916",
+        "channel": "#general"
+      },
+      "last_sync_at": "2025-11-24T09:15:36.229418",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "ea48a014-d882-4e7f-8cc4-16e7ca767063",
+      "customer_id": "7b3c3254-dc67-48c3-85be-0c55781caa95",
+      "integration_type": "zapier",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_120793",
+        "channel": "#sales"
+      },
+      "last_sync_at": "2025-11-26T04:15:36.229427",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "82277497-61e5-4ed9-89b7-17dde3219298",
+      "customer_id": "67e5fd00-fb89-43f6-a82c-33bfb70153c2",
+      "integration_type": "slack",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_170512",
+        "channel": "#support"
+      },
+      "last_sync_at": "2025-11-24T20:15:36.229437",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "84e513c4-77a1-418a-85f0-c6e320fccc15",
+      "customer_id": "9df08b32-e4d3-4c99-a730-b2b8b2f6a70e",
+      "integration_type": "microsoft_teams",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_944051",
+        "channel": "#engineering"
+      },
+      "last_sync_at": "2025-11-25T09:15:36.229447",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "cd9f7606-5f14-4ded-b2da-2f55affa78e3",
+      "customer_id": "67e5fd00-fb89-43f6-a82c-33bfb70153c2",
+      "integration_type": "hubspot",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_651723",
+        "channel": "#sales"
+      },
+      "last_sync_at": "2025-11-25T16:15:36.229456",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "d3e1988e-6e3c-4920-9edd-687d63ee3330",
+      "customer_id": "0e39bd43-2744-4950-957c-b5291bd660e1",
+      "integration_type": "zapier",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_160162",
+        "channel": "#support"
+      },
+      "last_sync_at": "2025-11-25T20:15:36.229465",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "783d0bb9-c584-4090-a909-c8c084688210",
+      "customer_id": "3abcbef6-90d3-408d-af26-25325ec21f75",
+      "integration_type": "hubspot",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_960945",
+        "channel": "#engineering"
+      },
+      "last_sync_at": "2025-11-25T04:15:36.229475",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "cb64fc4b-0d70-4211-bb79-29031a54b276",
+      "customer_id": "73a20df0-8247-439e-b5db-8a65b7a3db79",
+      "integration_type": "salesforce",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_719124",
+        "channel": "#sales"
+      },
+      "last_sync_at": "2025-11-25T12:15:36.229488",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "d0cb89c8-08c1-46e7-854e-9a3b00e0cfb9",
+      "customer_id": "47878252-2033-466e-afc0-a83ba902f2c9",
+      "integration_type": "salesforce",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_866898",
+        "channel": "#general"
+      },
+      "last_sync_at": "2025-11-24T15:15:36.229497",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "8481b17c-6fe5-424b-9cdb-71a7d2d7483d",
+      "customer_id": "af805a32-00cc-47df-aa18-67590a128f38",
+      "integration_type": "github",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_602407",
+        "channel": "#engineering"
+      },
+      "last_sync_at": "2025-11-25T04:15:36.229506",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "d4541cde-cd67-4935-84a0-4764e37a3895",
+      "customer_id": "d50bdce7-2e2b-461f-91c1-f3a701d83134",
+      "integration_type": "github",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_691421",
+        "channel": "#general"
+      },
+      "last_sync_at": "2025-11-25T06:15:36.229515",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "c9f7524d-6ad9-4db8-843d-e5041716dc79",
+      "customer_id": "ce9779e1-b478-4069-ab51-05488ba8f36a",
+      "integration_type": "microsoft_teams",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_893653",
+        "channel": "#support"
+      },
+      "last_sync_at": "2025-11-26T01:15:36.229524",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "e1fe1c59-9b4d-4d51-8238-adf5ec27b183",
+      "customer_id": "639bec07-f17f-49f9-b021-49b0204d9080",
+      "integration_type": "google_drive",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_266623",
+        "channel": "#engineering"
+      },
+      "last_sync_at": "2025-11-24T14:15:36.229533",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "e605d826-6842-4de6-8d8a-0882ec26737f",
+      "customer_id": "8360e714-2a76-4d9b-9407-b6122581ae14",
+      "integration_type": "slack",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_268319",
+        "channel": "#engineering"
+      },
+      "last_sync_at": "2025-11-24T10:15:36.229549",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "f00d9190-2007-4f96-9a82-67205a2ac143",
+      "customer_id": "b0aeb1b5-4920-4037-8c3d-7801a9267ee5",
+      "integration_type": "zapier",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_579402",
+        "channel": "#general"
+      },
+      "last_sync_at": "2025-11-24T17:15:36.229559",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "4b9855fe-633b-47f4-bbf2-c1be4ec3d631",
+      "customer_id": "77f655a4-5bb1-4c20-a1a8-59044ac2f519",
+      "integration_type": "google_drive",
+      "status": "disconnected",
+      "config": {
+        "workspace_id": "ws_280609",
+        "channel": "#support"
+      },
+      "last_sync_at": "2025-11-25T11:15:36.229569",
+      "last_sync_status": "failed",
+      "error_count": 0
+    },
+    {
+      "id": "6aa1aebb-e11b-43bb-8232-23ed3bace730",
+      "customer_id": "e4a35d4c-9f1c-401d-b92b-ecfd4a8f4430",
+      "integration_type": "microsoft_teams",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_929930",
+        "channel": "#engineering"
+      },
+      "last_sync_at": "2025-11-25T17:15:36.229578",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "1bb135ee-915b-40ab-a4ee-c0dae85a6e26",
+      "customer_id": "32497721-8f53-44fa-9dfb-ffd927800562",
+      "integration_type": "google_drive",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_799613",
+        "channel": "#engineering"
+      },
+      "last_sync_at": "2025-11-25T13:15:36.229587",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "96e45782-9342-410a-98f5-55bffc6e51a8",
+      "customer_id": "f88e07df-7fe2-45cf-983c-282547e7d2de",
+      "integration_type": "zapier",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_539527",
+        "channel": "#engineering"
+      },
+      "last_sync_at": "2025-11-25T04:15:36.229598",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "42d6abff-e682-4efd-8d84-d1face5eb9e4",
+      "customer_id": "b5bbb724-2ac7-41bb-861f-3d085cbd59ca",
+      "integration_type": "jira",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_691078",
+        "channel": "#sales"
+      },
+      "last_sync_at": "2025-11-25T20:15:36.229609",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "26877ba9-ffaa-43cf-8d7b-716694db004d",
+      "customer_id": "639bec07-f17f-49f9-b021-49b0204d9080",
+      "integration_type": "jira",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_791732",
+        "channel": "#engineering"
+      },
+      "last_sync_at": "2025-11-24T16:15:36.229619",
+      "last_sync_status": "partial",
+      "error_count": 0
+    },
+    {
+      "id": "8013ce2c-da5b-41a5-8830-21b003ef1168",
+      "customer_id": "ce9779e1-b478-4069-ab51-05488ba8f36a",
+      "integration_type": "github",
+      "status": "disconnected",
+      "config": {
+        "workspace_id": "ws_121929",
+        "channel": "#sales"
+      },
+      "last_sync_at": "2025-11-26T03:15:36.229629",
+      "last_sync_status": "failed",
+      "error_count": 0
+    },
+    {
+      "id": "08c47b0d-eb65-4e34-8991-3661808fb5ac",
+      "customer_id": "a73542a9-d3d8-4132-a178-de32f93b3d7f",
+      "integration_type": "salesforce",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_832686",
+        "channel": "#engineering"
+      },
+      "last_sync_at": "2025-11-25T01:15:36.229638",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "a350a11a-b6ce-4d50-82ca-a52281f5afb1",
+      "customer_id": "8c6ae507-65a0-4c2f-a9ce-32ab780bc766",
+      "integration_type": "jira",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_750405",
+        "channel": "#support"
+      },
+      "last_sync_at": "2025-11-25T00:15:36.229647",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "8c080fa1-9198-4c1a-9c60-d0efb3362907",
+      "customer_id": "170e76a7-8375-48e0-add5-8716af67546b",
+      "integration_type": "github",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_501353",
+        "channel": "#sales"
+      },
+      "last_sync_at": "2025-11-26T03:15:36.229661",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "8c25920f-57f7-460c-89c2-ba13b672fa87",
+      "customer_id": "83d64b0c-cd18-4563-b7e8-58f694be2649",
+      "integration_type": "salesforce",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_847138",
+        "channel": "#general"
+      },
+      "last_sync_at": "2025-11-24T23:15:36.229674",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "1cabfa94-ed6e-4960-9044-2c7950e8b0f1",
+      "customer_id": "c4794fd0-5ff6-49ef-9f53-8688cc248c94",
+      "integration_type": "zapier",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_350057",
+        "channel": "#sales"
+      },
+      "last_sync_at": "2025-11-25T23:15:36.229683",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "d1a04a71-6c90-4c21-b5ad-4ef662fb3a46",
+      "customer_id": "4e90a8f3-e5fc-4336-b4c6-14af448a7d74",
+      "integration_type": "hubspot",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_255413",
+        "channel": "#support"
+      },
+      "last_sync_at": "2025-11-26T06:15:36.229692",
+      "last_sync_status": "partial",
+      "error_count": 0
+    },
+    {
+      "id": "4ee31d14-f32f-4765-9d03-a5eb8cb85e28",
+      "customer_id": "ac4813ac-0510-40e5-b145-8a808bcd6ffd",
+      "integration_type": "jira",
+      "status": "error",
+      "config": {
+        "workspace_id": "ws_231871",
+        "channel": "#engineering"
+      },
+      "last_sync_at": "2025-11-25T17:15:36.229701",
+      "last_sync_status": "failed",
+      "error_count": 7
+    },
+    {
+      "id": "369e4d5f-5479-4342-b2fb-32f8be637c30",
+      "customer_id": "ae099772-b892-4c02-ba89-de98142926d9",
+      "integration_type": "hubspot",
+      "status": "error",
+      "config": {
+        "workspace_id": "ws_996089",
+        "channel": "#general"
+      },
+      "last_sync_at": "2025-11-25T23:15:36.229711",
+      "last_sync_status": "failed",
+      "error_count": 4
+    },
+    {
+      "id": "54e4368d-d6e7-4ae8-a7ce-154f3557e0cb",
+      "customer_id": "b93bb77c-df40-473b-85ac-0743b13f4135",
+      "integration_type": "hubspot",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_147663",
+        "channel": "#sales"
+      },
+      "last_sync_at": "2025-11-24T21:15:36.229721",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "ab11792e-0885-4e0c-a380-bfbd656c2761",
+      "customer_id": "bccfaf0f-358f-4213-9216-8d6ddd044919",
+      "integration_type": "microsoft_teams",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_493079",
+        "channel": "#sales"
+      },
+      "last_sync_at": "2025-11-25T05:15:36.229730",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "0c1d5001-4cc7-45d6-b209-76a18c57183a",
+      "customer_id": "8590b4f0-c079-43b2-bd57-5c9c09e74da2",
+      "integration_type": "zapier",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_969491",
+        "channel": "#sales"
+      },
+      "last_sync_at": "2025-11-25T19:15:36.229752",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "6a68369c-5195-4160-b3cb-7bc69a9039b6",
+      "customer_id": "83d64b0c-cd18-4563-b7e8-58f694be2649",
+      "integration_type": "google_drive",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_818219",
+        "channel": "#engineering"
+      },
+      "last_sync_at": "2025-11-25T01:15:36.229771",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "3441262f-507c-4cdd-a619-522ef157d996",
+      "customer_id": "1697dda3-fba7-4ed9-8501-5eb743331656",
+      "integration_type": "google_drive",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_852200",
+        "channel": "#engineering"
+      },
+      "last_sync_at": "2025-11-24T20:15:36.229781",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "62e1362f-4b81-4795-a70d-cce9814f93ab",
+      "customer_id": "09b82df8-c7cf-4bdb-84c6-c42436f5c622",
+      "integration_type": "salesforce",
+      "status": "error",
+      "config": {
+        "workspace_id": "ws_312378",
+        "channel": "#sales"
+      },
+      "last_sync_at": "2025-11-24T15:15:36.229794",
+      "last_sync_status": "failed",
+      "error_count": 0
+    },
+    {
+      "id": "f732fe87-9524-4633-92af-051f89e7d9ee",
+      "customer_id": "abaefea1-6f79-4158-9ab8-b7e1af90bfc4",
+      "integration_type": "google_drive",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_989800",
+        "channel": "#support"
+      },
+      "last_sync_at": "2025-11-25T10:15:36.229805",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "78685dd7-e757-4b57-9724-af547faad45e",
+      "customer_id": "3e8f199f-b160-4d81-bf07-7c4899bbfa88",
+      "integration_type": "google_drive",
+      "status": "error",
+      "config": {
+        "workspace_id": "ws_253767",
+        "channel": "#engineering"
+      },
+      "last_sync_at": "2025-11-26T02:15:36.229822",
+      "last_sync_status": "failed",
+      "error_count": 4
+    },
+    {
+      "id": "9beb8148-a651-42bd-8c89-5cd1d586708f",
+      "customer_id": "5e58f821-89f0-4cad-aa58-62a7549750c1",
+      "integration_type": "google_drive",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_392387",
+        "channel": "#general"
+      },
+      "last_sync_at": "2025-11-25T21:15:36.229833",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "e4f12131-62dc-435b-8a5b-93a2041fa567",
+      "customer_id": "c4d3518d-55cb-4a80-9bb6-ae7bf8a3dee2",
+      "integration_type": "github",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_807873",
+        "channel": "#engineering"
+      },
+      "last_sync_at": "2025-11-25T03:15:36.229843",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "efe498b9-3970-4355-b4f4-4728092535dd",
+      "customer_id": "e4a35d4c-9f1c-401d-b92b-ecfd4a8f4430",
+      "integration_type": "microsoft_teams",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_672020",
+        "channel": "#support"
+      },
+      "last_sync_at": "2025-11-25T18:15:36.229852",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "dc29f693-b394-45ed-8756-f8ec6a8e4717",
+      "customer_id": "0bd691c3-db86-4108-abba-caaf5beb8a3f",
+      "integration_type": "salesforce",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_966620",
+        "channel": "#support"
+      },
+      "last_sync_at": "2025-11-24T16:15:36.229866",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "fe9247df-3966-4ce2-aa83-92f380fc56cc",
+      "customer_id": "67afb706-102f-45fb-a3c9-92adede16938",
+      "integration_type": "salesforce",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_383135",
+        "channel": "#sales"
+      },
+      "last_sync_at": "2025-11-25T14:15:36.229875",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "8221fc1b-58d9-4631-9144-487b49fdd975",
+      "customer_id": "83ebeb4e-d87c-4e2e-af4c-9f66978be656",
+      "integration_type": "zapier",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_896041",
+        "channel": "#sales"
+      },
+      "last_sync_at": "2025-11-25T07:15:36.229884",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "dbacb094-958f-4a8a-86ac-ef876eb0659f",
+      "customer_id": "0d463c85-57cb-4053-91d3-31b54f4297fd",
+      "integration_type": "google_drive",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_964541",
+        "channel": "#general"
+      },
+      "last_sync_at": "2025-11-25T12:15:36.229894",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "6c1547ae-e4a9-4c16-bcf3-5568b05838cd",
+      "customer_id": "77f655a4-5bb1-4c20-a1a8-59044ac2f519",
+      "integration_type": "google_drive",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_148266",
+        "channel": "#sales"
+      },
+      "last_sync_at": "2025-11-25T09:15:36.229908",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "bd86092b-0244-46c5-9fc4-a6ea9514dd6a",
+      "customer_id": "3df21b21-90fa-4bff-8a46-baccf10a64b8",
+      "integration_type": "github",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_693279",
+        "channel": "#general"
+      },
+      "last_sync_at": "2025-11-24T23:15:36.229917",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "ae5c2e93-cfcb-476d-8b86-c2c5d6640244",
+      "customer_id": "2091e266-a9d7-46a8-a8dd-d52355f48e3b",
+      "integration_type": "jira",
+      "status": "error",
+      "config": {
+        "workspace_id": "ws_618011",
+        "channel": "#sales"
+      },
+      "last_sync_at": "2025-11-25T14:15:36.229927",
+      "last_sync_status": "failed",
+      "error_count": 7
+    },
+    {
+      "id": "13087d68-fc8e-49b4-bdea-b95f44a26aae",
+      "customer_id": "bccfaf0f-358f-4213-9216-8d6ddd044919",
+      "integration_type": "hubspot",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_550419",
+        "channel": "#support"
+      },
+      "last_sync_at": "2025-11-25T08:15:36.229937",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "2e52f739-4f7d-4ee9-a94d-835f3e173186",
+      "customer_id": "9e066359-f602-4d8c-bfb0-222ee6a24f8f",
+      "integration_type": "hubspot",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_857176",
+        "channel": "#support"
+      },
+      "last_sync_at": "2025-11-25T18:15:36.229946",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "38a53373-4480-4152-9f6e-660a4a03db34",
+      "customer_id": "51a91f42-d532-49b0-a67e-8581bdc0380a",
+      "integration_type": "hubspot",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_641577",
+        "channel": "#engineering"
+      },
+      "last_sync_at": "2025-11-26T08:15:36.229955",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "23e9f1bb-cc7a-4d2b-88ca-f1afab4abd33",
+      "customer_id": "c4d3518d-55cb-4a80-9bb6-ae7bf8a3dee2",
+      "integration_type": "jira",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_179216",
+        "channel": "#sales"
+      },
+      "last_sync_at": "2025-11-24T15:15:36.229965",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "11d70fb6-915d-40c7-88bc-d16672c2f3cb",
+      "customer_id": "137e51a3-cc91-42a0-a6b5-a07ecd725b35",
+      "integration_type": "hubspot",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_774085",
+        "channel": "#sales"
+      },
+      "last_sync_at": "2025-11-25T23:15:36.229974",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "4c9bbb96-eeec-4acd-999c-9dfc4a395e43",
+      "customer_id": "32497721-8f53-44fa-9dfb-ffd927800562",
+      "integration_type": "zapier",
+      "status": "error",
+      "config": {
+        "workspace_id": "ws_965095",
+        "channel": "#engineering"
+      },
+      "last_sync_at": "2025-11-25T09:15:36.229984",
+      "last_sync_status": "failed",
+      "error_count": 5
+    },
+    {
+      "id": "22f95a96-6874-481a-a7ae-695ed588aa51",
+      "customer_id": "8590b4f0-c079-43b2-bd57-5c9c09e74da2",
+      "integration_type": "salesforce",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_908785",
+        "channel": "#sales"
+      },
+      "last_sync_at": "2025-11-26T07:15:36.229994",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "42b0b947-1ef1-44c4-9747-86a75d3cfa2c",
+      "customer_id": "3df21b21-90fa-4bff-8a46-baccf10a64b8",
+      "integration_type": "hubspot",
+      "status": "error",
+      "config": {
+        "workspace_id": "ws_831377",
+        "channel": "#engineering"
+      },
+      "last_sync_at": "2025-11-24T14:15:36.230003",
+      "last_sync_status": "failed",
+      "error_count": 1
+    },
+    {
+      "id": "9fc86f5d-94cc-4887-9e98-72581e712c59",
+      "customer_id": "d7bbbadb-3eb1-48fc-a00e-0e3c6a4038d2",
+      "integration_type": "github",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_553919",
+        "channel": "#engineering"
+      },
+      "last_sync_at": "2025-11-25T13:15:36.230014",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "d54b75a1-b107-4ac6-ab1b-70c18c447c2c",
+      "customer_id": "47878252-2033-466e-afc0-a83ba902f2c9",
+      "integration_type": "google_drive",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_566282",
+        "channel": "#support"
+      },
+      "last_sync_at": "2025-11-25T18:15:36.230023",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "c0bebf2f-4eee-499f-b70c-636ebcae7884",
+      "customer_id": "0e39bd43-2744-4950-957c-b5291bd660e1",
+      "integration_type": "microsoft_teams",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_304842",
+        "channel": "#engineering"
+      },
+      "last_sync_at": "2025-11-25T02:15:36.230033",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "9b278d5d-b354-488d-9654-165293c62581",
+      "customer_id": "c4794fd0-5ff6-49ef-9f53-8688cc248c94",
+      "integration_type": "jira",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_491939",
+        "channel": "#sales"
+      },
+      "last_sync_at": "2025-11-25T05:15:36.230045",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "0a60233c-9a23-419a-b687-d510b9b86e40",
+      "customer_id": "7b3c3254-dc67-48c3-85be-0c55781caa95",
+      "integration_type": "google_drive",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_137450",
+        "channel": "#engineering"
+      },
+      "last_sync_at": "2025-11-24T23:15:36.230054",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "3fa48eab-3e7f-4cc1-b224-5e3642359e20",
+      "customer_id": "67afb706-102f-45fb-a3c9-92adede16938",
+      "integration_type": "github",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_992968",
+        "channel": "#general"
+      },
+      "last_sync_at": "2025-11-25T19:15:36.230064",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "45771f27-5d41-466c-a779-1997dc641a79",
+      "customer_id": "af805a32-00cc-47df-aa18-67590a128f38",
+      "integration_type": "hubspot",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_273888",
+        "channel": "#support"
+      },
+      "last_sync_at": "2025-11-25T12:15:36.230072",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "29712570-0cc7-40c6-9f65-4520078d7843",
+      "customer_id": "137e51a3-cc91-42a0-a6b5-a07ecd725b35",
+      "integration_type": "salesforce",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_232163",
+        "channel": "#engineering"
+      },
+      "last_sync_at": "2025-11-25T12:15:36.230583",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "7cb03183-1ab7-451a-a648-6b8b1108624a",
+      "customer_id": "63f2a4f8-b6a1-4ddf-9758-17104261c9f4",
+      "integration_type": "slack",
+      "status": "error",
+      "config": {
+        "workspace_id": "ws_332090",
+        "channel": "#support"
+      },
+      "last_sync_at": "2025-11-25T03:15:36.230623",
+      "last_sync_status": "failed",
+      "error_count": 6
+    },
+    {
+      "id": "f0773f7d-d4e7-4ab1-bc96-40b98f945a8f",
+      "customer_id": "91accb29-796e-4281-a67b-d7f7c5c34ecf",
+      "integration_type": "github",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_514815",
+        "channel": "#general"
+      },
+      "last_sync_at": "2025-11-25T08:15:36.230634",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "1aea09d4-0c1d-4ece-bba2-64d08b20fc96",
+      "customer_id": "ce9779e1-b478-4069-ab51-05488ba8f36a",
+      "integration_type": "google_drive",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_861996",
+        "channel": "#general"
+      },
+      "last_sync_at": "2025-11-25T17:15:36.230644",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "5dca91df-4f53-4361-b54e-3da28a665a7a",
+      "customer_id": "7883e9aa-844c-42ed-92d0-a731b3e82664",
+      "integration_type": "zapier",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_707800",
+        "channel": "#general"
+      },
+      "last_sync_at": "2025-11-25T10:15:36.230658",
+      "last_sync_status": "partial",
+      "error_count": 0
+    },
+    {
+      "id": "a5143117-c0fb-4e7b-afbd-9164925cc484",
+      "customer_id": "0e39bd43-2744-4950-957c-b5291bd660e1",
+      "integration_type": "zapier",
+      "status": "error",
+      "config": {
+        "workspace_id": "ws_941091",
+        "channel": "#engineering"
+      },
+      "last_sync_at": "2025-11-25T21:15:36.230673",
+      "last_sync_status": "failed",
+      "error_count": 8
+    },
+    {
+      "id": "d25c39dc-7b4c-4280-bd7e-7435278909a3",
+      "customer_id": "51a91f42-d532-49b0-a67e-8581bdc0380a",
+      "integration_type": "slack",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_510266",
+        "channel": "#sales"
+      },
+      "last_sync_at": "2025-11-24T17:15:36.230683",
+      "last_sync_status": "success",
+      "error_count": 0
+    },
+    {
+      "id": "71f67131-bfb5-4634-a720-4950de2393e7",
+      "customer_id": "d420aaed-5489-4e40-838c-318551a672b4",
+      "integration_type": "hubspot",
+      "status": "active",
+      "config": {
+        "workspace_id": "ws_752168",
+        "channel": "#general"
+      },
+      "last_sync_at": "2025-11-25T04:15:36.230692",
+      "last_sync_status": "success",
+      "error_count": 0
+    }
+  ]
+}
