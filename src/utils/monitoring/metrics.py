@@ -11,11 +11,12 @@ Tracks LLM usage metrics across all backends:
 Part of: Phase 2 - LiteLLM Multi-Backend Abstraction Layer
 """
 
-from typing import Dict, Any, Optional
-from datetime import datetime
-import structlog
-from dataclasses import dataclass, field
 from collections import defaultdict
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 
@@ -23,6 +24,7 @@ logger = structlog.get_logger(__name__)
 @dataclass
 class LLMCallMetrics:
     """Metrics for a single LLM call"""
+
     backend: str
     model: str
     input_tokens: int
@@ -30,7 +32,7 @@ class LLMCallMetrics:
     latency_ms: float
     timestamp: datetime = field(default_factory=datetime.utcnow)
     success: bool = True
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class LLMMetricsTracker:
@@ -47,7 +49,7 @@ class LLMMetricsTracker:
         self.max_recent_calls = 1000
 
         # Aggregated metrics per backend
-        self.backend_metrics: Dict[str, Dict[str, Any]] = defaultdict(
+        self.backend_metrics: dict[str, dict[str, Any]] = defaultdict(
             lambda: {
                 "total_calls": 0,
                 "successful_calls": 0,
@@ -60,7 +62,7 @@ class LLMMetricsTracker:
         )
 
         # Model-level metrics
-        self.model_metrics: Dict[str, Dict[str, Any]] = defaultdict(
+        self.model_metrics: dict[str, dict[str, Any]] = defaultdict(
             lambda: {
                 "total_calls": 0,
                 "total_input_tokens": 0,
@@ -79,7 +81,7 @@ class LLMMetricsTracker:
         output_tokens: int,
         latency_ms: float,
         success: bool = True,
-        error: Optional[str] = None,
+        error: str | None = None,
     ) -> None:
         """
         Track a single LLM call.
@@ -134,8 +136,8 @@ class LLMMetricsTracker:
             prev_avg = model_stats["avg_latency_ms"]
             total_calls = model_stats["total_calls"]
             model_stats["avg_latency_ms"] = (
-                (prev_avg * (total_calls - 1) + latency_ms) / total_calls
-            )
+                prev_avg * (total_calls - 1) + latency_ms
+            ) / total_calls
 
         logger.debug(
             "llm_call_tracked",
@@ -147,7 +149,7 @@ class LLMMetricsTracker:
             success=success,
         )
 
-    def get_backend_stats(self, backend: str) -> Dict[str, Any]:
+    def get_backend_stats(self, backend: str) -> dict[str, Any]:
         """
         Get aggregated statistics for a backend.
 
@@ -175,11 +177,7 @@ class LLMMetricsTracker:
             if stats["successful_calls"] > 0
             else 0
         )
-        error_rate = (
-            stats["failed_calls"] / total_calls
-            if total_calls > 0
-            else 0.0
-        )
+        error_rate = stats["failed_calls"] / total_calls if total_calls > 0 else 0.0
 
         return {
             "total_calls": total_calls,
@@ -191,15 +189,11 @@ class LLMMetricsTracker:
             "avg_latency_ms": round(avg_latency, 2),
             "error_rate": round(error_rate, 4),
             "top_errors": dict(
-                sorted(
-                    stats["errors"].items(),
-                    key=lambda x: x[1],
-                    reverse=True
-                )[:5]
+                sorted(stats["errors"].items(), key=lambda x: x[1], reverse=True)[:5]
             ),
         }
 
-    def get_model_stats(self, model: str) -> Dict[str, Any]:
+    def get_model_stats(self, model: str) -> dict[str, Any]:
         """
         Get aggregated statistics for a model.
 
@@ -225,7 +219,7 @@ class LLMMetricsTracker:
             "avg_latency_ms": round(stats["avg_latency_ms"], 2),
         }
 
-    def get_all_stats(self) -> Dict[str, Any]:
+    def get_all_stats(self) -> dict[str, Any]:
         """
         Get all metrics statistics.
 
@@ -233,14 +227,10 @@ class LLMMetricsTracker:
             Comprehensive statistics dictionary
         """
         backend_stats = {
-            backend: self.get_backend_stats(backend)
-            for backend in self.backend_metrics.keys()
+            backend: self.get_backend_stats(backend) for backend in self.backend_metrics
         }
 
-        model_stats = {
-            model: self.get_model_stats(model)
-            for model in self.model_metrics.keys()
-        }
+        model_stats = {model: self.get_model_stats(model) for model in self.model_metrics}
 
         # Overall totals
         total_calls = sum(s["total_calls"] for s in backend_stats.values())
@@ -262,7 +252,7 @@ class LLMMetricsTracker:
             "recent_calls": len(self.recent_calls),
         }
 
-    def get_recent_calls(self, limit: int = 10) -> list[Dict[str, Any]]:
+    def get_recent_calls(self, limit: int = 10) -> list[dict[str, Any]]:
         """
         Get recent LLM calls.
 
