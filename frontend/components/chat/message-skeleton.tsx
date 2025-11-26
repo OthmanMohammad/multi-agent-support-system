@@ -26,14 +26,14 @@ export function MessageSkeleton({
       <ShimmerSkeleton className="h-8 w-8 shrink-0 rounded-full" />
 
       {/* Message content */}
-      <div className={cn("flex-1 space-y-2", isUser ? "items-end" : "items-start")}>
+      <div
+        className={cn("flex-1 space-y-2", isUser ? "items-end" : "items-start")}
+      >
         {/* Message bubble */}
         <div
           className={cn(
             "max-w-[80%] rounded-lg border border-border p-4",
-            isUser
-              ? "ml-auto bg-accent/10"
-              : "mr-auto bg-surface"
+            isUser ? "ml-auto bg-accent/10" : "mr-auto bg-surface"
           )}
         >
           <SkeletonText
