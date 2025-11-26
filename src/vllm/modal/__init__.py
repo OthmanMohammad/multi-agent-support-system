@@ -10,17 +10,17 @@ Production vLLM deployment using Modal's serverless platform.
 from src.vllm.modal.client import ModalVLLMClient
 from src.vllm.modal.orchestrator import (
     ModalOrchestrator,
-    modal_orchestrator,
-    init_modal_orchestrator,
     get_modal_orchestrator,
+    init_modal_orchestrator,
     is_modal_configured,
+    modal_orchestrator,
 )
 
 __all__ = [
-    "ModalVLLMClient",
     "ModalOrchestrator",
-    "modal_orchestrator",
-    "init_modal_orchestrator",
+    "ModalVLLMClient",
     "get_modal_orchestrator",
+    "init_modal_orchestrator",
     "is_modal_configured",
+    "modal_orchestrator",
 ]
