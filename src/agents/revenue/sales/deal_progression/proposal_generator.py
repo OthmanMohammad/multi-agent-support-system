@@ -5,13 +5,13 @@ Generates customized proposals, calculates pricing based on requirements,
 creates line items, and includes terms and conditions for professional proposals.
 """
 
-from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("proposal_generator", tier="revenue", category="sales")
@@ -34,22 +34,34 @@ class ProposalGenerator(BaseAgent):
             "min_users": 5,
             "max_users": 50,
             "included_features": ["core", "basic_support", "basic_analytics"],
-            "description": "Perfect for small teams getting started"
+            "description": "Perfect for small teams getting started",
         },
         "professional": {
             "base_price_per_user": 100,
             "min_users": 10,
             "max_users": 500,
-            "included_features": ["core", "advanced", "priority_support", "advanced_analytics", "integrations"],
-            "description": "For growing teams with advanced needs"
+            "included_features": [
+                "core",
+                "advanced",
+                "priority_support",
+                "advanced_analytics",
+                "integrations",
+            ],
+            "description": "For growing teams with advanced needs",
         },
         "enterprise": {
             "base_price_per_user": 200,
             "min_users": 50,
             "max_users": 10000,
-            "included_features": ["all_features", "dedicated_support", "custom_integrations", "sla", "training"],
-            "description": "Complete solution for large organizations"
-        }
+            "included_features": [
+                "all_features",
+                "dedicated_support",
+                "custom_integrations",
+                "sla",
+                "training",
+            ],
+            "description": "Complete solution for large organizations",
+        },
     }
 
     # Add-on services and pricing
@@ -58,36 +70,36 @@ class ProposalGenerator(BaseAgent):
             "base_cost": 5000,
             "per_user_cost": 50,
             "description": "Professional implementation and setup",
-            "duration_weeks": 4
+            "duration_weeks": 4,
         },
         "training": {
             "base_cost": 2000,
             "per_session_cost": 500,
             "description": "Customized training sessions",
-            "duration_weeks": 2
+            "duration_weeks": 2,
         },
         "premium_support": {
             "monthly_cost": 1000,
             "description": "24/7 premium support with SLA",
-            "response_time": "2 hours"
+            "response_time": "2 hours",
         },
         "custom_integration": {
             "base_cost": 10000,
             "per_integration_cost": 5000,
             "description": "Custom integration development",
-            "duration_weeks": 8
+            "duration_weeks": 8,
         },
         "data_migration": {
             "base_cost": 3000,
             "per_gb_cost": 100,
             "description": "Data migration from legacy systems",
-            "duration_weeks": 3
+            "duration_weeks": 3,
         },
         "dedicated_csm": {
             "monthly_cost": 2000,
             "description": "Dedicated Customer Success Manager",
-            "availability": "business_hours"
-        }
+            "availability": "business_hours",
+        },
     }
 
     # Volume discounts
@@ -95,44 +107,31 @@ class ProposalGenerator(BaseAgent):
         "tier_1": {"min_users": 100, "discount": 0.10, "label": "10% volume discount"},
         "tier_2": {"min_users": 250, "discount": 0.15, "label": "15% volume discount"},
         "tier_3": {"min_users": 500, "discount": 0.20, "label": "20% volume discount"},
-        "tier_4": {"min_users": 1000, "discount": 0.25, "label": "25% enterprise discount"}
+        "tier_4": {"min_users": 1000, "discount": 0.25, "label": "25% enterprise discount"},
     }
 
     # Payment terms
     PAYMENT_TERMS = {
-        "monthly": {
-            "multiplier": 1.0,
-            "discount": 0.0,
-            "terms": "Net 30"
-        },
+        "monthly": {"multiplier": 1.0, "discount": 0.0, "terms": "Net 30"},
         "annual": {
             "multiplier": 10.0,  # 2 months free
             "discount": 0.17,
             "terms": "Net 30",
-            "savings_description": "Save 17% with annual commitment"
+            "savings_description": "Save 17% with annual commitment",
         },
         "biannual": {
             "multiplier": 5.5,  # 0.5 months free
             "discount": 0.08,
             "terms": "Net 30",
-            "savings_description": "Save 8% with 6-month commitment"
-        }
+            "savings_description": "Save 8% with 6-month commitment",
+        },
     }
 
     # Contract lengths and incentives
     CONTRACT_INCENTIVES = {
-        "1_year": {
-            "discount": 0.0,
-            "description": "Standard 1-year agreement"
-        },
-        "2_year": {
-            "discount": 0.05,
-            "description": "5% discount on 2-year commitment"
-        },
-        "3_year": {
-            "discount": 0.10,
-            "description": "10% discount on 3-year commitment"
-        }
+        "1_year": {"discount": 0.0, "description": "Standard 1-year agreement"},
+        "2_year": {"discount": 0.05, "description": "5% discount on 2-year commitment"},
+        "3_year": {"discount": 0.10, "description": "10% discount on 3-year commitment"},
     }
 
     # Standard terms and conditions
@@ -144,7 +143,7 @@ class ProposalGenerator(BaseAgent):
         "sla": "99.9% uptime SLA for Enterprise tier",
         "data_security": "SOC 2 Type II compliant, encryption at rest and in transit",
         "price_protection": "Price lock for duration of contract term",
-        "users": "User licenses can be added anytime, prorated billing applies"
+        "users": "User licenses can be added anytime, prorated billing applies",
     }
 
     # Proposal sections template
@@ -156,7 +155,7 @@ class ProposalGenerator(BaseAgent):
         "implementation_plan",
         "timeline",
         "terms_and_conditions",
-        "next_steps"
+        "next_steps",
     ]
 
     def __init__(self):
@@ -168,10 +167,10 @@ class ProposalGenerator(BaseAgent):
             capabilities=[
                 AgentCapability.KB_SEARCH,
                 AgentCapability.CONTEXT_AWARE,
-                AgentCapability.ENTITY_EXTRACTION
+                AgentCapability.ENTITY_EXTRACTION,
             ],
             kb_category="sales",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -197,40 +196,27 @@ class ProposalGenerator(BaseAgent):
         self.logger.debug(
             "proposal_generation_details",
             company=customer_metadata.get("company", "Unknown"),
-            users=requirements.get("num_users", 0)
+            users=requirements.get("num_users", 0),
         )
 
         # Extract proposal requirements
-        proposal_requirements = self._extract_requirements(
-            message,
-            customer_metadata,
-            requirements
-        )
+        proposal_requirements = self._extract_requirements(message, customer_metadata, requirements)
 
         # Determine pricing tier
         pricing_tier = self._determine_pricing_tier(proposal_requirements)
 
         # Calculate base pricing
-        base_pricing = self._calculate_base_pricing(
-            pricing_tier,
-            proposal_requirements
-        )
+        base_pricing = self._calculate_base_pricing(pricing_tier, proposal_requirements)
 
         # Calculate add-ons
         addon_pricing = self._calculate_addon_pricing(proposal_requirements)
 
         # Apply discounts
-        discounts = self._calculate_discounts(
-            base_pricing,
-            proposal_requirements
-        )
+        discounts = self._calculate_discounts(base_pricing, proposal_requirements)
 
         # Generate line items
         line_items = self._generate_line_items(
-            base_pricing,
-            addon_pricing,
-            discounts,
-            proposal_requirements
+            base_pricing, addon_pricing, discounts, proposal_requirements
         )
 
         # Calculate totals
@@ -243,17 +229,11 @@ class ProposalGenerator(BaseAgent):
         terms = self._generate_terms(pricing_tier, proposal_requirements)
 
         # Create proposal summary
-        proposal_summary = self._create_proposal_summary(
-            proposal_requirements,
-            totals,
-            timeline
-        )
+        proposal_summary = self._create_proposal_summary(proposal_requirements, totals, timeline)
 
         # Search KB for proposal templates
         kb_results = await self.search_knowledge_base(
-            f"proposal template {customer_metadata.get('industry', '')}",
-            category="sales",
-            limit=3
+            f"proposal template {customer_metadata.get('industry', '')}", category="sales", limit=3
         )
         state["kb_results"] = kb_results
 
@@ -267,7 +247,7 @@ class ProposalGenerator(BaseAgent):
             terms,
             kb_results,
             customer_metadata,
-            state
+            state,
         )
 
         # Update state
@@ -290,17 +270,14 @@ class ProposalGenerator(BaseAgent):
             "proposal_generator_completed",
             tier=pricing_tier,
             total_annual=totals["annual_total"],
-            discount_applied=totals["total_discount"]
+            discount_applied=totals["total_discount"],
         )
 
         return state
 
     def _extract_requirements(
-        self,
-        message: str,
-        customer_metadata: Dict,
-        requirements: Dict
-    ) -> Dict[str, Any]:
+        self, message: str, customer_metadata: dict, requirements: dict
+    ) -> dict[str, Any]:
         """Extract proposal requirements from message and context"""
         # Get user count
         num_users = requirements.get("num_users", customer_metadata.get("company_size", 50))
@@ -342,10 +319,10 @@ class ProposalGenerator(BaseAgent):
             "addons": addons,
             "industry": customer_metadata.get("industry", "technology"),
             "company": customer_metadata.get("company", "Customer"),
-            "urgency": "standard"
+            "urgency": "standard",
         }
 
-    def _determine_pricing_tier(self, requirements: Dict) -> str:
+    def _determine_pricing_tier(self, requirements: dict) -> str:
         """Determine appropriate pricing tier"""
         num_users = requirements["num_users"]
 
@@ -356,11 +333,7 @@ class ProposalGenerator(BaseAgent):
         else:
             return "starter"
 
-    def _calculate_base_pricing(
-        self,
-        tier: str,
-        requirements: Dict
-    ) -> Dict[str, Any]:
+    def _calculate_base_pricing(self, tier: str, requirements: dict) -> dict[str, Any]:
         """Calculate base subscription pricing"""
         tier_info = self.PRICING_TIERS[tier]
         num_users = requirements["num_users"]
@@ -382,10 +355,10 @@ class ProposalGenerator(BaseAgent):
             "annual_total": monthly_total * 12,
             "payment_term": payment_term,
             "term_total": term_total,
-            "included_features": tier_info["included_features"]
+            "included_features": tier_info["included_features"],
         }
 
-    def _calculate_addon_pricing(self, requirements: Dict) -> Dict[str, Any]:
+    def _calculate_addon_pricing(self, requirements: dict) -> dict[str, Any]:
         """Calculate add-on service pricing"""
         addons = {}
         total_addon_cost = 0
@@ -404,7 +377,7 @@ class ProposalGenerator(BaseAgent):
                     addons[addon] = {
                         "type": "one_time",
                         "cost": cost,
-                        "description": addon_info["description"]
+                        "description": addon_info["description"],
                     }
                     total_addon_cost += cost
 
@@ -416,7 +389,7 @@ class ProposalGenerator(BaseAgent):
                         "type": "recurring",
                         "monthly_cost": cost,
                         "annual_cost": cost * 12,
-                        "description": addon_info["description"]
+                        "description": addon_info["description"],
                     }
                     total_monthly_recurring += cost
 
@@ -424,14 +397,10 @@ class ProposalGenerator(BaseAgent):
             "addons": addons,
             "total_one_time": total_addon_cost,
             "total_monthly_recurring": total_monthly_recurring,
-            "total_annual_recurring": total_monthly_recurring * 12
+            "total_annual_recurring": total_monthly_recurring * 12,
         }
 
-    def _calculate_discounts(
-        self,
-        base_pricing: Dict,
-        requirements: Dict
-    ) -> Dict[str, Any]:
+    def _calculate_discounts(self, base_pricing: dict, requirements: dict) -> dict[str, Any]:
         """Calculate applicable discounts"""
         discounts = []
         total_discount_amount = 0
@@ -447,12 +416,14 @@ class ProposalGenerator(BaseAgent):
             if num_users >= tier["min_users"]:
                 discount_pct = tier["discount"]
                 discount_amt = base_pricing["term_total"] * discount_pct
-                discounts.append({
-                    "type": "volume",
-                    "label": tier["label"],
-                    "percentage": discount_pct,
-                    "amount": discount_amt
-                })
+                discounts.append(
+                    {
+                        "type": "volume",
+                        "label": tier["label"],
+                        "percentage": discount_pct,
+                        "amount": discount_amt,
+                    }
+                )
                 total_discount_amount += discount_amt
                 discount_percentage += discount_pct
                 break
@@ -462,12 +433,14 @@ class ProposalGenerator(BaseAgent):
         if payment_info["discount"] > 0:
             discount_pct = payment_info["discount"]
             discount_amt = base_pricing["annual_total"] * discount_pct
-            discounts.append({
-                "type": "payment_term",
-                "label": payment_info.get("savings_description", "Payment discount"),
-                "percentage": discount_pct,
-                "amount": discount_amt
-            })
+            discounts.append(
+                {
+                    "type": "payment_term",
+                    "label": payment_info.get("savings_description", "Payment discount"),
+                    "percentage": discount_pct,
+                    "amount": discount_amt,
+                }
+            )
             total_discount_amount += discount_amt
             discount_percentage += discount_pct
 
@@ -476,79 +449,85 @@ class ProposalGenerator(BaseAgent):
         if contract_info["discount"] > 0:
             discount_pct = contract_info["discount"]
             discount_amt = base_pricing["term_total"] * discount_pct
-            discounts.append({
-                "type": "contract_length",
-                "label": contract_info["description"],
-                "percentage": discount_pct,
-                "amount": discount_amt
-            })
+            discounts.append(
+                {
+                    "type": "contract_length",
+                    "label": contract_info["description"],
+                    "percentage": discount_pct,
+                    "amount": discount_amt,
+                }
+            )
             total_discount_amount += discount_amt
             discount_percentage += discount_pct
 
         return {
             "discounts": discounts,
             "total_amount": total_discount_amount,
-            "total_percentage": discount_percentage
+            "total_percentage": discount_percentage,
         }
 
     def _generate_line_items(
-        self,
-        base_pricing: Dict,
-        addon_pricing: Dict,
-        discounts: Dict,
-        requirements: Dict
-    ) -> List[Dict[str, Any]]:
+        self, base_pricing: dict, addon_pricing: dict, discounts: dict, requirements: dict
+    ) -> list[dict[str, Any]]:
         """Generate detailed line items for proposal"""
         items = []
 
         # Base subscription
-        items.append({
-            "category": "subscription",
-            "description": f"{base_pricing['tier'].title()} Plan - {requirements['num_users']} users",
-            "quantity": requirements['num_users'],
-            "unit_price": base_pricing['monthly_per_user'],
-            "subtotal": base_pricing['term_total'],
-            "term": requirements['payment_term']
-        })
+        items.append(
+            {
+                "category": "subscription",
+                "description": f"{base_pricing['tier'].title()} Plan - {requirements['num_users']} users",
+                "quantity": requirements["num_users"],
+                "unit_price": base_pricing["monthly_per_user"],
+                "subtotal": base_pricing["term_total"],
+                "term": requirements["payment_term"],
+            }
+        )
 
         # Add-ons (one-time)
-        for addon_name, addon_details in addon_pricing["addons"].items():
+        for _addon_name, addon_details in addon_pricing["addons"].items():
             if addon_details["type"] == "one_time":
-                items.append({
-                    "category": "service",
-                    "description": addon_details["description"],
-                    "quantity": 1,
-                    "unit_price": addon_details["cost"],
-                    "subtotal": addon_details["cost"],
-                    "term": "one_time"
-                })
+                items.append(
+                    {
+                        "category": "service",
+                        "description": addon_details["description"],
+                        "quantity": 1,
+                        "unit_price": addon_details["cost"],
+                        "subtotal": addon_details["cost"],
+                        "term": "one_time",
+                    }
+                )
 
         # Add-ons (recurring)
-        for addon_name, addon_details in addon_pricing["addons"].items():
+        for _addon_name, addon_details in addon_pricing["addons"].items():
             if addon_details["type"] == "recurring":
-                items.append({
-                    "category": "addon",
-                    "description": f"{addon_details['description']} (monthly recurring)",
-                    "quantity": 1,
-                    "unit_price": addon_details["monthly_cost"],
-                    "subtotal": addon_details["annual_cost"],
-                    "term": "monthly"
-                })
+                items.append(
+                    {
+                        "category": "addon",
+                        "description": f"{addon_details['description']} (monthly recurring)",
+                        "quantity": 1,
+                        "unit_price": addon_details["monthly_cost"],
+                        "subtotal": addon_details["annual_cost"],
+                        "term": "monthly",
+                    }
+                )
 
         # Discounts
         for discount in discounts["discounts"]:
-            items.append({
-                "category": "discount",
-                "description": discount["label"],
-                "quantity": 1,
-                "unit_price": -discount["amount"],
-                "subtotal": -discount["amount"],
-                "term": "applied"
-            })
+            items.append(
+                {
+                    "category": "discount",
+                    "description": discount["label"],
+                    "quantity": 1,
+                    "unit_price": -discount["amount"],
+                    "subtotal": -discount["amount"],
+                    "term": "applied",
+                }
+            )
 
         return items
 
-    def _calculate_totals(self, line_items: List[Dict]) -> Dict[str, Any]:
+    def _calculate_totals(self, line_items: list[dict]) -> dict[str, Any]:
         """Calculate proposal totals"""
         subtotal = 0
         total_discount = 0
@@ -573,75 +552,83 @@ class ProposalGenerator(BaseAgent):
             "one_time_total": one_time_total,
             "annual_total": recurring_total - total_discount,
             "total": total,
-            "monthly_equivalent": total / 12 if total > 0 else 0
+            "monthly_equivalent": total / 12 if total > 0 else 0,
         }
 
-    def _generate_timeline(
-        self,
-        requirements: Dict,
-        addon_pricing: Dict
-    ) -> Dict[str, Any]:
+    def _generate_timeline(self, requirements: dict, addon_pricing: dict) -> dict[str, Any]:
         """Generate implementation timeline"""
         start_date = datetime.now()
         phases = []
 
         # Contract signing
-        phases.append({
-            "phase": "Contract Execution",
-            "duration_weeks": 1,
-            "start": start_date,
-            "end": start_date + timedelta(weeks=1),
-            "activities": ["Contract signed", "Payment processed", "Account setup"]
-        })
+        phases.append(
+            {
+                "phase": "Contract Execution",
+                "duration_weeks": 1,
+                "start": start_date,
+                "end": start_date + timedelta(weeks=1),
+                "activities": ["Contract signed", "Payment processed", "Account setup"],
+            }
+        )
 
         current_date = start_date + timedelta(weeks=1)
 
         # Implementation if included
-        if any(addon in requirements.get("addons", []) for addon in ["implementation", "data_migration"]):
+        if any(
+            addon in requirements.get("addons", [])
+            for addon in ["implementation", "data_migration"]
+        ):
             impl_weeks = 4
-            phases.append({
-                "phase": "Implementation",
-                "duration_weeks": impl_weeks,
-                "start": current_date,
-                "end": current_date + timedelta(weeks=impl_weeks),
-                "activities": ["Environment setup", "Data migration", "Configuration", "Integration"]
-            })
+            phases.append(
+                {
+                    "phase": "Implementation",
+                    "duration_weeks": impl_weeks,
+                    "start": current_date,
+                    "end": current_date + timedelta(weeks=impl_weeks),
+                    "activities": [
+                        "Environment setup",
+                        "Data migration",
+                        "Configuration",
+                        "Integration",
+                    ],
+                }
+            )
             current_date += timedelta(weeks=impl_weeks)
 
         # Training if included
         if "training" in requirements.get("addons", []):
             training_weeks = 2
-            phases.append({
-                "phase": "Training",
-                "duration_weeks": training_weeks,
-                "start": current_date,
-                "end": current_date + timedelta(weeks=training_weeks),
-                "activities": ["User training", "Admin training", "Best practices"]
-            })
+            phases.append(
+                {
+                    "phase": "Training",
+                    "duration_weeks": training_weeks,
+                    "start": current_date,
+                    "end": current_date + timedelta(weeks=training_weeks),
+                    "activities": ["User training", "Admin training", "Best practices"],
+                }
+            )
             current_date += timedelta(weeks=training_weeks)
 
         # Go-live
-        phases.append({
-            "phase": "Go-Live",
-            "duration_weeks": 1,
-            "start": current_date,
-            "end": current_date + timedelta(weeks=1),
-            "activities": ["Production launch", "Monitoring", "Support"]
-        })
+        phases.append(
+            {
+                "phase": "Go-Live",
+                "duration_weeks": 1,
+                "start": current_date,
+                "end": current_date + timedelta(weeks=1),
+                "activities": ["Production launch", "Monitoring", "Support"],
+            }
+        )
 
         total_weeks = sum(p["duration_weeks"] for p in phases)
 
         return {
             "phases": phases,
             "total_weeks": total_weeks,
-            "estimated_completion": current_date + timedelta(weeks=1)
+            "estimated_completion": current_date + timedelta(weeks=1),
         }
 
-    def _generate_terms(
-        self,
-        tier: str,
-        requirements: Dict
-    ) -> Dict[str, str]:
+    def _generate_terms(self, tier: str, requirements: dict) -> dict[str, str]:
         """Generate terms and conditions"""
         terms = self.TERMS_AND_CONDITIONS.copy()
 
@@ -652,16 +639,15 @@ class ProposalGenerator(BaseAgent):
 
         # Add contract length
         contract_years = int(requirements["contract_length"].split("_")[0])
-        terms["contract_length"] = f"{contract_years}-year initial term, auto-renewal unless cancelled 30 days prior"
+        terms["contract_length"] = (
+            f"{contract_years}-year initial term, auto-renewal unless cancelled 30 days prior"
+        )
 
         return terms
 
     def _create_proposal_summary(
-        self,
-        requirements: Dict,
-        totals: Dict,
-        timeline: Dict
-    ) -> Dict[str, Any]:
+        self, requirements: dict, totals: dict, timeline: dict
+    ) -> dict[str, Any]:
         """Create executive proposal summary"""
         return {
             "company": requirements["company"],
@@ -670,23 +656,23 @@ class ProposalGenerator(BaseAgent):
                 "year_one_total": totals["annual_total"] + totals["one_time_total"],
                 "annual_recurring": totals["annual_total"],
                 "monthly_equivalent": totals["monthly_equivalent"],
-                "savings": totals["total_discount"]
+                "savings": totals["total_discount"],
             },
             "timeline": f"{timeline['total_weeks']} weeks to full deployment",
-            "contract_term": requirements["contract_length"].replace("_", " ")
+            "contract_term": requirements["contract_length"].replace("_", " "),
         }
 
     async def _generate_proposal_response(
         self,
         message: str,
-        proposal_summary: Dict,
-        line_items: List[Dict],
-        totals: Dict,
-        timeline: Dict,
-        terms: Dict,
-        kb_results: List[Dict],
-        customer_metadata: Dict,
-        state: AgentState
+        proposal_summary: dict,
+        line_items: list[dict],
+        totals: dict,
+        timeline: dict,
+        terms: dict,
+        kb_results: list[dict],
+        customer_metadata: dict,
+        state: AgentState,
     ) -> str:
         """Generate proposal presentation response"""
 
@@ -708,15 +694,15 @@ class ProposalGenerator(BaseAgent):
         system_prompt = f"""You are a Proposal Generator specialist creating professional sales proposals.
 
 Proposal Summary:
-- Solution: {proposal_summary['solution']}
-- Year 1 Investment: ${proposal_summary['investment']['year_one_total']:,.2f}
-- Annual Recurring: ${proposal_summary['investment']['annual_recurring']:,.2f}
-- Total Savings: ${proposal_summary['investment']['savings']:,.2f}
-- Implementation Timeline: {proposal_summary['timeline']}
-- Contract Term: {proposal_summary['contract_term']}
+- Solution: {proposal_summary["solution"]}
+- Year 1 Investment: ${proposal_summary["investment"]["year_one_total"]:,.2f}
+- Annual Recurring: ${proposal_summary["investment"]["annual_recurring"]:,.2f}
+- Total Savings: ${proposal_summary["investment"]["savings"]:,.2f}
+- Implementation Timeline: {proposal_summary["timeline"]}
+- Contract Term: {proposal_summary["contract_term"]}
 
-Company: {customer_metadata.get('company', 'Customer')}
-Industry: {customer_metadata.get('industry', 'Unknown')}
+Company: {customer_metadata.get("company", "Customer")}
+Industry: {customer_metadata.get("industry", "Unknown")}
 
 Your response should:
 1. Present the proposal professionally and enthusiastically
@@ -733,20 +719,18 @@ Your response should:
 {line_items_text}
 
 Total Investment:
-- Year 1: ${totals['one_time_total'] + totals['annual_total']:,.2f}
-- Annual Recurring: ${totals['annual_total']:,.2f}
-- Monthly Equivalent: ${totals['monthly_equivalent']:,.2f}
+- Year 1: ${totals["one_time_total"] + totals["annual_total"]:,.2f}
+- Annual Recurring: ${totals["annual_total"]:,.2f}
+- Monthly Equivalent: ${totals["monthly_equivalent"]:,.2f}
 
-Timeline: {timeline['total_weeks']} weeks from contract to go-live
+Timeline: {timeline["total_weeks"]} weeks from contract to go-live
 
 {kb_context}
 
 Generate a professional proposal presentation."""
 
         response = await self.call_llm(
-            system_prompt,
-            user_prompt,
-            conversation_history=conversation_history
+            system_prompt, user_prompt, conversation_history=conversation_history
         )
         return response
 
@@ -770,18 +754,16 @@ if __name__ == "__main__":
                     "company": "SmallBiz Inc",
                     "title": "Owner",
                     "company_size": 25,
-                    "industry": "retail"
+                    "industry": "retail",
                 },
-                "requirements": {
-                    "num_users": 25
-                }
-            }
+                "requirements": {"num_users": 25},
+            },
         )
 
         agent = ProposalGenerator()
         result1 = await agent.process(state1)
 
-        print(f"\nTest 1 - Small Business Starter Proposal")
+        print("\nTest 1 - Small Business Starter Proposal")
         print(f"Pricing Tier: {result1['pricing_tier']}")
         print(f"Line Items: {len(result1['line_items'])}")
         print(f"Annual Total: ${result1['totals']['annual_total']:,.2f}")
@@ -797,20 +779,20 @@ if __name__ == "__main__":
                     "company": "Enterprise Corp",
                     "title": "VP Operations",
                     "company_size": 500,
-                    "industry": "finance"
+                    "industry": "finance",
                 },
-                "requirements": {
-                    "num_users": 500
-                }
-            }
+                "requirements": {"num_users": 500},
+            },
         )
 
         result2 = await agent.process(state2)
 
-        print(f"\nTest 2 - Enterprise Full Service Proposal")
+        print("\nTest 2 - Enterprise Full Service Proposal")
         print(f"Pricing Tier: {result2['pricing_tier']}")
         print(f"Line Items: {len(result2['line_items'])}")
-        print(f"Year 1 Total: ${result2['totals']['one_time_total'] + result2['totals']['annual_total']:,.2f}")
+        print(
+            f"Year 1 Total: ${result2['totals']['one_time_total'] + result2['totals']['annual_total']:,.2f}"
+        )
         print(f"Annual Recurring: ${result2['totals']['annual_total']:,.2f}")
         print(f"Total Discount: ${result2['totals']['total_discount']:,.2f}")
         print(f"Add-ons: {len(result2['addon_pricing']['addons'])}")
@@ -825,17 +807,15 @@ if __name__ == "__main__":
                     "company": "MidMarket Co",
                     "title": "Director of IT",
                     "company_size": 150,
-                    "industry": "technology"
+                    "industry": "technology",
                 },
-                "requirements": {
-                    "num_users": 150
-                }
-            }
+                "requirements": {"num_users": 150},
+            },
         )
 
         result3 = await agent.process(state3)
 
-        print(f"\nTest 3 - Mid-Market Professional Proposal")
+        print("\nTest 3 - Mid-Market Professional Proposal")
         print(f"Pricing Tier: {result3['pricing_tier']}")
         print(f"Monthly Equivalent: ${result3['totals']['monthly_equivalent']:,.2f}")
         print(f"Annual Total: ${result3['totals']['annual_total']:,.2f}")
