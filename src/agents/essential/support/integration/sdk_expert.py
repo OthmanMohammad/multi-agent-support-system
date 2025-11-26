@@ -5,13 +5,10 @@ This agent specializes in helping customers use official SDKs, providing
 language-specific guidance, code examples, and troubleshooting SDK issues.
 """
 
-from typing import Dict, Any, Optional
-from datetime import datetime
-
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("sdk_expert", tier="essential", category="integration")
@@ -48,7 +45,7 @@ class SDKExpert(BaseAgent):
         "go": {
             "name": "Go SDK",
             "install": "go get github.com/example/sdk-go",
-            "import": "import \"github.com/example/sdk-go\"",
+            "import": 'import "github.com/example/sdk-go"',
             "docs": "https://docs.example.com/go",
             "github": "https://github.com/example/sdk-go",
             "versions": "Go 1.18+",
@@ -83,7 +80,17 @@ class SDKExpert(BaseAgent):
     # Language detection keywords
     LANGUAGE_KEYWORDS = {
         "python": ["python", "pip", "django", "flask", "fastapi", "requests", "py"],
-        "javascript": ["javascript", "js", "node", "npm", "react", "vue", "express", "typescript", "ts"],
+        "javascript": [
+            "javascript",
+            "js",
+            "node",
+            "npm",
+            "react",
+            "vue",
+            "express",
+            "typescript",
+            "ts",
+        ],
         "go": ["go", "golang", "go get"],
         "java": ["java", "maven", "gradle", "spring"],
         "ruby": ["ruby", "rails", "gem"],
@@ -96,12 +103,9 @@ class SDKExpert(BaseAgent):
             name="sdk_expert",
             type=AgentType.SPECIALIST,
             temperature=0.3,
-            capabilities=[
-                AgentCapability.KB_SEARCH,
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="integration",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -121,12 +125,10 @@ class SDKExpert(BaseAgent):
         state = self.update_state(state)
 
         message = state["current_message"]
-        customer_context = state.get("customer_metadata", {})
+        state.get("customer_metadata", {})
 
         self.logger.debug(
-            "sdk_processing_details",
-            message_preview=message[:100],
-            turn_count=state["turn_count"]
+            "sdk_processing_details", message_preview=message[:100], turn_count=state["turn_count"]
         )
 
         # Detect language preference
@@ -135,25 +137,14 @@ class SDKExpert(BaseAgent):
         # Detect SDK topic
         topic = self._detect_sdk_topic(message)
 
-        self.logger.info(
-            "sdk_request_detected",
-            language=language,
-            topic=topic
-        )
+        self.logger.info("sdk_request_detected", language=language, topic=topic)
 
         # Search knowledge base for SDK documentation
-        kb_results = await self.search_knowledge_base(
-            message,
-            category="integration",
-            limit=2
-        )
+        kb_results = await self.search_knowledge_base(message, category="integration", limit=2)
         state["kb_results"] = kb_results
 
         if kb_results:
-            self.logger.info(
-                "kb_articles_found",
-                count=len(kb_results)
-            )
+            self.logger.info("kb_articles_found", count=len(kb_results))
 
         # Generate SDK guidance
         response = self._generate_sdk_guide(language, topic, kb_results)
@@ -166,15 +157,12 @@ class SDKExpert(BaseAgent):
         state["status"] = "resolved"
 
         self.logger.info(
-            "sdk_processing_completed",
-            status="resolved",
-            language=language,
-            topic=topic
+            "sdk_processing_completed", status="resolved", language=language, topic=topic
         )
 
         return state
 
-    def _detect_language(self, message: str) -> Optional[str]:
+    def _detect_language(self, message: str) -> str | None:
         """
         Detect which programming language the user prefers.
 
@@ -216,12 +204,7 @@ class SDKExpert(BaseAgent):
         # Default to setup
         return "setup"
 
-    def _generate_sdk_guide(
-        self,
-        language: Optional[str],
-        topic: str,
-        kb_results: list
-    ) -> str:
+    def _generate_sdk_guide(self, language: str | None, topic: str, kb_results: list) -> str:
         """
         Generate SDK guidance based on language and topic.
 
@@ -260,15 +243,17 @@ class SDKExpert(BaseAgent):
 
     def _guide_language_selector(self) -> str:
         """Guide for selecting SDK language"""
-        sdk_list = "\n\n".join([
-            f"""**{sdk['name']}**
-- Install: `{sdk['install']}`
-- Docs: {sdk['docs']}
-- GitHub: {sdk['github']}
-- Requires: {sdk['versions']}"""
-            for lang, sdk in self.SDKS.items()
-            if lang in ["python", "javascript", "go", "java"]
-        ])
+        sdk_list = "\n\n".join(
+            [
+                f"""**{sdk["name"]}**
+- Install: `{sdk["install"]}`
+- Docs: {sdk["docs"]}
+- GitHub: {sdk["github"]}
+- Requires: {sdk["versions"]}"""
+                for lang, sdk in self.SDKS.items()
+                if lang in ["python", "javascript", "go", "java"]
+            ]
+        )
 
         return f"""**🛠️ Official SDKs**
 
@@ -301,7 +286,7 @@ Let me know and I'll provide specific setup instructions!"""
 
 ```bash
 # Install via pip
-{sdk['install']}
+{sdk["install"]}
 
 # Or with specific version
 pip install example-sdk==2.1.0
@@ -314,7 +299,7 @@ pip install -r requirements.txt
 **Step 2: Initialize client**
 
 ```python
-{sdk['import']}
+{sdk["import"]}
 
 # Initialize with API key
 client = Client(api_key='your_api_key_here')
@@ -399,9 +384,9 @@ asyncio.run(main())
 Settings > Developer > API Keys > Create Key
 
 **Documentation:**
-- Full docs: {sdk['docs']}
-- GitHub: {sdk['github']}
-- Examples: {sdk['github']}/tree/main/examples
+- Full docs: {sdk["docs"]}
+- GitHub: {sdk["github"]}
+- Examples: {sdk["github"]}/tree/main/examples
 
 **Need help with:**
 • Authentication
@@ -416,7 +401,7 @@ Settings > Developer > API Keys > Create Key
 
 ```bash
 # Install via npm
-{sdk['install']}
+{sdk["install"]}
 
 # Or via yarn
 yarn add example-sdk
@@ -428,7 +413,7 @@ npm install --save example-sdk
 **Step 2: Initialize client**
 
 ```javascript
-{sdk['import']}
+{sdk["import"]}
 
 // Initialize with API key
 const client = new ExampleSDK({{
@@ -575,10 +560,10 @@ app.listen(3000);
 Settings > Developer > API Keys > Create Key
 
 **Documentation:**
-- Full docs: {sdk['docs']}
-- GitHub: {sdk['github']}
-- Examples: {sdk['github']}/tree/main/examples
-- TypeScript: {sdk['docs']}/typescript
+- Full docs: {sdk["docs"]}
+- GitHub: {sdk["github"]}
+- Examples: {sdk["github"]}/tree/main/examples
+- TypeScript: {sdk["docs"]}/typescript
 
 **Need help with:**
 • Authentication
@@ -593,11 +578,11 @@ Settings > Developer > API Keys > Create Key
 
 ```bash
 # Install via go get
-{sdk['install']}
+{sdk["install"]}
 
 # Or add to go.mod
 go mod init your-app
-{sdk['install']}
+{sdk["install"]}
 ```
 
 **Step 2: Initialize client**
@@ -605,7 +590,7 @@ go mod init your-app
 ```go
 package main
 
-{sdk['import']}
+{sdk["import"]}
 "os"
 
 func main() {{
@@ -625,7 +610,7 @@ package main
 import (
     "fmt"
     "log"
-    {sdk['import']}
+    {sdk["import"]}
     "os"
 )
 
@@ -768,10 +753,10 @@ for {{
 Settings > Developer > API Keys > Create Key
 
 **Documentation:**
-- Full docs: {sdk['docs']}
-- GitHub: {sdk['github']}
-- Examples: {sdk['github']}/tree/main/examples
-- GoDoc: https://pkg.go.dev/{sdk['github']}
+- Full docs: {sdk["docs"]}
+- GitHub: {sdk["github"]}
+- Examples: {sdk["github"]}/tree/main/examples
+- GoDoc: https://pkg.go.dev/{sdk["github"]}
 
 **Need help with:**
 • Authentication
@@ -803,7 +788,7 @@ dependencies {{
 **Step 2: Initialize client**
 
 ```java
-{sdk['import']}
+{sdk["import"]}
 
 public class ExampleApp {{
     public static void main(String[] args) {{
@@ -956,10 +941,10 @@ public class CustomerController {{
 Settings > Developer > API Keys > Create Key
 
 **Documentation:**
-- Full docs: {sdk['docs']}
-- GitHub: {sdk['github']}
-- Examples: {sdk['github']}/tree/main/examples
-- JavaDoc: {sdk['docs']}/javadoc
+- Full docs: {sdk["docs"]}
+- GitHub: {sdk["github"]}
+- Examples: {sdk["github"]}/tree/main/examples
+- JavaDoc: {sdk["docs"]}/javadoc
 
 **Need help with:**
 • Authentication
@@ -1026,7 +1011,6 @@ EXAMPLE_API_VERSION=2025-11-01
 
 **Get your API key:**
 Settings > Developer > API Keys > Create Key""",
-
             "javascript": """**🔐 JavaScript/Node.js SDK Authentication**
 
 **Method 1: Direct API key (quick start)**
@@ -1099,7 +1083,6 @@ EXAMPLE_API_VERSION=2025-11-01
 
 **Get your API key:**
 Settings > Developer > API Keys > Create Key""",
-
             "go": """**🔐 Go SDK Authentication**
 
 **Method 1: Direct API key**
@@ -1157,7 +1140,6 @@ EXAMPLE_API_KEY=sk_live_abc123...
 
 **Get your API key:**
 Settings > Developer > API Keys > Create Key""",
-
             "java": """**🔐 Java SDK Authentication**
 
 **Method 1: Direct API key**
@@ -1217,10 +1199,10 @@ Settings > Developer > API Keys > Create Key""",
 
     def _guide_examples(self, language: str) -> str:
         """Generate code examples for specific language"""
-        return f"""**💡 {self.SDKS[language]['name']} - Common Examples**
+        return f"""**💡 {self.SDKS[language]["name"]} - Common Examples**
 
 **Full code examples:**
-{self.SDKS[language]['github']}/tree/main/examples
+{self.SDKS[language]["github"]}/tree/main/examples
 
 **Quick examples:**
 
@@ -1234,11 +1216,11 @@ Need help with:
 **Let me know what you'd like to do and I'll provide specific code examples!**
 
 **Or browse documentation:**
-{self.SDKS[language]['docs']}"""
+{self.SDKS[language]["docs"]}"""
 
     def _guide_errors(self, language: str) -> str:
         """Generate error handling guide for specific language"""
-        return f"""**🐛 {self.SDKS[language]['name']} - Error Troubleshooting**
+        return f"""**🐛 {self.SDKS[language]["name"]} - Error Troubleshooting**
 
 **Common errors:**
 
@@ -1248,7 +1230,7 @@ Need help with:
    - Verify key is not expired
 
 2. **Import error**
-   - Reinstall SDK: `{self.SDKS[language]['install']}`
+   - Reinstall SDK: `{self.SDKS[language]["install"]}`
    - Check SDK version compatibility
    - Clear package cache
 
@@ -1261,26 +1243,26 @@ Need help with:
 Share the specific error message you're seeing and I'll help debug!
 
 **Documentation:**
-{self.SDKS[language]['docs']}/troubleshooting
+{self.SDKS[language]["docs"]}/troubleshooting
 
 **GitHub Issues:**
-{self.SDKS[language]['github']}/issues"""
+{self.SDKS[language]["github"]}/issues"""
 
     def _guide_versions(self, language: str) -> str:
         """Generate version compatibility guide"""
         sdk = self.SDKS[language]
 
-        return f"""**📦 {sdk['name']} - Version Information**
+        return f"""**📦 {sdk["name"]} - Version Information**
 
 **Requirements:**
-- {sdk['versions']}
+- {sdk["versions"]}
 
 **Latest version:**
-Check: {sdk['github']}/releases
+Check: {sdk["github"]}/releases
 
 **Upgrade:**
 ```bash
-{sdk['install']}
+{sdk["install"]}
 ```
 
 **Version compatibility:**
@@ -1288,10 +1270,10 @@ Check: {sdk['github']}/releases
 - SDK 1.x → API 2024-01-01+
 
 **Migration guides:**
-{sdk['docs']}/migration
+{sdk["docs"]}/migration
 
 **Breaking changes:**
-{sdk['github']}/blob/main/CHANGELOG.md
+{sdk["github"]}/blob/main/CHANGELOG.md
 
 **Need help upgrading?**
 Let me know your current version and I'll guide you through the upgrade!"""
@@ -1299,6 +1281,7 @@ Let me know your current version and I'll guide you through the upgrade!"""
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
