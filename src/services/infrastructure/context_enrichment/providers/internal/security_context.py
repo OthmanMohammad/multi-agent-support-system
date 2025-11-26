@@ -4,15 +4,17 @@ Security context provider.
 Fetches security posture, compliance status, and incident information from database.
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
+from typing import Any
 from uuid import UUID
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.services.infrastructure.context_enrichment.providers.base_provider import BaseContextProvider
-from src.database.models import AuditLog
-from src.database.unit_of_work import UnitOfWork
 from src.database.connection import get_db_session
+from src.database.unit_of_work import UnitOfWork
+from src.services.infrastructure.context_enrichment.providers.base_provider import (
+    BaseContextProvider,
+)
 
 
 class SecurityContextProvider(BaseContextProvider):
@@ -31,11 +33,8 @@ class SecurityContextProvider(BaseContextProvider):
     """
 
     async def fetch(
-        self,
-        customer_id: str,
-        conversation_id: Optional[str] = None,
-        **kwargs
-    ) -> Dict[str, Any]:
+        self, customer_id: str, conversation_id: str | None = None, **kwargs
+    ) -> dict[str, Any]:
         """
         Fetch security context from database.
 
@@ -62,11 +61,7 @@ class SecurityContextProvider(BaseContextProvider):
             async for session in get_db_session():
                 return await self._fetch_with_session(cust_uuid, session)
 
-    async def _fetch_with_session(
-        self,
-        customer_id: UUID,
-        session: AsyncSession
-    ) -> Dict[str, Any]:
+    async def _fetch_with_session(self, customer_id: UUID, session: AsyncSession) -> dict[str, Any]:
         """Fetch security context using provided session"""
         try:
             uow = UnitOfWork(session)
@@ -77,25 +72,30 @@ class SecurityContextProvider(BaseContextProvider):
 
             # Filter to last 90 days
             recent_logs = [
-                log for log in audit_logs
-                if hasattr(log, 'created_at') and
-                   log.created_at.replace(tzinfo=None) > cutoff
+                log
+                for log in audit_logs
+                if hasattr(log, "created_at") and log.created_at.replace(tzinfo=None) > cutoff
             ]
 
             # Analyze security events
             security_events = [
-                log for log in recent_logs
-                if hasattr(log, 'event_type') and
-                   log.event_type in ['login_failed', 'unauthorized_access', 'permission_denied']
+                log
+                for log in recent_logs
+                if hasattr(log, "event_type")
+                and log.event_type in ["login_failed", "unauthorized_access", "permission_denied"]
             ]
 
             # Count failed login attempts (last 24 hours)
             daily_cutoff = datetime.now(UTC) - timedelta(days=1)
             failed_logins_24h = sum(
-                1 for log in security_events
-                if (hasattr(log, 'event_type') and log.event_type == 'login_failed' and
-                    hasattr(log, 'created_at') and
-                    log.created_at.replace(tzinfo=None) > daily_cutoff)
+                1
+                for log in security_events
+                if (
+                    hasattr(log, "event_type")
+                    and log.event_type == "login_failed"
+                    and hasattr(log, "created_at")
+                    and log.created_at.replace(tzinfo=None) > daily_cutoff
+                )
             )
 
             # Check for unusual activity
@@ -103,12 +103,14 @@ class SecurityContextProvider(BaseContextProvider):
 
             # Get customer metadata for security settings
             customer = await uow.customers.get_by_id(customer_id)
-            metadata = customer.extra_metadata if customer and hasattr(customer, 'extra_metadata') else {}
+            metadata = (
+                customer.extra_metadata if customer and hasattr(customer, "extra_metadata") else {}
+            )
 
             # Extract security settings
-            mfa_enabled = metadata.get('mfa_enabled', False)
-            sso_configured = metadata.get('sso_configured', False)
-            ip_whitelist_enabled = metadata.get('ip_whitelist_enabled', False)
+            mfa_enabled = metadata.get("mfa_enabled", False)
+            sso_configured = metadata.get("sso_configured", False)
+            ip_whitelist_enabled = metadata.get("ip_whitelist_enabled", False)
 
             # Security posture score (0-100)
             score = 100
@@ -122,20 +124,22 @@ class SecurityContextProvider(BaseContextProvider):
                 score -= 10
 
             # Determine compliance status
-            compliance_score = metadata.get('compliance_score', 85)
-            certifications = metadata.get('certifications', [])
+            compliance_score = metadata.get("compliance_score", 85)
+            certifications = metadata.get("certifications", [])
 
             # Build incidents list
-            incidents: List[Dict[str, Any]] = []
+            incidents: list[dict[str, Any]] = []
             open_incidents = 0
 
             if unusual_activity:
-                incidents.append({
-                    "severity": "medium",
-                    "type": "unusual_login_attempts",
-                    "description": f"{failed_logins_24h} failed login attempts in last 24 hours",
-                    "status": "investigating",
-                })
+                incidents.append(
+                    {
+                        "severity": "medium",
+                        "type": "unusual_login_attempts",
+                        "description": f"{failed_logins_24h} failed login attempts in last 24 hours",
+                        "status": "investigating",
+                    }
+                )
                 open_incidents += 1
 
             # Severity breakdown
@@ -147,11 +151,11 @@ class SecurityContextProvider(BaseContextProvider):
             }
 
             # Last audit/assessment
-            last_audit = metadata.get('last_security_audit')
+            last_audit = metadata.get("last_security_audit")
             if last_audit:
                 try:
                     last_audit = datetime.fromisoformat(last_audit)
-                except:
+                except Exception:
                     last_audit = None
 
             return {
@@ -182,11 +186,11 @@ class SecurityContextProvider(BaseContextProvider):
                 "fetch_failed",
                 customer_id=str(customer_id),
                 error=str(e),
-                error_type=type(e).__name__
+                error_type=type(e).__name__,
             )
             return self._get_fallback_data()
 
-    def _get_fallback_data(self) -> Dict[str, Any]:
+    def _get_fallback_data(self) -> dict[str, Any]:
         """Get fallback data when query fails"""
         return {
             "security_posture": {
