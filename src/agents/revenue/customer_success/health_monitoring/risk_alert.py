@@ -5,13 +5,13 @@ Aggregates risk signals, prioritizes alerts, and routes to appropriate owners.
 Manages escalation and SLA tracking for at-risk customers.
 """
 
-from typing import Dict, Any, List
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("risk_alert", tier="revenue", category="customer_success")
@@ -32,7 +32,7 @@ class RiskAlertAgent(BaseAgent):
         "critical": {"sla_hours": 4, "escalation": ["csm", "cs_manager", "vp_cs"]},
         "high": {"sla_hours": 24, "escalation": ["csm", "cs_manager"]},
         "medium": {"sla_hours": 72, "escalation": ["csm"]},
-        "low": {"sla_hours": 168, "escalation": ["csm"]}
+        "low": {"sla_hours": 168, "escalation": ["csm"]},
     }
 
     def __init__(self):
@@ -42,7 +42,7 @@ class RiskAlertAgent(BaseAgent):
             temperature=0.2,
             max_tokens=400,
             capabilities=[AgentCapability.CONTEXT_AWARE],
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -75,16 +75,14 @@ class RiskAlertAgent(BaseAgent):
             "risk_alert_created",
             customer_id=customer_id,
             severity=alert["alert_severity"],
-            assigned_to=alert["assigned_to"]
+            assigned_to=alert["assigned_to"],
         )
 
         return state
 
     def _generate_alert(
-        self,
-        customer_id: str,
-        risk_signals: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        self, customer_id: str, risk_signals: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Generate risk alert from signals."""
         # Determine severity
         severity = self._calculate_severity(risk_signals)
@@ -109,20 +107,26 @@ class RiskAlertAgent(BaseAgent):
             "escalation_path": sla_config["escalation"],
             "sla": f"Respond within {sla_config['sla_hours']} hours",
             "recommended_actions": recommended_actions,
-            "created_at": datetime.now(UTC).isoformat()
+            "created_at": datetime.now(UTC).isoformat(),
         }
 
-    def _calculate_severity(self, risk_signals: List[Dict[str, Any]]) -> str:
+    def _calculate_severity(self, risk_signals: list[dict[str, Any]]) -> str:
         """Calculate alert severity from risk signals."""
         if not risk_signals:
             return "low"
 
         # Count signals by type
-        critical_signals = sum(1 for s in risk_signals if s.get("type") in ["churn_risk", "payment_failure"])
-        high_signals = sum(1 for s in risk_signals if s.get("type") in ["health_decline", "usage_drop"])
+        critical_signals = sum(
+            1 for s in risk_signals if s.get("type") in ["churn_risk", "payment_failure"]
+        )
+        high_signals = sum(
+            1 for s in risk_signals if s.get("type") in ["health_decline", "usage_drop"]
+        )
 
         # Aggregate severity
-        total_value = sum(s.get("value", 0) for s in risk_signals if isinstance(s.get("value"), (int, float)))
+        total_value = sum(
+            s.get("value", 0) for s in risk_signals if isinstance(s.get("value"), (int, float))
+        )
 
         if critical_signals >= 1 or total_value >= 80:
             return "critical"
@@ -133,7 +137,7 @@ class RiskAlertAgent(BaseAgent):
         else:
             return "low"
 
-    def _generate_alert_content(self, risk_signals: List[Dict[str, Any]]) -> tuple:
+    def _generate_alert_content(self, risk_signals: list[dict[str, Any]]) -> tuple:
         """Generate alert title and description."""
         if not risk_signals:
             return "Customer Health Alert", "General health monitoring alert"
@@ -147,14 +151,16 @@ class RiskAlertAgent(BaseAgent):
             "health_decline": "Customer Health Decline",
             "usage_drop": "Product Usage Declined",
             "payment_failure": "Payment Failure Alert",
-            "nps_detractor": "NPS Detractor Alert"
+            "nps_detractor": "NPS Detractor Alert",
         }
 
         title = title_map.get(signal_type, "Customer At Risk")
 
         # Build description
         description = f"{len(risk_signals)} risk signal(s) detected: "
-        description += ", ".join([s.get("type", "unknown").replace("_", " ") for s in risk_signals[:3]])
+        description += ", ".join(
+            [s.get("type", "unknown").replace("_", " ") for s in risk_signals[:3]]
+        )
 
         return title, description
 
@@ -168,72 +174,73 @@ class RiskAlertAgent(BaseAgent):
             return "csm_assigned"
 
     def _generate_recommended_actions(
-        self,
-        risk_signals: List[Dict[str, Any]],
-        severity: str
-    ) -> List[Dict[str, str]]:
+        self, risk_signals: list[dict[str, Any]], severity: str
+    ) -> list[dict[str, str]]:
         """Generate recommended actions."""
         actions = []
 
         if severity in ["critical", "high"]:
-            actions.append({
-                "action": "Immediate customer call to understand issues",
-                "priority": "critical",
-                "estimated_effort": "1 hour"
-            })
+            actions.append(
+                {
+                    "action": "Immediate customer call to understand issues",
+                    "priority": "critical",
+                    "estimated_effort": "1 hour",
+                }
+            )
 
         for signal in risk_signals[:3]:
             signal_type = signal.get("type", "")
 
             if signal_type == "usage_drop":
-                actions.append({
-                    "action": "Investigate usage drop - review product analytics",
-                    "priority": "high",
-                    "estimated_effort": "30 minutes"
-                })
+                actions.append(
+                    {
+                        "action": "Investigate usage drop - review product analytics",
+                        "priority": "high",
+                        "estimated_effort": "30 minutes",
+                    }
+                )
             elif signal_type == "payment_failure":
-                actions.append({
-                    "action": "Contact billing to resolve payment issues",
-                    "priority": "critical",
-                    "estimated_effort": "15 minutes"
-                })
+                actions.append(
+                    {
+                        "action": "Contact billing to resolve payment issues",
+                        "priority": "critical",
+                        "estimated_effort": "15 minutes",
+                    }
+                )
             elif signal_type == "nps_detractor":
-                actions.append({
-                    "action": "Follow up on NPS feedback",
-                    "priority": "high",
-                    "estimated_effort": "30 minutes"
-                })
+                actions.append(
+                    {
+                        "action": "Follow up on NPS feedback",
+                        "priority": "high",
+                        "estimated_effort": "30 minutes",
+                    }
+                )
 
         return actions[:5]  # Limit to top 5
 
-    def _format_alert(self, alert: Dict[str, Any]) -> str:
+    def _format_alert(self, alert: dict[str, Any]) -> str:
         """Format risk alert."""
         severity = alert["alert_severity"]
 
         # Severity emoji
-        emoji = {
-            "critical": "????",
-            "high": "????",
-            "medium": "??????",
-            "low": "??????"
-        }
+        emoji = {"critical": "????", "high": "????", "medium": "??????", "low": "??????"}
 
-        report = f"""**{emoji.get(severity, '????')} {alert['alert_title']}**
+        report = f"""**{emoji.get(severity, "????")} {alert["alert_title"]}**
 
 **Severity:** {severity.upper()}
-**Assigned To:** {alert['assigned_to']}
-**SLA:** {alert['sla']}
+**Assigned To:** {alert["assigned_to"]}
+**SLA:** {alert["sla"]}
 
 **Description:**
-{alert['description']}
+{alert["description"]}
 
 **Escalation Path:**
-{' ??? '.join(alert['escalation_path'])}
+{" ??? ".join(alert["escalation_path"])}
 
 **???? Recommended Actions:**
 """
 
-        for i, action in enumerate(alert['recommended_actions'], 1):
+        for i, action in enumerate(alert["recommended_actions"], 1):
             report += f"{i}. **{action['action']}**\n"
             report += f"   - Priority: {action['priority'].upper()}\n"
             report += f"   - Estimated Effort: {action['estimated_effort']}\n"
@@ -243,6 +250,7 @@ class RiskAlertAgent(BaseAgent):
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -256,7 +264,7 @@ if __name__ == "__main__":
             "risk_signals": [
                 {"type": "churn_risk", "value": 85},
                 {"type": "usage_drop", "value": 70},
-                {"type": "nps_detractor", "value": 3}
+                {"type": "nps_detractor", "value": 3},
             ]
         }
 
