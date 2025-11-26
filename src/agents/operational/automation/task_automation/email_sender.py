@@ -5,14 +5,14 @@ Auto-sends templated emails for common scenarios: welcome emails, follow-ups,
 escalation notifications, and customer communications.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, UTC
 import json
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("email_sender", tier="operational", category="automation")
@@ -50,7 +50,7 @@ If you have any questions, our support team is here to help.
 
 Best regards,
 The {company_name} Team""",
-            "category": "onboarding"
+            "category": "onboarding",
         },
         "followup": {
             "subject": "Following up: {topic}",
@@ -64,7 +64,7 @@ Let me know if you have any questions or need any assistance.
 
 Best regards,
 {sender_name}""",
-            "category": "engagement"
+            "category": "engagement",
         },
         "escalation": {
             "subject": "URGENT: {issue_type} - Action Required",
@@ -82,7 +82,7 @@ Current Status: {status}
 
 Best regards,
 {company_name} Support Team""",
-            "category": "support"
+            "category": "support",
         },
         "feedback_request": {
             "subject": "How was your experience with {company_name}?",
@@ -96,7 +96,7 @@ Please take a moment to share your thoughts: {survey_link}
 
 Thank you!
 The {company_name} Team""",
-            "category": "feedback"
+            "category": "feedback",
         },
         "renewal_reminder": {
             "subject": "Your {plan_name} subscription renews in {days_until_renewal} days",
@@ -113,8 +113,8 @@ If you have any questions or want to make changes, please contact us.
 
 Best regards,
 {company_name} Billing Team""",
-            "category": "billing"
-        }
+            "category": "billing",
+        },
     }
 
     # Email priority levels
@@ -122,7 +122,7 @@ Best regards,
         "urgent": {"importance": "high", "send_immediately": True},
         "high": {"importance": "high", "send_immediately": False},
         "normal": {"importance": "normal", "send_immediately": False},
-        "low": {"importance": "low", "send_immediately": False}
+        "low": {"importance": "low", "send_immediately": False},
     }
 
     def __init__(self):
@@ -132,7 +132,7 @@ Best regards,
             temperature=0.1,
             max_tokens=1000,
             capabilities=[AgentCapability.DATABASE_WRITE],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -164,68 +164,42 @@ Best regards,
             "email_sending_details",
             template=template_type,
             priority=priority,
-            scheduled=schedule_time is not None
+            scheduled=schedule_time is not None,
         )
 
         # Get email template
-        template = self.EMAIL_TEMPLATES.get(
-            template_type,
-            self.EMAIL_TEMPLATES["followup"]
-        )
+        template = self.EMAIL_TEMPLATES.get(template_type, self.EMAIL_TEMPLATES["followup"])
 
         # Extract custom parameters from message
         custom_params = await self._extract_email_parameters(
-            message,
-            template_type,
-            customer_metadata
+            message, template_type, customer_metadata
         )
 
         # Prepare email content
-        email_content = self._prepare_email_content(
-            template,
-            custom_params,
-            customer_metadata
-        )
+        email_content = self._prepare_email_content(template, custom_params, customer_metadata)
 
         # Personalize email
-        personalized_email = self._personalize_email(
-            email_content,
-            customer_metadata
-        )
+        personalized_email = self._personalize_email(email_content, customer_metadata)
 
         # Validate email
         validation = self._validate_email(personalized_email, customer_metadata)
 
         # Send email (or schedule if requested)
         if schedule_time:
-            sent_email = await self._schedule_email(
-                personalized_email,
-                schedule_time,
-                priority
-            )
+            sent_email = await self._schedule_email(personalized_email, schedule_time, priority)
         else:
-            sent_email = await self._send_email_external(
-                personalized_email,
-                priority,
-                validation
-            )
+            sent_email = await self._send_email_external(personalized_email, priority, validation)
 
         # Track email
         tracking_info = self._setup_email_tracking(sent_email)
 
         # Log automation action
         automation_log = self._log_automation_action(
-            "email_sent" if not schedule_time else "email_scheduled",
-            sent_email,
-            customer_metadata
+            "email_sent" if not schedule_time else "email_scheduled", sent_email, customer_metadata
         )
 
         # Generate response
-        response = self._format_email_response(
-            sent_email,
-            tracking_info,
-            schedule_time
-        )
+        response = self._format_email_response(sent_email, tracking_info, schedule_time)
 
         state["agent_response"] = response
         state["sent_email"] = sent_email
@@ -242,17 +216,14 @@ Best regards,
             email_id=sent_email.get("id"),
             template=template_type,
             recipient=sent_email.get("to"),
-            scheduled=schedule_time is not None
+            scheduled=schedule_time is not None,
         )
 
         return state
 
     async def _extract_email_parameters(
-        self,
-        message: str,
-        template_type: str,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, message: str, template_type: str, customer_metadata: dict
+    ) -> dict[str, Any]:
         """
         Extract email parameters from message using LLM.
 
@@ -280,35 +251,30 @@ Be concise and professional."""
 Message: {message}
 
 Template Type: {template_type}
-Customer: {customer_metadata.get('customer_name', 'Unknown')}
+Customer: {customer_metadata.get("customer_name", "Unknown")}
 
 Return JSON with extracted parameters relevant to the email template."""
 
         response = await self.call_llm(
             system_prompt=system_prompt,
             user_message=user_prompt,
-            conversation_history=[]  # Email parameter extraction uses message context
+            conversation_history=[],  # Email parameter extraction uses message context
         )
 
         # Parse LLM response
         try:
             import re
-            json_match = re.search(r'\{.*\}', response, re.DOTALL)
-            if json_match:
-                params = json.loads(json_match.group())
-            else:
-                params = {"custom_message": message}
-        except:
+
+            json_match = re.search(r"\{.*\}", response, re.DOTALL)
+            params = json.loads(json_match.group()) if json_match else {"custom_message": message}
+        except Exception:
             params = {"custom_message": message}
 
         return params
 
     def _prepare_email_content(
-        self,
-        template: Dict,
-        custom_params: Dict,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, template: dict, custom_params: dict, customer_metadata: dict
+    ) -> dict[str, Any]:
         """
         Prepare email content from template and parameters.
 
@@ -327,19 +293,19 @@ Return JSON with extracted parameters relevant to the email template."""
             "sender_name": "Support Team",
             "plan_name": customer_metadata.get("plan_name", "Standard Plan"),
             "topic": "your request",  # Default topic
-            **custom_params
+            **custom_params,
         }
 
         # Fill in template with safe formatting
         try:
             subject = template["subject"].format(**template_vars)
-        except KeyError as e:
+        except KeyError:
             # If key is missing, use template as-is
             subject = template["subject"]
 
         try:
             body = template["body"].format(**template_vars)
-        except KeyError as e:
+        except KeyError:
             # If key is missing, use template as-is
             body = template["body"]
 
@@ -347,14 +313,10 @@ Return JSON with extracted parameters relevant to the email template."""
             "subject": subject,
             "body": body,
             "category": template["category"],
-            "template_vars": template_vars
+            "template_vars": template_vars,
         }
 
-    def _personalize_email(
-        self,
-        email_content: Dict,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+    def _personalize_email(self, email_content: dict, customer_metadata: dict) -> dict[str, Any]:
         """
         Personalize email based on customer data.
 
@@ -374,7 +336,7 @@ Return JSON with extracted parameters relevant to the email template."""
             personalized["body"] = f"[Enterprise Customer]\n\n{personalized['body']}"
 
         # Add signature
-        personalized["signature"] = f"""
+        personalized["signature"] = """
 --
 Best regards,
 The Support Team
@@ -396,11 +358,7 @@ Help Center: https://help.acme-corp.com
 
         return personalized
 
-    def _validate_email(
-        self,
-        email: Dict,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+    def _validate_email(self, email: dict, customer_metadata: dict) -> dict[str, Any]:
         """
         Validate email before sending.
 
@@ -411,14 +369,14 @@ Help Center: https://help.acme-corp.com
         Returns:
             Validation results
         """
-        validation = {
-            "is_valid": True,
-            "warnings": [],
-            "errors": []
-        }
+        validation = {"is_valid": True, "warnings": [], "errors": []}
 
         # Validate recipient - check both email dict and customer_metadata
-        recipient = email.get("to") or customer_metadata.get("email") or customer_metadata.get("customer_email")
+        recipient = (
+            email.get("to")
+            or customer_metadata.get("email")
+            or customer_metadata.get("customer_email")
+        )
         if not recipient:
             validation["is_valid"] = False
             validation["errors"].append("No recipient email address")
@@ -438,11 +396,8 @@ Help Center: https://help.acme-corp.com
         return validation
 
     async def _send_email_external(
-        self,
-        email: Dict,
-        priority: str,
-        validation: Dict
-    ) -> Dict[str, Any]:
+        self, email: dict, priority: str, validation: dict
+    ) -> dict[str, Any]:
         """
         Send email via external email service (mocked).
 
@@ -462,13 +417,12 @@ Help Center: https://help.acme-corp.com
             self.logger.warning(
                 "email_validation_failed",
                 errors=validation.get("errors", []),
-                warnings=validation.get("warnings", [])
+                warnings=validation.get("warnings", []),
             )
 
         import hashlib
-        email_id = hashlib.md5(
-            f"{email['subject']}{datetime.now(UTC)}".encode()
-        ).hexdigest()[:16]
+
+        email_id = hashlib.md5(f"{email['subject']}{datetime.now(UTC)}".encode()).hexdigest()[:16]
 
         priority_config = self.PRIORITY_LEVELS.get(priority, self.PRIORITY_LEVELS["normal"])
 
@@ -478,30 +432,28 @@ Help Center: https://help.acme-corp.com
             "body": email["body"] + email.get("signature", ""),
             "from": email.get("from_email", "support@acme-corp.com"),
             "from_name": email.get("from_name", "Support Team"),
-            "to": email.get("to") or "customer@example.com",  # Use None-coalescing to ensure we have a value
+            "to": email.get("to")
+            or "customer@example.com",  # Use None-coalescing to ensure we have a value
             "reply_to": email.get("reply_to"),
             "priority": priority,
             "importance": priority_config["importance"],
             "status": "sent",
             "sent_at": datetime.now(UTC).isoformat(),
-            "category": email.get("category", "general")
+            "category": email.get("category", "general"),
         }
 
         self.logger.info(
             "email_sent_via_external_service",
             email_id=email_id,
             priority=priority,
-            category=email["category"]
+            category=email["category"],
         )
 
         return sent_email
 
     async def _schedule_email(
-        self,
-        email: Dict,
-        schedule_time: str,
-        priority: str
-    ) -> Dict[str, Any]:
+        self, email: dict, schedule_time: str, priority: str
+    ) -> dict[str, Any]:
         """
         Schedule email for later sending.
 
@@ -514,9 +466,8 @@ Help Center: https://help.acme-corp.com
             Scheduled email details
         """
         import hashlib
-        email_id = hashlib.md5(
-            f"{email['subject']}{schedule_time}".encode()
-        ).hexdigest()[:16]
+
+        email_id = hashlib.md5(f"{email['subject']}{schedule_time}".encode()).hexdigest()[:16]
 
         scheduled_email = {
             "id": email_id,
@@ -527,12 +478,12 @@ Help Center: https://help.acme-corp.com
             "priority": priority,
             "status": "scheduled",
             "scheduled_for": schedule_time,
-            "created_at": datetime.now(UTC).isoformat()
+            "created_at": datetime.now(UTC).isoformat(),
         }
 
         return scheduled_email
 
-    def _setup_email_tracking(self, sent_email: Dict) -> Dict[str, Any]:
+    def _setup_email_tracking(self, sent_email: dict) -> dict[str, Any]:
         """
         Setup email tracking (opens, clicks).
 
@@ -548,15 +499,12 @@ Help Center: https://help.acme-corp.com
             "track_clicks": True,
             "tracking_pixel_url": f"https://tracking.acme-corp.com/pixel/{sent_email['id']}",
             "click_tracking_enabled": True,
-            "tracking_created_at": datetime.now(UTC).isoformat()
+            "tracking_created_at": datetime.now(UTC).isoformat(),
         }
 
     def _log_automation_action(
-        self,
-        action_type: str,
-        sent_email: Dict,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, action_type: str, sent_email: dict, customer_metadata: dict
+    ) -> dict[str, Any]:
         """Log automated action for audit trail."""
         return {
             "action_type": action_type,
@@ -568,48 +516,45 @@ Help Center: https://help.acme-corp.com
                 "subject": sent_email.get("subject"),
                 "recipient": sent_email.get("to"),
                 "category": sent_email.get("category"),
-                "priority": sent_email.get("priority")
-            }
+                "priority": sent_email.get("priority"),
+            },
         }
 
     def _format_email_response(
-        self,
-        sent_email: Dict,
-        tracking_info: Dict,
-        schedule_time: Optional[str]
+        self, sent_email: dict, tracking_info: dict, schedule_time: str | None
     ) -> str:
         """Format email sending response."""
         if schedule_time:
             response = f"""**Email Scheduled Successfully**
 
-Email ID: {sent_email['id']}
+Email ID: {sent_email["id"]}
 Status: Scheduled
-Scheduled For: {sent_email['scheduled_for']}
+Scheduled For: {sent_email["scheduled_for"]}
 
-Subject: {sent_email['subject']}
-To: {sent_email['to']}
-From: {sent_email['from']}
-Priority: {sent_email['priority'].title()}
+Subject: {sent_email["subject"]}
+To: {sent_email["to"]}
+From: {sent_email["from"]}
+Priority: {sent_email["priority"].title()}
 
 The email will be automatically sent at the scheduled time.
 """
         else:
             response = f"""**Email Sent Successfully**
 
-Email ID: {sent_email['id']}
+Email ID: {sent_email["id"]}
 Status: Sent
-Sent At: {sent_email['sent_at']}
+Sent At: {sent_email["sent_at"]}
 
-Subject: {sent_email['subject']}
-To: {sent_email['to']}
-From: {sent_email['from']}
-Priority: {sent_email['priority'].title()}
-Category: {sent_email['category'].title()}
+Subject: {sent_email["subject"]}
+To: {sent_email["to"]}
+From: {sent_email["from"]}
+Priority: {sent_email["priority"].title()}
+Category: {sent_email["category"].title()}
 
 **Tracking:**
 - Opens: Enabled
 - Clicks: Enabled
-- Tracking ID: {tracking_info['tracking_id']}
+- Tracking ID: {tracking_info["tracking_id"]}
 """
 
         return response
