@@ -5,14 +5,13 @@ This agent handles invoice generation requests for monthly invoices,
 custom date ranges, and tax documents.
 """
 
-from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
 import random
+from datetime import datetime, timedelta
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("invoice_generator", tier="essential", category="billing")
@@ -36,12 +35,9 @@ class InvoiceGenerator(BaseAgent):
             name="invoice_generator",
             type=AgentType.SPECIALIST,
             temperature=0.2,
-            capabilities=[
-                AgentCapability.KB_SEARCH,
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="billing",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -72,7 +68,7 @@ class InvoiceGenerator(BaseAgent):
             message_preview=user_message[:100],
             invoice_type=invoice_type,
             customer_id=state.get("customer_id"),
-            turn_count=state["turn_count"]
+            turn_count=state["turn_count"],
         )
 
         # Generate appropriate invoice
@@ -105,7 +101,7 @@ class InvoiceGenerator(BaseAgent):
             customer_id=state.get("customer_id"),
             invoice_type=invoice_type,
             invoice_number=result["invoice"].get("invoice_number"),
-            email=email
+            email=email,
         )
 
         return state
@@ -131,20 +127,20 @@ class InvoiceGenerator(BaseAgent):
         # Check message keywords
         if any(word in message_lower for word in ["tax", "receipt", "tax document"]):
             return "tax_document"
-        elif any(word in message_lower for word in ["year end", "annual", "yearly", "year summary"]):
+        elif any(
+            word in message_lower for word in ["year end", "annual", "yearly", "year summary"]
+        ):
             return "year_end_summary"
-        elif any(word in message_lower for word in ["resend", "re-send", "send again", "didn't receive"]):
+        elif any(
+            word in message_lower for word in ["resend", "re-send", "send again", "didn't receive"]
+        ):
             return "resend"
         elif any(word in message_lower for word in ["custom", "specific date", "date range"]):
             return "custom"
         else:
             return "monthly"
 
-    async def _generate_monthly_invoice(
-        self,
-        customer_metadata: Dict,
-        state: AgentState
-    ) -> Dict:
+    async def _generate_monthly_invoice(self, customer_metadata: dict, state: AgentState) -> dict:
         """
         Generate monthly invoice.
 
@@ -182,40 +178,32 @@ class InvoiceGenerator(BaseAgent):
                     "description": f"{plan.title()} Plan - {billing_cycle.title()}",
                     "quantity": 1,
                     "unit_price": mrr,
-                    "amount": mrr
+                    "amount": mrr,
                 }
             ],
             "subtotal": mrr,
             "tax": 0,  # Tax would be calculated based on location
-            "total": mrr
+            "total": mrr,
         }
 
-        message = f"""I've generated your invoice and sent it to {customer_metadata.get('email', 'your email')}.
+        message = f"""I've generated your invoice and sent it to {customer_metadata.get("email", "your email")}.
 
 **Invoice Details:**
 - Invoice Number: {invoice_number}
 - Amount: ${mrr:.2f}
-- Due Date: {due_date.strftime('%B %d, %Y')}
-- Billing Period: {period_start.strftime('%b %d')} - {period_end.strftime('%b %d, %Y')}
+- Due Date: {due_date.strftime("%B %d, %Y")}
+- Billing Period: {period_start.strftime("%b %d")} - {period_end.strftime("%b %d, %Y")}
 
 You can also access all your invoices anytime in:
 **Settings → Billing → Invoice History**
 
 Is there anything else I can help you with?"""
 
-        self.logger.debug(
-            "monthly_invoice_generated",
-            invoice_number=invoice_number,
-            amount=mrr
-        )
+        self.logger.debug("monthly_invoice_generated", invoice_number=invoice_number, amount=mrr)
 
         return {"invoice": invoice, "message": message}
 
-    async def _generate_custom_invoice(
-        self,
-        customer_metadata: Dict,
-        state: AgentState
-    ) -> Dict:
+    async def _generate_custom_invoice(self, customer_metadata: dict, state: AgentState) -> dict:
         """
         Generate custom date range invoice.
 
@@ -228,7 +216,9 @@ Is there anything else I can help you with?"""
         """
         # Extract date range from entities or use defaults
         entities = state.get("entities", {})
-        start_date_str = entities.get("start_date", (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d"))
+        start_date_str = entities.get(
+            "start_date", (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+        )
         end_date_str = entities.get("end_date", datetime.now().strftime("%Y-%m-%d"))
 
         # Parse dates
@@ -259,17 +249,17 @@ Is there anything else I can help you with?"""
                 {
                     "description": f"{plan.title()} Plan - Custom Period",
                     "period": f"{start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}",
-                    "amount": prorated_amount
+                    "amount": prorated_amount,
                 }
             ],
-            "total": prorated_amount
+            "total": prorated_amount,
         }
 
-        message = f"""I've generated a custom invoice for the period you requested and sent it to {customer_metadata.get('email', 'your email')}.
+        message = f"""I've generated a custom invoice for the period you requested and sent it to {customer_metadata.get("email", "your email")}.
 
 **Invoice Details:**
 - Invoice Number: {invoice_number}
-- Period: {start_date.strftime('%B %d, %Y')} - {end_date.strftime('%B %d, %Y')}
+- Period: {start_date.strftime("%B %d, %Y")} - {end_date.strftime("%B %d, %Y")}
 - Amount: ${prorated_amount:.2f}
 
 The invoice has been sent to your email. Is there anything else I can help you with?"""
@@ -278,16 +268,12 @@ The invoice has been sent to your email. Is there anything else I can help you w
             "custom_invoice_generated",
             invoice_number=invoice_number,
             period_days=days_in_range,
-            amount=prorated_amount
+            amount=prorated_amount,
         )
 
         return {"invoice": invoice, "message": message}
 
-    async def _generate_tax_document(
-        self,
-        customer_metadata: Dict,
-        state: AgentState
-    ) -> Dict:
+    async def _generate_tax_document(self, customer_metadata: dict, state: AgentState) -> dict:
         """
         Generate tax document/receipt.
 
@@ -315,11 +301,11 @@ The invoice has been sent to your email. Is there anything else I can help you w
             "breakdown": {
                 "subscription_fees": annual_total,
                 "taxes_paid": 0,
-                "total": annual_total
-            }
+                "total": annual_total,
+            },
         }
 
-        message = f"""I've generated your tax document for {tax_year} and sent it to {customer_metadata.get('email', 'your email')}.
+        message = f"""I've generated your tax document for {tax_year} and sent it to {customer_metadata.get("email", "your email")}.
 
 **Tax Document Summary:**
 - Document Number: {invoice_number}
@@ -334,16 +320,12 @@ The document has been sent to your email in PDF format. Is there anything else I
             "tax_document_generated",
             invoice_number=invoice_number,
             tax_year=tax_year,
-            total_paid=annual_total
+            total_paid=annual_total,
         )
 
         return {"invoice": invoice, "message": message}
 
-    async def _generate_year_end_summary(
-        self,
-        customer_metadata: Dict,
-        state: AgentState
-    ) -> Dict:
+    async def _generate_year_end_summary(self, customer_metadata: dict, state: AgentState) -> dict:
         """
         Generate year-end summary.
 
@@ -365,12 +347,11 @@ The document has been sent to your email in PDF format. Is there anything else I
             "year": year,
             "total_paid": annual_total,
             "monthly_breakdown": [
-                {"month": f"{year}-{str(i).zfill(2)}", "amount": mrr}
-                for i in range(1, 13)
-            ]
+                {"month": f"{year}-{str(i).zfill(2)}", "amount": mrr} for i in range(1, 13)
+            ],
         }
 
-        message = f"""I've generated your year-end summary for {year} and sent it to {customer_metadata.get('email', 'your email')}.
+        message = f"""I've generated your year-end summary for {year} and sent it to {customer_metadata.get("email", "your email")}.
 
 **Year-End Summary {year}:**
 - Document Number: {invoice_number}
@@ -389,16 +370,12 @@ The document has been sent to your email. Is there anything else I can help you 
             "year_end_summary_generated",
             invoice_number=invoice_number,
             year=year,
-            total_paid=annual_total
+            total_paid=annual_total,
         )
 
         return {"invoice": invoice, "message": message}
 
-    async def _resend_invoice(
-        self,
-        customer_metadata: Dict,
-        state: AgentState
-    ) -> Dict:
+    async def _resend_invoice(self, customer_metadata: dict, state: AgentState) -> dict:
         """
         Resend existing invoice.
 
@@ -415,13 +392,9 @@ The document has been sent to your email. Is there anything else I can help you 
         invoice_number = f"INV-{random.randint(100000, 999999)}"
         mrr = customer_metadata.get("mrr", 0)
 
-        invoice = {
-            "invoice_number": invoice_number,
-            "amount": mrr,
-            "status": "resent"
-        }
+        invoice = {"invoice_number": invoice_number, "amount": mrr, "status": "resent"}
 
-        message = f"""I've resent your most recent invoice to {customer_metadata.get('email', 'your email')}.
+        message = f"""I've resent your most recent invoice to {customer_metadata.get("email", "your email")}.
 
 **Invoice Details:**
 - Invoice Number: {invoice_number}
@@ -436,19 +409,11 @@ You can also access all invoices in **Settings → Billing → Invoice History**
 
 Is there anything else I can help you with?"""
 
-        self.logger.debug(
-            "invoice_resent",
-            invoice_number=invoice_number
-        )
+        self.logger.debug("invoice_resent", invoice_number=invoice_number)
 
         return {"invoice": invoice, "message": message}
 
-    async def _send_invoice_email(
-        self,
-        email: str,
-        invoice: Dict,
-        state: AgentState
-    ) -> None:
+    async def _send_invoice_email(self, email: str, invoice: dict, state: AgentState) -> None:
         """
         Send invoice via email.
 
@@ -464,13 +429,14 @@ Is there anything else I can help you with?"""
             "invoice_email_sent",
             email=email,
             invoice_number=invoice.get("invoice_number"),
-            customer_id=state.get("customer_id")
+            customer_id=state.get("customer_id"),
         )
 
 
 if __name__ == "__main__":
     # Test invoice generator
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -488,16 +454,16 @@ if __name__ == "__main__":
                     "plan": "premium",
                     "mrr": 100,
                     "billing_cycle": "monthly",
-                    "email": "test@example.com"
+                    "email": "test@example.com",
                 }
-            }
+            },
         )
 
         result1 = await generator.process(state1)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("TEST 1: Monthly Invoice")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Invoice generated: {result1.get('invoice_generated')}")
         print(f"Invoice number: {result1.get('invoice_number')}")
         print(f"\nResponse:\n{result1['agent_response']}")
@@ -506,20 +472,16 @@ if __name__ == "__main__":
         state2 = create_initial_state(
             "I need a tax receipt for 2024",
             context={
-                "customer_metadata": {
-                    "plan": "premium",
-                    "mrr": 100,
-                    "email": "test@example.com"
-                }
-            }
+                "customer_metadata": {"plan": "premium", "mrr": 100, "email": "test@example.com"}
+            },
         )
         state2["entities"] = {"year": 2024}
 
         result2 = await generator.process(state2)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("TEST 2: Tax Document")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Invoice generated: {result2.get('invoice_generated')}")
         print(f"Invoice number: {result2.get('invoice_number')}")
         print(f"\nResponse:\n{result2['agent_response'][:200]}...")
