@@ -27,6 +27,7 @@ export function ChatHeader({ conversation }: ChatHeaderProps): JSX.Element {
   const messages = useChatStore((state) => state.messages);
 
   const handleDelete = async (): Promise<void> => {
+    // eslint-disable-next-line no-alert -- Simple confirmation for delete action
     if (window.confirm("Are you sure you want to delete this conversation?")) {
       try {
         await deleteConversation(conversation.conversation_id);
