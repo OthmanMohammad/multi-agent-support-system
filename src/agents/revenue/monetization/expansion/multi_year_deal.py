@@ -522,5 +522,9 @@ Key Benefits:
 
 Generate a compelling multi-year deal proposal."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # Deal proposals use qualification data
+        )
         return response
