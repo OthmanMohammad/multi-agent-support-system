@@ -11,7 +11,7 @@ Tests cover:
 import pytest
 from uuid import uuid4
 
-from core.errors import (
+from src.core.errors import (
     ValidationError,
     BusinessRuleError,
     NotFoundError,
@@ -22,7 +22,7 @@ from core.errors import (
     ExternalServiceError,
     ErrorCodes,
 )
-from core.result import Error
+from src.core.result import Error
 
 
 class TestValidationError:
