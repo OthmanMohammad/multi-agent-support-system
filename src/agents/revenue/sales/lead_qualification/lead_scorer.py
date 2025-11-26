@@ -5,13 +5,12 @@ Scores leads 0-100 based on firmographic, behavioral, and engagement signals.
 Uses ML-ready scoring model with feature importance.
 """
 
-from typing import Dict, Any, List
-from datetime import datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("lead_scorer", tier="revenue", category="sales")
@@ -42,11 +41,8 @@ class LeadScorer(BaseAgent):
             type=AgentType.ANALYZER,
             temperature=0.2,
             max_tokens=800,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.DATABASE_WRITE
-            ],
-            tier="revenue"
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.DATABASE_WRITE],
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -71,8 +67,7 @@ class LeadScorer(BaseAgent):
 
         # Total score
         total_score = min(
-            firmographic_score + behavioral_score + engagement_score + recency_bonus,
-            100
+            firmographic_score + behavioral_score + engagement_score + recency_bonus, 100
         )
 
         # Assign tier
@@ -87,7 +82,7 @@ class LeadScorer(BaseAgent):
             "behavioral_score": behavioral_score,
             "engagement_score": engagement_score,
             "recency_bonus": recency_bonus,
-            "total_score": total_score
+            "total_score": total_score,
         }
 
         # Update state
@@ -98,20 +93,13 @@ class LeadScorer(BaseAgent):
         state["status"] = "resolved"
         state["response_confidence"] = 0.91
 
-        self.logger.info(
-            "lead_scorer_completed",
-            total_score=total_score,
-            tier=tier
-        )
+        self.logger.info("lead_scorer_completed", total_score=total_score, tier=tier)
 
         return state
 
     def _extract_scoring_data(
-        self,
-        customer_metadata: Dict,
-        entities: Dict,
-        state: AgentState
-    ) -> Dict[str, Any]:
+        self, customer_metadata: dict, entities: dict, state: AgentState
+    ) -> dict[str, Any]:
         """Extract all data needed for scoring"""
         return {
             # Firmographic
@@ -119,25 +107,22 @@ class LeadScorer(BaseAgent):
             "industry": customer_metadata.get("industry", "other"),
             "location": customer_metadata.get("location", "unknown"),
             "revenue": customer_metadata.get("revenue", 0),
-
             # Behavioral
             "email_opens": customer_metadata.get("email_opens", 0),
             "page_views": customer_metadata.get("page_views", 0),
             "downloads": customer_metadata.get("downloads", 0),
             "demo_requested": customer_metadata.get("demo_requested", False),
-
             # Engagement
             "trial_started": customer_metadata.get("trial_started", False),
             "trial_activity": customer_metadata.get("trial_activity", "none"),
             "features_used": customer_metadata.get("features_used", 0),
             "api_calls": customer_metadata.get("api_calls", 0),
-
             # Recency
             "days_since_first_touch": customer_metadata.get("days_since_first_touch", 999),
-            "last_activity_date": customer_metadata.get("last_activity_date")
+            "last_activity_date": customer_metadata.get("last_activity_date"),
         }
 
-    def _calculate_firmographic_score(self, data: Dict) -> int:
+    def _calculate_firmographic_score(self, data: dict) -> int:
         """Calculate firmographic score (0-30 points)"""
         score = 0
 
@@ -174,7 +159,7 @@ class LeadScorer(BaseAgent):
 
         return min(score, 30)
 
-    def _calculate_behavioral_score(self, data: Dict) -> int:
+    def _calculate_behavioral_score(self, data: dict) -> int:
         """Calculate behavioral score (0-25 points)"""
         score = 0
 
@@ -192,7 +177,7 @@ class LeadScorer(BaseAgent):
 
         return min(score, 25)
 
-    def _calculate_engagement_score(self, data: Dict) -> int:
+    def _calculate_engagement_score(self, data: dict) -> int:
         """Calculate engagement score (0-30 points)"""
         score = 0
 
@@ -215,7 +200,7 @@ class LeadScorer(BaseAgent):
 
         return min(score, 30)
 
-    def _calculate_recency_score(self, data: Dict) -> int:
+    def _calculate_recency_score(self, data: dict) -> int:
         """Calculate recency bonus/penalty (0-15 points)"""
         days_since = data.get("days_since_first_touch", 999)
 
@@ -243,7 +228,7 @@ class LeadScorer(BaseAgent):
         else:
             return "D"
 
-    def _generate_recommendation(self, score: int, tier: str, data: Dict) -> str:
+    def _generate_recommendation(self, score: int, tier: str, data: dict) -> str:
         """Generate action recommendation based on score"""
         if tier == "A":
             return "High-priority lead - Immediate sales outreach recommended"
