@@ -12,12 +12,11 @@ import pytest
 from uuid import uuid4
 from datetime import datetime, UTC
 
-# Add src directory to Python path
+# Add project root to Python path
 # This allows tests to import from src/ regardless of where pytest is run
 project_root = Path(__file__).parent.parent
-src_path = project_root / "src"
-if str(src_path) not in sys.path:
-    sys.path.insert(0, str(src_path))
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 
 
 # ===== Core Pattern Fixtures =====
