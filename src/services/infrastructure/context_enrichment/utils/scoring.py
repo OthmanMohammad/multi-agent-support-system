@@ -5,14 +5,12 @@ Calculates relevance scores for context data based on recency, completeness,
 agent type relevance, and data quality.
 """
 
-from typing import Dict, Any, Optional
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime
+from typing import Any
+
 import structlog
 
-from src.services.infrastructure.context_enrichment.types import (
-    AgentType,
-    RelevanceScoreComponents
-)
+from src.services.infrastructure.context_enrichment.types import AgentType, RelevanceScoreComponents
 
 logger = structlog.get_logger(__name__)
 
@@ -75,12 +73,7 @@ class RelevanceScorer:
         """Initialize relevance scorer"""
         self.logger = logger.bind(component="relevance_scorer")
 
-    def score(
-        self,
-        context: Dict[str, Any],
-        agent_type: AgentType,
-        **kwargs
-    ) -> float:
+    def score(self, context: dict[str, Any], agent_type: AgentType, **kwargs) -> float:
         """
         Calculate overall relevance score (0-1).
 
@@ -104,26 +97,20 @@ class RelevanceScorer:
 
         # Weighted average of components
         score = (
-            components["recency_score"] * 0.3 +
-            components["completeness_score"] * 0.3 +
-            components["agent_relevance_score"] * 0.3 +
-            components["data_quality_score"] * 0.1
+            components["recency_score"] * 0.3
+            + components["completeness_score"] * 0.3
+            + components["agent_relevance_score"] * 0.3
+            + components["data_quality_score"] * 0.1
         )
 
         self.logger.debug(
-            "relevance_score_calculated",
-            score=score,
-            agent_type=agent_type.value,
-            **components
+            "relevance_score_calculated", score=score, agent_type=agent_type.value, **components
         )
 
         return min(1.0, max(0.0, score))
 
     def score_with_breakdown(
-        self,
-        context: Dict[str, Any],
-        agent_type: AgentType,
-        **kwargs
+        self, context: dict[str, Any], agent_type: AgentType, **kwargs
     ) -> RelevanceScoreComponents:
         """
         Calculate relevance score with component breakdown.
@@ -145,10 +132,10 @@ class RelevanceScorer:
             recency_score=self._score_recency(context),
             completeness_score=self._score_completeness(context, agent_type),
             agent_relevance_score=self._score_agent_relevance(context, agent_type),
-            data_quality_score=self._score_data_quality(context)
+            data_quality_score=self._score_data_quality(context),
         )
 
-    def _score_recency(self, context: Dict[str, Any]) -> float:
+    def _score_recency(self, context: dict[str, Any]) -> float:
         """
         Score data recency.
 
@@ -162,12 +149,7 @@ class RelevanceScorer:
             Recency score (0-1)
         """
         # Check for timestamp fields
-        timestamp_fields = [
-            "enriched_at",
-            "last_login",
-            "last_conversation",
-            "customer_since"
-        ]
+        timestamp_fields = ["enriched_at", "last_login", "last_conversation", "customer_since"]
 
         most_recent = None
         for field in timestamp_fields:
@@ -189,11 +171,7 @@ class RelevanceScorer:
 
         return min(1.0, score)
 
-    def _score_completeness(
-        self,
-        context: Dict[str, Any],
-        agent_type: AgentType
-    ) -> float:
+    def _score_completeness(self, context: dict[str, Any], agent_type: AgentType) -> float:
         """
         Score data completeness for agent type.
 
@@ -207,8 +185,7 @@ class RelevanceScorer:
             Completeness score (0-1)
         """
         relevant_fields = self.AGENT_FIELD_WEIGHTS.get(
-            agent_type,
-            self.AGENT_FIELD_WEIGHTS[AgentType.GENERAL]
+            agent_type, self.AGENT_FIELD_WEIGHTS[AgentType.GENERAL]
         )
 
         if not relevant_fields:
@@ -237,11 +214,7 @@ class RelevanceScorer:
 
         return filled_weight / total_weight
 
-    def _score_agent_relevance(
-        self,
-        context: Dict[str, Any],
-        agent_type: AgentType
-    ) -> float:
+    def _score_agent_relevance(self, context: dict[str, Any], agent_type: AgentType) -> float:
         """
         Score how relevant the data is for the agent type.
 
@@ -255,32 +228,26 @@ class RelevanceScorer:
             Agent relevance score (0-1)
         """
         relevant_fields = self.AGENT_FIELD_WEIGHTS.get(
-            agent_type,
-            self.AGENT_FIELD_WEIGHTS[AgentType.GENERAL]
+            agent_type, self.AGENT_FIELD_WEIGHTS[AgentType.GENERAL]
         )
 
         if not relevant_fields:
             return 1.0
 
         # Get top 3 most important fields for this agent
-        top_fields = sorted(
-            relevant_fields.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )[:3]
+        top_fields = sorted(relevant_fields.items(), key=lambda x: x[1], reverse=True)[:3]
 
         if not top_fields:
             return 1.0
 
         # Score based on presence of top fields
         score = sum(
-            1.0 if context.get(field) is not None else 0.0
-            for field, _ in top_fields
+            1.0 if context.get(field) is not None else 0.0 for field, _ in top_fields
         ) / len(top_fields)
 
         return score
 
-    def _score_data_quality(self, context: Dict[str, Any]) -> float:
+    def _score_data_quality(self, context: dict[str, Any]) -> float:
         """
         Score data quality.
 
@@ -319,14 +286,8 @@ class RelevanceScorer:
                         issues += 1
 
         # Check for placeholder values
-        placeholder_patterns = [
-            "test",
-            "example",
-            "placeholder",
-            "todo",
-            "unknown"
-        ]
-        for key, value in context.items():
+        placeholder_patterns = ["test", "example", "placeholder", "todo", "unknown"]
+        for _key, value in context.items():
             if isinstance(value, str):
                 checks += 1
                 if any(pattern in value.lower() for pattern in placeholder_patterns):
@@ -341,7 +302,7 @@ class RelevanceScorer:
 
 
 # Convenience functions
-_scorer_instance: Optional[RelevanceScorer] = None
+_scorer_instance: RelevanceScorer | None = None
 
 
 def _get_scorer() -> RelevanceScorer:
@@ -352,11 +313,7 @@ def _get_scorer() -> RelevanceScorer:
     return _scorer_instance
 
 
-def score_context(
-    context: Dict[str, Any],
-    agent_type: AgentType,
-    **kwargs
-) -> float:
+def score_context(context: dict[str, Any], agent_type: AgentType, **kwargs) -> float:
     """
     Convenience function to score context.
 
@@ -375,9 +332,7 @@ def score_context(
 
 
 def score_with_breakdown(
-    context: Dict[str, Any],
-    agent_type: AgentType,
-    **kwargs
+    context: dict[str, Any], agent_type: AgentType, **kwargs
 ) -> RelevanceScoreComponents:
     """
     Convenience function to score with breakdown.
