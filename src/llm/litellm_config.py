@@ -8,9 +8,10 @@ Part of: Phase 2 - LiteLLM Multi-Backend Abstraction Layer
 """
 
 from enum import Enum
-from typing import Optional, Dict, Any
-from pydantic import BaseModel, Field
+from typing import Any
+
 import structlog
+from pydantic import BaseModel
 
 from src.core.config import get_settings
 
@@ -19,6 +20,7 @@ logger = structlog.get_logger(__name__)
 
 class LLMBackend(str, Enum):
     """Supported LLM backends"""
+
     ANTHROPIC = "anthropic"
     VLLM = "vllm"
 
@@ -37,10 +39,11 @@ class ModelConfig(BaseModel):
         timeout: Request timeout in seconds
         max_retries: Maximum retry attempts on failure
     """
+
     provider: str
     model_name: str
-    api_base: Optional[str] = None
-    api_key: Optional[str] = None
+    api_base: str | None = None
+    api_key: str | None = None
     max_tokens: int = 4096
     temperature: float = 0.7
     timeout: int = 60
@@ -68,14 +71,14 @@ class LiteLLMConfig:
 
     def __init__(self):
         self.current_backend: LLMBackend = LLMBackend.ANTHROPIC
-        self.vllm_endpoint: Optional[str] = None
+        self.vllm_endpoint: str | None = None
 
         # Get API key from settings (loads from .env via Pydantic)
         settings = get_settings()
         anthropic_api_key = settings.anthropic.api_key
 
         # Model configurations for each backend
-        self.models: Dict[LLMBackend, Dict[str, ModelConfig]] = {
+        self.models: dict[LLMBackend, dict[str, ModelConfig]] = {
             LLMBackend.ANTHROPIC: {
                 # Fast, cost-effective model for routing and simple tasks
                 "haiku": ModelConfig(
@@ -121,10 +124,7 @@ class LiteLLMConfig:
             vllm_models=list(self.models[LLMBackend.VLLM].keys()),
         )
 
-    def get_model_config(
-        self,
-        model_tier: str = "haiku"
-    ) -> ModelConfig:
+    def get_model_config(self, model_tier: str = "haiku") -> ModelConfig:
         """
         Get model configuration for current backend.
 
@@ -209,7 +209,7 @@ class LiteLLMConfig:
             >>> config.switch_backend(LLMBackend.VLLM)
         """
         # Normalize endpoint (remove trailing slash)
-        endpoint = endpoint.rstrip('/')
+        endpoint = endpoint.rstrip("/")
 
         self.vllm_endpoint = endpoint
 
@@ -226,7 +226,7 @@ class LiteLLMConfig:
         """Check if vLLM endpoint is configured"""
         return self.vllm_endpoint is not None
 
-    def get_backend_info(self) -> Dict[str, Any]:
+    def get_backend_info(self) -> dict[str, Any]:
         """
         Get current backend information.
 
