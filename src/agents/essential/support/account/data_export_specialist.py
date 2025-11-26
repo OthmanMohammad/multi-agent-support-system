@@ -2,11 +2,10 @@
 Data Export Specialist Agent - Handles data exports (GDPR compliance).
 """
 
-from typing import Dict, Any
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("data_export_specialist", tier="essential", category="account")
@@ -14,12 +13,12 @@ class DataExportSpecialist(BaseAgent):
     """Data Export Specialist - Handles GDPR-compliant data exports."""
 
     EXPORT_FORMATS = ["json", "csv", "xml", "pdf"]
-    
+
     EXPORT_TYPES = {
         "full": "Complete account data",
         "personal": "Personal data only (GDPR)",
         "projects": "Project data and tasks",
-        "audit_logs": "Security logs"
+        "audit_logs": "Security logs",
     }
 
     def __init__(self):
@@ -29,7 +28,7 @@ class DataExportSpecialist(BaseAgent):
             temperature=0.3,
             capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="account",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -37,21 +36,21 @@ class DataExportSpecialist(BaseAgent):
     async def process(self, state: AgentState) -> AgentState:
         self.logger.info("data_export_processing_started")
         state = self.update_state(state)
-        
+
         message = state["current_message"]
         action = self._detect_export_action(message)
-        
+
         kb_results = await self.search_knowledge_base(message, category="account", limit=2)
         state["kb_results"] = kb_results
-        
+
         response = self._generate_export_guide(action)
-        
+
         state["agent_response"] = response
         state["export_action"] = action
         state["response_confidence"] = 0.85
         state["next_agent"] = None
         state["status"] = "resolved"
-        
+
         self.logger.info("export_processing_completed", action=action)
         return state
 
@@ -254,8 +253,10 @@ Settings > Account > Export Data
 **Quick Start:**
 Settings > Account > Export Data > Request Export"""
 
+
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
