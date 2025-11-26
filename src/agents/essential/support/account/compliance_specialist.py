@@ -2,11 +2,10 @@
 Compliance Specialist Agent - Handles GDPR, CCPA, and compliance requests.
 """
 
-from typing import Dict, Any
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("compliance_specialist", tier="essential", category="account")
@@ -18,7 +17,7 @@ class ComplianceSpecialist(BaseAgent):
         "ccpa": "California Consumer Privacy Act (US)",
         "hipaa": "Health Insurance Portability (US)",
         "soc2": "SOC 2 Compliance",
-        "iso27001": "ISO 27001 Information Security"
+        "iso27001": "ISO 27001 Information Security",
     }
 
     GDPR_RIGHTS = {
@@ -27,7 +26,7 @@ class ComplianceSpecialist(BaseAgent):
         "erasure": "Right to be forgotten",
         "portability": "Right to transfer data",
         "restrict": "Right to restrict processing",
-        "object": "Right to object to processing"
+        "object": "Right to object to processing",
     }
 
     def __init__(self):
@@ -37,7 +36,7 @@ class ComplianceSpecialist(BaseAgent):
             temperature=0.3,
             capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="account",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -45,21 +44,21 @@ class ComplianceSpecialist(BaseAgent):
     async def process(self, state: AgentState) -> AgentState:
         self.logger.info("compliance_processing_started")
         state = self.update_state(state)
-        
+
         message = state["current_message"]
         action = self._detect_compliance_action(message)
-        
+
         kb_results = await self.search_knowledge_base(message, category="account", limit=2)
         state["kb_results"] = kb_results
-        
+
         response = self._generate_compliance_guide(action)
-        
+
         state["agent_response"] = response
         state["compliance_action"] = action
         state["response_confidence"] = 0.85
         state["next_agent"] = None
         state["status"] = "resolved"
-        
+
         self.logger.info("compliance_processing_completed", action=action)
         return state
 
@@ -365,8 +364,10 @@ Security: security@example.com
 **Quick Access:**
 Settings > Privacy > Compliance"""
 
+
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
