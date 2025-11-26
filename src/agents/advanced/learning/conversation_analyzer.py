@@ -153,6 +153,7 @@ Identify 5-7 most significant conversation patterns and provide actionable recom
             analysis_state = state.copy()
             analysis_state["user_message"] = analysis_prompt
             analysis_state["analysis_data"] = analysis_data
+            analysis_state["conversation_history"] = []  # Conversation analysis is standalone
 
             llm_response = await self.call_llm(analysis_state)
 
