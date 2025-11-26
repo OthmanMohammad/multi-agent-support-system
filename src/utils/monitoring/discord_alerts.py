@@ -15,11 +15,12 @@ Alert Types:
 Part of: Phase 5 - Monitoring & Observability
 """
 
-import aiohttp
 import asyncio
-from typing import Dict, Any, Optional, List
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from enum import Enum
+from typing import Any
+
+import aiohttp
 
 from src.core.config import get_settings
 from src.utils.logging.setup import get_logger
@@ -32,8 +33,10 @@ settings = get_settings()
 # ALERT SEVERITY LEVELS
 # =============================================================================
 
+
 class AlertSeverity(str, Enum):
     """Alert severity levels"""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -42,9 +45,9 @@ class AlertSeverity(str, Enum):
 
 # Severity colors for Discord embeds
 SEVERITY_COLORS = {
-    AlertSeverity.INFO: 0x00B2FF,      # Blue
-    AlertSeverity.WARNING: 0xFFA500,   # Orange
-    AlertSeverity.ERROR: 0xFF0000,     # Red
+    AlertSeverity.INFO: 0x00B2FF,  # Blue
+    AlertSeverity.WARNING: 0xFFA500,  # Orange
+    AlertSeverity.ERROR: 0xFF0000,  # Red
     AlertSeverity.CRITICAL: 0x8B0000,  # Dark Red
 }
 
@@ -53,6 +56,7 @@ SEVERITY_COLORS = {
 # DISCORD WEBHOOK CLIENT
 # =============================================================================
 
+
 class DiscordAlerter:
     """
     Discord webhook alerting client.
@@ -60,15 +64,15 @@ class DiscordAlerter:
     Sends formatted alerts to Discord channels via webhooks.
     """
 
-    def __init__(self, webhook_url: Optional[str] = None):
+    def __init__(self, webhook_url: str | None = None):
         """
         Initialize Discord alerter.
 
         Args:
             webhook_url: Discord webhook URL (from settings if not provided)
         """
-        self.webhook_url = webhook_url or getattr(settings, 'discord_webhook_url', None)
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.webhook_url = webhook_url or getattr(settings, "discord_webhook_url", None)
+        self.session: aiohttp.ClientSession | None = None
 
     async def _get_session(self) -> aiohttp.ClientSession:
         """Get or create aiohttp session"""
@@ -86,9 +90,9 @@ class DiscordAlerter:
         title: str,
         description: str,
         severity: AlertSeverity = AlertSeverity.INFO,
-        fields: Optional[List[Dict[str, Any]]] = None,
-        footer: Optional[str] = None,
-        thumbnail_url: Optional[str] = None,
+        fields: list[dict[str, Any]] | None = None,
+        footer: str | None = None,
+        thumbnail_url: str | None = None,
     ) -> bool:
         """
         Send alert to Discord.
@@ -140,7 +144,7 @@ class DiscordAlerter:
                     logger.error(
                         "discord_alert_failed",
                         status=response.status,
-                        response=await response.text()
+                        response=await response.text(),
                     )
                     return False
 
@@ -154,7 +158,7 @@ class DiscordAlerter:
 # =============================================================================
 
 # Global alerter instance
-_alerter: Optional[DiscordAlerter] = None
+_alerter: DiscordAlerter | None = None
 
 
 def get_alerter() -> DiscordAlerter:
@@ -168,9 +172,9 @@ def get_alerter() -> DiscordAlerter:
 async def send_critical_error_alert(
     error_type: str,
     error_message: str,
-    endpoint: Optional[str] = None,
-    user_id: Optional[str] = None,
-    stack_trace: Optional[str] = None,
+    endpoint: str | None = None,
+    user_id: str | None = None,
+    stack_trace: str | None = None,
 ):
     """
     Send critical error alert.
@@ -186,7 +190,11 @@ async def send_critical_error_alert(
 
     fields = [
         {"name": "Error Type", "value": error_type, "inline": True},
-        {"name": "Timestamp", "value": datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC"), "inline": True},
+        {
+            "name": "Timestamp",
+            "value": datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "inline": True,
+        },
     ]
 
     if endpoint:
@@ -198,21 +206,23 @@ async def send_critical_error_alert(
     if stack_trace:
         # Truncate stack trace to fit Discord limits
         truncated_trace = stack_trace[:500] + "..." if len(stack_trace) > 500 else stack_trace
-        fields.append({"name": "Stack Trace", "value": f"```\n{truncated_trace}\n```", "inline": False})
+        fields.append(
+            {"name": "Stack Trace", "value": f"```\n{truncated_trace}\n```", "inline": False}
+        )
 
     await alerter.send_alert(
         title="🚨 Critical Error Detected",
         description=error_message,
         severity=AlertSeverity.CRITICAL,
         fields=fields,
-        footer="Multi-Agent Support System"
+        footer="Multi-Agent Support System",
     )
 
 
 async def send_rate_limit_alert(
     tier: str,
     endpoint: str,
-    user_id: Optional[str] = None,
+    user_id: str | None = None,
 ):
     """
     Send rate limit breach alert.
@@ -236,7 +246,7 @@ async def send_rate_limit_alert(
         title="⚠️ Rate Limit Exceeded",
         description=f"Rate limit exceeded for tier **{tier}** on endpoint **{endpoint}**",
         severity=AlertSeverity.WARNING,
-        fields=fields
+        fields=fields,
     )
 
 
@@ -244,7 +254,7 @@ async def send_agent_failure_alert(
     agent_name: str,
     error_message: str,
     tier: str,
-    conversation_id: Optional[str] = None,
+    conversation_id: str | None = None,
 ):
     """
     Send agent execution failure alert.
@@ -269,7 +279,7 @@ async def send_agent_failure_alert(
         title="⚠️ Agent Execution Failed",
         description=error_message,
         severity=AlertSeverity.ERROR,
-        fields=fields
+        fields=fields,
     )
 
 
@@ -300,15 +310,15 @@ async def send_performance_degradation_alert(
         title="📊 Performance Degradation Detected",
         description=f"**{metric_name}** has exceeded threshold",
         severity=AlertSeverity.WARNING,
-        fields=fields
+        fields=fields,
     )
 
 
 async def send_security_alert(
     event_type: str,
     description: str,
-    ip_address: Optional[str] = None,
-    user_id: Optional[str] = None,
+    ip_address: str | None = None,
+    user_id: str | None = None,
 ):
     """
     Send security event alert.
@@ -323,7 +333,11 @@ async def send_security_alert(
 
     fields = [
         {"name": "Event Type", "value": event_type, "inline": True},
-        {"name": "Timestamp", "value": datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC"), "inline": True},
+        {
+            "name": "Timestamp",
+            "value": datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "inline": True,
+        },
     ]
 
     if ip_address:
@@ -336,14 +350,14 @@ async def send_security_alert(
         title="🔒 Security Alert",
         description=description,
         severity=AlertSeverity.ERROR,
-        fields=fields
+        fields=fields,
     )
 
 
 async def send_system_health_alert(
     component: str,
     status: str,
-    details: Optional[str] = None,
+    details: str | None = None,
 ):
     """
     Send system health alert.
@@ -369,13 +383,14 @@ async def send_system_health_alert(
         title="🏥 System Health Issue",
         description=f"Component **{component}** is **{status}**",
         severity=severity,
-        fields=fields
+        fields=fields,
     )
 
 
 # =============================================================================
 # SENTRY INTEGRATION
 # =============================================================================
+
 
 def setup_sentry_discord_integration():
     """
@@ -385,24 +400,28 @@ def setup_sentry_discord_integration():
     This should be called during application startup.
     """
     try:
-        import sentry_sdk
-        from sentry_sdk.integrations.logging import LoggingIntegration
+        import sentry_sdk  # noqa: F401
+        from sentry_sdk.integrations.logging import LoggingIntegration  # noqa: F401
 
         # Add custom before_send hook to send critical errors to Discord
         def before_send(event, hint):
             """Sentry before_send hook to send alerts to Discord"""
-            if event.get('level') in ('error', 'fatal'):
+            if event.get("level") in ("error", "fatal"):
                 # Send to Discord asynchronously (non-blocking)
-                error_type = event.get('exception', {}).get('values', [{}])[0].get('type', 'Unknown')
-                error_message = event.get('exception', {}).get('values', [{}])[0].get('value', 'No message')
+                error_type = (
+                    event.get("exception", {}).get("values", [{}])[0].get("type", "Unknown")
+                )
+                error_message = (
+                    event.get("exception", {}).get("values", [{}])[0].get("value", "No message")
+                )
 
                 # Create async task to send alert
                 asyncio.create_task(
                     send_critical_error_alert(
                         error_type=error_type,
                         error_message=error_message,
-                        endpoint=event.get('request', {}).get('url'),
-                        stack_trace=str(event.get('exception'))
+                        endpoint=event.get("request", {}).get("url"),
+                        stack_trace=str(event.get("exception")),
                     )
                 )
 
