@@ -1,16 +1,8 @@
 """
 Compare keyword search vs vector search quality
 """
-import sys
-from pathlib import Path
 
-# Add src to path (works for both pytest and direct python execution)
-project_root = Path(__file__).parent.parent
-src_path = project_root / 'src'
-if str(src_path) not in sys.path:
-    sys.path.insert(0, str(src_path))
-
-from knowledge_base import search_articles_keyword, search_articles_vector
+from src.knowledge_base import search_articles_keyword, search_articles_vector
 
 
 def test_search_comparison():
