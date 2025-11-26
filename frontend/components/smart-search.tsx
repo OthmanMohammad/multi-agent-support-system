@@ -1,9 +1,9 @@
 "use client";
 
 import type { JSX } from "react";
-import { useState, useMemo, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Fuse from "fuse.js";
-import { Search, X, Filter } from "lucide-react";
+import { Filter, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -30,7 +30,7 @@ interface SearchFilter {
   values: Array<{ value: string; label: string }>;
 }
 
-export function SmartSearch<T extends Record<string, any>>({
+export function SmartSearch<T extends Record<string, unknown>>({
   data,
   keys,
   onResults,
@@ -41,7 +41,9 @@ export function SmartSearch<T extends Record<string, any>>({
   filters = [],
 }: SmartSearchProps<T>): JSX.Element {
   const [query, setQuery] = useState("");
-  const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
+  const [activeFilters, setActiveFilters] = useState<Record<string, string>>(
+    {}
+  );
   const [showFilterPanel, setShowFilterPanel] = useState(false);
 
   // Initialize Fuse instance
@@ -73,7 +75,9 @@ export function SmartSearch<T extends Record<string, any>>({
     if (Object.keys(activeFilters).length > 0) {
       results = results.filter((item) => {
         return Object.entries(activeFilters).every(([key, value]) => {
-          if (!value) return true;
+          if (!value) {
+            return true;
+          }
           return String(item[key]) === value;
         });
       });
@@ -132,7 +136,9 @@ export function SmartSearch<T extends Record<string, any>>({
           >
             <Filter className="h-4 w-4" />
             {Object.keys(activeFilters).length > 0 && (
-              <span className="ml-2">({Object.keys(activeFilters).length})</span>
+              <span className="ml-2">
+                ({Object.keys(activeFilters).length})
+              </span>
             )}
           </Button>
         )}
@@ -172,7 +178,9 @@ export function SmartSearch<T extends Record<string, any>>({
                 </label>
                 <select
                   value={activeFilters[filter.key] || ""}
-                  onChange={(e) => handleFilterChange(filter.key, e.target.value)}
+                  onChange={(e) =>
+                    handleFilterChange(filter.key, e.target.value)
+                  }
                   className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 >
                   <option value="">All</option>
@@ -194,7 +202,7 @@ export function SmartSearch<T extends Record<string, any>>({
           <span>Active filters:</span>
           {query && (
             <span className="rounded-full bg-accent/10 px-2 py-0.5 font-medium text-accent">
-              Search: "{query}"
+              Search: &quot;{query}&quot;
             </span>
           )}
           {Object.entries(activeFilters).map(([key, value]) => {
