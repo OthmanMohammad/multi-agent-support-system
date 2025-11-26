@@ -17,14 +17,16 @@ Part of: EPIC-006 Advanced Workflow Patterns
 """
 
 import asyncio
-from typing import List, Dict, Any, Optional, Callable, Literal
-from dataclasses import dataclass, field
-from datetime import datetime, UTC
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import UTC, datetime
 from enum import Enum
+from typing import Any, Literal
+
 import structlog
 
-from src.workflow.state import AgentState
 from src.workflow.exceptions import WorkflowException
+from src.workflow.state import AgentState
 
 # Alias for backward compatibility
 WorkflowExecutionError = WorkflowException
@@ -34,6 +36,7 @@ logger = structlog.get_logger(__name__)
 
 class DebateFormat(str, Enum):
     """Format for the debate."""
+
     ROUND_ROBIN = "round_robin"  # Each agent speaks in turn
     FREE_FORM = "free_form"  # Agents can respond to each other freely
     STRUCTURED = "structured"  # Opening ??? Rebuttals ??? Closing
@@ -42,6 +45,7 @@ class DebateFormat(str, Enum):
 
 class ConsensusMethod(str, Enum):
     """Method for reaching consensus."""
+
     UNANIMOUS = "unanimous"  # All agents must agree
     MAJORITY = "majority"  # Majority vote wins
     WEIGHTED_VOTE = "weighted_vote"  # Weighted by agent expertise
@@ -61,10 +65,11 @@ class DebateParticipant:
         speaking_order: Order in structured debates (optional)
         max_turns: Maximum turns this agent can take
     """
+
     agent_name: str
     role: Literal["advocate", "critic", "moderator", "neutral"] = "neutral"
     expertise_weight: float = 1.0
-    speaking_order: Optional[int] = None
+    speaking_order: int | None = None
     max_turns: int = 3
 
 
@@ -81,12 +86,13 @@ class DebateRound:
         timestamp: When the statement was made
         response_to: Which agent this responds to (optional)
     """
+
     round_number: int
     speaker: str
     statement: str
     confidence: float
     timestamp: datetime
-    response_to: Optional[str] = None
+    response_to: str | None = None
 
 
 @dataclass
@@ -105,15 +111,16 @@ class DebateResult:
         votes: Final vote tally (if applicable)
         error: Error message if debate failed
     """
+
     success: bool
-    final_decision: Optional[str]
+    final_decision: str | None
     confidence: float
-    rounds: List[DebateRound]
-    participants: List[str]
+    rounds: list[DebateRound]
+    participants: list[str]
     consensus_method: ConsensusMethod
     execution_time: float
-    votes: Optional[Dict[str, Any]] = None
-    error: Optional[str] = None
+    votes: dict[str, Any] | None = None
+    error: str | None = None
 
 
 class DebateWorkflow:
@@ -143,13 +150,13 @@ class DebateWorkflow:
     def __init__(
         self,
         name: str,
-        participants: List[DebateParticipant],
+        participants: list[DebateParticipant],
         format: DebateFormat = DebateFormat.ROUND_ROBIN,
         consensus_method: ConsensusMethod = ConsensusMethod.MAJORITY,
         max_rounds: int = 5,
         confidence_threshold: float = 0.8,
-        overall_timeout: Optional[int] = None,
-        moderator_agent: Optional[str] = None
+        overall_timeout: int | None = None,
+        moderator_agent: str | None = None,
     ):
         """
         Initialize debate workflow.
@@ -186,7 +193,7 @@ class DebateWorkflow:
             self.logger.warning(
                 "many_participants",
                 count=len(self.participants),
-                message="Large number of participants may make consensus difficult"
+                message="Large number of participants may make consensus difficult",
             )
 
         if self.max_rounds < 1:
@@ -198,12 +205,12 @@ class DebateWorkflow:
         # Validate expertise weights
         for participant in self.participants:
             if not 0.0 <= participant.expertise_weight <= 2.0:
-                raise ValueError(f"Expertise weight must be between 0.0 and 2.0: {participant.agent_name}")
+                raise ValueError(
+                    f"Expertise weight must be between 0.0 and 2.0: {participant.agent_name}"
+                )
 
     async def execute(
-        self,
-        initial_state: AgentState,
-        agent_executor: Callable[[str, AgentState], Any]
+        self, initial_state: AgentState, agent_executor: Callable[[str, AgentState], Any]
     ) -> DebateResult:
         """
         Execute the debate workflow.
@@ -216,14 +223,14 @@ class DebateWorkflow:
             DebateResult with final decision and debate transcript
         """
         start_time = datetime.now(UTC)
-        rounds: List[DebateRound] = []
+        rounds: list[DebateRound] = []
         current_state = initial_state.copy()
 
         self.logger.info(
             "debate_started",
             participants=len(self.participants),
             format=self.format.value,
-            max_rounds=self.max_rounds
+            max_rounds=self.max_rounds,
         )
 
         try:
@@ -241,9 +248,7 @@ class DebateWorkflow:
 
             # Reach consensus
             decision, confidence, votes = await self._reach_consensus(
-                rounds,
-                current_state,
-                agent_executor
+                rounds, current_state, agent_executor
             )
 
             execution_time = (datetime.now(UTC) - start_time).total_seconds()
@@ -252,7 +257,7 @@ class DebateWorkflow:
                 "debate_completed",
                 rounds=len(rounds),
                 decision_confidence=confidence,
-                execution_time=execution_time
+                execution_time=execution_time,
             )
 
             return DebateResult(
@@ -263,10 +268,10 @@ class DebateWorkflow:
                 participants=[p.agent_name for p in self.participants],
                 consensus_method=self.consensus_method,
                 execution_time=execution_time,
-                votes=votes
+                votes=votes,
             )
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             error = f"Debate exceeded timeout of {self.overall_timeout}s"
             self.logger.error("debate_timeout", error=error)
 
@@ -278,7 +283,7 @@ class DebateWorkflow:
                 participants=[p.agent_name for p in self.participants],
                 consensus_method=self.consensus_method,
                 execution_time=(datetime.now(UTC) - start_time).total_seconds(),
-                error=error
+                error=error,
             )
 
         except Exception as e:
@@ -292,16 +297,14 @@ class DebateWorkflow:
                 participants=[p.agent_name for p in self.participants],
                 consensus_method=self.consensus_method,
                 execution_time=(datetime.now(UTC) - start_time).total_seconds(),
-                error=f"Debate error: {str(e)}"
+                error=f"Debate error: {e!s}",
             )
 
     async def _round_robin_debate(
-        self,
-        state: AgentState,
-        agent_executor: Callable
-    ) -> List[DebateRound]:
+        self, state: AgentState, agent_executor: Callable
+    ) -> list[DebateRound]:
         """Execute round-robin debate where each agent speaks in turn."""
-        rounds: List[DebateRound] = []
+        rounds: list[DebateRound] = []
         debate_history = []
 
         for round_num in range(1, self.max_rounds + 1):
@@ -309,9 +312,7 @@ class DebateWorkflow:
 
             for participant in self.participants:
                 # Skip if participant exceeded max turns
-                participant_turns = sum(
-                    1 for r in rounds if r.speaker == participant.agent_name
-                )
+                participant_turns = sum(1 for r in rounds if r.speaker == participant.agent_name)
                 if participant_turns >= participant.max_turns:
                     continue
 
@@ -324,8 +325,7 @@ class DebateWorkflow:
                 # Execute agent
                 try:
                     result = await asyncio.wait_for(
-                        agent_executor(participant.agent_name, debate_state),
-                        timeout=30
+                        agent_executor(participant.agent_name, debate_state), timeout=30
                     )
 
                     statement = result.get("agent_response", "")
@@ -336,28 +336,28 @@ class DebateWorkflow:
                         speaker=participant.agent_name,
                         statement=statement,
                         confidence=confidence,
-                        timestamp=datetime.now(UTC)
+                        timestamp=datetime.now(UTC),
                     )
 
                     rounds.append(debate_round)
-                    debate_history.append({
-                        "speaker": participant.agent_name,
-                        "statement": statement,
-                        "confidence": confidence
-                    })
+                    debate_history.append(
+                        {
+                            "speaker": participant.agent_name,
+                            "statement": statement,
+                            "confidence": confidence,
+                        }
+                    )
 
                     self.logger.debug(
                         "agent_spoke",
                         agent=participant.agent_name,
                         round=round_num,
-                        confidence=confidence
+                        confidence=confidence,
                     )
 
                 except Exception as e:
                     self.logger.warning(
-                        "agent_failed_to_speak",
-                        agent=participant.agent_name,
-                        error=str(e)
+                        "agent_failed_to_speak", agent=participant.agent_name, error=str(e)
                     )
 
             # Check for early consensus
@@ -368,12 +368,10 @@ class DebateWorkflow:
         return rounds
 
     async def _structured_debate(
-        self,
-        state: AgentState,
-        agent_executor: Callable
-    ) -> List[DebateRound]:
+        self, state: AgentState, agent_executor: Callable
+    ) -> list[DebateRound]:
         """Execute structured debate: Opening ??? Rebuttals ??? Closing."""
-        rounds: List[DebateRound] = []
+        rounds: list[DebateRound] = []
 
         # Phase 1: Opening statements
         self.logger.debug("debate_phase", phase="opening_statements")
@@ -384,13 +382,15 @@ class DebateWorkflow:
 
             try:
                 result = await agent_executor(participant.agent_name, debate_state)
-                rounds.append(DebateRound(
-                    round_number=1,
-                    speaker=participant.agent_name,
-                    statement=result.get("agent_response", ""),
-                    confidence=result.get("response_confidence", 0.5),
-                    timestamp=datetime.now(UTC)
-                ))
+                rounds.append(
+                    DebateRound(
+                        round_number=1,
+                        speaker=participant.agent_name,
+                        statement=result.get("agent_response", ""),
+                        confidence=result.get("response_confidence", 0.5),
+                        timestamp=datetime.now(UTC),
+                    )
+                )
             except Exception as e:
                 self.logger.warning("opening_failed", agent=participant.agent_name, error=str(e))
 
@@ -402,21 +402,24 @@ class DebateWorkflow:
                 debate_state = state.copy()
                 debate_state["debate_phase"] = "rebuttal"
                 debate_state["debate_history"] = [
-                    {"speaker": r.speaker, "statement": r.statement}
-                    for r in rounds
+                    {"speaker": r.speaker, "statement": r.statement} for r in rounds
                 ]
 
                 try:
                     result = await agent_executor(participant.agent_name, debate_state)
-                    rounds.append(DebateRound(
-                        round_number=round_num,
-                        speaker=participant.agent_name,
-                        statement=result.get("agent_response", ""),
-                        confidence=result.get("response_confidence", 0.5),
-                        timestamp=datetime.now(UTC)
-                    ))
+                    rounds.append(
+                        DebateRound(
+                            round_number=round_num,
+                            speaker=participant.agent_name,
+                            statement=result.get("agent_response", ""),
+                            confidence=result.get("response_confidence", 0.5),
+                            timestamp=datetime.now(UTC),
+                        )
+                    )
                 except Exception as e:
-                    self.logger.warning("rebuttal_failed", agent=participant.agent_name, error=str(e))
+                    self.logger.warning(
+                        "rebuttal_failed", agent=participant.agent_name, error=str(e)
+                    )
 
         # Phase 3: Closing statements
         self.logger.debug("debate_phase", phase="closing_statements")
@@ -424,39 +427,39 @@ class DebateWorkflow:
             debate_state = state.copy()
             debate_state["debate_phase"] = "closing"
             debate_state["debate_history"] = [
-                {"speaker": r.speaker, "statement": r.statement}
-                for r in rounds
+                {"speaker": r.speaker, "statement": r.statement} for r in rounds
             ]
 
             try:
                 result = await agent_executor(participant.agent_name, debate_state)
-                rounds.append(DebateRound(
-                    round_number=self.max_rounds,
-                    speaker=participant.agent_name,
-                    statement=result.get("agent_response", ""),
-                    confidence=result.get("response_confidence", 0.5),
-                    timestamp=datetime.now(UTC)
-                ))
+                rounds.append(
+                    DebateRound(
+                        round_number=self.max_rounds,
+                        speaker=participant.agent_name,
+                        statement=result.get("agent_response", ""),
+                        confidence=result.get("response_confidence", 0.5),
+                        timestamp=datetime.now(UTC),
+                    )
+                )
             except Exception as e:
                 self.logger.warning("closing_failed", agent=participant.agent_name, error=str(e))
 
         return rounds
 
     async def _free_form_debate(
-        self,
-        state: AgentState,
-        agent_executor: Callable
-    ) -> List[DebateRound]:
+        self, state: AgentState, agent_executor: Callable
+    ) -> list[DebateRound]:
         """Execute free-form debate where agents respond to each other."""
-        rounds: List[DebateRound] = []
+        rounds: list[DebateRound] = []
         last_speaker = None
 
         for round_num in range(1, self.max_rounds + 1):
             # Select next speaker (different from last)
             available_participants = [
-                p for p in self.participants
-                if p.agent_name != last_speaker and
-                sum(1 for r in rounds if r.speaker == p.agent_name) < p.max_turns
+                p
+                for p in self.participants
+                if p.agent_name != last_speaker
+                and sum(1 for r in rounds if r.speaker == p.agent_name) < p.max_turns
             ]
 
             if not available_participants:
@@ -467,21 +470,22 @@ class DebateWorkflow:
 
             debate_state = state.copy()
             debate_state["debate_history"] = [
-                {"speaker": r.speaker, "statement": r.statement}
-                for r in rounds
+                {"speaker": r.speaker, "statement": r.statement} for r in rounds
             ]
             debate_state["last_speaker"] = last_speaker
 
             try:
                 result = await agent_executor(participant.agent_name, debate_state)
-                rounds.append(DebateRound(
-                    round_number=round_num,
-                    speaker=participant.agent_name,
-                    statement=result.get("agent_response", ""),
-                    confidence=result.get("response_confidence", 0.5),
-                    timestamp=datetime.now(UTC),
-                    response_to=last_speaker
-                ))
+                rounds.append(
+                    DebateRound(
+                        round_number=round_num,
+                        speaker=participant.agent_name,
+                        statement=result.get("agent_response", ""),
+                        confidence=result.get("response_confidence", 0.5),
+                        timestamp=datetime.now(UTC),
+                        response_to=last_speaker,
+                    )
+                )
                 last_speaker = participant.agent_name
             except Exception as e:
                 self.logger.warning("free_form_failed", agent=participant.agent_name, error=str(e))
@@ -489,12 +493,10 @@ class DebateWorkflow:
         return rounds
 
     async def _socratic_debate(
-        self,
-        state: AgentState,
-        agent_executor: Callable
-    ) -> List[DebateRound]:
+        self, state: AgentState, agent_executor: Callable
+    ) -> list[DebateRound]:
         """Execute Socratic debate (question-driven dialogue)."""
-        rounds: List[DebateRound] = []
+        rounds: list[DebateRound] = []
 
         # Questioner and responder alternate
         questioner = self.participants[0]
@@ -505,19 +507,20 @@ class DebateWorkflow:
             debate_state = state.copy()
             debate_state["debate_mode"] = "question"
             debate_state["debate_history"] = [
-                {"speaker": r.speaker, "statement": r.statement}
-                for r in rounds
+                {"speaker": r.speaker, "statement": r.statement} for r in rounds
             ]
 
             try:
                 result = await agent_executor(questioner.agent_name, debate_state)
-                rounds.append(DebateRound(
-                    round_number=round_num,
-                    speaker=questioner.agent_name,
-                    statement=result.get("agent_response", ""),
-                    confidence=result.get("response_confidence", 0.5),
-                    timestamp=datetime.now(UTC)
-                ))
+                rounds.append(
+                    DebateRound(
+                        round_number=round_num,
+                        speaker=questioner.agent_name,
+                        statement=result.get("agent_response", ""),
+                        confidence=result.get("response_confidence", 0.5),
+                        timestamp=datetime.now(UTC),
+                    )
+                )
             except Exception as e:
                 self.logger.warning("question_failed", error=str(e))
 
@@ -525,26 +528,27 @@ class DebateWorkflow:
             for responder in responders:
                 debate_state["debate_mode"] = "answer"
                 debate_state["debate_history"] = [
-                    {"speaker": r.speaker, "statement": r.statement}
-                    for r in rounds
+                    {"speaker": r.speaker, "statement": r.statement} for r in rounds
                 ]
 
                 try:
                     result = await agent_executor(responder.agent_name, debate_state)
-                    rounds.append(DebateRound(
-                        round_number=round_num,
-                        speaker=responder.agent_name,
-                        statement=result.get("agent_response", ""),
-                        confidence=result.get("response_confidence", 0.5),
-                        timestamp=datetime.now(UTC),
-                        response_to=questioner.agent_name
-                    ))
+                    rounds.append(
+                        DebateRound(
+                            round_number=round_num,
+                            speaker=responder.agent_name,
+                            statement=result.get("agent_response", ""),
+                            confidence=result.get("response_confidence", 0.5),
+                            timestamp=datetime.now(UTC),
+                            response_to=questioner.agent_name,
+                        )
+                    )
                 except Exception as e:
                     self.logger.warning("answer_failed", agent=responder.agent_name, error=str(e))
 
         return rounds
 
-    async def _check_early_consensus(self, rounds: List[DebateRound]) -> bool:
+    async def _check_early_consensus(self, rounds: list[DebateRound]) -> bool:
         """Check if early consensus has been reached."""
         if len(rounds) < len(self.participants):
             return False
@@ -558,17 +562,16 @@ class DebateWorkflow:
 
         # Check if all have high confidence and similar statements
         if len(last_statements) == len(self.participants):
-            avg_confidence = sum(r.confidence for r in last_statements.values()) / len(last_statements)
+            avg_confidence = sum(r.confidence for r in last_statements.values()) / len(
+                last_statements
+            )
             return avg_confidence >= self.confidence_threshold
 
         return False
 
     async def _reach_consensus(
-        self,
-        rounds: List[DebateRound],
-        state: AgentState,
-        agent_executor: Callable
-    ) -> tuple[Optional[str], float, Optional[Dict]]:
+        self, rounds: list[DebateRound], state: AgentState, agent_executor: Callable
+    ) -> tuple[str | None, float, dict | None]:
         """Reach consensus based on configured method."""
         if self.consensus_method == ConsensusMethod.MAJORITY:
             return self._majority_vote(rounds)
@@ -583,7 +586,7 @@ class DebateWorkflow:
         else:
             return None, 0.0, None
 
-    def _majority_vote(self, rounds: List[DebateRound]) -> tuple[str, float, Dict]:
+    def _majority_vote(self, rounds: list[DebateRound]) -> tuple[str, float, dict]:
         """Simple majority vote from last round statements."""
         last_round = max(r.round_number for r in rounds)
         final_statements = [r for r in rounds if r.round_number == last_round]
@@ -601,7 +604,7 @@ class DebateWorkflow:
 
         return "No consensus reached", 0.0, {"votes": {}}
 
-    def _weighted_vote(self, rounds: List[DebateRound]) -> tuple[str, float, Dict]:
+    def _weighted_vote(self, rounds: list[DebateRound]) -> tuple[str, float, dict]:
         """Weighted vote based on participant expertise."""
         last_round = max(r.round_number for r in rounds)
         final_statements = [r for r in rounds if r.round_number == last_round]
@@ -610,8 +613,7 @@ class DebateWorkflow:
         weighted_votes = {}
         for statement in final_statements:
             participant = next(
-                (p for p in self.participants if p.agent_name == statement.speaker),
-                None
+                (p for p in self.participants if p.agent_name == statement.speaker), None
             )
             weight = participant.expertise_weight if participant else 1.0
             key = statement.statement[:50]
@@ -625,24 +627,21 @@ class DebateWorkflow:
 
         return "No consensus reached", 0.0, {"weighted_votes": {}}
 
-    def _unanimous_decision(self, rounds: List[DebateRound]) -> tuple[str, float, Dict]:
+    def _unanimous_decision(self, rounds: list[DebateRound]) -> tuple[str, float, dict]:
         """Check for unanimous agreement."""
         last_round = max(r.round_number for r in rounds)
         final_statements = [r for r in rounds if r.round_number == last_round]
 
-        unique_statements = set(s.statement[:50] for s in final_statements)
+        unique_statements = {s.statement[:50] for s in final_statements}
 
         if len(unique_statements) == 1:
-            return list(unique_statements)[0], 1.0, {"unanimous": True}
+            return next(iter(unique_statements)), 1.0, {"unanimous": True}
 
         return "No unanimous consensus", 0.0, {"unanimous": False}
 
     async def _moderator_decision(
-        self,
-        rounds: List[DebateRound],
-        state: AgentState,
-        agent_executor: Callable
-    ) -> tuple[Optional[str], float, Dict]:
+        self, rounds: list[DebateRound], state: AgentState, agent_executor: Callable
+    ) -> tuple[str | None, float, dict]:
         """Let moderator make final decision."""
         if not self.moderator_agent:
             return self._majority_vote(rounds)
@@ -663,7 +662,7 @@ class DebateWorkflow:
             self.logger.error("moderator_failed", error=str(e))
             return None, 0.0, {"error": str(e)}
 
-    def _confidence_consensus(self, rounds: List[DebateRound]) -> tuple[str, float, Dict]:
+    def _confidence_consensus(self, rounds: list[DebateRound]) -> tuple[str, float, dict]:
         """Consensus when average confidence exceeds threshold."""
         last_round = max(r.round_number for r in rounds)
         final_statements = [r for r in rounds if r.round_number == last_round]
@@ -675,16 +674,20 @@ class DebateWorkflow:
             best = max(final_statements, key=lambda x: x.confidence)
             return best.statement, best.confidence, {"average_confidence": avg_confidence}
 
-        return "Confidence threshold not met", avg_confidence, {"threshold": self.confidence_threshold}
+        return (
+            "Confidence threshold not met",
+            avg_confidence,
+            {"threshold": self.confidence_threshold},
+        )
 
 
 # Convenience function for quick debate execution
 async def execute_debate(
     workflow_name: str,
-    agent_names: List[str],
+    agent_names: list[str],
     initial_state: AgentState,
     agent_executor: Callable,
-    **kwargs
+    **kwargs,
 ) -> DebateResult:
     """
     Quick helper to execute a debate.
