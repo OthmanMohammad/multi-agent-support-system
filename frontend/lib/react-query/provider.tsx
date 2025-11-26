@@ -28,7 +28,8 @@ export function QueryProvider({ children }: QueryProviderProps): JSX.Element {
             // Retry failed requests 2 times
             retry: 2,
             // Retry delay with exponential backoff
-            retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+            retryDelay: (attemptIndex) =>
+              Math.min(1000 * 2 ** attemptIndex, 30000),
             // Refetch on window focus for fresh data
             refetchOnWindowFocus: true,
             // Don't refetch on mount if data is fresh
