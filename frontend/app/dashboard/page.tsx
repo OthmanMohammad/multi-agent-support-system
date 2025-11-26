@@ -49,6 +49,7 @@ function DashboardContent(): JSX.Element {
         </div>
 
         {/* Metrics Cards */}
+        {/* eslint-disable-next-line no-nested-ternary -- Loading/data/empty conditional */}
         {isLoading ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
