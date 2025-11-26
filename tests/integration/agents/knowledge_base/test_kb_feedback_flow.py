@@ -35,8 +35,8 @@ class TestKBFeedbackFlow:
         assert state["feedback_tracked"] is True
 
         # Verify view was tracked in database
-        from src.database.models import KnowledgeBaseArticle
-        article = await test_db_session.get(KnowledgeBaseArticle, article_id)
+        from src.database.models import KBArticle
+        article = await test_db_session.get(KBArticle, article_id)
         assert article.view_count > 0
 
     @pytest.mark.asyncio
@@ -133,9 +133,9 @@ class TestKBFeedbackFlow:
         feedback_tracker = KBFeedbackTracker()
 
         # Create an article with poor feedback
-        from src.database.models import KnowledgeBaseArticle
+        from src.database.models import KBArticle
 
-        poor_article = KnowledgeBaseArticle(
+        poor_article = KBArticle(
             article_id="kb_poor",
             title="Poor Article",
             content="Not helpful content",

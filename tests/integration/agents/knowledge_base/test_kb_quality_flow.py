@@ -6,7 +6,7 @@ import pytest
 from datetime import datetime, timedelta
 from src.agents.essential.knowledge_base import KBQualityChecker, KBUpdater
 from src.workflow.state import create_initial_state
-from src.database.models import KnowledgeBaseArticle
+from src.database.models import KBArticle
 
 
 class TestKBQualityFlow:

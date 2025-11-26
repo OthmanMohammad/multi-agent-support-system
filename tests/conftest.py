@@ -44,7 +44,7 @@ def sample_email():
 @pytest.fixture
 def sample_error():
     """Create a sample Error instance"""
-    from core.result import Error
+    from src.core.result import Error
     return Error(
         code="TEST_ERROR",
         message="This is a test error",
@@ -55,7 +55,7 @@ def sample_error():
 @pytest.fixture
 def sample_validation_error():
     """Create a sample validation error"""
-    from core.errors import ValidationError
+    from src.core.errors import ValidationError
     return ValidationError(
         message="Email is required",
         field="email",
@@ -68,14 +68,14 @@ def sample_validation_error():
 @pytest.fixture
 def event_bus():
     """Create a fresh EventBus instance for each test"""
-    from core.events import EventBus
+    from src.core.events import EventBus
     return EventBus()
 
 
 @pytest.fixture
 def reset_global_event_bus():
     """Reset global event bus before and after test"""
-    from core.events import reset_event_bus
+    from src.core.events import reset_event_bus
     reset_event_bus()
     yield
     reset_event_bus()
