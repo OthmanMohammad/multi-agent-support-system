@@ -5,14 +5,13 @@ Analyzes conversion funnels and identifies bottlenecks in user journeys.
 Provides step-by-step conversion metrics and optimization recommendations.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, UTC
-from decimal import Decimal
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("funnel_analyzer", tier="operational", category="analytics")
@@ -36,39 +35,21 @@ class FunnelAnalyzerAgent(BaseAgent):
             "email_verification",
             "profile_setup",
             "first_project",
-            "first_action"
+            "first_action",
         ],
-        "sales": [
-            "lead",
-            "qualified",
-            "demo",
-            "proposal",
-            "negotiation",
-            "closed_won"
-        ],
+        "sales": ["lead", "qualified", "demo", "proposal", "negotiation", "closed_won"],
         "product": [
             "trial_signup",
             "first_login",
             "feature_activation",
             "regular_usage",
-            "paid_conversion"
+            "paid_conversion",
         ],
-        "support": [
-            "ticket_created",
-            "assigned",
-            "first_response",
-            "in_progress",
-            "resolved"
-        ]
+        "support": ["ticket_created", "assigned", "first_response", "in_progress", "resolved"],
     }
 
     # Conversion rate benchmarks
-    BENCHMARKS = {
-        "excellent": 80,
-        "good": 60,
-        "average": 40,
-        "poor": 20
-    }
+    BENCHMARKS = {"excellent": 80, "good": 60, "average": 40, "poor": 20}
 
     def __init__(self):
         config = AgentConfig(
@@ -77,7 +58,7 @@ class FunnelAnalyzerAgent(BaseAgent):
             temperature=0.2,
             max_tokens=1500,
             capabilities=[AgentCapability.DATABASE_WRITE],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -106,7 +87,7 @@ class FunnelAnalyzerAgent(BaseAgent):
             "funnel_analysis_details",
             funnel_type=funnel_type,
             custom_steps=funnel_steps is not None,
-            time_period=time_period
+            time_period=time_period,
         )
 
         # Get funnel definition
@@ -131,9 +112,7 @@ class FunnelAnalyzerAgent(BaseAgent):
 
         # Generate recommendations
         recommendations = self._generate_recommendations(
-            conversion_metrics,
-            bottlenecks,
-            time_analysis
+            conversion_metrics, bottlenecks, time_analysis
         )
 
         # Format response
@@ -144,7 +123,7 @@ class FunnelAnalyzerAgent(BaseAgent):
             bottlenecks,
             time_analysis,
             segment_analysis,
-            recommendations
+            recommendations,
         )
 
         state["agent_response"] = response
@@ -161,16 +140,12 @@ class FunnelAnalyzerAgent(BaseAgent):
             "funnel_analysis_completed",
             funnel_type=funnel_type,
             steps=len(funnel_definition),
-            bottlenecks_found=len(bottlenecks)
+            bottlenecks_found=len(bottlenecks),
         )
 
         return state
 
-    def _get_funnel_definition(
-        self,
-        funnel_type: str,
-        custom_steps: Optional[List[str]]
-    ) -> List[str]:
+    def _get_funnel_definition(self, funnel_type: str, custom_steps: list[str] | None) -> list[str]:
         """
         Get funnel step definitions.
 
@@ -188,11 +163,7 @@ class FunnelAnalyzerAgent(BaseAgent):
         else:
             return self.FUNNEL_TYPES["product"]  # Default
 
-    def _fetch_funnel_data(
-        self,
-        funnel_definition: List[str],
-        time_period: str
-    ) -> Dict[str, Any]:
+    def _fetch_funnel_data(self, funnel_definition: list[str], time_period: str) -> dict[str, Any]:
         """
         Fetch funnel data from data sources.
 
@@ -204,11 +175,7 @@ class FunnelAnalyzerAgent(BaseAgent):
             Funnel data
         """
         # Mock funnel data - in production, query actual data
-        funnel_data = {
-            "time_period": time_period,
-            "steps": [],
-            "total_entered": 10000
-        }
+        funnel_data = {"time_period": time_period, "steps": [], "total_entered": 10000}
 
         # Generate decreasing user counts through funnel
         current_users = funnel_data["total_entered"]
@@ -216,26 +183,26 @@ class FunnelAnalyzerAgent(BaseAgent):
         for i, step in enumerate(funnel_definition):
             # Simulate drop-off (10-30% per step)
             import random
+
             drop_rate = random.uniform(0.10, 0.30)
             users_at_step = int(current_users * (1 - drop_rate))
 
-            funnel_data["steps"].append({
-                "step_number": i + 1,
-                "step_name": step,
-                "users_entered": current_users,
-                "users_completed": users_at_step,
-                "users_dropped": current_users - users_at_step,
-                "avg_time_to_complete_hours": random.uniform(0.5, 48)
-            })
+            funnel_data["steps"].append(
+                {
+                    "step_number": i + 1,
+                    "step_name": step,
+                    "users_entered": current_users,
+                    "users_completed": users_at_step,
+                    "users_dropped": current_users - users_at_step,
+                    "avg_time_to_complete_hours": random.uniform(0.5, 48),
+                }
+            )
 
             current_users = users_at_step
 
         return funnel_data
 
-    def _calculate_conversion_rates(
-        self,
-        funnel_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _calculate_conversion_rates(self, funnel_data: dict[str, Any]) -> dict[str, Any]:
         """
         Calculate conversion metrics for funnel.
 
@@ -248,10 +215,7 @@ class FunnelAnalyzerAgent(BaseAgent):
         steps = funnel_data.get("steps", [])
         total_entered = funnel_data.get("total_entered", 0)
 
-        metrics = {
-            "overall_conversion_rate": 0,
-            "step_metrics": []
-        }
+        metrics = {"overall_conversion_rate": 0, "step_metrics": []}
 
         if not steps or total_entered == 0:
             return metrics
@@ -261,7 +225,7 @@ class FunnelAnalyzerAgent(BaseAgent):
         metrics["overall_conversion_rate"] = round((final_users / total_entered) * 100, 2)
 
         # Calculate per-step metrics
-        for i, step in enumerate(steps):
+        for _i, step in enumerate(steps):
             users_entered = step["users_entered"]
             users_completed = step["users_completed"]
             users_dropped = step["users_dropped"]
@@ -270,7 +234,9 @@ class FunnelAnalyzerAgent(BaseAgent):
             step_conversion = (users_completed / users_entered * 100) if users_entered > 0 else 0
 
             # Cumulative conversion from start
-            cumulative_conversion = (users_completed / total_entered * 100) if total_entered > 0 else 0
+            cumulative_conversion = (
+                (users_completed / total_entered * 100) if total_entered > 0 else 0
+            )
 
             # Drop-off rate
             drop_off_rate = (users_dropped / users_entered * 100) if users_entered > 0 else 0
@@ -284,7 +250,7 @@ class FunnelAnalyzerAgent(BaseAgent):
                 "step_conversion_rate": round(step_conversion, 2),
                 "cumulative_conversion_rate": round(cumulative_conversion, 2),
                 "drop_off_rate": round(drop_off_rate, 2),
-                "performance": self._classify_conversion_rate(step_conversion)
+                "performance": self._classify_conversion_rate(step_conversion),
             }
 
             metrics["step_metrics"].append(step_metric)
@@ -302,10 +268,7 @@ class FunnelAnalyzerAgent(BaseAgent):
         else:
             return "poor"
 
-    def _identify_bottlenecks(
-        self,
-        conversion_metrics: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+    def _identify_bottlenecks(self, conversion_metrics: dict[str, Any]) -> list[dict[str, Any]]:
         """
         Identify funnel bottlenecks.
 
@@ -324,16 +287,20 @@ class FunnelAnalyzerAgent(BaseAgent):
             performance = metric.get("performance", "average")
 
             if drop_off_rate > 30 or performance == "poor":
-                severity = "critical" if drop_off_rate > 50 else "high" if drop_off_rate > 40 else "medium"
+                severity = (
+                    "critical" if drop_off_rate > 50 else "high" if drop_off_rate > 40 else "medium"
+                )
 
-                bottlenecks.append({
-                    "step_number": metric["step_number"],
-                    "step_name": metric["step_name"],
-                    "drop_off_rate": drop_off_rate,
-                    "users_lost": metric["users_dropped"],
-                    "severity": severity,
-                    "impact": self._calculate_bottleneck_impact(metric, conversion_metrics)
-                })
+                bottlenecks.append(
+                    {
+                        "step_number": metric["step_number"],
+                        "step_name": metric["step_name"],
+                        "drop_off_rate": drop_off_rate,
+                        "users_lost": metric["users_dropped"],
+                        "severity": severity,
+                        "impact": self._calculate_bottleneck_impact(metric, conversion_metrics),
+                    }
+                )
 
         # Sort by severity and impact
         severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
@@ -342,9 +309,7 @@ class FunnelAnalyzerAgent(BaseAgent):
         return bottlenecks
 
     def _calculate_bottleneck_impact(
-        self,
-        step_metric: Dict[str, Any],
-        conversion_metrics: Dict[str, Any]
+        self, step_metric: dict[str, Any], conversion_metrics: dict[str, Any]
     ) -> str:
         """Calculate impact of bottleneck."""
         users_lost = step_metric.get("users_dropped", 0)
@@ -359,10 +324,7 @@ class FunnelAnalyzerAgent(BaseAgent):
         else:
             return f"Low impact - {impact_pct:.1f}% of total users lost"
 
-    def _analyze_time_to_convert(
-        self,
-        funnel_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _analyze_time_to_convert(self, funnel_data: dict[str, Any]) -> dict[str, Any]:
         """
         Analyze time taken at each funnel step.
 
@@ -374,30 +336,29 @@ class FunnelAnalyzerAgent(BaseAgent):
         """
         steps = funnel_data.get("steps", [])
 
-        time_metrics = {
-            "total_time_hours": 0,
-            "step_times": []
-        }
+        time_metrics = {"total_time_hours": 0, "step_times": []}
 
         for step in steps:
             avg_time = step.get("avg_time_to_complete_hours", 0)
             time_metrics["total_time_hours"] += avg_time
 
-            time_metrics["step_times"].append({
-                "step_name": step["step_name"],
-                "avg_time_hours": round(avg_time, 2),
-                "time_classification": "fast" if avg_time < 1 else "normal" if avg_time < 24 else "slow"
-            })
+            time_metrics["step_times"].append(
+                {
+                    "step_name": step["step_name"],
+                    "avg_time_hours": round(avg_time, 2),
+                    "time_classification": "fast"
+                    if avg_time < 1
+                    else "normal"
+                    if avg_time < 24
+                    else "slow",
+                }
+            )
 
         time_metrics["total_time_hours"] = round(time_metrics["total_time_hours"], 2)
 
         return time_metrics
 
-    def _analyze_by_segment(
-        self,
-        funnel_data: Dict[str, Any],
-        segment_by: str
-    ) -> Dict[str, Any]:
+    def _analyze_by_segment(self, funnel_data: dict[str, Any], segment_by: str) -> dict[str, Any]:
         """
         Analyze funnel by segment.
 
@@ -412,25 +373,17 @@ class FunnelAnalyzerAgent(BaseAgent):
         return {
             "segment_type": segment_by,
             "segments": [
-                {
-                    "segment_name": "Segment A",
-                    "overall_conversion": 45.2,
-                    "user_count": 6000
-                },
-                {
-                    "segment_name": "Segment B",
-                    "overall_conversion": 38.7,
-                    "user_count": 4000
-                }
-            ]
+                {"segment_name": "Segment A", "overall_conversion": 45.2, "user_count": 6000},
+                {"segment_name": "Segment B", "overall_conversion": 38.7, "user_count": 4000},
+            ],
         }
 
     def _generate_recommendations(
         self,
-        conversion_metrics: Dict[str, Any],
-        bottlenecks: List[Dict[str, Any]],
-        time_analysis: Dict[str, Any]
-    ) -> List[str]:
+        conversion_metrics: dict[str, Any],
+        bottlenecks: list[dict[str, Any]],
+        time_analysis: dict[str, Any],
+    ) -> list[str]:
         """
         Generate optimization recommendations.
 
@@ -462,7 +415,9 @@ class FunnelAnalyzerAgent(BaseAgent):
             )
 
         # Time-based recommendations
-        slow_steps = [s for s in time_analysis.get("step_times", []) if s["time_classification"] == "slow"]
+        slow_steps = [
+            s for s in time_analysis.get("step_times", []) if s["time_classification"] == "slow"
+        ]
         if slow_steps:
             recommendations.append(
                 f"Optimize slow steps: {', '.join(s['step_name'] for s in slow_steps)}"
@@ -476,31 +431,39 @@ class FunnelAnalyzerAgent(BaseAgent):
     def _format_funnel_report(
         self,
         funnel_type: str,
-        funnel_definition: List[str],
-        conversion_metrics: Dict[str, Any],
-        bottlenecks: List[Dict[str, Any]],
-        time_analysis: Dict[str, Any],
-        segment_analysis: Optional[Dict[str, Any]],
-        recommendations: List[str]
+        funnel_definition: list[str],
+        conversion_metrics: dict[str, Any],
+        bottlenecks: list[dict[str, Any]],
+        time_analysis: dict[str, Any],
+        segment_analysis: dict[str, Any] | None,
+        recommendations: list[str],
     ) -> str:
         """Format funnel analysis report."""
         report = f"""**Funnel Analysis Report**
 
 **Funnel Type:** {funnel_type.title()}
 **Total Steps:** {len(funnel_definition)}
-**Overall Conversion Rate:** {conversion_metrics.get('overall_conversion_rate', 0)}%
+**Overall Conversion Rate:** {conversion_metrics.get("overall_conversion_rate", 0)}%
 
 **Funnel Steps:**
 """
 
         # Step-by-step breakdown
         for metric in conversion_metrics.get("step_metrics", []):
-            perf_icon = "✅" if metric["performance"] == "excellent" else "⚠️" if metric["performance"] == "poor" else "➡️"
+            perf_icon = (
+                "✅"
+                if metric["performance"] == "excellent"
+                else "⚠️"
+                if metric["performance"] == "poor"
+                else "➡️"
+            )
             report += f"\n{metric['step_number']}. **{metric['step_name']}** {perf_icon}\n"
             report += f"   - Users Entered: {metric['users_entered']:,}\n"
             report += f"   - Users Completed: {metric['users_completed']:,}\n"
             report += f"   - Step Conversion: {metric['step_conversion_rate']}%\n"
-            report += f"   - Drop-off: {metric['drop_off_rate']}% ({metric['users_dropped']:,} users)\n"
+            report += (
+                f"   - Drop-off: {metric['drop_off_rate']}% ({metric['users_dropped']:,} users)\n"
+            )
 
         # Bottlenecks
         if bottlenecks:
@@ -513,7 +476,7 @@ class FunnelAnalyzerAgent(BaseAgent):
                 report += f"   - {bottleneck['impact']}\n"
 
         # Time analysis
-        report += f"\n**Time to Convert:**\n"
+        report += "\n**Time to Convert:**\n"
         report += f"- Total Average Time: {time_analysis['total_time_hours']:.1f} hours\n"
         for step_time in time_analysis.get("step_times", [])[:3]:
             report += f"- {step_time['step_name']}: {step_time['avg_time_hours']:.1f}h ({step_time['time_classification']})\n"
