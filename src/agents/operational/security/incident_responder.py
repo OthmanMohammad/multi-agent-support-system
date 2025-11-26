@@ -5,18 +5,19 @@ Automates security incident detection and response.
 Target: <5 min detection-to-response time for critical incidents.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 from enum import Enum
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 class IncidentSeverity(Enum):
     """Incident severity levels."""
+
     CRITICAL = "critical"  # P1: Active breach, data exposure
     HIGH = "high"  # P2: Attempted breach, major vulnerability
     MEDIUM = "medium"  # P3: Policy violation, minor vulnerability
@@ -25,6 +26,7 @@ class IncidentSeverity(Enum):
 
 class IncidentType(Enum):
     """Security incident types."""
+
     DATA_BREACH = "data_breach"
     UNAUTHORIZED_ACCESS = "unauthorized_access"
     MALWARE = "malware"
@@ -63,7 +65,7 @@ class IncidentResponderAgent(BaseAgent):
         IncidentSeverity.CRITICAL: timedelta(minutes=5),
         IncidentSeverity.HIGH: timedelta(minutes=15),
         IncidentSeverity.MEDIUM: timedelta(hours=1),
-        IncidentSeverity.LOW: timedelta(hours=24)
+        IncidentSeverity.LOW: timedelta(hours=24),
     }
 
     # Automated containment actions
@@ -72,38 +74,38 @@ class IncidentResponderAgent(BaseAgent):
             "isolate_affected_systems",
             "revoke_compromised_credentials",
             "enable_enhanced_logging",
-            "notify_security_team"
+            "notify_security_team",
         ],
         IncidentType.UNAUTHORIZED_ACCESS: [
             "block_ip_address",
             "terminate_session",
             "reset_user_password",
-            "enable_mfa_enforcement"
+            "enable_mfa_enforcement",
         ],
         IncidentType.MALWARE: [
             "quarantine_infected_systems",
             "block_malicious_domains",
             "scan_related_systems",
-            "update_antivirus_signatures"
+            "update_antivirus_signatures",
         ],
         IncidentType.DDOS: [
             "enable_rate_limiting",
             "activate_ddos_protection",
             "block_attacking_ips",
-            "scale_infrastructure"
+            "scale_infrastructure",
         ],
         IncidentType.RANSOMWARE: [
             "isolate_affected_systems",
             "disable_network_shares",
             "initiate_backup_restoration",
-            "contact_law_enforcement"
+            "contact_law_enforcement",
         ],
         IncidentType.DATA_EXFILTRATION: [
             "block_outbound_connections",
             "revoke_api_keys",
             "analyze_data_access_logs",
-            "notify_compliance_team"
-        ]
+            "notify_compliance_team",
+        ],
     }
 
     def __init__(self):
@@ -114,7 +116,7 @@ class IncidentResponderAgent(BaseAgent):
             temperature=0.1,
             max_tokens=3000,
             capabilities=[AgentCapability.DATABASE_WRITE],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -137,7 +139,9 @@ class IncidentResponderAgent(BaseAgent):
         incident_type = state.get("entities", {}).get("incident_type", "unknown")
         incident_data = state.get("entities", {}).get("incident_data", {})
         affected_systems = state.get("entities", {}).get("affected_systems", [])
-        detection_time = state.get("entities", {}).get("detection_time", datetime.now(UTC).isoformat())
+        detection_time = state.get("entities", {}).get(
+            "detection_time", datetime.now(UTC).isoformat()
+        )
         source_ip = state.get("entities", {}).get("source_ip", "unknown")
         user_id = state.get("entities", {}).get("user_id")
 
@@ -145,7 +149,7 @@ class IncidentResponderAgent(BaseAgent):
             "security_incident_detected",
             incident_type=incident_type,
             affected_systems=len(affected_systems),
-            source_ip=source_ip
+            source_ip=source_ip,
         )
 
         # Start response timer
@@ -162,25 +166,17 @@ class IncidentResponderAgent(BaseAgent):
             incident_data,
             affected_systems,
             source_ip,
-            user_id
+            user_id,
         )
 
         # Execute automated containment
         containment_actions = self._execute_containment(
-            incident_type,
-            severity,
-            affected_systems,
-            source_ip,
-            user_id
+            incident_type, severity, affected_systems, source_ip, user_id
         )
 
         # Collect evidence
         evidence = self._collect_evidence(
-            incident_type,
-            incident_data,
-            affected_systems,
-            source_ip,
-            user_id
+            incident_type, incident_data, affected_systems, source_ip, user_id
         )
 
         # Determine escalation
@@ -188,10 +184,7 @@ class IncidentResponderAgent(BaseAgent):
 
         # Generate notifications
         notifications = self._generate_notifications(
-            incident_id,
-            incident_type,
-            severity,
-            escalation_required
+            incident_id, incident_type, severity, escalation_required
         )
 
         # Calculate response time
@@ -203,18 +196,12 @@ class IncidentResponderAgent(BaseAgent):
 
         # Generate recovery plan
         recovery_plan = self._generate_recovery_plan(
-            incident_type,
-            severity,
-            affected_systems,
-            containment_actions
+            incident_type, severity, affected_systems, containment_actions
         )
 
         # Generate recommendations
         recommendations = self._generate_recommendations(
-            incident_type,
-            severity,
-            containment_actions,
-            sla_met
+            incident_type, severity, containment_actions, sla_met
         )
 
         # Format response
@@ -228,7 +215,7 @@ class IncidentResponderAgent(BaseAgent):
             recovery_plan,
             response_time,
             sla_met,
-            recommendations
+            recommendations,
         )
 
         state["agent_response"] = response
@@ -256,16 +243,13 @@ class IncidentResponderAgent(BaseAgent):
             severity=severity.value,
             response_time=response_time,
             sla_met=sla_met,
-            actions_taken=len(containment_actions)
+            actions_taken=len(containment_actions),
         )
 
         return state
 
     def _classify_severity(
-        self,
-        incident_type: str,
-        incident_data: Dict[str, Any],
-        affected_systems: List[str]
+        self, incident_type: str, incident_data: dict[str, Any], affected_systems: list[str]
     ) -> IncidentSeverity:
         """
         Classify incident severity.
@@ -282,7 +266,7 @@ class IncidentResponderAgent(BaseAgent):
         critical_types = [
             IncidentType.DATA_BREACH.value,
             IncidentType.RANSOMWARE.value,
-            IncidentType.DATA_EXFILTRATION.value
+            IncidentType.DATA_EXFILTRATION.value,
         ]
 
         if incident_type in critical_types:
@@ -292,7 +276,7 @@ class IncidentResponderAgent(BaseAgent):
         high_types = [
             IncidentType.UNAUTHORIZED_ACCESS.value,
             IncidentType.MALWARE.value,
-            IncidentType.PRIVILEGE_ESCALATION.value
+            IncidentType.PRIVILEGE_ESCALATION.value,
         ]
 
         if incident_type in high_types:
@@ -314,10 +298,10 @@ class IncidentResponderAgent(BaseAgent):
         incident_type: str,
         severity: IncidentSeverity,
         detection_time: str,
-        incident_data: Dict[str, Any],
-        affected_systems: List[str],
+        incident_data: dict[str, Any],
+        affected_systems: list[str],
         source_ip: str,
-        user_id: Optional[str]
+        user_id: str | None,
     ) -> str:
         """Create incident record."""
         incident_id = f"INC-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}"
@@ -326,7 +310,7 @@ class IncidentResponderAgent(BaseAgent):
             "incident_record_created",
             incident_id=incident_id,
             incident_type=incident_type,
-            severity=severity.value
+            severity=severity.value,
         )
 
         return incident_id
@@ -335,10 +319,10 @@ class IncidentResponderAgent(BaseAgent):
         self,
         incident_type: str,
         severity: IncidentSeverity,
-        affected_systems: List[str],
+        affected_systems: list[str],
         source_ip: str,
-        user_id: Optional[str]
-    ) -> List[Dict[str, Any]]:
+        user_id: str | None,
+    ) -> list[dict[str, Any]]:
         """
         Execute automated containment actions.
 
@@ -363,23 +347,14 @@ class IncidentResponderAgent(BaseAgent):
         # Execute predefined containment actions
         if incident_enum and incident_enum in self.CONTAINMENT_ACTIONS:
             for action in self.CONTAINMENT_ACTIONS[incident_enum]:
-                result = self._execute_action(
-                    action,
-                    affected_systems,
-                    source_ip,
-                    user_id
-                )
+                result = self._execute_action(action, affected_systems, source_ip, user_id)
                 actions_taken.append(result)
 
         return actions_taken
 
     def _execute_action(
-        self,
-        action: str,
-        affected_systems: List[str],
-        source_ip: str,
-        user_id: Optional[str]
-    ) -> Dict[str, Any]:
+        self, action: str, affected_systems: list[str], source_ip: str, user_id: str | None
+    ) -> dict[str, Any]:
         """Execute single containment action."""
         # Simulate action execution
         # In production, integrate with actual systems
@@ -388,7 +363,7 @@ class IncidentResponderAgent(BaseAgent):
             "action": action,
             "status": "success",
             "executed_at": datetime.now(UTC).isoformat(),
-            "details": f"Executed {action.replace('_', ' ')}"
+            "details": f"Executed {action.replace('_', ' ')}",
         }
 
         if action == "block_ip_address":
@@ -399,9 +374,7 @@ class IncidentResponderAgent(BaseAgent):
             action_result["details"] = f"Isolated {len(affected_systems)} systems from network"
 
         self.logger.info(
-            "containment_action_executed",
-            action=action,
-            status=action_result["status"]
+            "containment_action_executed", action=action, status=action_result["status"]
         )
 
         return action_result
@@ -409,53 +382,49 @@ class IncidentResponderAgent(BaseAgent):
     def _collect_evidence(
         self,
         incident_type: str,
-        incident_data: Dict[str, Any],
-        affected_systems: List[str],
+        incident_data: dict[str, Any],
+        affected_systems: list[str],
         source_ip: str,
-        user_id: Optional[str]
-    ) -> Dict[str, Any]:
+        user_id: str | None,
+    ) -> dict[str, Any]:
         """Collect evidence for forensic analysis."""
         evidence = {
             "collection_time": datetime.now(UTC).isoformat(),
             "incident_type": incident_type,
             "artifacts": [],
-            "chain_of_custody": []
+            "chain_of_custody": [],
         }
 
         # Collect various types of evidence
-        evidence["artifacts"].extend([
-            {"type": "system_logs", "source": system, "preserved": True}
-            for system in affected_systems
-        ])
+        evidence["artifacts"].extend(
+            [
+                {"type": "system_logs", "source": system, "preserved": True}
+                for system in affected_systems
+            ]
+        )
 
         if source_ip:
-            evidence["artifacts"].append({
-                "type": "network_traffic",
-                "source_ip": source_ip,
-                "preserved": True
-            })
+            evidence["artifacts"].append(
+                {"type": "network_traffic", "source_ip": source_ip, "preserved": True}
+            )
 
         if user_id:
-            evidence["artifacts"].append({
-                "type": "user_activity",
-                "user_id": user_id,
-                "preserved": True
-            })
+            evidence["artifacts"].append(
+                {"type": "user_activity", "user_id": user_id, "preserved": True}
+            )
 
         # Chain of custody
-        evidence["chain_of_custody"].append({
-            "timestamp": datetime.now(UTC).isoformat(),
-            "action": "evidence_collection_started",
-            "collector": "incident_responder_agent"
-        })
+        evidence["chain_of_custody"].append(
+            {
+                "timestamp": datetime.now(UTC).isoformat(),
+                "action": "evidence_collection_started",
+                "collector": "incident_responder_agent",
+            }
+        )
 
         return evidence
 
-    def _check_escalation(
-        self,
-        severity: IncidentSeverity,
-        incident_type: str
-    ) -> bool:
+    def _check_escalation(self, severity: IncidentSeverity, incident_type: str) -> bool:
         """Check if incident requires escalation."""
         # Always escalate critical incidents
         if severity == IncidentSeverity.CRITICAL:
@@ -465,7 +434,7 @@ class IncidentResponderAgent(BaseAgent):
         escalation_types = [
             IncidentType.DATA_BREACH.value,
             IncidentType.RANSOMWARE.value,
-            IncidentType.INSIDER_THREAT.value
+            IncidentType.INSIDER_THREAT.value,
         ]
 
         return incident_type in escalation_types
@@ -475,36 +444,42 @@ class IncidentResponderAgent(BaseAgent):
         incident_id: str,
         incident_type: str,
         severity: IncidentSeverity,
-        escalation_required: bool
-    ) -> List[Dict[str, Any]]:
+        escalation_required: bool,
+    ) -> list[dict[str, Any]]:
         """Generate incident notifications."""
         notifications = []
 
         # Always notify security team
-        notifications.append({
-            "recipient": "security_team",
-            "channel": "pagerduty",
-            "severity": severity.value,
-            "message": f"Security incident {incident_id}: {incident_type}"
-        })
+        notifications.append(
+            {
+                "recipient": "security_team",
+                "channel": "pagerduty",
+                "severity": severity.value,
+                "message": f"Security incident {incident_id}: {incident_type}",
+            }
+        )
 
         # Escalate to CISO for critical incidents
         if severity == IncidentSeverity.CRITICAL or escalation_required:
-            notifications.append({
-                "recipient": "ciso",
-                "channel": "phone_sms",
-                "severity": "critical",
-                "message": f"CRITICAL INCIDENT {incident_id} requires immediate attention"
-            })
+            notifications.append(
+                {
+                    "recipient": "ciso",
+                    "channel": "phone_sms",
+                    "severity": "critical",
+                    "message": f"CRITICAL INCIDENT {incident_id} requires immediate attention",
+                }
+            )
 
         # Notify compliance team for data breaches
         if "breach" in incident_type.lower() or "exfiltration" in incident_type.lower():
-            notifications.append({
-                "recipient": "compliance_team",
-                "channel": "email",
-                "severity": severity.value,
-                "message": f"Data incident {incident_id} may require regulatory notification"
-            })
+            notifications.append(
+                {
+                    "recipient": "compliance_team",
+                    "channel": "email",
+                    "severity": severity.value,
+                    "message": f"Data incident {incident_id} may require regulatory notification",
+                }
+            )
 
         return notifications
 
@@ -519,47 +494,55 @@ class IncidentResponderAgent(BaseAgent):
         self,
         incident_type: str,
         severity: IncidentSeverity,
-        affected_systems: List[str],
-        containment_actions: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        affected_systems: list[str],
+        containment_actions: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
         """Generate recovery plan."""
         plan = []
 
         # Verify containment
-        plan.append({
-            "step": 1,
-            "action": "Verify containment effectiveness",
-            "description": "Confirm all containment actions successful",
-            "responsible": "security_team",
-            "deadline": (datetime.now(UTC) + timedelta(hours=1)).isoformat()
-        })
+        plan.append(
+            {
+                "step": 1,
+                "action": "Verify containment effectiveness",
+                "description": "Confirm all containment actions successful",
+                "responsible": "security_team",
+                "deadline": (datetime.now(UTC) + timedelta(hours=1)).isoformat(),
+            }
+        )
 
         # Eradicate threat
-        plan.append({
-            "step": 2,
-            "action": "Eradicate threat",
-            "description": f"Remove malicious artifacts from {len(affected_systems)} systems",
-            "responsible": "security_team",
-            "deadline": (datetime.now(UTC) + timedelta(hours=4)).isoformat()
-        })
+        plan.append(
+            {
+                "step": 2,
+                "action": "Eradicate threat",
+                "description": f"Remove malicious artifacts from {len(affected_systems)} systems",
+                "responsible": "security_team",
+                "deadline": (datetime.now(UTC) + timedelta(hours=4)).isoformat(),
+            }
+        )
 
         # Restore systems
-        plan.append({
-            "step": 3,
-            "action": "Restore affected systems",
-            "description": "Restore from clean backups and verify integrity",
-            "responsible": "ops_team",
-            "deadline": (datetime.now(UTC) + timedelta(hours=8)).isoformat()
-        })
+        plan.append(
+            {
+                "step": 3,
+                "action": "Restore affected systems",
+                "description": "Restore from clean backups and verify integrity",
+                "responsible": "ops_team",
+                "deadline": (datetime.now(UTC) + timedelta(hours=8)).isoformat(),
+            }
+        )
 
         # Post-incident review
-        plan.append({
-            "step": 4,
-            "action": "Conduct post-incident review",
-            "description": "Document lessons learned and update procedures",
-            "responsible": "security_lead",
-            "deadline": (datetime.now(UTC) + timedelta(days=3)).isoformat()
-        })
+        plan.append(
+            {
+                "step": 4,
+                "action": "Conduct post-incident review",
+                "description": "Document lessons learned and update procedures",
+                "responsible": "security_lead",
+                "deadline": (datetime.now(UTC) + timedelta(days=3)).isoformat(),
+            }
+        )
 
         return plan
 
@@ -567,9 +550,9 @@ class IncidentResponderAgent(BaseAgent):
         self,
         incident_type: str,
         severity: IncidentSeverity,
-        containment_actions: List[Dict[str, Any]],
-        sla_met: bool
-    ) -> List[str]:
+        containment_actions: list[dict[str, Any]],
+        sla_met: bool,
+    ) -> list[str]:
         """Generate security recommendations."""
         recommendations = []
 
@@ -579,9 +562,7 @@ class IncidentResponderAgent(BaseAgent):
             )
 
         if not sla_met:
-            recommendations.append(
-                "SLA not met. Review and optimize incident response procedures."
-            )
+            recommendations.append("SLA not met. Review and optimize incident response procedures.")
 
         recommendations.append(
             f"Executed {len(containment_actions)} automated containment actions. "
@@ -592,9 +573,7 @@ class IncidentResponderAgent(BaseAgent):
             "Preserve all evidence for forensic analysis and potential legal proceedings."
         )
 
-        recommendations.append(
-            "Update threat intelligence based on attack patterns observed."
-        )
+        recommendations.append("Update threat intelligence based on attack patterns observed.")
 
         if "breach" in incident_type.lower():
             recommendations.append(
@@ -608,16 +587,22 @@ class IncidentResponderAgent(BaseAgent):
         incident_id: str,
         incident_type: str,
         severity: IncidentSeverity,
-        containment_actions: List[Dict[str, Any]],
-        evidence: Dict[str, Any],
-        notifications: List[Dict[str, Any]],
-        recovery_plan: List[Dict[str, Any]],
+        containment_actions: list[dict[str, Any]],
+        evidence: dict[str, Any],
+        notifications: list[dict[str, Any]],
+        recovery_plan: list[dict[str, Any]],
         response_time: float,
         sla_met: bool,
-        recommendations: List[str]
+        recommendations: list[str],
     ) -> str:
         """Format incident response report."""
-        severity_icon = "🔴" if severity == IncidentSeverity.CRITICAL else "⚠️" if severity == IncidentSeverity.HIGH else "📋"
+        severity_icon = (
+            "🔴"
+            if severity == IncidentSeverity.CRITICAL
+            else "⚠️"
+            if severity == IncidentSeverity.HIGH
+            else "📋"
+        )
         sla_icon = "✅" if sla_met else "❌"
 
         report = f"""**SECURITY INCIDENT RESPONSE REPORT**
@@ -644,17 +629,17 @@ class IncidentResponderAgent(BaseAgent):
         for notif in notifications:
             report += f"- {notif['recipient']}: {notif['channel']}\n"
 
-        report += f"\n**RECOVERY PLAN:**\n"
+        report += "\n**RECOVERY PLAN:**\n"
         for step in recovery_plan:
             report += f"{step['step']}. {step['action']}\n"
             report += f"   {step['description']}\n"
             report += f"   Deadline: {step['deadline'][:19]}\n\n"
 
-        report += f"**RECOMMENDATIONS:**\n"
+        report += "**RECOMMENDATIONS:**\n"
         for rec in recommendations:
             report += f"- {rec}\n"
 
         report += f"\n*Incident response completed at {datetime.now(UTC).isoformat()}*"
-        report += f"\n*Status: CONTAINED - Monitoring for additional indicators*"
+        report += "\n*Status: CONTAINED - Monitoring for additional indicators*"
 
         return report
