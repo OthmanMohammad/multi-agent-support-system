@@ -10,7 +10,6 @@ Provides Redis client for:
 Single global connection pool for performance.
 """
 
-from typing import Optional
 import redis.asyncio as redis
 from redis.asyncio import Redis
 
@@ -22,10 +21,10 @@ settings = get_settings()
 
 
 # Global Redis client instance
-_redis_client: Optional[Redis] = None
+_redis_client: Redis | None = None
 
 
-async def get_redis_client() -> Optional[Redis]:
+async def get_redis_client() -> Redis | None:
     """
     Get or create Redis client connection.
 
@@ -68,9 +67,7 @@ async def get_redis_client() -> Optional[Redis]:
             logger.info("redis_client_connected_successfully")
         except Exception as e:
             logger.error(
-                "redis_client_connection_failed",
-                error=str(e),
-                error_type=type(e).__name__
+                "redis_client_connection_failed", error=str(e), error_type=type(e).__name__
             )
             raise
 
@@ -174,9 +171,7 @@ class RateLimiter:
 
     @staticmethod
     async def check_rate_limit(
-        key: str,
-        max_requests: int,
-        window_seconds: int
+        key: str, max_requests: int, window_seconds: int
     ) -> tuple[bool, int, int]:
         """
         Check if request is within rate limit.
@@ -227,7 +222,7 @@ class RateLimiter:
                 "rate_limit_exceeded",
                 key=key,
                 current_count=current_count,
-                max_requests=max_requests
+                max_requests=max_requests,
             )
 
         return is_allowed, current_count, remaining
@@ -252,7 +247,7 @@ class RateLimiter:
         logger.info("rate_limit_reset", key=key)
 
     @staticmethod
-    async def get_reset_time(key: str) -> Optional[int]:
+    async def get_reset_time(key: str) -> int | None:
         """
         Get time until rate limit resets.
 
@@ -284,11 +279,7 @@ class SessionCache:
     """
 
     @staticmethod
-    async def set_session(
-        session_id: str,
-        data: str,
-        ttl_seconds: int = 3600
-    ) -> None:
+    async def set_session(session_id: str, data: str, ttl_seconds: int = 3600) -> None:
         """
         Store session data.
 
@@ -312,7 +303,7 @@ class SessionCache:
         logger.debug("session_cached", session_id=session_id, ttl=ttl_seconds)
 
     @staticmethod
-    async def get_session(session_id: str) -> Optional[str]:
+    async def get_session(session_id: str) -> str | None:
         """
         Retrieve session data.
 
