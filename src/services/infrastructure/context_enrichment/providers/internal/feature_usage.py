@@ -4,15 +4,17 @@ Feature usage provider.
 Fetches detailed feature adoption and usage patterns from database.
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
+from typing import Any
 from uuid import UUID
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.services.infrastructure.context_enrichment.providers.base_provider import BaseContextProvider
-from src.database.models import FeatureUsage
-from src.database.unit_of_work import UnitOfWork
 from src.database.connection import get_db_session
+from src.database.unit_of_work import UnitOfWork
+from src.services.infrastructure.context_enrichment.providers.base_provider import (
+    BaseContextProvider,
+)
 
 
 class FeatureUsageProvider(BaseContextProvider):
@@ -28,11 +30,8 @@ class FeatureUsageProvider(BaseContextProvider):
     """
 
     async def fetch(
-        self,
-        customer_id: str,
-        conversation_id: Optional[str] = None,
-        **kwargs
-    ) -> Dict[str, Any]:
+        self, customer_id: str, conversation_id: str | None = None, **kwargs
+    ) -> dict[str, Any]:
         """
         Fetch feature usage from database.
 
@@ -59,11 +58,7 @@ class FeatureUsageProvider(BaseContextProvider):
             async for session in get_db_session():
                 return await self._fetch_with_session(cust_uuid, session)
 
-    async def _fetch_with_session(
-        self,
-        customer_id: UUID,
-        session: AsyncSession
-    ) -> Dict[str, Any]:
+    async def _fetch_with_session(self, customer_id: UUID, session: AsyncSession) -> dict[str, Any]:
         """Fetch feature usage using provided session"""
         try:
             uow = UnitOfWork(session)
@@ -78,9 +73,12 @@ class FeatureUsageProvider(BaseContextProvider):
             daily_cutoff = datetime.now(UTC) - timedelta(days=1)
             daily_features = set()
             for usage in all_usage:
-                if (hasattr(usage, 'last_used_at') and usage.last_used_at and
-                    usage.last_used_at.replace(tzinfo=None) > daily_cutoff):
-                    if hasattr(usage, 'feature_name'):
+                if (
+                    hasattr(usage, "last_used_at")
+                    and usage.last_used_at
+                    and usage.last_used_at.replace(tzinfo=None) > daily_cutoff
+                ):
+                    if hasattr(usage, "feature_name"):
                         daily_features.add(usage.feature_name)
 
             daily_active_features = len(daily_features)
@@ -89,9 +87,12 @@ class FeatureUsageProvider(BaseContextProvider):
             weekly_cutoff = datetime.now(UTC) - timedelta(days=7)
             weekly_features = set()
             for usage in all_usage:
-                if (hasattr(usage, 'last_used_at') and usage.last_used_at and
-                    usage.last_used_at.replace(tzinfo=None) > weekly_cutoff):
-                    if hasattr(usage, 'feature_name'):
+                if (
+                    hasattr(usage, "last_used_at")
+                    and usage.last_used_at
+                    and usage.last_used_at.replace(tzinfo=None) > weekly_cutoff
+                ):
+                    if hasattr(usage, "feature_name"):
                         weekly_features.add(usage.feature_name)
 
             weekly_active_features = len(weekly_features)
@@ -101,11 +102,14 @@ class FeatureUsageProvider(BaseContextProvider):
             feature_stats = {}
 
             for usage in all_usage:
-                if (hasattr(usage, 'date') and usage.date and
-                    usage.date.replace(tzinfo=None) > monthly_cutoff):
-                    name = usage.feature_name if hasattr(usage, 'feature_name') else "unknown"
-                    count = usage.usage_count if hasattr(usage, 'usage_count') else 0
-                    last_used = usage.last_used_at if hasattr(usage, 'last_used_at') else None
+                if (
+                    hasattr(usage, "date")
+                    and usage.date
+                    and usage.date.replace(tzinfo=None) > monthly_cutoff
+                ):
+                    name = usage.feature_name if hasattr(usage, "feature_name") else "unknown"
+                    count = usage.usage_count if hasattr(usage, "usage_count") else 0
+                    last_used = usage.last_used_at if hasattr(usage, "last_used_at") else None
 
                     if name not in feature_stats:
                         feature_stats[name] = {
@@ -115,8 +119,8 @@ class FeatureUsageProvider(BaseContextProvider):
 
                     feature_stats[name]["usage_count_30d"] += count
                     if last_used and (
-                        not feature_stats[name]["last_used"] or
-                        last_used > feature_stats[name]["last_used"]
+                        not feature_stats[name]["last_used"]
+                        or last_used > feature_stats[name]["last_used"]
                     ):
                         feature_stats[name]["last_used"] = last_used
 
@@ -128,16 +132,15 @@ class FeatureUsageProvider(BaseContextProvider):
             # Identify power users (features used > 100 times/month)
             power_user_threshold = 100
             power_user_features = sum(
-                1 for stats in feature_stats.values()
+                1
+                for stats in feature_stats.values()
                 if stats["usage_count_30d"] > power_user_threshold
             )
 
             # Build detailed feature list
-            feature_details: List[Dict[str, Any]] = []
+            feature_details: list[dict[str, Any]] = []
             for name, stats in sorted(
-                feature_stats.items(),
-                key=lambda x: x[1]["usage_count_30d"],
-                reverse=True
+                feature_stats.items(), key=lambda x: x[1]["usage_count_30d"], reverse=True
             ):
                 # Calculate trend (simple: compare to previous period)
                 # For now, mark as "stable" - would need historical data for real trends
@@ -147,12 +150,14 @@ class FeatureUsageProvider(BaseContextProvider):
                 elif stats["usage_count_30d"] < 10:
                     trend = "decreasing"
 
-                feature_details.append({
-                    "feature": name,
-                    "usage_count_30d": stats["usage_count_30d"],
-                    "last_used": stats["last_used"],
-                    "trend": trend,
-                })
+                feature_details.append(
+                    {
+                        "feature": name,
+                        "usage_count_30d": stats["usage_count_30d"],
+                        "last_used": stats["last_used"],
+                        "trend": trend,
+                    }
+                )
 
             # Identify adoption opportunities (high-value features not being used)
             all_premium_features = [
@@ -185,11 +190,11 @@ class FeatureUsageProvider(BaseContextProvider):
                 "fetch_failed",
                 customer_id=str(customer_id),
                 error=str(e),
-                error_type=type(e).__name__
+                error_type=type(e).__name__,
             )
             return self._get_fallback_data()
 
-    def _get_fallback_data(self) -> Dict[str, Any]:
+    def _get_fallback_data(self) -> dict[str, Any]:
         """Get fallback data when query fails"""
         return {
             "daily_active_features": 0,
