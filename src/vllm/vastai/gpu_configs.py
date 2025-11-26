@@ -7,9 +7,10 @@ Includes multi-factor scoring algorithm for optimal GPU selection.
 Vast.ai GPU Orchestration
 """
 
-from typing import List, Dict, Any
-from pydantic import BaseModel, Field
+from typing import Any
+
 import structlog
+from pydantic import BaseModel, Field
 
 logger = structlog.get_logger(__name__)
 
@@ -36,14 +37,20 @@ class GPUConfig(BaseModel):
     max_price_per_hour: float = Field(..., ge=0.01, le=5.0, description="Max price USD/hour")
     cuda_version: str = Field(default="12.1", description="Minimum CUDA version")
     disk_space_gb: int = Field(default=50, ge=20, le=500, description="Disk space in GB")
-    priority: int = Field(..., ge=1, le=100, description="Search priority (lower = higher priority)")
-    preferred_reliability: float = Field(default=0.95, ge=0.0, le=1.0, description="Min reliability score")
-    min_network_speed_mbps: int = Field(default=100, ge=10, le=10000, description="Min network speed")
+    priority: int = Field(
+        ..., ge=1, le=100, description="Search priority (lower = higher priority)"
+    )
+    preferred_reliability: float = Field(
+        default=0.95, ge=0.0, le=1.0, description="Min reliability score"
+    )
+    min_network_speed_mbps: int = Field(
+        default=100, ge=10, le=10000, description="Min network speed"
+    )
 
     class Config:
         frozen = True  # Immutable configuration
 
-    def to_search_query(self) -> Dict[str, Any]:
+    def to_search_query(self) -> dict[str, Any]:
         """
         Convert to Vast.ai search parameters.
 
@@ -59,7 +66,7 @@ class GPUConfig(BaseModel):
             "type": "on-demand",  # On-demand instances
         }
 
-    def score_offer(self, offer: Dict[str, Any]) -> float:
+    def score_offer(self, offer: dict[str, Any]) -> float:
         """
         Multi-factor scoring for GPU offers.
 
@@ -125,8 +132,8 @@ class GPUConfig(BaseModel):
         # CUDA version (10% weight)
         cuda_version = offer.get("cuda_vers", "0.0")
         try:
-            cuda_major = float(cuda_version.split('.')[0])
-            required_major = float(self.cuda_version.split('.')[0])
+            cuda_major = float(cuda_version.split(".")[0])
+            required_major = float(self.cuda_version.split(".")[0])
             cuda_score = 1.0 if cuda_major >= required_major else 0.5
         except (ValueError, IndexError):
             cuda_score = 0.5
@@ -150,7 +157,7 @@ class GPUConfig(BaseModel):
 
         return min(score, 1.0)  # Clamp to [0, 1]
 
-    def is_offer_compatible(self, offer: Dict[str, Any]) -> bool:
+    def is_offer_compatible(self, offer: dict[str, Any]) -> bool:
         """
         Check if offer meets minimum requirements.
 
@@ -220,7 +227,7 @@ class GPUConfig(BaseModel):
 # GPU FALLBACK CONFIGURATIONS (Priority Order)
 # ============================================================================
 
-GPU_FALLBACK_CONFIGS: List[GPUConfig] = [
+GPU_FALLBACK_CONFIGS: list[GPUConfig] = [
     # PRIORITY 1: RTX 4090 - Newest generation (better Vast.ai infrastructure)
     # Moved to priority 1 due to CDI issues with RTX 3090 hosts
     GPUConfig(
@@ -234,7 +241,6 @@ GPU_FALLBACK_CONFIGS: List[GPUConfig] = [
         preferred_reliability=0.95,
         min_network_speed_mbps=100,
     ),
-
     # PRIORITY 2: RTX A5000 - Professional card (datacenter-grade infrastructure)
     GPUConfig(
         gpu_name="RTX A5000",
@@ -247,7 +253,6 @@ GPU_FALLBACK_CONFIGS: List[GPUConfig] = [
         preferred_reliability=0.98,  # Higher reliability expected
         min_network_speed_mbps=100,
     ),
-
     # PRIORITY 3: RTX A6000 - High VRAM professional
     GPUConfig(
         gpu_name="RTX A6000",
@@ -260,7 +265,6 @@ GPU_FALLBACK_CONFIGS: List[GPUConfig] = [
         preferred_reliability=0.98,
         min_network_speed_mbps=100,
     ),
-
     # PRIORITY 4: RTX 4080 - Good alternative
     GPUConfig(
         gpu_name="RTX 4080",
@@ -273,7 +277,6 @@ GPU_FALLBACK_CONFIGS: List[GPUConfig] = [
         preferred_reliability=0.95,
         min_network_speed_mbps=100,
     ),
-
     # PRIORITY 5: RTX 3090 - Best cost/performance (MOVED DOWN - CDI issues on some hosts)
     GPUConfig(
         gpu_name="RTX 3090",
@@ -286,7 +289,6 @@ GPU_FALLBACK_CONFIGS: List[GPUConfig] = [
         preferred_reliability=0.95,
         min_network_speed_mbps=100,
     ),
-
     # PRIORITY 6: RTX 3090 Ti - Slightly faster (also has CDI issues)
     GPUConfig(
         gpu_name="RTX 3090 Ti",
@@ -299,7 +301,6 @@ GPU_FALLBACK_CONFIGS: List[GPUConfig] = [
         preferred_reliability=0.95,
         min_network_speed_mbps=100,
     ),
-
     # PRIORITY 7: A40 - Datacenter GPU
     GPUConfig(
         gpu_name="A40",
@@ -312,7 +313,6 @@ GPU_FALLBACK_CONFIGS: List[GPUConfig] = [
         preferred_reliability=0.98,
         min_network_speed_mbps=100,
     ),
-
     # PRIORITY 8: A100 - High-end datacenter (expensive)
     GPUConfig(
         gpu_name="A100",
@@ -325,7 +325,6 @@ GPU_FALLBACK_CONFIGS: List[GPUConfig] = [
         preferred_reliability=0.99,
         min_network_speed_mbps=100,
     ),
-
     # PRIORITY 9: V100 - Older datacenter (backup)
     GPUConfig(
         gpu_name="V100",
@@ -338,7 +337,6 @@ GPU_FALLBACK_CONFIGS: List[GPUConfig] = [
         preferred_reliability=0.95,
         min_network_speed_mbps=100,
     ),
-
     # PRIORITY 10: RTX 3080 - Emergency fallback (low VRAM)
     GPUConfig(
         gpu_name="RTX 3080",
@@ -357,6 +355,7 @@ GPU_FALLBACK_CONFIGS: List[GPUConfig] = [
 # ============================================================================
 # Helper Functions
 # ============================================================================
+
 
 def get_gpu_config_by_name(gpu_name: str) -> GPUConfig | None:
     """
@@ -391,9 +390,8 @@ def get_gpu_config_by_priority(priority: int) -> GPUConfig | None:
 
 
 def filter_compatible_offers(
-    config: GPUConfig,
-    offers: List[Dict[str, Any]]
-) -> List[Dict[str, Any]]:
+    config: GPUConfig, offers: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
     """
     Filter offers by compatibility and score them.
 
@@ -405,10 +403,7 @@ def filter_compatible_offers(
         Filtered and scored offers, sorted by score (highest first)
     """
     # Filter compatible offers
-    compatible = [
-        offer for offer in offers
-        if config.is_offer_compatible(offer)
-    ]
+    compatible = [offer for offer in offers if config.is_offer_compatible(offer)]
 
     # Score and sort
     scored_offers = []
@@ -434,6 +429,7 @@ def filter_compatible_offers(
 # ============================================================================
 # Configuration Validation
 # ============================================================================
+
 
 def validate_gpu_configs():
     """
@@ -466,7 +462,7 @@ def validate_gpu_configs():
         "gpu_configs_validated",
         total_configs=len(GPU_FALLBACK_CONFIGS),
         price_range=f"${min(c.max_price_per_hour for c in GPU_FALLBACK_CONFIGS):.2f} - "
-                    f"${max(c.max_price_per_hour for c in GPU_FALLBACK_CONFIGS):.2f}"
+        f"${max(c.max_price_per_hour for c in GPU_FALLBACK_CONFIGS):.2f}",
     )
 
 
