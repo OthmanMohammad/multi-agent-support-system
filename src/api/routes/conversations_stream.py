@@ -5,18 +5,18 @@ Real-time AI response streaming for chat conversations.
 All endpoints require authentication via JWT token or API key.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+import asyncio
+import json
+from collections.abc import AsyncGenerator
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from uuid import UUID
-from typing import AsyncGenerator
-import json
-import asyncio
 
 from src.api.dependencies import get_conversation_application_service
 from src.api.dependencies.auth_dependencies import get_current_user_or_api_key
 from src.database.models.user import User, UserRole
-from src.api.error_handlers import map_error_to_http
 from src.services.application.conversation_service import ConversationApplicationService
 from src.utils.logging.setup import get_logger
 
@@ -25,9 +25,7 @@ logger = get_logger(__name__)
 
 
 async def verify_conversation_access(
-    conversation_id: UUID,
-    current_user: User,
-    service: ConversationApplicationService
+    conversation_id: UUID, current_user: User, service: ConversationApplicationService
 ) -> None:
     """
     Verify that the current user has access to the specified conversation.
@@ -59,23 +57,21 @@ async def verify_conversation_access(
                 "stream_conversation_access_denied",
                 conversation_id=str(conversation_id),
                 user_email=current_user.email,
-                customer_email=customer_email
+                customer_email=customer_email,
             )
             raise HTTPException(
-                status_code=403,
-                detail="You don't have permission to access this conversation"
+                status_code=403, detail="You don't have permission to access this conversation"
             )
 
 
 class StreamMessageRequest(BaseModel):
     """Request model for streaming message"""
+
     message: str
 
 
 async def stream_conversation_response(
-    conversation_id: UUID,
-    message: str,
-    service: ConversationApplicationService
+    conversation_id: UUID, message: str, service: ConversationApplicationService
 ) -> AsyncGenerator[str, None]:
     """
     Stream conversation response as Server-Sent Events
@@ -90,23 +86,20 @@ async def stream_conversation_response(
         logger.info(
             "stream_conversation_started",
             conversation_id=str(conversation_id),
-            message_length=len(message)
+            message_length=len(message),
         )
 
         # CRITICAL FIX: Fetch conversation WITH messages for context continuity
         conversation = await service.uow.conversations.get_with_messages(conversation_id)
         if not conversation:
-            error_event = {
-                "type": "error",
-                "error": "Conversation not found"
-            }
+            error_event = {"type": "error", "error": "Conversation not found"}
             yield f"data: {json.dumps(error_event)}\n\n"
             return
 
         if conversation.status != "active":
             error_event = {
                 "type": "error",
-                "error": f"Conversation is {conversation.status}, not active"
+                "error": f"Conversation is {conversation.status}, not active",
             }
             yield f"data: {json.dumps(error_event)}\n\n"
             return
@@ -115,16 +108,18 @@ async def stream_conversation_response(
         conversation_history = []
         if conversation.messages:
             for msg in conversation.messages:
-                conversation_history.append({
-                    "role": msg.role,
-                    "content": msg.content,
-                    "timestamp": msg.created_at.isoformat() if msg.created_at else None,
-                    "agent_name": getattr(msg, 'agent_name', None)
-                })
+                conversation_history.append(
+                    {
+                        "role": msg.role,
+                        "content": msg.content,
+                        "timestamp": msg.created_at.isoformat() if msg.created_at else None,
+                        "agent_name": getattr(msg, "agent_name", None),
+                    }
+                )
             logger.debug(
                 "stream_conversation_history_built",
                 conversation_id=str(conversation_id),
-                history_count=len(conversation_history)
+                history_count=len(conversation_history),
             )
 
         # Save user message
@@ -132,16 +127,13 @@ async def stream_conversation_response(
             conversation_id=conversation.id,
             role="user",
             content=message,
-            created_by=service.uow.current_user_id
+            created_by=service.uow.current_user_id,
         )
 
         # Add the current message to history for complete context
-        conversation_history.append({
-            "role": "user",
-            "content": message,
-            "timestamp": None,
-            "agent_name": None
-        })
+        conversation_history.append(
+            {"role": "user", "content": message, "timestamp": None, "agent_name": None}
+        )
 
         # Execute workflow with streaming
         # Note: For now, we'll simulate streaming by chunking the response
@@ -152,8 +144,8 @@ async def stream_conversation_response(
             context={
                 "conversation_id": str(conversation.id),
                 "customer_id": str(conversation.customer_id),
-                "conversation_history": conversation_history
-            }
+                "conversation_history": conversation_history,
+            },
         )
 
         # Extract response data
@@ -170,16 +162,12 @@ async def stream_conversation_response(
         words = response_text.split()
         accumulated = ""
 
-        for i, word in enumerate(words):
+        for _i, word in enumerate(words):
             chunk = word + " "
             accumulated += chunk
 
             # Send content chunk
-            content_event = {
-                "type": "content",
-                "chunk": chunk,
-                "accumulated": accumulated.strip()
-            }
+            content_event = {"type": "content", "chunk": chunk, "accumulated": accumulated.strip()}
             yield f"data: {json.dumps(content_event)}\n\n"
 
             # Small delay to simulate real-time streaming
@@ -195,7 +183,7 @@ async def stream_conversation_response(
             intent=intent,
             sentiment=sentiment,
             confidence=confidence,
-            created_by=service.uow.current_user_id
+            created_by=service.uow.current_user_id,
         )
 
         # Apply business rules for status:
@@ -205,10 +193,10 @@ async def stream_conversation_response(
         final_status = "active"
 
         should_actually_escalate = (
-            should_escalate or
-            agent_suggested_status == "escalated" or
-            (confidence < 0.4 and escalation_reason) or
-            sentiment < -0.7
+            should_escalate
+            or agent_suggested_status == "escalated"
+            or (confidence < 0.4 and escalation_reason)
+            or sentiment < -0.7
         )
 
         if should_actually_escalate:
@@ -219,7 +207,7 @@ async def stream_conversation_response(
                 conversation_id=str(conversation_id),
                 reason=escalation_reason or "Low confidence or negative sentiment",
                 confidence=confidence,
-                sentiment=sentiment
+                sentiment=sentiment,
             )
         else:
             # Keep conversation active - user resolves when satisfied
@@ -227,7 +215,7 @@ async def stream_conversation_response(
                 conversation.id,
                 status="active",
                 sentiment_avg=sentiment,
-                updated_by=service.uow.current_user_id
+                updated_by=service.uow.current_user_id,
             )
 
         # Commit all changes
@@ -244,8 +232,8 @@ async def stream_conversation_response(
                 "intent": intent,
                 "sentiment": sentiment,
                 "status": final_status,  # Use business-rule-determined status
-                "agent_suggested_status": agent_suggested_status  # For debugging
-            }
+                "agent_suggested_status": agent_suggested_status,  # For debugging
+            },
         }
         yield f"data: {json.dumps(done_event)}\n\n"
 
@@ -253,7 +241,7 @@ async def stream_conversation_response(
             "stream_conversation_completed",
             conversation_id=str(conversation_id),
             message_id=str(agent_message.id),
-            agent=agent_name
+            agent=agent_name,
         )
 
     except Exception as e:
@@ -262,13 +250,10 @@ async def stream_conversation_response(
             conversation_id=str(conversation_id),
             error=str(e),
             error_type=type(e).__name__,
-            exc_info=True
+            exc_info=True,
         )
 
-        error_event = {
-            "type": "error",
-            "error": str(e)
-        }
+        error_event = {"type": "error", "error": str(e)}
         yield f"data: {json.dumps(error_event)}\n\n"
 
 
@@ -277,7 +262,7 @@ async def stream_message_response(
     conversation_id: UUID,
     request: StreamMessageRequest,
     current_user: User = Depends(get_current_user_or_api_key),
-    service: ConversationApplicationService = Depends(get_conversation_application_service)
+    service: ConversationApplicationService = Depends(get_conversation_application_service),
 ):
     """
     Stream AI response for a message in real-time
@@ -302,22 +287,18 @@ async def stream_message_response(
         "stream_message_endpoint_called",
         conversation_id=str(conversation_id),
         user_id=str(current_user.id),
-        message_length=len(request.message)
+        message_length=len(request.message),
     )
 
     # Authorization check
     await verify_conversation_access(conversation_id, current_user, service)
 
     return StreamingResponse(
-        stream_conversation_response(
-            conversation_id,
-            request.message,
-            service
-        ),
+        stream_conversation_response(conversation_id, request.message, service),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no",  # Disable nginx buffering
-        }
+        },
     )
