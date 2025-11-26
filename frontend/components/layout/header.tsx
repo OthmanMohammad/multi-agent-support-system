@@ -3,7 +3,7 @@
 import type { JSX } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Menu, LogOut, User, Settings, ChevronDown } from "lucide-react";
+import { ChevronDown, LogOut, Menu, Settings, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -109,6 +109,7 @@ export const Header = (): JSX.Element => {
           <ThemeToggle />
 
           {/* Auth Section */}
+          {/* eslint-disable-next-line no-nested-ternary -- Auth state conditional */}
           {showLoading ? (
             // Loading skeleton during auth initialization
             <div className="flex items-center gap-2">
