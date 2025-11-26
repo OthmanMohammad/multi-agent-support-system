@@ -1,11 +1,23 @@
 """
 Subscription and billing models
 """
-from sqlalchemy import Column, String, Integer, DECIMAL, Boolean, Text, ForeignKey, CheckConstraint, DateTime
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.orm import relationship
+
 import uuid
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+
+from sqlalchemy import (
+    DECIMAL,
+    Boolean,
+    CheckConstraint,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import relationship
 
 from src.database.models.base import BaseModel
 
@@ -20,7 +32,7 @@ class Subscription(BaseModel):
         UUID(as_uuid=True),
         ForeignKey("customers.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
     plan = Column(String(50), nullable=False)
     billing_cycle = Column(String(20), nullable=False)
@@ -40,29 +52,19 @@ class Subscription(BaseModel):
     # Relationships
     customer = relationship("Customer", back_populates="subscriptions")
     invoices = relationship(
-        "Invoice",
-        back_populates="subscription",
-        cascade="all, delete-orphan",
-        lazy="selectin"
+        "Invoice", back_populates="subscription", cascade="all, delete-orphan", lazy="selectin"
     )
 
     __table_args__ = (
         CheckConstraint(
-            "plan IN ('free', 'basic', 'premium', 'enterprise')",
-            name="check_subscription_plan"
+            "plan IN ('free', 'basic', 'premium', 'enterprise')", name="check_subscription_plan"
         ),
-        CheckConstraint(
-            "billing_cycle IN ('monthly', 'annual')",
-            name="check_billing_cycle"
-        ),
+        CheckConstraint("billing_cycle IN ('monthly', 'annual')", name="check_billing_cycle"),
         CheckConstraint(
             "status IN ('active', 'past_due', 'canceled', 'unpaid', 'trialing')",
-            name="check_subscription_status"
+            name="check_subscription_status",
         ),
-        CheckConstraint(
-            "seats_used <= seats_total",
-            name="check_seats_capacity"
-        ),
+        CheckConstraint("seats_used <= seats_total", name="check_seats_capacity"),
     )
 
     @property
@@ -104,12 +106,10 @@ class Invoice(BaseModel):
         UUID(as_uuid=True),
         ForeignKey("customers.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
     subscription_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("subscriptions.id", ondelete="SET NULL"),
-        nullable=True
+        UUID(as_uuid=True), ForeignKey("subscriptions.id", ondelete="SET NULL"), nullable=True
     )
     invoice_number = Column(String(50), nullable=False, unique=True, index=True)
     amount = Column(DECIMAL(precision=10, scale=2), nullable=False)
@@ -124,16 +124,13 @@ class Invoice(BaseModel):
     customer = relationship("Customer", back_populates="invoices")
     subscription = relationship("Subscription", back_populates="invoices")
     payments = relationship(
-        "Payment",
-        back_populates="invoice",
-        cascade="all, delete-orphan",
-        lazy="selectin"
+        "Payment", back_populates="invoice", cascade="all, delete-orphan", lazy="selectin"
     )
 
     __table_args__ = (
         CheckConstraint(
             "status IN ('draft', 'open', 'paid', 'void', 'uncollectible')",
-            name="check_invoice_status"
+            name="check_invoice_status",
         ),
     )
 
@@ -163,13 +160,13 @@ class Payment(BaseModel):
         UUID(as_uuid=True),
         ForeignKey("customers.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
     invoice_id = Column(
         UUID(as_uuid=True),
         ForeignKey("invoices.id", ondelete="SET NULL"),
         nullable=True,
-        index=True
+        index=True,
     )
     amount = Column(DECIMAL(precision=10, scale=2), nullable=False)
     currency = Column(String(3), nullable=False, server_default="USD")
@@ -187,7 +184,7 @@ class Payment(BaseModel):
     __table_args__ = (
         CheckConstraint(
             "status IN ('pending', 'succeeded', 'failed', 'canceled', 'refunded')",
-            name="check_payment_status"
+            name="check_payment_status",
         ),
     )
 
@@ -210,7 +207,7 @@ class UsageEvent(BaseModel):
         UUID(as_uuid=True),
         ForeignKey("customers.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
     event_type = Column(String(50), nullable=False, index=True)
     quantity = Column(Integer, nullable=False, server_default="1")
@@ -235,7 +232,7 @@ class Credit(BaseModel):
         UUID(as_uuid=True),
         ForeignKey("customers.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
     amount = Column(DECIMAL(precision=10, scale=2), nullable=False)
     currency = Column(String(3), nullable=False, server_default="USD")
@@ -252,16 +249,12 @@ class Credit(BaseModel):
     __table_args__ = (
         CheckConstraint(
             "credit_type IN ('promotional', 'refund', 'goodwill', 'migration')",
-            name="check_credit_type"
+            name="check_credit_type",
         ),
         CheckConstraint(
-            "status IN ('active', 'used', 'expired', 'canceled')",
-            name="check_credit_status"
+            "status IN ('active', 'used', 'expired', 'canceled')", name="check_credit_status"
         ),
-        CheckConstraint(
-            "used_amount <= amount",
-            name="check_credit_usage"
-        ),
+        CheckConstraint("used_amount <= amount", name="check_credit_usage"),
     )
 
     @property
