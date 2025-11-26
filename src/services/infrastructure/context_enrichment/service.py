@@ -5,28 +5,27 @@ This is the main service that agents interact with to get enriched customer cont
 It orchestrates all providers, handles caching, and combines data from multiple sources.
 """
 
-from typing import Optional, List
 import asyncio
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+
 import structlog
 
+from src.services.infrastructure.context_enrichment.cache import ContextCache
 from src.services.infrastructure.context_enrichment.models import (
-    EnrichedContext,
+    AccountHealth,
     CustomerIntelligence,
     EngagementMetrics,
-    SupportHistory,
+    EnrichedContext,
+    ProductStatus,
     SubscriptionDetails,
-    AccountHealth,
-    CompanyEnrichment,
-    ProductStatus
+    SupportHistory,
 )
-from src.services.infrastructure.context_enrichment.cache import ContextCache
 from src.services.infrastructure.context_enrichment.providers.internal import (
+    AccountHealthProvider,
     CustomerIntelligenceProvider,
     EngagementMetricsProvider,
-    SupportHistoryProvider,
     SubscriptionDetailsProvider,
-    AccountHealthProvider
+    SupportHistoryProvider,
 )
 
 logger = structlog.get_logger(__name__)
@@ -48,8 +47,8 @@ class ContextEnrichmentService:
         self,
         enable_external_apis: bool = False,
         enable_caching: bool = True,
-        redis_url: Optional[str] = None,
-        cache_ttl: int = 300
+        redis_url: str | None = None,
+        cache_ttl: int = 300,
     ):
         """
         Initialize context enrichment service.
@@ -85,15 +84,15 @@ class ContextEnrichmentService:
         logger.info(
             "context_enrichment_service_initialized",
             external_apis=enable_external_apis,
-            caching=enable_caching
+            caching=enable_caching,
         )
 
     async def enrich_context(
         self,
         customer_id: str,
-        conversation_id: Optional[str] = None,
+        conversation_id: str | None = None,
         force_refresh: bool = False,
-        include_external: bool = None
+        include_external: bool | None = None,
     ) -> EnrichedContext:
         """
         Enrich context for a customer.
@@ -117,13 +116,13 @@ class ContextEnrichmentService:
             'premium'
         """
         start_time = datetime.now(UTC)
-        providers_used: List[str] = []
+        providers_used: list[str] = []
 
         self.logger.info(
             "context_enrichment_started",
             customer_id=customer_id,
             conversation_id=conversation_id,
-            force_refresh=force_refresh
+            force_refresh=force_refresh,
         )
 
         # Check cache first (unless force_refresh)
@@ -134,7 +133,7 @@ class ContextEnrichmentService:
                 self.logger.info(
                     "context_cache_hit",
                     customer_id=customer_id,
-                    latency_ms=(datetime.now(UTC) - start_time).total_seconds() * 1000
+                    latency_ms=(datetime.now(UTC) - start_time).total_seconds() * 1000,
                 )
                 return cached_context
 
@@ -154,22 +153,20 @@ class ContextEnrichmentService:
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # Track which providers were used
-        providers_used.extend([
-            "CustomerIntelligence",
-            "EngagementMetrics",
-            "SupportHistory",
-            "SubscriptionDetails",
-            "AccountHealth"
-        ])
+        providers_used.extend(
+            [
+                "CustomerIntelligence",
+                "EngagementMetrics",
+                "SupportHistory",
+                "SubscriptionDetails",
+                "AccountHealth",
+            ]
+        )
 
         # Handle any exceptions
         for i, result in enumerate(results):
             if isinstance(result, Exception):
-                self.logger.error(
-                    "provider_failed",
-                    provider=providers_used[i],
-                    error=str(result)
-                )
+                self.logger.error("provider_failed", provider=providers_used[i], error=str(result))
                 # Replace with empty dict
                 results[i] = {}
 
@@ -186,15 +183,11 @@ class ContextEnrichmentService:
                 enriched_at=datetime.now(UTC),
                 cache_hit=False,
                 enrichment_latency_ms=(datetime.now(UTC) - start_time).total_seconds() * 1000,
-                providers_used=providers_used
+                providers_used=providers_used,
             )
 
         except Exception as e:
-            self.logger.error(
-                "context_construction_failed",
-                customer_id=customer_id,
-                error=str(e)
-            )
+            self.logger.error("context_construction_failed", customer_id=customer_id, error=str(e))
             # Return minimal context on error
             context = self._create_minimal_context(customer_id)
 
@@ -210,7 +203,7 @@ class ContextEnrichmentService:
             customer_id=customer_id,
             latency_ms=context.enrichment_latency_ms,
             providers_count=len(providers_used),
-            cache_hit=False
+            cache_hit=False,
         )
 
         return context
@@ -246,9 +239,7 @@ class ContextEnrichmentService:
     def _create_minimal_context(self, customer_id: str) -> EnrichedContext:
         """Create minimal context on error"""
         return EnrichedContext(
-            customer_intelligence=CustomerIntelligence(
-                company_name=f"Customer {customer_id[:8]}"
-            ),
+            customer_intelligence=CustomerIntelligence(company_name=f"Customer {customer_id[:8]}"),
             engagement_metrics=EngagementMetrics(),
             support_history=SupportHistory(),
             subscription_details=SubscriptionDetails(),
@@ -256,17 +247,16 @@ class ContextEnrichmentService:
             enriched_at=datetime.now(UTC),
             cache_hit=False,
             enrichment_latency_ms=0,
-            providers_used=[]
+            providers_used=[],
         )
 
 
 # Singleton instance for easy import
-_service_instance: Optional[ContextEnrichmentService] = None
+_service_instance: ContextEnrichmentService | None = None
 
 
 def get_context_service(
-    enable_caching: bool = True,
-    redis_url: Optional[str] = None
+    enable_caching: bool = True, redis_url: str | None = None
 ) -> ContextEnrichmentService:
     """
     Get or create context enrichment service singleton.
@@ -281,7 +271,6 @@ def get_context_service(
     global _service_instance
     if _service_instance is None:
         _service_instance = ContextEnrichmentService(
-            enable_caching=enable_caching,
-            redis_url=redis_url
+            enable_caching=enable_caching, redis_url=redis_url
         )
     return _service_instance
