@@ -528,5 +528,9 @@ Next Contacts to Engage:
 
 Generate a strategic expansion recommendation."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # Expansion analysis uses account data
+        )
         return response
