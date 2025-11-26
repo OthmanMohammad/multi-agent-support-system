@@ -5,13 +5,13 @@ Detects referral signals and identifies referrers from database.
 Calculates rewards and sends thank-you messages.
 """
 
-from typing import Dict, Any, List, Optional
 from datetime import datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("referral_detector", tier="revenue", category="sales")
@@ -37,7 +37,7 @@ class ReferralDetector(BaseAgent):
         "someone told me",
         "heard from",
         "learned about you from",
-        "was told by"
+        "was told by",
     ]
 
     # Referral reward tiers
@@ -46,26 +46,26 @@ class ReferralDetector(BaseAgent):
             "min_company_size": 1000,
             "referrer_credit": 5000,
             "referee_discount": 2000,
-            "tier_name": "Enterprise"
+            "tier_name": "Enterprise",
         },
         "mid_market": {
             "min_company_size": 200,
             "referrer_credit": 2000,
             "referee_discount": 1000,
-            "tier_name": "Mid-Market"
+            "tier_name": "Mid-Market",
         },
         "smb": {
             "min_company_size": 50,
             "referrer_credit": 1000,
             "referee_discount": 500,
-            "tier_name": "SMB"
+            "tier_name": "SMB",
         },
         "small_business": {
             "min_company_size": 0,
             "referrer_credit": 500,
             "referee_discount": 250,
-            "tier_name": "Small Business"
-        }
+            "tier_name": "Small Business",
+        },
     }
 
     # Referral bonus for closed deals
@@ -74,7 +74,7 @@ class ReferralDetector(BaseAgent):
     # Thank you message templates
     THANK_YOU_TEMPLATES = {
         "referrer": "automated_referrer_thank_you",
-        "referee": "automated_referee_welcome"
+        "referee": "automated_referee_welcome",
     }
 
     def __init__(self):
@@ -87,10 +87,10 @@ class ReferralDetector(BaseAgent):
                 AgentCapability.KB_SEARCH,
                 AgentCapability.CONTEXT_AWARE,
                 AgentCapability.DATABASE_WRITE,
-                AgentCapability.ENTITY_EXTRACTION
+                AgentCapability.ENTITY_EXTRACTION,
             ],
             kb_category="sales",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -128,35 +128,23 @@ class ReferralDetector(BaseAgent):
 
         # Extract referrer information
         referrer_info = self._extract_referrer_info(
-            message,
-            customer_metadata,
-            entities,
-            referral_detected
+            message, customer_metadata, entities, referral_detected
         )
 
         # Identify referrer from database (simulated)
         identified_referrer = self._identify_referrer_from_database(referrer_info)
 
         # Calculate rewards
-        rewards = self._calculate_referral_rewards(
-            customer_metadata,
-            identified_referrer
-        )
+        rewards = self._calculate_referral_rewards(customer_metadata, identified_referrer)
 
         # Generate thank-you messages
         thank_you_messages = await self._generate_thank_you_messages(
-            referrer_info,
-            identified_referrer,
-            rewards,
-            customer_metadata
+            referrer_info, identified_referrer, rewards, customer_metadata
         )
 
         # Create referral tracking record
         referral_record = self._create_referral_record(
-            customer_metadata,
-            identified_referrer,
-            rewards,
-            state
+            customer_metadata, identified_referrer, rewards, state
         )
 
         # Update state
@@ -176,16 +164,12 @@ class ReferralDetector(BaseAgent):
             "referral_detected_and_processed",
             referrer_found=identified_referrer["found"],
             referrer_credit=rewards.get("referrer_credit", 0),
-            referee_discount=rewards.get("referee_discount", 0)
+            referee_discount=rewards.get("referee_discount", 0),
         )
 
         return state
 
-    def _detect_referral_signals(
-        self,
-        message: str,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+    def _detect_referral_signals(self, message: str, customer_metadata: dict) -> dict[str, Any]:
         """
         Detect if this is a referral lead.
 
@@ -197,52 +181,28 @@ class ReferralDetector(BaseAgent):
         # Check for referral signals in message
         for signal in self.REFERRAL_SIGNALS:
             if signal in message_lower:
-                return {
-                    "is_referral": True,
-                    "source_type": "message_mention",
-                    "signal": signal
-                }
+                return {"is_referral": True, "source_type": "message_mention", "signal": signal}
 
         # Check for referral source in metadata
         lead_source = customer_metadata.get("lead_source", "").lower()
         if "referral" in lead_source:
-            return {
-                "is_referral": True,
-                "source_type": "metadata_source",
-                "signal": lead_source
-            }
+            return {"is_referral": True, "source_type": "metadata_source", "signal": lead_source}
 
         # Check for referral code
         referral_code = customer_metadata.get("referral_code")
         if referral_code:
-            return {
-                "is_referral": True,
-                "source_type": "referral_code",
-                "signal": referral_code
-            }
+            return {"is_referral": True, "source_type": "referral_code", "signal": referral_code}
 
         # Check UTM parameters
         utm_source = customer_metadata.get("utm_source", "").lower()
         if "referral" in utm_source or "refer" in utm_source:
-            return {
-                "is_referral": True,
-                "source_type": "utm_parameter",
-                "signal": utm_source
-            }
+            return {"is_referral": True, "source_type": "utm_parameter", "signal": utm_source}
 
-        return {
-            "is_referral": False,
-            "source_type": None,
-            "signal": None
-        }
+        return {"is_referral": False, "source_type": None, "signal": None}
 
     def _extract_referrer_info(
-        self,
-        message: str,
-        customer_metadata: Dict,
-        entities: Dict,
-        referral_detected: Dict
-    ) -> Dict[str, Any]:
+        self, message: str, customer_metadata: dict, entities: dict, referral_detected: dict
+    ) -> dict[str, Any]:
         """Extract information about who referred this lead"""
 
         referrer_info = {
@@ -250,7 +210,7 @@ class ReferralDetector(BaseAgent):
             "referrer_email": None,
             "referrer_company": None,
             "referral_code": customer_metadata.get("referral_code"),
-            "detection_source": referral_detected["source_type"]
+            "detection_source": referral_detected["source_type"],
         }
 
         # Try to extract from message
@@ -283,7 +243,7 @@ class ReferralDetector(BaseAgent):
 
         return referrer_info
 
-    def _identify_referrer_from_database(self, referrer_info: Dict) -> Dict[str, Any]:
+    def _identify_referrer_from_database(self, referrer_info: dict) -> dict[str, Any]:
         """
         Identify referrer from customer database (simulated).
 
@@ -303,7 +263,7 @@ class ReferralDetector(BaseAgent):
                 "email": referrer_info["referrer_email"],
                 "name": referrer_info.get("referrer_name", "Unknown"),
                 "is_active_customer": True,
-                "account_status": "active"
+                "account_status": "active",
             }
         # If we have referral code, try to match
         elif referrer_info.get("referral_code"):
@@ -314,27 +274,21 @@ class ReferralDetector(BaseAgent):
                 "referral_code": referrer_info["referral_code"],
                 "name": referrer_info.get("referrer_name", "Unknown Referrer"),
                 "is_active_customer": True,
-                "account_status": "active"
+                "account_status": "active",
             }
         # If we only have name, mark as unverified
         elif referrer_info.get("referrer_name"):
             found = False  # Can't verify without email/code
             referrer_details = {
                 "name": referrer_info["referrer_name"],
-                "verification_status": "unverified"
+                "verification_status": "unverified",
             }
 
-        return {
-            "found": found,
-            "referrer_id": referrer_id,
-            "details": referrer_details
-        }
+        return {"found": found, "referrer_id": referrer_id, "details": referrer_details}
 
     def _calculate_referral_rewards(
-        self,
-        customer_metadata: Dict,
-        identified_referrer: Dict
-    ) -> Dict[str, Any]:
+        self, customer_metadata: dict, identified_referrer: dict
+    ) -> dict[str, Any]:
         """Calculate referral rewards for both referrer and referee"""
 
         company_size = customer_metadata.get("company_size", 0)
@@ -355,7 +309,7 @@ class ReferralDetector(BaseAgent):
             "referee_discount": tier_config["referee_discount"],
             "currency": "USD",
             "status": "pending",  # Pending until deal closes
-            "closed_deal_bonus": tier_config["referrer_credit"] * self.CLOSED_DEAL_BONUS_MULTIPLIER
+            "closed_deal_bonus": tier_config["referrer_credit"] * self.CLOSED_DEAL_BONUS_MULTIPLIER,
         }
 
         # If referrer not found, mark as unverified
@@ -366,12 +320,8 @@ class ReferralDetector(BaseAgent):
         return rewards
 
     async def _generate_thank_you_messages(
-        self,
-        referrer_info: Dict,
-        identified_referrer: Dict,
-        rewards: Dict,
-        customer_metadata: Dict
-    ) -> Dict[str, str]:
+        self, referrer_info: dict, identified_referrer: dict, rewards: dict, customer_metadata: dict
+    ) -> dict[str, str]:
         """Generate personalized thank-you messages for referrer and referee"""
 
         messages = {}
@@ -388,14 +338,14 @@ Be warm, appreciative, and professional. Keep it brief (2-3 sentences)."""
 
 Referrer: {referrer_name}
 Referred: {referee_company}
-Reward: ${rewards['referrer_credit']} account credit (pending deal closure)
+Reward: ${rewards["referrer_credit"]} account credit (pending deal closure)
 
 Express gratitude and mention the reward."""
 
             messages["referrer_message"] = await self.call_llm(
                 system_prompt=system_prompt_referrer,
                 user_message=user_prompt_referrer,
-                conversation_history=[]  # Thank-you messages are standalone
+                conversation_history=[],  # Thank-you messages are standalone
             )
 
         # Generate referee welcome message
@@ -409,25 +359,21 @@ Be welcoming and mention the referral discount. Keep it brief (2-3 sentences).""
 
 New Lead: {referee_name}
 Referred By: {referrer_name}
-Discount: ${rewards['referee_discount']} on first purchase
+Discount: ${rewards["referee_discount"]} on first purchase
 
 Welcome them and mention the discount."""
 
         messages["referee_message"] = await self.call_llm(
             system_prompt=system_prompt_referee,
             user_message=user_prompt_referee,
-            conversation_history=[]  # Welcome messages are standalone
+            conversation_history=[],  # Welcome messages are standalone
         )
 
         return messages
 
     def _create_referral_record(
-        self,
-        customer_metadata: Dict,
-        identified_referrer: Dict,
-        rewards: Dict,
-        state: AgentState
-    ) -> Dict[str, Any]:
+        self, customer_metadata: dict, identified_referrer: dict, rewards: dict, state: AgentState
+    ) -> dict[str, Any]:
         """Create referral tracking record"""
 
         referral_id = f"REF-{datetime.now().strftime('%Y%m%d%H%M%S')}-{customer_metadata.get('email', 'unknown').split('@')[0]}"
@@ -444,7 +390,7 @@ Welcome them and mention the discount."""
             "referee_discount": rewards["referee_discount"],
             "status": "pending",
             "created_at": datetime.now().isoformat(),
-            "tracking_source": state.get("referral_source")
+            "tracking_source": state.get("referral_source"),
         }
 
         return record
@@ -470,26 +416,28 @@ if __name__ == "__main__":
                     "name": "Jane Doe",
                     "email": "jane@techstartup.com",
                     "company_size": 150,
-                    "lead_source": "referral"
+                    "lead_source": "referral",
                 },
-                "entities": {
-                    "referrer_name": "John Smith"
-                }
-            }
+                "entities": {"referrer_name": "John Smith"},
+            },
         )
 
         agent = ReferralDetector()
         result1 = await agent.process(state1)
 
-        print(f"\nTest 1 - Explicit Referral Mention")
+        print("\nTest 1 - Explicit Referral Mention")
         print(f"Is Referral: {result1['is_referral']}")
-        if result1['is_referral']:
+        if result1["is_referral"]:
             print(f"Referral Source: {result1['referral_source']}")
             print(f"Referrer Found: {result1['identified_referrer']['found']}")
-            print(f"Rewards: ${result1['referral_rewards']['referrer_credit']} credit, ${result1['referral_rewards']['referee_discount']} discount")
+            print(
+                f"Rewards: ${result1['referral_rewards']['referrer_credit']} credit, ${result1['referral_rewards']['referee_discount']} discount"
+            )
             print(f"\nReferee Welcome Message:\n{result1['thank_you_messages']['referee_message']}")
-            if "referrer_message" in result1['thank_you_messages']:
-                print(f"\nReferrer Thank You:\n{result1['thank_you_messages']['referrer_message']}\n")
+            if "referrer_message" in result1["thank_you_messages"]:
+                print(
+                    f"\nReferrer Thank You:\n{result1['thank_you_messages']['referrer_message']}\n"
+                )
 
         # Test case 2: Referral code
         state2 = create_initial_state(
@@ -499,18 +447,20 @@ if __name__ == "__main__":
                     "company": "Enterprise Corp",
                     "email": "contact@enterprise.com",
                     "company_size": 2000,
-                    "referral_code": "SARAH2024"
+                    "referral_code": "SARAH2024",
                 }
-            }
+            },
         )
 
         result2 = await agent.process(state2)
 
-        print(f"\nTest 2 - Referral Code")
+        print("\nTest 2 - Referral Code")
         print(f"Is Referral: {result2['is_referral']}")
-        if result2['is_referral']:
+        if result2["is_referral"]:
             print(f"Referral Source: {result2['referral_source']}")
             print(f"Reward Tier: {result2['referral_rewards']['tier_name']}")
-            print(f"Rewards: ${result2['referral_rewards']['referrer_credit']} credit, ${result2['referral_rewards']['referee_discount']} discount")
+            print(
+                f"Rewards: ${result2['referral_rewards']['referrer_credit']} credit, ${result2['referral_rewards']['referee_discount']} discount"
+            )
 
     asyncio.run(test())
