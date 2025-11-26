@@ -1,0 +1,1605 @@
+{
+  "table": "customers",
+  "records": [
+    {
+      "id": "67e5fd00-fb89-43f6-a82c-33bfb70153c2",
+      "email": "lisa.hall@gmail.com",
+      "name": "Lisa Hall",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "PulseDigital Inc",
+        "company_size": "51-200",
+        "industry": "legal",
+        "title": "VP Engineering",
+        "timezone": "Europe/Berlin",
+        "signup_source": "referral",
+        "phone": "+1-213-606-4475"
+      },
+      "created_at": "2025-10-14T01:47:18.152224"
+    },
+    {
+      "id": "d358256f-72f5-4b5a-974b-4601b31821d2",
+      "email": "matthew.hall@outlook.com",
+      "name": "Matthew Hall",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "VelocityX Labs",
+        "company_size": "201-500",
+        "industry": "nonprofit",
+        "title": "VP Engineering",
+        "timezone": "Asia/Tokyo",
+        "signup_source": "referral",
+        "phone": "+1-697-300-5206"
+      },
+      "created_at": "2025-05-25T12:06:19.152224"
+    },
+    {
+      "id": "73a20df0-8247-439e-b5db-8a65b7a3db79",
+      "email": "betty.lee@work.email",
+      "name": "Betty Lee",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "PrimeLogic Systems",
+        "company_size": "500+",
+        "industry": "marketing",
+        "title": "CEO",
+        "timezone": "America/Denver",
+        "signup_source": "referral",
+        "phone": "+1-817-399-2591"
+      },
+      "created_at": "2025-05-27T14:15:09.152224"
+    },
+    {
+      "id": "b5bbb724-2ac7-41bb-861f-3d085cbd59ca",
+      "email": "john.lopez@outlook.com",
+      "name": "John Lopez",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "NexGen Digital",
+        "company_size": "201-500",
+        "industry": "nonprofit",
+        "title": "VP Engineering",
+        "timezone": "Asia/Tokyo",
+        "signup_source": "google",
+        "phone": "+1-568-360-8082"
+      },
+      "created_at": "2025-07-18T11:54:39.152224"
+    },
+    {
+      "id": "f88e07df-7fe2-45cf-983c-282547e7d2de",
+      "email": "richard.johnson@work.email",
+      "name": "Richard Johnson",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "PulseDigital Inc",
+        "company_size": "201-500",
+        "industry": "technology",
+        "title": "Analyst",
+        "timezone": "Europe/Paris",
+        "signup_source": "demo",
+        "phone": "+1-640-240-4526"
+      },
+      "created_at": "2025-04-21T01:02:00.152224"
+    },
+    {
+      "id": "3df21b21-90fa-4bff-8a46-baccf10a64b8",
+      "email": "donald.rodriguez@company.com",
+      "name": "Donald Rodriguez",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "SynergyTech Partners",
+        "company_size": "11-50",
+        "industry": "technology",
+        "title": "Team Lead",
+        "timezone": "America/Los_Angeles",
+        "signup_source": "linkedin",
+        "phone": "+1-268-962-2856"
+      },
+      "created_at": "2025-04-04T03:59:07.152224"
+    },
+    {
+      "id": "3e8f199f-b160-4d81-bf07-7c4899bbfa88",
+      "email": "michael.gonzalez@outlook.com",
+      "name": "Michael Gonzalez",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "BrightScale Consulting",
+        "company_size": "51-200",
+        "industry": "education",
+        "title": "Team Lead",
+        "timezone": "Europe/London",
+        "signup_source": "google",
+        "phone": "+1-858-897-4772"
+      },
+      "created_at": "2024-01-25T05:56:58.152224"
+    },
+    {
+      "id": "a5305c44-b58b-4197-95ea-8456317d3fc4",
+      "email": "donald.johnson@outlook.com",
+      "name": "Donald Johnson",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "ProScale Solutions",
+        "company_size": "500+",
+        "industry": "consulting",
+        "title": "CTO",
+        "timezone": "Asia/Singapore",
+        "signup_source": "linkedin",
+        "phone": "+1-472-241-6597"
+      },
+      "created_at": "2024-07-01T07:11:43.152224"
+    },
+    {
+      "id": "c4794fd0-5ff6-49ef-9f53-8688cc248c94",
+      "email": "linda.williams@company.com",
+      "name": "Linda Williams",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "VelocityX Labs",
+        "company_size": "1-10",
+        "industry": "healthcare",
+        "title": "Project Manager",
+        "timezone": "Australia/Sydney",
+        "signup_source": "google",
+        "phone": "+1-905-293-4359"
+      },
+      "created_at": "2024-07-20T04:45:03.152224"
+    },
+    {
+      "id": "9b770a2f-4d4f-431f-9e59-832afd0ad12a",
+      "email": "sarah.anderson@company.com",
+      "name": "Sarah Anderson",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "DataStream Analytics",
+        "company_size": "11-50",
+        "industry": "consulting",
+        "title": "Analyst",
+        "timezone": "Asia/Singapore",
+        "signup_source": "trial",
+        "phone": "+1-674-505-8718"
+      },
+      "created_at": "2024-11-08T13:59:04.152224"
+    },
+    {
+      "id": "09bd8c5b-8bfd-466e-b605-e218718c67d1",
+      "email": "barbara.rodriguez@outlook.com",
+      "name": "Barbara Rodriguez",
+      "plan": "premium",
+      "extra_metadata": {
+        "company": "VelocityX Labs",
+        "company_size": "11-50",
+        "industry": "healthcare",
+        "title": "VP Engineering",
+        "timezone": "Australia/Sydney",
+        "signup_source": "organic",
+        "phone": "+1-900-718-2063"
+      },
+      "created_at": "2024-04-20T04:13:36.152224"
+    },
+    {
+      "id": "c4d3518d-55cb-4a80-9bb6-ae7bf8a3dee2",
+      "email": "christopher.walker@work.email",
+      "name": "Christopher Walker",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "BrightScale Consulting",
+        "company_size": "201-500",
+        "industry": "technology",
+        "title": "Analyst",
+        "timezone": "America/Chicago",
+        "signup_source": "organic",
+        "phone": "+1-731-228-1808"
+      },
+      "created_at": "2024-10-29T09:49:01.152224"
+    },
+    {
+      "id": "bb87c043-37ce-4d49-9de3-5bb1f833e625",
+      "email": "jennifer.jones@gmail.com",
+      "name": "Jennifer Jones",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "SecureNet Systems",
+        "company_size": "11-50",
+        "industry": "manufacturing",
+        "title": "CEO",
+        "timezone": "Asia/Tokyo",
+        "signup_source": "demo",
+        "phone": "+1-596-510-4952"
+      },
+      "created_at": "2025-09-16T17:46:01.152224"
+    },
+    {
+      "id": "d420aaed-5489-4e40-838c-318551a672b4",
+      "email": "lisa.gonzalez@gmail.com",
+      "name": "Lisa Gonzalez",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "SynergyTech Partners",
+        "company_size": "201-500",
+        "industry": "nonprofit",
+        "title": "CTO",
+        "timezone": "America/Chicago",
+        "signup_source": "organic",
+        "phone": "+1-955-680-5967"
+      },
+      "created_at": "2024-05-21T05:41:57.152224"
+    },
+    {
+      "id": "0535bf5f-3916-4c7b-b162-f07d37ef1537",
+      "email": "linda.moore@outlook.com",
+      "name": "Linda Moore",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "TechVision Corp",
+        "company_size": "51-200",
+        "industry": "legal",
+        "title": "VP Engineering",
+        "timezone": "America/Denver",
+        "signup_source": "referral",
+        "phone": "+1-384-770-5243"
+      },
+      "created_at": "2025-03-06T03:13:57.152224"
+    },
+    {
+      "id": "ce9779e1-b478-4069-ab51-05488ba8f36a",
+      "email": "anthony.lee@gmail.com",
+      "name": "Anthony Lee",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "ApexInnovate",
+        "company_size": "201-500",
+        "industry": "healthcare",
+        "title": "Team Lead",
+        "timezone": "America/Toronto",
+        "signup_source": "linkedin",
+        "phone": "+1-900-789-9545"
+      },
+      "created_at": "2025-09-30T12:54:41.152224"
+    },
+    {
+      "id": "e0c23ac4-d511-4e04-958c-20b314cc735f",
+      "email": "jessica.lee@outlook.com",
+      "name": "Jessica Lee",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "BrightScale Consulting",
+        "company_size": "500+",
+        "industry": "retail",
+        "title": "VP Engineering",
+        "timezone": "America/Los_Angeles",
+        "signup_source": "referral",
+        "phone": "+1-446-246-8440"
+      },
+      "created_at": "2023-11-27T22:10:24.152224"
+    },
+    {
+      "id": "ae099772-b892-4c02-ba89-de98142926d9",
+      "email": "david.smith@outlook.com",
+      "name": "David Smith",
+      "plan": "premium",
+      "extra_metadata": {
+        "company": "QuantumLeap Inc",
+        "company_size": "201-500",
+        "industry": "retail",
+        "title": "CEO",
+        "timezone": "America/Toronto",
+        "signup_source": "linkedin",
+        "phone": "+1-441-526-4792"
+      },
+      "created_at": "2024-04-21T12:42:26.152224"
+    },
+    {
+      "id": "b0aeb1b5-4920-4037-8c3d-7801a9267ee5",
+      "email": "jessica.smith@outlook.com",
+      "name": "Jessica Smith",
+      "plan": "premium",
+      "extra_metadata": {
+        "company": "PrimeLogic Systems",
+        "company_size": "500+",
+        "industry": "manufacturing",
+        "title": "CTO",
+        "timezone": "America/Chicago",
+        "signup_source": "organic",
+        "phone": "+1-673-332-1847"
+      },
+      "created_at": "2025-03-13T20:53:33.152224"
+    },
+    {
+      "id": "3237fbb1-2257-416b-8f49-ac8144ff51a1",
+      "email": "daniel.thomas@company.com",
+      "name": "Daniel Thomas",
+      "plan": "premium",
+      "extra_metadata": {
+        "company": "NexGen Digital",
+        "company_size": "1-10",
+        "industry": "manufacturing",
+        "title": "VP Engineering",
+        "timezone": "America/Los_Angeles",
+        "signup_source": "trial",
+        "phone": "+1-629-926-1923"
+      },
+      "created_at": "2025-08-08T17:17:48.152224"
+    },
+    {
+      "id": "ac4813ac-0510-40e5-b145-8a808bcd6ffd",
+      "email": "john.lee@company.com",
+      "name": "John Lee",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "ZenithTech Group",
+        "company_size": "201-500",
+        "industry": "marketing",
+        "title": "VP Engineering",
+        "timezone": "America/New_York",
+        "signup_source": "referral",
+        "phone": "+1-958-462-7397"
+      },
+      "created_at": "2025-10-24T20:40:21.152224"
+    },
+    {
+      "id": "2eaa5ce6-1fdc-4f0f-a2c0-1d772e20ef09",
+      "email": "daniel.lopez@company.com",
+      "name": "Daniel Lopez",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "PrimeLogic Systems",
+        "company_size": "1-10",
+        "industry": "nonprofit",
+        "title": "Team Lead",
+        "timezone": "Europe/London",
+        "signup_source": "referral",
+        "phone": "+1-323-280-8082"
+      },
+      "created_at": "2025-07-24T16:34:32.152224"
+    },
+    {
+      "id": "87ac66df-1bc5-4747-b0d7-f0139d225c52",
+      "email": "christopher.rodriguez@gmail.com",
+      "name": "Christopher Rodriguez",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "ProScale Solutions",
+        "company_size": "51-200",
+        "industry": "marketing",
+        "title": "Project Manager",
+        "timezone": "America/Mexico_City",
+        "signup_source": "google",
+        "phone": "+1-863-594-7340"
+      },
+      "created_at": "2024-06-20T12:19:38.152224"
+    },
+    {
+      "id": "8c6ae507-65a0-4c2f-a9ce-32ab780bc766",
+      "email": "margaret.thomas@company.com",
+      "name": "Margaret Thomas",
+      "plan": "premium",
+      "extra_metadata": {
+        "company": "EchoSmart Technologies",
+        "company_size": "51-200",
+        "industry": "healthcare",
+        "title": "CEO",
+        "timezone": "Europe/Paris",
+        "signup_source": "organic",
+        "phone": "+1-283-821-2119"
+      },
+      "created_at": "2025-04-30T07:33:57.152224"
+    },
+    {
+      "id": "8360e714-2a76-4d9b-9407-b6122581ae14",
+      "email": "margaret.jackson@gmail.com",
+      "name": "Margaret Jackson",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "NexGen Digital",
+        "company_size": "500+",
+        "industry": "finance",
+        "title": "CTO",
+        "timezone": "Europe/London",
+        "signup_source": "linkedin",
+        "phone": "+1-754-391-3796"
+      },
+      "created_at": "2024-08-13T08:13:30.152224"
+    },
+    {
+      "id": "0e39bd43-2744-4950-957c-b5291bd660e1",
+      "email": "daniel.taylor@company.com",
+      "name": "Daniel Taylor",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "CloudNext Solutions",
+        "company_size": "11-50",
+        "industry": "technology",
+        "title": "CEO",
+        "timezone": "America/New_York",
+        "signup_source": "referral",
+        "phone": "+1-279-824-3756"
+      },
+      "created_at": "2024-12-28T18:58:07.152224"
+    },
+    {
+      "id": "67afb706-102f-45fb-a3c9-92adede16938",
+      "email": "william.moore@outlook.com",
+      "name": "William Moore",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "StrategyCore LLC",
+        "company_size": "500+",
+        "industry": "marketing",
+        "title": "Project Manager",
+        "timezone": "America/Toronto",
+        "signup_source": "google",
+        "phone": "+1-855-867-6789"
+      },
+      "created_at": "2025-09-25T11:38:58.152224"
+    },
+    {
+      "id": "09b82df8-c7cf-4bdb-84c6-c42436f5c622",
+      "email": "mark.miller@outlook.com",
+      "name": "Mark Miller",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "PrimeLogic Systems",
+        "company_size": "201-500",
+        "industry": "marketing",
+        "title": "Team Lead",
+        "timezone": "Asia/Singapore",
+        "signup_source": "demo",
+        "phone": "+1-487-228-5878"
+      },
+      "created_at": "2024-09-11T02:10:04.152224"
+    },
+    {
+      "id": "b693f076-984d-42c8-8e97-196d9c4c58a4",
+      "email": "karen.thomas@work.email",
+      "name": "Karen Thomas",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "FusionWorks Inc",
+        "company_size": "500+",
+        "industry": "education",
+        "title": "CTO",
+        "timezone": "Europe/London",
+        "signup_source": "organic",
+        "phone": "+1-593-743-7032"
+      },
+      "created_at": "2025-11-19T18:55:55.152224"
+    },
+    {
+      "id": "13d41301-e15b-493f-8ca8-caf46024772e",
+      "email": "barbara.thomas@outlook.com",
+      "name": "Barbara Thomas",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "FusionWorks Inc",
+        "company_size": "1-10",
+        "industry": "healthcare",
+        "title": "CEO",
+        "timezone": "America/Chicago",
+        "signup_source": "trial",
+        "phone": "+1-892-650-5409"
+      },
+      "created_at": "2025-09-28T19:58:45.152224"
+    },
+    {
+      "id": "a21edf0d-18b4-4fb7-86cd-1fee831f4a36",
+      "email": "susan.gonzalez@work.email",
+      "name": "Susan Gonzalez",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "ApexInnovate",
+        "company_size": "51-200",
+        "industry": "legal",
+        "title": "Analyst",
+        "timezone": "America/Chicago",
+        "signup_source": "organic",
+        "phone": "+1-379-309-6165"
+      },
+      "created_at": "2024-10-29T20:02:14.152224"
+    },
+    {
+      "id": "11a22548-f803-49f2-896a-fb32ae9af696",
+      "email": "donald.lopez@work.email",
+      "name": "Donald Lopez",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "VertexTech Group",
+        "company_size": "201-500",
+        "industry": "healthcare",
+        "title": "Analyst",
+        "timezone": "America/Chicago",
+        "signup_source": "trial",
+        "phone": "+1-347-930-6176"
+      },
+      "created_at": "2025-02-19T12:50:16.152224"
+    },
+    {
+      "id": "c9da4811-2f12-45b2-8b81-1df86ec12743",
+      "email": "patricia.jones@company.com",
+      "name": "Patricia Jones",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "BrightScale Consulting",
+        "company_size": "500+",
+        "industry": "finance",
+        "title": "CEO",
+        "timezone": "Europe/London",
+        "signup_source": "linkedin",
+        "phone": "+1-541-304-3376"
+      },
+      "created_at": "2024-02-23T08:28:03.152224"
+    },
+    {
+      "id": "0c4f9845-20cf-44a7-92b1-c72428709668",
+      "email": "charles.williams@company.com",
+      "name": "Charles Williams",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "ProScale Solutions",
+        "company_size": "11-50",
+        "industry": "retail",
+        "title": "Project Manager",
+        "timezone": "America/Chicago",
+        "signup_source": "trial",
+        "phone": "+1-855-681-1025"
+      },
+      "created_at": "2025-01-24T02:26:48.152224"
+    },
+    {
+      "id": "a73542a9-d3d8-4132-a178-de32f93b3d7f",
+      "email": "donald.gonzalez@company.com",
+      "name": "Donald Gonzalez",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "EchoSmart Technologies",
+        "company_size": "51-200",
+        "industry": "technology",
+        "title": "Project Manager",
+        "timezone": "America/Los_Angeles",
+        "signup_source": "trial",
+        "phone": "+1-792-354-6488"
+      },
+      "created_at": "2024-10-19T06:40:19.152224"
+    },
+    {
+      "id": "3abcbef6-90d3-408d-af26-25325ec21f75",
+      "email": "charles.smith@work.email",
+      "name": "Charles Smith",
+      "plan": "premium",
+      "extra_metadata": {
+        "company": "BrightScale Consulting",
+        "company_size": "500+",
+        "industry": "manufacturing",
+        "title": "CTO",
+        "timezone": "America/Mexico_City",
+        "signup_source": "referral",
+        "phone": "+1-893-763-4900"
+      },
+      "created_at": "2025-07-19T02:41:35.152224"
+    },
+    {
+      "id": "4e90a8f3-e5fc-4336-b4c6-14af448a7d74",
+      "email": "betty.garcia@gmail.com",
+      "name": "Betty Garcia",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "HorizonFlow Solutions",
+        "company_size": "51-200",
+        "industry": "education",
+        "title": "CEO",
+        "timezone": "Australia/Sydney",
+        "signup_source": "linkedin",
+        "phone": "+1-591-606-2723"
+      },
+      "created_at": "2025-02-17T16:31:05.152224"
+    },
+    {
+      "id": "bccfaf0f-358f-4213-9216-8d6ddd044919",
+      "email": "joseph.gonzalez@gmail.com",
+      "name": "Joseph Gonzalez",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "VertexTech Group",
+        "company_size": "500+",
+        "industry": "technology",
+        "title": "Analyst",
+        "timezone": "Europe/Paris",
+        "signup_source": "demo",
+        "phone": "+1-823-662-1920"
+      },
+      "created_at": "2024-02-06T00:29:41.152224"
+    },
+    {
+      "id": "639bec07-f17f-49f9-b021-49b0204d9080",
+      "email": "james.hall@company.com",
+      "name": "James Hall",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "SynergyTech Partners",
+        "company_size": "500+",
+        "industry": "consulting",
+        "title": "CEO",
+        "timezone": "Asia/Tokyo",
+        "signup_source": "demo",
+        "phone": "+1-554-888-1309"
+      },
+      "created_at": "2025-01-16T10:05:08.152224"
+    },
+    {
+      "id": "1c2057a0-98bb-40c7-aafd-03befcfa26ed",
+      "email": "richard.martinez@outlook.com",
+      "name": "Richard Martinez",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "CloudNext Solutions",
+        "company_size": "51-200",
+        "industry": "nonprofit",
+        "title": "VP Engineering",
+        "timezone": "America/New_York",
+        "signup_source": "demo",
+        "phone": "+1-529-751-8172"
+      },
+      "created_at": "2024-01-11T02:39:44.152224"
+    },
+    {
+      "id": "294da176-7d62-43bd-9098-9d42d8f99fef",
+      "email": "david.garcia@work.email",
+      "name": "David Garcia",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "VertexTech Group",
+        "company_size": "51-200",
+        "industry": "education",
+        "title": "CTO",
+        "timezone": "Asia/Singapore",
+        "signup_source": "demo",
+        "phone": "+1-960-993-6064"
+      },
+      "created_at": "2024-01-01T16:53:03.152224"
+    },
+    {
+      "id": "b9cc2ebf-8ba0-4ca1-be55-5e6ac2c702da",
+      "email": "thomas.williams@company.com",
+      "name": "Thomas Williams",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "QuantumLeap Inc",
+        "company_size": "51-200",
+        "industry": "finance",
+        "title": "Team Lead",
+        "timezone": "America/Los_Angeles",
+        "signup_source": "linkedin",
+        "phone": "+1-305-368-6497"
+      },
+      "created_at": "2024-04-16T15:10:15.152224"
+    },
+    {
+      "id": "0a30546e-2ca7-4a36-a849-adf3924c4bce",
+      "email": "anthony.anderson@outlook.com",
+      "name": "Anthony Anderson",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "CloudNext Solutions",
+        "company_size": "51-200",
+        "industry": "education",
+        "title": "VP Engineering",
+        "timezone": "Europe/Paris",
+        "signup_source": "demo",
+        "phone": "+1-503-934-2093"
+      },
+      "created_at": "2024-04-02T00:03:56.152224"
+    },
+    {
+      "id": "8590b4f0-c079-43b2-bd57-5c9c09e74da2",
+      "email": "david.brown@work.email",
+      "name": "David Brown",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "VelocityX Labs",
+        "company_size": "201-500",
+        "industry": "education",
+        "title": "Team Lead",
+        "timezone": "America/Los_Angeles",
+        "signup_source": "organic",
+        "phone": "+1-558-472-2346"
+      },
+      "created_at": "2024-03-30T13:51:26.152224"
+    },
+    {
+      "id": "3882003f-c6f1-4419-a72d-52777cebfbbc",
+      "email": "sarah.martin@gmail.com",
+      "name": "Sarah Martin",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "VertexTech Group",
+        "company_size": "1-10",
+        "industry": "technology",
+        "title": "VP Engineering",
+        "timezone": "Europe/Berlin",
+        "signup_source": "organic",
+        "phone": "+1-558-247-7610"
+      },
+      "created_at": "2025-11-06T10:06:52.152224"
+    },
+    {
+      "id": "91accb29-796e-4281-a67b-d7f7c5c34ecf",
+      "email": "daniel.johnson@gmail.com",
+      "name": "Daniel Johnson",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "VelocityX Labs",
+        "company_size": "500+",
+        "industry": "nonprofit",
+        "title": "Team Lead",
+        "timezone": "America/Chicago",
+        "signup_source": "demo",
+        "phone": "+1-893-218-7042"
+      },
+      "created_at": "2025-01-05T08:22:02.152224"
+    },
+    {
+      "id": "e9399822-e4f9-432b-8fe8-c2f4e6a25259",
+      "email": "patricia.taylor@outlook.com",
+      "name": "Patricia Taylor",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "ApexInnovate",
+        "company_size": "500+",
+        "industry": "consulting",
+        "title": "Team Lead",
+        "timezone": "Europe/Paris",
+        "signup_source": "organic",
+        "phone": "+1-575-491-1586"
+      },
+      "created_at": "2024-08-18T13:44:12.152224"
+    },
+    {
+      "id": "18d48263-db8e-4385-8ea5-cd1e24fcf5d5",
+      "email": "robert.lopez@company.com",
+      "name": "Robert Lopez",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "TechVision Corp",
+        "company_size": "201-500",
+        "industry": "marketing",
+        "title": "Analyst",
+        "timezone": "Europe/Paris",
+        "signup_source": "trial",
+        "phone": "+1-567-456-8938"
+      },
+      "created_at": "2023-11-28T18:14:48.152224"
+    },
+    {
+      "id": "170e76a7-8375-48e0-add5-8716af67546b",
+      "email": "thomas.moore@company.com",
+      "name": "Thomas Moore",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "ApexInnovate",
+        "company_size": "500+",
+        "industry": "healthcare",
+        "title": "Team Lead",
+        "timezone": "America/New_York",
+        "signup_source": "linkedin",
+        "phone": "+1-296-874-2832"
+      },
+      "created_at": "2024-09-22T15:42:05.152224"
+    },
+    {
+      "id": "5e58f821-89f0-4cad-aa58-62a7549750c1",
+      "email": "thomas.lee@work.email",
+      "name": "Thomas Lee",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "VertexTech Group",
+        "company_size": "11-50",
+        "industry": "healthcare",
+        "title": "Analyst",
+        "timezone": "America/Toronto",
+        "signup_source": "organic",
+        "phone": "+1-734-446-5138"
+      },
+      "created_at": "2024-07-22T08:48:51.152224"
+    },
+    {
+      "id": "2091e266-a9d7-46a8-a8dd-d52355f48e3b",
+      "email": "emily.davis@outlook.com",
+      "name": "Emily Davis",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "HorizonFlow Solutions",
+        "company_size": "1-10",
+        "industry": "nonprofit",
+        "title": "VP Engineering",
+        "timezone": "America/Denver",
+        "signup_source": "google",
+        "phone": "+1-481-552-2352"
+      },
+      "created_at": "2024-07-04T18:37:43.152224"
+    },
+    {
+      "id": "6af9985c-4bfb-4155-bc74-97bcf04300a9",
+      "email": "emily.wilson@outlook.com",
+      "name": "Emily Wilson",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "PulseDigital Inc",
+        "company_size": "1-10",
+        "industry": "manufacturing",
+        "title": "Team Lead",
+        "timezone": "America/New_York",
+        "signup_source": "google",
+        "phone": "+1-651-678-7990"
+      },
+      "created_at": "2024-04-24T13:14:52.152224"
+    },
+    {
+      "id": "0d463c85-57cb-4053-91d3-31b54f4297fd",
+      "email": "lisa.hall@gmail.com",
+      "name": "Lisa Hall",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "DataStream Analytics",
+        "company_size": "11-50",
+        "industry": "education",
+        "title": "Team Lead",
+        "timezone": "America/Chicago",
+        "signup_source": "trial",
+        "phone": "+1-892-538-3661"
+      },
+      "created_at": "2025-09-24T09:03:25.152224"
+    },
+    {
+      "id": "63f2a4f8-b6a1-4ddf-9758-17104261c9f4",
+      "email": "michael.taylor@gmail.com",
+      "name": "Michael Taylor",
+      "plan": "enterprise",
+      "extra_metadata": {
+        "company": "SecureNet Systems",
+        "company_size": "11-50",
+        "industry": "technology",
+        "title": "Analyst",
+        "timezone": "America/Mexico_City",
+        "signup_source": "trial",
+        "phone": "+1-412-462-1973"
+      },
+      "created_at": "2024-07-09T13:55:51.152224"
+    },
+    {
+      "id": "82afae5d-65df-4f24-a846-00fb1ca5a22e",
+      "email": "donald.anderson@company.com",
+      "name": "Donald Anderson",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "VelocityX Labs",
+        "company_size": "201-500",
+        "industry": "consulting",
+        "title": "Project Manager",
+        "timezone": "America/Denver",
+        "signup_source": "trial",
+        "phone": "+1-945-757-2784"
+      },
+      "created_at": "2025-09-17T06:42:30.152224"
+    },
+    {
+      "id": "8c6e959d-a827-4bcb-bec5-530a3fe54889",
+      "email": "christopher.brown@work.email",
+      "name": "Christopher Brown",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "SecureNet Systems",
+        "company_size": "201-500",
+        "industry": "nonprofit",
+        "title": "Project Manager",
+        "timezone": "Europe/Paris",
+        "signup_source": "organic",
+        "phone": "+1-488-361-8669"
+      },
+      "created_at": "2025-01-31T19:55:51.152224"
+    },
+    {
+      "id": "1d3ed106-ff41-4c25-be06-7545e9d4cadc",
+      "email": "nancy.lee@work.email",
+      "name": "Nancy Lee",
+      "plan": "premium",
+      "extra_metadata": {
+        "company": "SecureNet Systems",
+        "company_size": "51-200",
+        "industry": "education",
+        "title": "CTO",
+        "timezone": "Australia/Sydney",
+        "signup_source": "referral",
+        "phone": "+1-383-735-7729"
+      },
+      "created_at": "2024-12-10T02:00:10.152224"
+    },
+    {
+      "id": "32497721-8f53-44fa-9dfb-ffd927800562",
+      "email": "betty.martinez@company.com",
+      "name": "Betty Martinez",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "NexGen Digital",
+        "company_size": "51-200",
+        "industry": "nonprofit",
+        "title": "Analyst",
+        "timezone": "Asia/Singapore",
+        "signup_source": "linkedin",
+        "phone": "+1-555-371-4585"
+      },
+      "created_at": "2024-12-09T05:09:11.152224"
+    },
+    {
+      "id": "83ebeb4e-d87c-4e2e-af4c-9f66978be656",
+      "email": "lisa.miller@gmail.com",
+      "name": "Lisa Miller",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "CloudNext Solutions",
+        "company_size": "500+",
+        "industry": "technology",
+        "title": "Project Manager",
+        "timezone": "America/Toronto",
+        "signup_source": "demo",
+        "phone": "+1-684-409-2986"
+      },
+      "created_at": "2025-06-21T14:44:26.152224"
+    },
+    {
+      "id": "137e51a3-cc91-42a0-a6b5-a07ecd725b35",
+      "email": "anthony.taylor@gmail.com",
+      "name": "Anthony Taylor",
+      "plan": "enterprise",
+      "extra_metadata": {
+        "company": "PulseDigital Inc",
+        "company_size": "201-500",
+        "industry": "technology",
+        "title": "Project Manager",
+        "timezone": "Europe/London",
+        "signup_source": "organic",
+        "phone": "+1-499-482-1893"
+      },
+      "created_at": "2024-01-27T14:44:34.152224"
+    },
+    {
+      "id": "e4a35d4c-9f1c-401d-b92b-ecfd4a8f4430",
+      "email": "betty.wilson@gmail.com",
+      "name": "Betty Wilson",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "Digital Innovations Inc",
+        "company_size": "51-200",
+        "industry": "nonprofit",
+        "title": "CEO",
+        "timezone": "America/Toronto",
+        "signup_source": "linkedin",
+        "phone": "+1-587-525-1236"
+      },
+      "created_at": "2024-08-28T01:17:34.152224"
+    },
+    {
+      "id": "97d8f4c1-5820-44c1-be09-6188fadc046f",
+      "email": "matthew.smith@gmail.com",
+      "name": "Matthew Smith",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "DataStream Analytics",
+        "company_size": "11-50",
+        "industry": "manufacturing",
+        "title": "CTO",
+        "timezone": "Asia/Tokyo",
+        "signup_source": "trial",
+        "phone": "+1-403-425-8674"
+      },
+      "created_at": "2024-12-02T18:04:11.152224"
+    },
+    {
+      "id": "51a91f42-d532-49b0-a67e-8581bdc0380a",
+      "email": "richard.davis@gmail.com",
+      "name": "Richard Davis",
+      "plan": "premium",
+      "extra_metadata": {
+        "company": "VertexTech Group",
+        "company_size": "1-10",
+        "industry": "technology",
+        "title": "Project Manager",
+        "timezone": "Asia/Tokyo",
+        "signup_source": "google",
+        "phone": "+1-795-785-8252"
+      },
+      "created_at": "2025-10-09T15:54:36.152224"
+    },
+    {
+      "id": "d50bdce7-2e2b-461f-91c1-f3a701d83134",
+      "email": "barbara.gonzalez@company.com",
+      "name": "Barbara Gonzalez",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "PrimeLogic Systems",
+        "company_size": "500+",
+        "industry": "nonprofit",
+        "title": "CEO",
+        "timezone": "America/Denver",
+        "signup_source": "trial",
+        "phone": "+1-360-478-7580"
+      },
+      "created_at": "2025-08-04T14:05:23.152224"
+    },
+    {
+      "id": "69c3376e-1f6c-423c-ac34-3532e2afaae1",
+      "email": "matthew.rodriguez@gmail.com",
+      "name": "Matthew Rodriguez",
+      "plan": "premium",
+      "extra_metadata": {
+        "company": "FusionWorks Inc",
+        "company_size": "201-500",
+        "industry": "education",
+        "title": "Analyst",
+        "timezone": "Europe/Paris",
+        "signup_source": "referral",
+        "phone": "+1-446-891-4177"
+      },
+      "created_at": "2024-09-05T03:50:19.152224"
+    },
+    {
+      "id": "382cb212-0142-4811-975b-82bd28dd04a0",
+      "email": "sarah.hall@outlook.com",
+      "name": "Sarah Hall",
+      "plan": "premium",
+      "extra_metadata": {
+        "company": "HorizonFlow Solutions",
+        "company_size": "1-10",
+        "industry": "retail",
+        "title": "Project Manager",
+        "timezone": "Asia/Singapore",
+        "signup_source": "organic",
+        "phone": "+1-612-577-6128"
+      },
+      "created_at": "2025-05-19T18:13:59.152224"
+    },
+    {
+      "id": "0bd691c3-db86-4108-abba-caaf5beb8a3f",
+      "email": "sarah.miller@outlook.com",
+      "name": "Sarah Miller",
+      "plan": "premium",
+      "extra_metadata": {
+        "company": "BrightScale Consulting",
+        "company_size": "500+",
+        "industry": "finance",
+        "title": "VP Engineering",
+        "timezone": "Asia/Singapore",
+        "signup_source": "demo",
+        "phone": "+1-325-760-3787"
+      },
+      "created_at": "2024-01-12T17:21:34.152224"
+    },
+    {
+      "id": "7883e9aa-844c-42ed-92d0-a731b3e82664",
+      "email": "christopher.johnson@gmail.com",
+      "name": "Christopher Johnson",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "VertexTech Group",
+        "company_size": "500+",
+        "industry": "marketing",
+        "title": "Analyst",
+        "timezone": "Australia/Sydney",
+        "signup_source": "demo",
+        "phone": "+1-811-697-4993"
+      },
+      "created_at": "2024-07-11T15:45:28.152224"
+    },
+    {
+      "id": "b6f3fb07-8d31-44ef-a9cc-bb3e2e2d3126",
+      "email": "sarah.martin@work.email",
+      "name": "Sarah Martin",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "SecureNet Systems",
+        "company_size": "11-50",
+        "industry": "retail",
+        "title": "Team Lead",
+        "timezone": "Asia/Singapore",
+        "signup_source": "demo",
+        "phone": "+1-701-914-3949"
+      },
+      "created_at": "2023-12-04T03:59:03.152224"
+    },
+    {
+      "id": "f7b69109-b8ab-4498-8319-a99bebeed576",
+      "email": "patricia.taylor@outlook.com",
+      "name": "Patricia Taylor",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "ZenithTech Group",
+        "company_size": "11-50",
+        "industry": "marketing",
+        "title": "Team Lead",
+        "timezone": "Australia/Sydney",
+        "signup_source": "referral",
+        "phone": "+1-295-946-2123"
+      },
+      "created_at": "2025-09-18T18:05:09.152224"
+    },
+    {
+      "id": "8926ba8b-39bc-4e43-bc72-3f4544a3b84b",
+      "email": "charles.garcia@company.com",
+      "name": "Charles Garcia",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "Digital Innovations Inc",
+        "company_size": "11-50",
+        "industry": "retail",
+        "title": "CEO",
+        "timezone": "Europe/London",
+        "signup_source": "demo",
+        "phone": "+1-406-756-5567"
+      },
+      "created_at": "2024-03-15T05:37:37.152224"
+    },
+    {
+      "id": "bf053e8a-3c06-4fbf-b2ed-40685138884f",
+      "email": "donald.smith@company.com",
+      "name": "Donald Smith",
+      "plan": "premium",
+      "extra_metadata": {
+        "company": "BrightScale Consulting",
+        "company_size": "1-10",
+        "industry": "manufacturing",
+        "title": "Analyst",
+        "timezone": "Australia/Sydney",
+        "signup_source": "google",
+        "phone": "+1-307-866-1323"
+      },
+      "created_at": "2025-07-13T19:14:50.152224"
+    },
+    {
+      "id": "d7bbbadb-3eb1-48fc-a00e-0e3c6a4038d2",
+      "email": "barbara.gonzalez@company.com",
+      "name": "Barbara Gonzalez",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "ZenithTech Group",
+        "company_size": "500+",
+        "industry": "manufacturing",
+        "title": "Project Manager",
+        "timezone": "Europe/London",
+        "signup_source": "linkedin",
+        "phone": "+1-474-204-7395"
+      },
+      "created_at": "2025-01-07T13:35:06.152224"
+    },
+    {
+      "id": "77f655a4-5bb1-4c20-a1a8-59044ac2f519",
+      "email": "sarah.thomas@work.email",
+      "name": "Sarah Thomas",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "SynergyTech Partners",
+        "company_size": "1-10",
+        "industry": "consulting",
+        "title": "Project Manager",
+        "timezone": "Asia/Singapore",
+        "signup_source": "trial",
+        "phone": "+1-499-964-1740"
+      },
+      "created_at": "2024-05-25T14:34:12.152224"
+    },
+    {
+      "id": "1697dda3-fba7-4ed9-8501-5eb743331656",
+      "email": "james.wilson@company.com",
+      "name": "James Wilson",
+      "plan": "premium",
+      "extra_metadata": {
+        "company": "StrategyCore LLC",
+        "company_size": "1-10",
+        "industry": "finance",
+        "title": "Team Lead",
+        "timezone": "America/Mexico_City",
+        "signup_source": "trial",
+        "phone": "+1-804-310-2589"
+      },
+      "created_at": "2024-09-09T17:01:20.152224"
+    },
+    {
+      "id": "4637b44f-1ae8-4723-bd11-5e892bd2fd82",
+      "email": "patricia.hernandez@gmail.com",
+      "name": "Patricia Hernandez",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "PrimeLogic Systems",
+        "company_size": "1-10",
+        "industry": "nonprofit",
+        "title": "CEO",
+        "timezone": "Europe/Paris",
+        "signup_source": "organic",
+        "phone": "+1-290-287-7921"
+      },
+      "created_at": "2025-07-02T00:17:53.152224"
+    },
+    {
+      "id": "0aea8259-efc9-4413-b52d-76cd52279f4c",
+      "email": "david.lee@work.email",
+      "name": "David Lee",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "SecureNet Systems",
+        "company_size": "51-200",
+        "industry": "retail",
+        "title": "Project Manager",
+        "timezone": "Asia/Singapore",
+        "signup_source": "linkedin",
+        "phone": "+1-780-571-5721"
+      },
+      "created_at": "2024-05-15T13:40:04.152224"
+    },
+    {
+      "id": "9e066359-f602-4d8c-bfb0-222ee6a24f8f",
+      "email": "joseph.garcia@outlook.com",
+      "name": "Joseph Garcia",
+      "plan": "enterprise",
+      "extra_metadata": {
+        "company": "TechVision Corp",
+        "company_size": "11-50",
+        "industry": "retail",
+        "title": "Project Manager",
+        "timezone": "America/New_York",
+        "signup_source": "google",
+        "phone": "+1-566-252-6478"
+      },
+      "created_at": "2025-11-05T09:46:13.152224"
+    },
+    {
+      "id": "abaefea1-6f79-4158-9ab8-b7e1af90bfc4",
+      "email": "nancy.moore@gmail.com",
+      "name": "Nancy Moore",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "VelocityX Labs",
+        "company_size": "1-10",
+        "industry": "marketing",
+        "title": "Team Lead",
+        "timezone": "Europe/Paris",
+        "signup_source": "linkedin",
+        "phone": "+1-443-466-6963"
+      },
+      "created_at": "2025-02-12T20:21:10.152224"
+    },
+    {
+      "id": "9c101041-b7ec-4504-bf22-1aba5a7052e3",
+      "email": "lisa.garcia@company.com",
+      "name": "Lisa Garcia",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "StrategyCore LLC",
+        "company_size": "201-500",
+        "industry": "marketing",
+        "title": "CEO",
+        "timezone": "America/Denver",
+        "signup_source": "referral",
+        "phone": "+1-377-887-9212"
+      },
+      "created_at": "2025-04-06T14:55:34.152224"
+    },
+    {
+      "id": "e3f2f134-ded2-4477-8460-577b051e35d5",
+      "email": "barbara.martinez@outlook.com",
+      "name": "Barbara Martinez",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "ZenithTech Group",
+        "company_size": "1-10",
+        "industry": "education",
+        "title": "CTO",
+        "timezone": "Europe/London",
+        "signup_source": "organic",
+        "phone": "+1-406-892-8125"
+      },
+      "created_at": "2025-06-29T00:21:37.152224"
+    },
+    {
+      "id": "47878252-2033-466e-afc0-a83ba902f2c9",
+      "email": "linda.davis@company.com",
+      "name": "Linda Davis",
+      "plan": "enterprise",
+      "extra_metadata": {
+        "company": "Digital Innovations Inc",
+        "company_size": "51-200",
+        "industry": "technology",
+        "title": "CTO",
+        "timezone": "Asia/Tokyo",
+        "signup_source": "google",
+        "phone": "+1-640-874-2891"
+      },
+      "created_at": "2025-03-12T22:27:23.152224"
+    },
+    {
+      "id": "9df08b32-e4d3-4c99-a730-b2b8b2f6a70e",
+      "email": "linda.rodriguez@outlook.com",
+      "name": "Linda Rodriguez",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "NexGen Digital",
+        "company_size": "500+",
+        "industry": "consulting",
+        "title": "CEO",
+        "timezone": "Europe/Paris",
+        "signup_source": "demo",
+        "phone": "+1-811-934-1695"
+      },
+      "created_at": "2025-10-18T00:21:46.152224"
+    },
+    {
+      "id": "fc6315df-c7dd-4a34-b883-f1da97a30097",
+      "email": "barbara.garcia@outlook.com",
+      "name": "Barbara Garcia",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "VertexTech Group",
+        "company_size": "51-200",
+        "industry": "marketing",
+        "title": "VP Engineering",
+        "timezone": "America/Los_Angeles",
+        "signup_source": "demo",
+        "phone": "+1-605-361-5097"
+      },
+      "created_at": "2024-07-15T23:17:35.152224"
+    },
+    {
+      "id": "04f3e9e0-f8a3-4baa-9625-9acbbc9e6cd1",
+      "email": "matthew.williams@company.com",
+      "name": "Matthew Williams",
+      "plan": "premium",
+      "extra_metadata": {
+        "company": "ApexInnovate",
+        "company_size": "51-200",
+        "industry": "nonprofit",
+        "title": "CTO",
+        "timezone": "Asia/Tokyo",
+        "signup_source": "referral",
+        "phone": "+1-444-899-2911"
+      },
+      "created_at": "2024-12-08T13:50:15.152224"
+    },
+    {
+      "id": "83d64b0c-cd18-4563-b7e8-58f694be2649",
+      "email": "david.davis@gmail.com",
+      "name": "David Davis",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "PrimeLogic Systems",
+        "company_size": "11-50",
+        "industry": "marketing",
+        "title": "CEO",
+        "timezone": "Asia/Tokyo",
+        "signup_source": "trial",
+        "phone": "+1-697-283-3162"
+      },
+      "created_at": "2024-03-02T13:11:20.152224"
+    },
+    {
+      "id": "99f0579f-5525-4246-8f29-52a7f100daf5",
+      "email": "robert.thomas@work.email",
+      "name": "Robert Thomas",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "ProScale Solutions",
+        "company_size": "500+",
+        "industry": "legal",
+        "title": "Team Lead",
+        "timezone": "Europe/Paris",
+        "signup_source": "trial",
+        "phone": "+1-598-961-2536"
+      },
+      "created_at": "2025-11-18T16:19:41.152224"
+    },
+    {
+      "id": "55ed5c06-c40c-402d-a538-1d3c82d4c463",
+      "email": "james.williams@company.com",
+      "name": "James Williams",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "BrightScale Consulting",
+        "company_size": "11-50",
+        "industry": "marketing",
+        "title": "CEO",
+        "timezone": "America/Toronto",
+        "signup_source": "google",
+        "phone": "+1-990-373-8187"
+      },
+      "created_at": "2024-11-02T07:26:58.152224"
+    },
+    {
+      "id": "f9f43cd0-cd5c-47de-80b7-d8deb1757b19",
+      "email": "anthony.garcia@outlook.com",
+      "name": "Anthony Garcia",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "Digital Innovations Inc",
+        "company_size": "201-500",
+        "industry": "marketing",
+        "title": "Analyst",
+        "timezone": "America/Denver",
+        "signup_source": "referral",
+        "phone": "+1-907-952-8766"
+      },
+      "created_at": "2025-08-14T09:33:00.152224"
+    },
+    {
+      "id": "c01e8012-59d5-4e7b-aa54-d4aa726d648a",
+      "email": "thomas.davis@work.email",
+      "name": "Thomas Davis",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "QuantumLeap Inc",
+        "company_size": "51-200",
+        "industry": "manufacturing",
+        "title": "Project Manager",
+        "timezone": "America/Mexico_City",
+        "signup_source": "trial",
+        "phone": "+1-311-376-5411"
+      },
+      "created_at": "2024-09-26T18:58:53.152224"
+    },
+    {
+      "id": "7b3c3254-dc67-48c3-85be-0c55781caa95",
+      "email": "david.jones@work.email",
+      "name": "David Jones",
+      "plan": "enterprise",
+      "extra_metadata": {
+        "company": "EchoSmart Technologies",
+        "company_size": "201-500",
+        "industry": "education",
+        "title": "CEO",
+        "timezone": "America/Chicago",
+        "signup_source": "demo",
+        "phone": "+1-463-216-7416"
+      },
+      "created_at": "2024-02-26T02:21:10.152224"
+    },
+    {
+      "id": "b93bb77c-df40-473b-85ac-0743b13f4135",
+      "email": "betty.taylor@outlook.com",
+      "name": "Betty Taylor",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "TechVision Corp",
+        "company_size": "500+",
+        "industry": "healthcare",
+        "title": "VP Engineering",
+        "timezone": "Asia/Singapore",
+        "signup_source": "referral",
+        "phone": "+1-761-433-8699"
+      },
+      "created_at": "2025-07-17T23:22:01.152224"
+    },
+    {
+      "id": "6706f9be-94cb-478e-84a7-2e885c21a11f",
+      "email": "james.taylor@company.com",
+      "name": "James Taylor",
+      "plan": "enterprise",
+      "extra_metadata": {
+        "company": "TechVision Corp",
+        "company_size": "11-50",
+        "industry": "healthcare",
+        "title": "CEO",
+        "timezone": "America/Mexico_City",
+        "signup_source": "google",
+        "phone": "+1-976-766-3385"
+      },
+      "created_at": "2025-01-27T06:24:47.152224"
+    },
+    {
+      "id": "6a849ea2-b855-4355-8e61-9884f7ae682b",
+      "email": "thomas.martinez@gmail.com",
+      "name": "Thomas Martinez",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "SecureNet Systems",
+        "company_size": "11-50",
+        "industry": "healthcare",
+        "title": "CEO",
+        "timezone": "America/New_York",
+        "signup_source": "demo",
+        "phone": "+1-313-515-9266"
+      },
+      "created_at": "2024-05-11T10:58:16.152224"
+    },
+    {
+      "id": "af805a32-00cc-47df-aa18-67590a128f38",
+      "email": "margaret.gonzalez@gmail.com",
+      "name": "Margaret Gonzalez",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "ProScale Solutions",
+        "company_size": "1-10",
+        "industry": "retail",
+        "title": "Team Lead",
+        "timezone": "Europe/Berlin",
+        "signup_source": "linkedin",
+        "phone": "+1-989-303-6301"
+      },
+      "created_at": "2025-08-26T18:24:43.152224"
+    },
+    {
+      "id": "c1844e9b-cfad-40d5-8187-c1c5348ac451",
+      "email": "joseph.miller@company.com",
+      "name": "Joseph Miller",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "PulseDigital Inc",
+        "company_size": "500+",
+        "industry": "nonprofit",
+        "title": "Project Manager",
+        "timezone": "Asia/Singapore",
+        "signup_source": "google",
+        "phone": "+1-531-201-2966"
+      },
+      "created_at": "2023-12-21T15:38:55.152224"
+    },
+    {
+      "id": "1aa07adc-e71d-483b-8033-7345f5c05b77",
+      "email": "susan.brown@company.com",
+      "name": "Susan Brown",
+      "plan": "free",
+      "extra_metadata": {
+        "company": "SynergyTech Partners",
+        "company_size": "51-200",
+        "industry": "education",
+        "title": "Team Lead",
+        "timezone": "Europe/Berlin",
+        "signup_source": "organic",
+        "phone": "+1-685-514-2708"
+      },
+      "created_at": "2024-04-27T12:35:27.152224"
+    },
+    {
+      "id": "2777b725-b797-4a21-87be-2aab29fbaba6",
+      "email": "margaret.garcia@outlook.com",
+      "name": "Margaret Garcia",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "SynergyTech Partners",
+        "company_size": "201-500",
+        "industry": "consulting",
+        "title": "Project Manager",
+        "timezone": "Asia/Singapore",
+        "signup_source": "referral",
+        "phone": "+1-948-910-6210"
+      },
+      "created_at": "2024-06-23T10:33:59.152224"
+    },
+    {
+      "id": "6a9e08ae-817b-4a30-ad65-3dcc6265561c",
+      "email": "karen.moore@company.com",
+      "name": "Karen Moore",
+      "plan": "enterprise",
+      "extra_metadata": {
+        "company": "ZenithTech Group",
+        "company_size": "51-200",
+        "industry": "marketing",
+        "title": "Analyst",
+        "timezone": "America/New_York",
+        "signup_source": "referral",
+        "phone": "+1-757-808-8072"
+      },
+      "created_at": "2024-08-13T13:37:08.152224"
+    },
+    {
+      "id": "66fc2b21-c4be-43e7-a246-d7dabf129244",
+      "email": "daniel.gonzalez@work.email",
+      "name": "Daniel Gonzalez",
+      "plan": "basic",
+      "extra_metadata": {
+        "company": "ZenithTech Group",
+        "company_size": "51-200",
+        "industry": "healthcare",
+        "title": "Analyst",
+        "timezone": "Asia/Tokyo",
+        "signup_source": "google",
+        "phone": "+1-437-400-4393"
+      },
+      "created_at": "2024-06-23T08:17:15.152224"
+    }
+  ]
+}
