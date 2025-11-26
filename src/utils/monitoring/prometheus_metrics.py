@@ -16,19 +16,19 @@ Metrics Categories:
 Part of: Phase 5 - Monitoring & Observability
 """
 
+import time
+from functools import wraps
+
+from fastapi import Response
 from prometheus_client import (
-    Counter,
-    Histogram,
-    Gauge,
-    Info,
-    generate_latest,
     CONTENT_TYPE_LATEST,
     CollectorRegistry,
+    Counter,
+    Gauge,
+    Histogram,
+    Info,
+    generate_latest,
 )
-from fastapi import Response
-import time
-from typing import Optional
-from functools import wraps
 
 from src.utils.logging.setup import get_logger
 
@@ -52,7 +52,7 @@ http_requests_total = Counter(
     "http_requests_total",
     "Total HTTP requests",
     ["method", "endpoint", "status_code"],
-    registry=registry
+    registry=registry,
 )
 
 # HTTP request duration
@@ -61,7 +61,7 @@ http_request_duration_seconds = Histogram(
     "HTTP request duration in seconds",
     ["method", "endpoint"],
     buckets=(0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0),
-    registry=registry
+    registry=registry,
 )
 
 # HTTP requests in progress
@@ -69,7 +69,7 @@ http_requests_in_progress = Gauge(
     "http_requests_in_progress",
     "HTTP requests currently being processed",
     ["method", "endpoint"],
-    registry=registry
+    registry=registry,
 )
 
 
@@ -82,7 +82,7 @@ agent_executions_total = Counter(
     "agent_executions_total",
     "Total agent executions",
     ["agent_name", "tier", "status"],
-    registry=registry
+    registry=registry,
 )
 
 # Agent execution duration
@@ -91,7 +91,7 @@ agent_execution_duration_seconds = Histogram(
     "Agent execution duration in seconds",
     ["agent_name", "tier"],
     buckets=(0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0),
-    registry=registry
+    registry=registry,
 )
 
 # Agent tokens used
@@ -99,7 +99,7 @@ agent_tokens_used_total = Counter(
     "agent_tokens_used_total",
     "Total LLM tokens used by agents",
     ["agent_name", "model"],
-    registry=registry
+    registry=registry,
 )
 
 # Active agent executions
@@ -107,7 +107,7 @@ agent_executions_in_progress = Gauge(
     "agent_executions_in_progress",
     "Agent executions currently in progress",
     ["agent_name"],
-    registry=registry
+    registry=registry,
 )
 
 
@@ -120,7 +120,7 @@ workflow_executions_total = Counter(
     "workflow_executions_total",
     "Total workflow executions",
     ["workflow_type", "status"],
-    registry=registry
+    registry=registry,
 )
 
 # Workflow execution duration
@@ -129,7 +129,7 @@ workflow_execution_duration_seconds = Histogram(
     "Workflow execution duration in seconds",
     ["workflow_type"],
     buckets=(1.0, 5.0, 10.0, 30.0, 60.0, 120.0, 300.0),
-    registry=registry
+    registry=registry,
 )
 
 # Active workflow executions
@@ -137,7 +137,7 @@ workflow_executions_in_progress = Gauge(
     "workflow_executions_in_progress",
     "Workflow executions currently in progress",
     ["workflow_type"],
-    registry=registry
+    registry=registry,
 )
 
 
@@ -147,10 +147,7 @@ workflow_executions_in_progress = Gauge(
 
 # Database query counter
 db_queries_total = Counter(
-    "db_queries_total",
-    "Total database queries",
-    ["operation", "table"],
-    registry=registry
+    "db_queries_total", "Total database queries", ["operation", "table"], registry=registry
 )
 
 # Database query duration
@@ -159,21 +156,15 @@ db_query_duration_seconds = Histogram(
     "Database query duration in seconds",
     ["operation", "table"],
     buckets=(0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0),
-    registry=registry
+    registry=registry,
 )
 
 # Database connection pool
 db_connections_active = Gauge(
-    "db_connections_active",
-    "Active database connections",
-    registry=registry
+    "db_connections_active", "Active database connections", registry=registry
 )
 
-db_connections_idle = Gauge(
-    "db_connections_idle",
-    "Idle database connections",
-    registry=registry
-)
+db_connections_idle = Gauge("db_connections_idle", "Idle database connections", registry=registry)
 
 
 # =============================================================================
@@ -182,46 +173,26 @@ db_connections_idle = Gauge(
 
 # Conversations
 conversations_total = Gauge(
-    "conversations_total",
-    "Total conversations",
-    ["status"],
-    registry=registry
+    "conversations_total", "Total conversations", ["status"], registry=registry
 )
 
 conversations_created_total = Counter(
-    "conversations_created_total",
-    "Total conversations created",
-    registry=registry
+    "conversations_created_total", "Total conversations created", registry=registry
 )
 
 conversations_resolved_total = Counter(
-    "conversations_resolved_total",
-    "Total conversations resolved",
-    registry=registry
+    "conversations_resolved_total", "Total conversations resolved", registry=registry
 )
 
 # Customers
-customers_total = Gauge(
-    "customers_total",
-    "Total customers",
-    ["plan", "status"],
-    registry=registry
-)
+customers_total = Gauge("customers_total", "Total customers", ["plan", "status"], registry=registry)
 
 customers_created_total = Counter(
-    "customers_created_total",
-    "Total customers created",
-    ["plan"],
-    registry=registry
+    "customers_created_total", "Total customers created", ["plan"], registry=registry
 )
 
 # Messages
-messages_total = Counter(
-    "messages_total",
-    "Total messages",
-    ["role"],
-    registry=registry
-)
+messages_total = Counter("messages_total", "Total messages", ["role"], registry=registry)
 
 
 # =============================================================================
@@ -233,7 +204,7 @@ external_api_calls_total = Counter(
     "external_api_calls_total",
     "Total external API calls",
     ["service", "endpoint", "status_code"],
-    registry=registry
+    registry=registry,
 )
 
 # External API duration
@@ -242,7 +213,7 @@ external_api_duration_seconds = Histogram(
     "External API call duration in seconds",
     ["service", "endpoint"],
     buckets=(0.1, 0.5, 1.0, 2.0, 5.0, 10.0),
-    registry=registry
+    registry=registry,
 )
 
 
@@ -252,25 +223,15 @@ external_api_duration_seconds = Histogram(
 
 # Authentication attempts
 auth_attempts_total = Counter(
-    "auth_attempts_total",
-    "Total authentication attempts",
-    ["method", "status"],
-    registry=registry
+    "auth_attempts_total", "Total authentication attempts", ["method", "status"], registry=registry
 )
 
 # Active sessions
-active_sessions = Gauge(
-    "active_sessions",
-    "Active user sessions",
-    registry=registry
-)
+active_sessions = Gauge("active_sessions", "Active user sessions", registry=registry)
 
 # Rate limit hits
 rate_limit_hits_total = Counter(
-    "rate_limit_hits_total",
-    "Total rate limit hits",
-    ["tier", "endpoint"],
-    registry=registry
+    "rate_limit_hits_total", "Total rate limit hits", ["tier", "endpoint"], registry=registry
 )
 
 
@@ -279,85 +240,68 @@ rate_limit_hits_total = Counter(
 # =============================================================================
 
 # Application info
-app_info = Info(
-    "app",
-    "Application information",
-    registry=registry
-)
+app_info = Info("app", "Application information", registry=registry)
 
 # Set application info
-app_info.info({
-    "version": "1.0.0",
-    "environment": "production",
-    "name": "multi-agent-support-system"
-})
+app_info.info(
+    {"version": "1.0.0", "environment": "production", "name": "multi-agent-support-system"}
+)
 
 
 # =============================================================================
 # METRIC DECORATORS
 # =============================================================================
 
+
 def track_http_request(method: str, endpoint: str):
     """Decorator to track HTTP request metrics"""
+
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             # Increment in-progress gauge
-            http_requests_in_progress.labels(
-                method=method,
-                endpoint=endpoint
-            ).inc()
+            http_requests_in_progress.labels(method=method, endpoint=endpoint).inc()
 
             start_time = time.time()
 
             try:
                 result = await func(*args, **kwargs)
-                status_code = getattr(result, 'status_code', 200)
+                status_code = getattr(result, "status_code", 200)
 
                 # Record metrics
                 duration = time.time() - start_time
-                http_request_duration_seconds.labels(
-                    method=method,
-                    endpoint=endpoint
-                ).observe(duration)
+                http_request_duration_seconds.labels(method=method, endpoint=endpoint).observe(
+                    duration
+                )
 
                 http_requests_total.labels(
-                    method=method,
-                    endpoint=endpoint,
-                    status_code=status_code
+                    method=method, endpoint=endpoint, status_code=status_code
                 ).inc()
 
                 return result
 
-            except Exception as e:
+            except Exception:
                 # Record error
-                http_requests_total.labels(
-                    method=method,
-                    endpoint=endpoint,
-                    status_code=500
-                ).inc()
+                http_requests_total.labels(method=method, endpoint=endpoint, status_code=500).inc()
                 raise
 
             finally:
                 # Decrement in-progress gauge
-                http_requests_in_progress.labels(
-                    method=method,
-                    endpoint=endpoint
-                ).dec()
+                http_requests_in_progress.labels(method=method, endpoint=endpoint).dec()
 
         return wrapper
+
     return decorator
 
 
 def track_agent_execution(agent_name: str, tier: str):
     """Decorator to track agent execution metrics"""
+
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             # Increment in-progress gauge
-            agent_executions_in_progress.labels(
-                agent_name=agent_name
-            ).inc()
+            agent_executions_in_progress.labels(agent_name=agent_name).inc()
 
             start_time = time.time()
             status = "success"
@@ -366,44 +310,38 @@ def track_agent_execution(agent_name: str, tier: str):
                 result = await func(*args, **kwargs)
 
                 # Track token usage if available
-                if hasattr(result, 'tokens_used'):
+                if hasattr(result, "tokens_used"):
                     agent_tokens_used_total.labels(
-                        agent_name=agent_name,
-                        model=getattr(result, 'model_used', 'unknown')
+                        agent_name=agent_name, model=getattr(result, "model_used", "unknown")
                     ).inc(result.tokens_used)
 
                 return result
 
-            except Exception as e:
+            except Exception:
                 status = "failed"
                 raise
 
             finally:
                 # Record metrics
                 duration = time.time() - start_time
-                agent_execution_duration_seconds.labels(
-                    agent_name=agent_name,
-                    tier=tier
-                ).observe(duration)
+                agent_execution_duration_seconds.labels(agent_name=agent_name, tier=tier).observe(
+                    duration
+                )
 
-                agent_executions_total.labels(
-                    agent_name=agent_name,
-                    tier=tier,
-                    status=status
-                ).inc()
+                agent_executions_total.labels(agent_name=agent_name, tier=tier, status=status).inc()
 
                 # Decrement in-progress gauge
-                agent_executions_in_progress.labels(
-                    agent_name=agent_name
-                ).dec()
+                agent_executions_in_progress.labels(agent_name=agent_name).dec()
 
         return wrapper
+
     return decorator
 
 
 # =============================================================================
 # METRICS ENDPOINT
 # =============================================================================
+
 
 def get_metrics() -> Response:
     """
@@ -415,15 +353,13 @@ def get_metrics() -> Response:
 
     metrics_data = generate_latest(registry)
 
-    return Response(
-        content=metrics_data,
-        media_type=CONTENT_TYPE_LATEST
-    )
+    return Response(content=metrics_data, media_type=CONTENT_TYPE_LATEST)
 
 
 # =============================================================================
 # METRIC RECORDING FUNCTIONS
 # =============================================================================
+
 
 def record_conversation_created():
     """Record conversation creation"""
