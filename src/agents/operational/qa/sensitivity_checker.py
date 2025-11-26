@@ -5,13 +5,13 @@ Detects inappropriate, biased, or culturally insensitive content in responses.
 Uses Claude Sonnet for nuanced sensitivity analysis and context understanding.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("sensitivity_checker", tier="operational", category="qa")
@@ -36,36 +36,24 @@ class SensitivityCheckerAgent(BaseAgent):
     SENSITIVITY_CATEGORIES = {
         "discriminatory": {
             "description": "Language that discriminates based on protected characteristics",
-            "severity": "critical"
+            "severity": "critical",
         },
-        "biased": {
-            "description": "Biased assumptions or stereotypes",
-            "severity": "high"
-        },
+        "biased": {"description": "Biased assumptions or stereotypes", "severity": "high"},
         "culturally_insensitive": {
             "description": "Culturally insensitive or inappropriate references",
-            "severity": "high"
+            "severity": "high",
         },
         "gendered_language": {
             "description": "Unnecessarily gendered language or assumptions",
-            "severity": "medium"
+            "severity": "medium",
         },
-        "ageist": {
-            "description": "Age-based assumptions or stereotypes",
-            "severity": "medium"
-        },
+        "ageist": {"description": "Age-based assumptions or stereotypes", "severity": "medium"},
         "ableist": {
             "description": "Language that may be insensitive to people with disabilities",
-            "severity": "high"
+            "severity": "high",
         },
-        "microaggression": {
-            "description": "Subtle discriminatory comments",
-            "severity": "medium"
-        },
-        "exclusive": {
-            "description": "Language that excludes certain groups",
-            "severity": "medium"
-        }
+        "microaggression": {"description": "Subtle discriminatory comments", "severity": "medium"},
+        "exclusive": {"description": "Language that excludes certain groups", "severity": "medium"},
     }
 
     # Problematic patterns (context-aware - some may be acceptable in certain contexts)
@@ -75,25 +63,9 @@ class SensitivityCheckerAgent(BaseAgent):
             r"\bshe\b.*\bnurse\b",
             r"\bguys\b",  # When addressing mixed group
         ],
-        "ableist_language": [
-            "crazy",
-            "insane",
-            "dumb",
-            "stupid",
-            "lame",
-            "blind to",
-            "deaf to"
-        ],
-        "age_assumptions": [
-            "millennials are",
-            "boomers are",
-            "gen z is"
-        ],
-        "cultural_assumptions": [
-            "everyone celebrates",
-            "as we all know",
-            "obviously"
-        ]
+        "ableist_language": ["crazy", "insane", "dumb", "stupid", "lame", "blind to", "deaf to"],
+        "age_assumptions": ["millennials are", "boomers are", "gen z is"],
+        "cultural_assumptions": ["everyone celebrates", "as we all know", "obviously"],
     }
 
     # Inclusive language alternatives
@@ -104,7 +76,7 @@ class SensitivityCheckerAgent(BaseAgent):
         "dumb": "ineffective/suboptimal",
         "lame": "disappointing/ineffective",
         "blind to": "unaware of/overlooking",
-        "deaf to": "ignoring/not responsive to"
+        "deaf to": "ignoring/not responsive to",
     }
 
     def __init__(self):
@@ -115,7 +87,7 @@ class SensitivityCheckerAgent(BaseAgent):
             temperature=0.2,
             max_tokens=2000,
             capabilities=[],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -135,13 +107,15 @@ class SensitivityCheckerAgent(BaseAgent):
         state = self.update_state(state)
 
         # Extract parameters
-        response_text = state.get("entities", {}).get("response_text", state.get("agent_response", ""))
+        response_text = state.get("entities", {}).get(
+            "response_text", state.get("agent_response", "")
+        )
         strict_mode = state.get("entities", {}).get("strict_mode", True)
 
         self.logger.debug(
             "sensitivity_checking_details",
             response_length=len(response_text),
-            strict_mode=strict_mode
+            strict_mode=strict_mode,
         )
 
         # Check for problematic language
@@ -158,10 +132,7 @@ class SensitivityCheckerAgent(BaseAgent):
 
         # Aggregate all issues
         all_issues = self._aggregate_issues(
-            language_issues,
-            bias_issues,
-            cultural_issues,
-            inclusivity_issues
+            language_issues, bias_issues, cultural_issues, inclusivity_issues
         )
 
         # Generate recommendations
@@ -175,10 +146,7 @@ class SensitivityCheckerAgent(BaseAgent):
 
         # Format response
         response = self._format_sensitivity_report(
-            all_issues,
-            recommendations,
-            sensitivity_score,
-            passed
+            all_issues, recommendations, sensitivity_score, passed
         )
 
         state["agent_response"] = response
@@ -194,12 +162,12 @@ class SensitivityCheckerAgent(BaseAgent):
             "sensitivity_checking_completed",
             issues_found=len(all_issues),
             sensitivity_score=sensitivity_score,
-            passed=passed
+            passed=passed,
         )
 
         return state
 
-    def _check_problematic_language(self, response_text: str) -> List[Dict[str, Any]]:
+    def _check_problematic_language(self, response_text: str) -> list[dict[str, Any]]:
         """Check for problematic language patterns."""
         issues = []
         text_lower = response_text.lower()
@@ -210,81 +178,91 @@ class SensitivityCheckerAgent(BaseAgent):
                 # Check context - some uses may be acceptable (e.g., "blind spot" in technical context)
                 context = self._extract_context(response_text, term)
 
-                issues.append({
-                    "category": "ableist",
-                    "type": "ableist_language",
-                    "severity": "medium",
-                    "term": term,
-                    "message": f"Potentially ableist language: '{term}'",
-                    "context": context,
-                    "suggestion": f"Consider using '{self.INCLUSIVE_ALTERNATIVES.get(term, 'alternative phrasing')}'"
-                })
+                issues.append(
+                    {
+                        "category": "ableist",
+                        "type": "ableist_language",
+                        "severity": "medium",
+                        "term": term,
+                        "message": f"Potentially ableist language: '{term}'",
+                        "context": context,
+                        "suggestion": f"Consider using '{self.INCLUSIVE_ALTERNATIVES.get(term, 'alternative phrasing')}'",
+                    }
+                )
 
         # Check for slurs or highly offensive terms (would have a comprehensive list in production)
         offensive_terms = []  # Placeholder - actual list would be comprehensive
         for term in offensive_terms:
             if term in text_lower:
-                issues.append({
-                    "category": "discriminatory",
-                    "type": "offensive_language",
-                    "severity": "critical",
-                    "term": term,
-                    "message": "Offensive language detected",
-                    "context": self._extract_context(response_text, term)
-                })
+                issues.append(
+                    {
+                        "category": "discriminatory",
+                        "type": "offensive_language",
+                        "severity": "critical",
+                        "term": term,
+                        "message": "Offensive language detected",
+                        "context": self._extract_context(response_text, term),
+                    }
+                )
 
         return issues
 
-    def _check_biases(self, response_text: str) -> List[Dict[str, Any]]:
+    def _check_biases(self, response_text: str) -> list[dict[str, Any]]:
         """Check for biased language and assumptions."""
         issues = []
         text_lower = response_text.lower()
 
         # Check for gendered language
         if "guys" in text_lower and ("hi guys" in text_lower or "hey guys" in text_lower):
-            issues.append({
-                "category": "gendered_language",
-                "type": "gendered_address",
-                "severity": "medium",
-                "message": "Using 'guys' to address group may not be inclusive",
-                "context": self._extract_context(response_text, "guys"),
-                "suggestion": "Use 'everyone', 'folks', or 'team' instead"
-            })
+            issues.append(
+                {
+                    "category": "gendered_language",
+                    "type": "gendered_address",
+                    "severity": "medium",
+                    "message": "Using 'guys' to address group may not be inclusive",
+                    "context": self._extract_context(response_text, "guys"),
+                    "suggestion": "Use 'everyone', 'folks', or 'team' instead",
+                }
+            )
 
         # Check for age-based generalizations
         for pattern in self.PROBLEMATIC_PATTERNS["age_assumptions"]:
             if pattern in text_lower:
-                issues.append({
-                    "category": "ageist",
-                    "type": "age_generalization",
-                    "severity": "medium",
-                    "message": "Age-based generalization detected",
-                    "context": self._extract_context(response_text, pattern),
-                    "suggestion": "Avoid generalizations about age groups"
-                })
+                issues.append(
+                    {
+                        "category": "ageist",
+                        "type": "age_generalization",
+                        "severity": "medium",
+                        "message": "Age-based generalization detected",
+                        "context": self._extract_context(response_text, pattern),
+                        "suggestion": "Avoid generalizations about age groups",
+                    }
+                )
 
         # Check for assumptions about technical ability
         assumption_phrases = [
             "as you probably know",
             "obviously you",
             "everyone knows",
-            "it's common sense"
+            "it's common sense",
         ]
 
         for phrase in assumption_phrases:
             if phrase in text_lower:
-                issues.append({
-                    "category": "exclusive",
-                    "type": "knowledge_assumption",
-                    "severity": "low",
-                    "message": "Assumes shared knowledge that may exclude some users",
-                    "context": self._extract_context(response_text, phrase),
-                    "suggestion": "Explain concepts without assuming prior knowledge"
-                })
+                issues.append(
+                    {
+                        "category": "exclusive",
+                        "type": "knowledge_assumption",
+                        "severity": "low",
+                        "message": "Assumes shared knowledge that may exclude some users",
+                        "context": self._extract_context(response_text, phrase),
+                        "suggestion": "Explain concepts without assuming prior knowledge",
+                    }
+                )
 
         return issues
 
-    def _check_cultural_sensitivity(self, response_text: str) -> List[Dict[str, Any]]:
+    def _check_cultural_sensitivity(self, response_text: str) -> list[dict[str, Any]]:
         """Check for cultural sensitivity issues."""
         issues = []
         text_lower = response_text.lower()
@@ -293,41 +271,41 @@ class SensitivityCheckerAgent(BaseAgent):
         holiday_assumptions = [
             "as we all celebrate",
             "during the holidays",
-            "everyone celebrates christmas"
+            "everyone celebrates christmas",
         ]
 
         for phrase in holiday_assumptions:
             if phrase in text_lower:
-                issues.append({
-                    "category": "culturally_insensitive",
-                    "type": "cultural_assumption",
-                    "severity": "medium",
-                    "message": "Assumes shared cultural practices",
-                    "context": self._extract_context(response_text, phrase),
-                    "suggestion": "Avoid assuming everyone shares the same cultural background"
-                })
+                issues.append(
+                    {
+                        "category": "culturally_insensitive",
+                        "type": "cultural_assumption",
+                        "severity": "medium",
+                        "message": "Assumes shared cultural practices",
+                        "context": self._extract_context(response_text, phrase),
+                        "suggestion": "Avoid assuming everyone shares the same cultural background",
+                    }
+                )
 
         # Check for Americentric assumptions
-        americentric_phrases = [
-            "in this country",
-            "as americans",
-            "our government"
-        ]
+        americentric_phrases = ["in this country", "as americans", "our government"]
 
         for phrase in americentric_phrases:
             if phrase in text_lower:
-                issues.append({
-                    "category": "culturally_insensitive",
-                    "type": "geographic_assumption",
-                    "severity": "medium",
-                    "message": "Assumes specific geographic location",
-                    "context": self._extract_context(response_text, phrase),
-                    "suggestion": "Remember users are from diverse geographic locations"
-                })
+                issues.append(
+                    {
+                        "category": "culturally_insensitive",
+                        "type": "geographic_assumption",
+                        "severity": "medium",
+                        "message": "Assumes specific geographic location",
+                        "context": self._extract_context(response_text, phrase),
+                        "suggestion": "Remember users are from diverse geographic locations",
+                    }
+                )
 
         return issues
 
-    def _check_inclusivity(self, response_text: str) -> List[Dict[str, Any]]:
+    def _check_inclusivity(self, response_text: str) -> list[dict[str, Any]]:
         """Check for inclusive language usage."""
         issues = []
         text_lower = response_text.lower()
@@ -338,47 +316,46 @@ class SensitivityCheckerAgent(BaseAgent):
             "policeman": "police officer",
             "fireman": "firefighter",
             "mankind": "humanity/humankind",
-            "manpower": "workforce/staff"
+            "manpower": "workforce/staff",
         }
 
         for gendered, neutral in gendered_titles.items():
             if gendered in text_lower:
-                issues.append({
-                    "category": "gendered_language",
-                    "type": "gendered_title",
-                    "severity": "low",
-                    "message": f"Use gender-neutral term: '{neutral}' instead of '{gendered}'",
-                    "context": self._extract_context(response_text, gendered),
-                    "suggestion": f"Replace with '{neutral}'"
-                })
+                issues.append(
+                    {
+                        "category": "gendered_language",
+                        "type": "gendered_title",
+                        "severity": "low",
+                        "message": f"Use gender-neutral term: '{neutral}' instead of '{gendered}'",
+                        "context": self._extract_context(response_text, gendered),
+                        "suggestion": f"Replace with '{neutral}'",
+                    }
+                )
 
         # Check for binary gender assumptions
         if "he or she" in text_lower or "he/she" in text_lower:
-            issues.append({
-                "category": "gendered_language",
-                "type": "binary_gender",
-                "severity": "low",
-                "message": "Using binary gender pronouns",
-                "context": self._extract_context(response_text, "he or she"),
-                "suggestion": "Use 'they' as singular pronoun or rephrase to avoid pronouns"
-            })
+            issues.append(
+                {
+                    "category": "gendered_language",
+                    "type": "binary_gender",
+                    "severity": "low",
+                    "message": "Using binary gender pronouns",
+                    "context": self._extract_context(response_text, "he or she"),
+                    "suggestion": "Use 'they' as singular pronoun or rephrase to avoid pronouns",
+                }
+            )
 
         return issues
 
     def _aggregate_issues(
         self,
-        language_issues: List[Dict[str, Any]],
-        bias_issues: List[Dict[str, Any]],
-        cultural_issues: List[Dict[str, Any]],
-        inclusivity_issues: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        language_issues: list[dict[str, Any]],
+        bias_issues: list[dict[str, Any]],
+        cultural_issues: list[dict[str, Any]],
+        inclusivity_issues: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
         """Aggregate all sensitivity issues."""
-        all_issues = (
-            language_issues +
-            bias_issues +
-            cultural_issues +
-            inclusivity_issues
-        )
+        all_issues = language_issues + bias_issues + cultural_issues + inclusivity_issues
 
         # Add timestamps and sort by severity
         for issue in all_issues:
@@ -389,7 +366,7 @@ class SensitivityCheckerAgent(BaseAgent):
 
         return all_issues
 
-    def _generate_recommendations(self, issues: List[Dict[str, Any]]) -> List[str]:
+    def _generate_recommendations(self, issues: list[dict[str, Any]]) -> list[str]:
         """Generate sensitivity recommendations."""
         recommendations = []
 
@@ -400,7 +377,7 @@ class SensitivityCheckerAgent(BaseAgent):
         # Count by severity
         critical = [i for i in issues if i["severity"] == "critical"]
         high = [i for i in issues if i["severity"] == "high"]
-        medium = [i for i in issues if i["severity"] == "medium"]
+        [i for i in issues if i["severity"] == "medium"]
 
         if critical:
             recommendations.append(
@@ -419,19 +396,13 @@ class SensitivityCheckerAgent(BaseAgent):
             categories[cat] = categories.get(cat, 0) + 1
 
         if "ableist" in categories:
-            recommendations.append(
-                "Replace ableist language with neutral alternatives"
-            )
+            recommendations.append("Replace ableist language with neutral alternatives")
 
         if "gendered_language" in categories:
-            recommendations.append(
-                "Use gender-neutral language and terms"
-            )
+            recommendations.append("Use gender-neutral language and terms")
 
         if "culturally_insensitive" in categories:
-            recommendations.append(
-                "Avoid cultural assumptions - remember global audience"
-            )
+            recommendations.append("Avoid cultural assumptions - remember global audience")
 
         if "exclusive" in categories:
             recommendations.append(
@@ -440,7 +411,7 @@ class SensitivityCheckerAgent(BaseAgent):
 
         return recommendations
 
-    def _calculate_sensitivity_score(self, issues: List[Dict[str, Any]]) -> float:
+    def _calculate_sensitivity_score(self, issues: list[dict[str, Any]]) -> float:
         """Calculate sensitivity score (0-100)."""
         if not issues:
             return 100.0
@@ -450,17 +421,12 @@ class SensitivityCheckerAgent(BaseAgent):
         # Deduct based on severity
         for issue in issues:
             severity = issue["severity"]
-            deductions = {
-                "critical": 40.0,
-                "high": 20.0,
-                "medium": 10.0,
-                "low": 5.0
-            }
+            deductions = {"critical": 40.0, "high": 20.0, "medium": 10.0, "low": 5.0}
             score -= deductions.get(severity, 0)
 
         return max(0.0, round(score, 1))
 
-    def _determine_pass_fail(self, issues: List[Dict[str, Any]], strict_mode: bool) -> bool:
+    def _determine_pass_fail(self, issues: list[dict[str, Any]], strict_mode: bool) -> bool:
         """Determine if sensitivity check passes."""
         critical = [i for i in issues if i["severity"] == "critical"]
         high = [i for i in issues if i["severity"] == "high"]
@@ -492,10 +458,10 @@ class SensitivityCheckerAgent(BaseAgent):
 
     def _format_sensitivity_report(
         self,
-        issues: List[Dict[str, Any]],
-        recommendations: List[str],
+        issues: list[dict[str, Any]],
+        recommendations: list[str],
         sensitivity_score: float,
-        passed: bool
+        passed: bool,
     ) -> str:
         """Format sensitivity report."""
         status_icon = "✅" if passed else "❌"
@@ -516,17 +482,23 @@ class SensitivityCheckerAgent(BaseAgent):
             categories[cat] = categories.get(cat, 0) + 1
 
         for category, count in categories.items():
-            cat_desc = self.SENSITIVITY_CATEGORIES.get(category, {}).get("description", category)
+            self.SENSITIVITY_CATEGORIES.get(category, {}).get("description", category)
             report += f"- {category.replace('_', ' ').title()}: {count}\n"
 
         # List issues
         if issues:
-            report += f"\n**Detected Issues:**\n"
+            report += "\n**Detected Issues:**\n"
             for issue in issues[:5]:  # Top 5
-                icon = "🔴" if issue["severity"] == "critical" else "⚠️" if issue["severity"] == "high" else "ℹ️"
+                icon = (
+                    "🔴"
+                    if issue["severity"] == "critical"
+                    else "⚠️"
+                    if issue["severity"] == "high"
+                    else "ℹ️"
+                )
                 report += f"{icon} [{issue['severity'].upper()}] {issue['message']}\n"
                 if "context" in issue:
-                    report += f"   Context: \"{issue['context']}\"\n"
+                    report += f'   Context: "{issue["context"]}"\n'
                 if "suggestion" in issue:
                     report += f"   Suggestion: {issue['suggestion']}\n"
 
@@ -535,7 +507,7 @@ class SensitivityCheckerAgent(BaseAgent):
 
         # Recommendations
         if recommendations:
-            report += f"\n**Recommendations:**\n"
+            report += "\n**Recommendations:**\n"
             for rec in recommendations:
                 report += f"- {rec}\n"
 
