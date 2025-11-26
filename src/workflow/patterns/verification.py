@@ -17,14 +17,16 @@ Part of: EPIC-006 Advanced Workflow Patterns
 """
 
 import asyncio
-from typing import List, Dict, Any, Optional, Callable, Literal
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from enum import Enum
+from typing import Any, Literal
+
 import structlog
 
-from src.workflow.state import AgentState
 from src.workflow.exceptions import WorkflowException
+from src.workflow.state import AgentState
 
 # Alias for backward compatibility
 WorkflowExecutionError = WorkflowException
@@ -34,6 +36,7 @@ logger = structlog.get_logger(__name__)
 
 class VerificationLevel(str, Enum):
     """Level of verification rigor."""
+
     BASIC = "basic"  # Quick sanity check
     STANDARD = "standard"  # Normal verification
     THOROUGH = "thorough"  # Comprehensive review
@@ -42,6 +45,7 @@ class VerificationLevel(str, Enum):
 
 class VerificationAction(str, Enum):
     """Action to take based on verification result."""
+
     APPROVE = "approve"  # Output is good, no changes needed
     APPROVE_WITH_NOTES = "approve_with_notes"  # Good but has suggestions
     REQUEST_REVISION = "request_revision"  # Needs changes
@@ -61,11 +65,12 @@ class VerificationCheck:
         weight: Importance weight (0.0-1.0)
         criteria: Specific criteria to check
     """
+
     name: str
     description: str
     required: bool = True
     weight: float = 1.0
-    criteria: List[str] = field(default_factory=list)
+    criteria: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -80,11 +85,12 @@ class VerificationFinding:
         recommendation: Suggested fix
         location: Where the issue was found (optional)
     """
+
     check_name: str
     severity: Literal["critical", "high", "medium", "low", "info"]
     finding: str
     recommendation: str
-    location: Optional[str] = None
+    location: str | None = None
 
 
 @dataclass
@@ -104,16 +110,17 @@ class VerificationResult:
         execution_time: Total verification time in seconds
         error: Error message if workflow failed
     """
+
     success: bool
     action: VerificationAction
     original_output: str
     verified_output: str
-    findings: List[VerificationFinding]
+    findings: list[VerificationFinding]
     verification_score: float
     verifier_confidence: float
     iterations: int
     execution_time: float
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class VerificationWorkflow:
@@ -146,12 +153,12 @@ class VerificationWorkflow:
         name: str,
         producer_agent: str,
         verifier_agent: str,
-        checks: List[VerificationCheck],
+        checks: list[VerificationCheck],
         verification_level: VerificationLevel = VerificationLevel.STANDARD,
         max_iterations: int = 3,
         auto_correct: bool = True,
         quality_threshold: float = 0.8,
-        overall_timeout: Optional[int] = None
+        overall_timeout: int | None = None,
     ):
         """
         Initialize verification workflow.
@@ -198,9 +205,7 @@ class VerificationWorkflow:
                 raise ValueError(f"Check weight must be between 0.0 and 1.0: {check.name}")
 
     async def execute(
-        self,
-        initial_state: AgentState,
-        agent_executor: Callable[[str, AgentState], Any]
+        self, initial_state: AgentState, agent_executor: Callable[[str, AgentState], Any]
     ) -> VerificationResult:
         """
         Execute the verification workflow.
@@ -213,7 +218,7 @@ class VerificationWorkflow:
             VerificationResult with verification outcome
         """
         start_time = datetime.now(UTC)
-        all_findings: List[VerificationFinding] = []
+        all_findings: list[VerificationFinding] = []
         current_state = initial_state.copy()
         original_output = None
 
@@ -222,7 +227,7 @@ class VerificationWorkflow:
             producer=self.producer_agent,
             verifier=self.verifier_agent,
             checks=len(self.checks),
-            level=self.verification_level.value
+            level=self.verification_level.value,
         )
 
         try:
@@ -230,17 +235,13 @@ class VerificationWorkflow:
             self.logger.debug("producer_executing", agent=self.producer_agent)
 
             producer_result = await asyncio.wait_for(
-                agent_executor(self.producer_agent, current_state),
-                timeout=60
+                agent_executor(self.producer_agent, current_state), timeout=60
             )
 
             original_output = producer_result.get("agent_response", "")
             current_output = original_output
 
-            self.logger.info(
-                "producer_completed",
-                output_length=len(original_output)
-            )
+            self.logger.info("producer_completed", output_length=len(original_output))
 
             # Step 2: Iterative verification and improvement
             iteration = 0
@@ -252,7 +253,7 @@ class VerificationWorkflow:
                 self.logger.debug(
                     "verification_iteration",
                     iteration=iteration,
-                    max_iterations=self.max_iterations
+                    max_iterations=self.max_iterations,
                 )
 
                 # Verify current output
@@ -263,7 +264,7 @@ class VerificationWorkflow:
                         "name": check.name,
                         "description": check.description,
                         "required": check.required,
-                        "criteria": check.criteria
+                        "criteria": check.criteria,
                     }
                     for check in self.checks
                 ]
@@ -271,8 +272,7 @@ class VerificationWorkflow:
                 verification_state["iteration"] = iteration
 
                 verifier_result = await asyncio.wait_for(
-                    agent_executor(self.verifier_agent, verification_state),
-                    timeout=60
+                    agent_executor(self.verifier_agent, verification_state), timeout=60
                 )
 
                 # Parse verification results
@@ -287,7 +287,7 @@ class VerificationWorkflow:
                     iteration=iteration,
                     score=score,
                     findings=len(findings),
-                    action=action.value
+                    action=action.value,
                 )
 
                 # Determine next action
@@ -318,7 +318,7 @@ class VerificationWorkflow:
                                 "check": f.check_name,
                                 "severity": f.severity,
                                 "finding": f.finding,
-                                "recommendation": f.recommendation
+                                "recommendation": f.recommendation,
                             }
                             for f in findings
                         ]
@@ -326,8 +326,7 @@ class VerificationWorkflow:
                         self.logger.debug("requesting_revision", iteration=iteration)
 
                         revision_result = await asyncio.wait_for(
-                            agent_executor(self.producer_agent, revision_state),
-                            timeout=60
+                            agent_executor(self.producer_agent, revision_state), timeout=60
                         )
 
                         current_output = revision_result.get("agent_response", current_output)
@@ -335,7 +334,7 @@ class VerificationWorkflow:
                         self.logger.info(
                             "revision_completed",
                             iteration=iteration,
-                            output_length=len(current_output)
+                            output_length=len(current_output),
                         )
                     else:
                         # Can't auto-correct or max iterations reached
@@ -352,7 +351,7 @@ class VerificationWorkflow:
                 action=final_action.value,
                 iterations=iteration,
                 score=final_score,
-                execution_time=execution_time
+                execution_time=execution_time,
             )
 
             return VerificationResult(
@@ -364,10 +363,10 @@ class VerificationWorkflow:
                 verification_score=final_score,
                 verifier_confidence=confidence,
                 iterations=iteration,
-                execution_time=execution_time
+                execution_time=execution_time,
             )
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             error = f"Verification exceeded timeout of {self.overall_timeout}s"
             self.logger.error("verification_timeout", error=error)
 
@@ -381,7 +380,7 @@ class VerificationWorkflow:
                 verifier_confidence=0.0,
                 iterations=0,
                 execution_time=(datetime.now(UTC) - start_time).total_seconds(),
-                error=error
+                error=error,
             )
 
         except Exception as e:
@@ -397,20 +396,19 @@ class VerificationWorkflow:
                 verifier_confidence=0.0,
                 iterations=0,
                 execution_time=(datetime.now(UTC) - start_time).total_seconds(),
-                error=f"Verification error: {str(e)}"
+                error=f"Verification error: {e!s}",
             )
 
     def _parse_verification_result(
-        self,
-        verifier_result: AgentState
-    ) -> tuple[List[VerificationFinding], float, float, VerificationAction]:
+        self, verifier_result: AgentState
+    ) -> tuple[list[VerificationFinding], float, float, VerificationAction]:
         """
         Parse verification result from verifier agent.
 
         Returns:
             Tuple of (findings, score, confidence, action)
         """
-        findings: List[VerificationFinding] = []
+        findings: list[VerificationFinding] = []
 
         # Extract findings from verifier response
         # In a real implementation, this would parse structured output
@@ -423,21 +421,25 @@ class VerificationWorkflow:
         elif "REJECT" in response.upper():
             action = VerificationAction.REJECT
             score = 0.3
-            findings.append(VerificationFinding(
-                check_name="overall",
-                severity="critical",
-                finding="Output did not meet quality standards",
-                recommendation="Review and revise output"
-            ))
+            findings.append(
+                VerificationFinding(
+                    check_name="overall",
+                    severity="critical",
+                    finding="Output did not meet quality standards",
+                    recommendation="Review and revise output",
+                )
+            )
         elif "REVISION" in response.upper() or "REVISE" in response.upper():
             action = VerificationAction.REQUEST_REVISION
             score = 0.6
-            findings.append(VerificationFinding(
-                check_name="overall",
-                severity="medium",
-                finding="Output needs improvement",
-                recommendation="Address verification feedback and revise"
-            ))
+            findings.append(
+                VerificationFinding(
+                    check_name="overall",
+                    severity="medium",
+                    finding="Output needs improvement",
+                    recommendation="Address verification feedback and revise",
+                )
+            )
         else:
             action = VerificationAction.APPROVE_WITH_NOTES
             score = 0.8
@@ -450,25 +452,16 @@ class VerificationWorkflow:
 
         return findings, score, confidence, action
 
-    def _calculate_final_score(self, findings: List[VerificationFinding]) -> float:
+    def _calculate_final_score(self, findings: list[VerificationFinding]) -> float:
         """Calculate final quality score based on findings."""
         if not findings:
             return 1.0
 
         # Severity weights
-        severity_weights = {
-            "critical": 1.0,
-            "high": 0.7,
-            "medium": 0.4,
-            "low": 0.2,
-            "info": 0.1
-        }
+        severity_weights = {"critical": 1.0, "high": 0.7, "medium": 0.4, "low": 0.2, "info": 0.1}
 
         # Calculate penalty
-        total_penalty = sum(
-            severity_weights.get(f.severity, 0.5)
-            for f in findings
-        )
+        total_penalty = sum(severity_weights.get(f.severity, 0.5) for f in findings)
 
         # Normalize to 0-1 score
         max_possible_penalty = len(self.checks) * 1.0
@@ -500,9 +493,9 @@ class MultiVerifierWorkflow:
         self,
         name: str,
         producer_agent: str,
-        verifiers: List[tuple[str, List[VerificationCheck]]],
+        verifiers: list[tuple[str, list[VerificationCheck]]],
         require_all_pass: bool = True,
-        overall_timeout: Optional[int] = None
+        overall_timeout: int | None = None,
     ):
         """
         Initialize multi-verifier workflow.
@@ -522,9 +515,7 @@ class MultiVerifierWorkflow:
         self.logger = logger.bind(workflow=name, pattern="multi_verification")
 
     async def execute(
-        self,
-        initial_state: AgentState,
-        agent_executor: Callable[[str, AgentState], Any]
+        self, initial_state: AgentState, agent_executor: Callable[[str, AgentState], Any]
     ) -> VerificationResult:
         """Execute multi-verifier workflow."""
         start_time = datetime.now(UTC)
@@ -534,7 +525,7 @@ class MultiVerifierWorkflow:
         output = producer_result.get("agent_response", "")
 
         # Step 2: Run all verifiers in parallel
-        all_findings: List[VerificationFinding] = []
+        all_findings: list[VerificationFinding] = []
         verification_results = []
 
         for verifier_agent, checks in self.verifiers:
@@ -544,7 +535,7 @@ class MultiVerifierWorkflow:
                 verifier_agent=verifier_agent,
                 checks=checks,
                 max_iterations=1,  # Single pass for multi-verifier
-                auto_correct=False
+                auto_correct=False,
             )
 
             # Run verification
@@ -562,11 +553,14 @@ class MultiVerifierWorkflow:
                 r.action in [VerificationAction.APPROVE, VerificationAction.APPROVE_WITH_NOTES]
                 for _, r in verification_results
             )
-            final_action = VerificationAction.APPROVE if all_approved else VerificationAction.REQUEST_REVISION
+            final_action = (
+                VerificationAction.APPROVE if all_approved else VerificationAction.REQUEST_REVISION
+            )
         else:
             # Majority must approve
             approved_count = sum(
-                1 for _, r in verification_results
+                1
+                for _, r in verification_results
                 if r.action in [VerificationAction.APPROVE, VerificationAction.APPROVE_WITH_NOTES]
             )
             final_action = (
@@ -576,7 +570,9 @@ class MultiVerifierWorkflow:
             )
 
         # Calculate aggregate score
-        avg_score = sum(r.verification_score for _, r in verification_results) / len(verification_results)
+        avg_score = sum(r.verification_score for _, r in verification_results) / len(
+            verification_results
+        )
 
         return VerificationResult(
             success=True,
@@ -587,7 +583,7 @@ class MultiVerifierWorkflow:
             verification_score=avg_score,
             verifier_confidence=0.8,
             iterations=1,
-            execution_time=(datetime.now(UTC) - start_time).total_seconds()
+            execution_time=(datetime.now(UTC) - start_time).total_seconds(),
         )
 
 
@@ -595,10 +591,10 @@ class MultiVerifierWorkflow:
 async def execute_verification(
     producer_agent: str,
     verifier_agent: str,
-    checks: List[str],
+    checks: list[str],
     initial_state: AgentState,
     agent_executor: Callable,
-    **kwargs
+    **kwargs,
 ) -> VerificationResult:
     """
     Quick helper to execute verification workflow.
@@ -624,8 +620,7 @@ async def execute_verification(
         )
     """
     check_objects = [
-        VerificationCheck(name=check, description=f"Check {check}")
-        for check in checks
+        VerificationCheck(name=check, description=f"Check {check}") for check in checks
     ]
 
     workflow = VerificationWorkflow(
@@ -633,7 +628,7 @@ async def execute_verification(
         producer_agent=producer_agent,
         verifier_agent=verifier_agent,
         checks=check_objects,
-        **kwargs
+        **kwargs,
     )
 
     return await workflow.execute(initial_state, agent_executor)
