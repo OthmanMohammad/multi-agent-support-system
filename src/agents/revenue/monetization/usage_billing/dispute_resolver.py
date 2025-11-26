@@ -601,5 +601,9 @@ Investigation Reasoning:
 
 Generate an empathetic dispute resolution response."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # Dispute analysis uses request context only
+        )
         return response
