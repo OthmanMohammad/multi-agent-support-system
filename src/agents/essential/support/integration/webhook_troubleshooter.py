@@ -5,14 +5,10 @@ This agent specializes in diagnosing and resolving webhook-related problems
 including delivery failures, timeouts, authentication errors, and payload issues.
 """
 
-from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
-import os
-
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("webhook_troubleshooter", tier="essential", category="integration")
@@ -43,12 +39,9 @@ class WebhookTroubleshooter(BaseAgent):
             name="webhook_troubleshooter",
             type=AgentType.SPECIALIST,
             temperature=0.3,
-            capabilities=[
-                AgentCapability.KB_SEARCH,
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="integration",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -68,35 +61,25 @@ class WebhookTroubleshooter(BaseAgent):
         state = self.update_state(state)
 
         message = state["current_message"]
-        customer_context = state.get("customer_metadata", {})
+        state.get("customer_metadata", {})
 
         self.logger.debug(
             "webhook_troubleshooting_details",
             message_preview=message[:100],
-            turn_count=state["turn_count"]
+            turn_count=state["turn_count"],
         )
 
         # Detect webhook issue type
         issue_type = self._detect_issue_type(message)
 
-        self.logger.info(
-            "webhook_issue_detected",
-            issue_type=issue_type
-        )
+        self.logger.info("webhook_issue_detected", issue_type=issue_type)
 
         # Search knowledge base for webhook documentation
-        kb_results = await self.search_knowledge_base(
-            message,
-            category="integration",
-            limit=2
-        )
+        kb_results = await self.search_knowledge_base(message, category="integration", limit=2)
         state["kb_results"] = kb_results
 
         if kb_results:
-            self.logger.info(
-                "kb_articles_found",
-                count=len(kb_results)
-            )
+            self.logger.info("kb_articles_found", count=len(kb_results))
 
         # Generate troubleshooting response
         response = self._generate_troubleshooting_guide(issue_type, kb_results)
@@ -108,9 +91,7 @@ class WebhookTroubleshooter(BaseAgent):
         state["status"] = "resolved"
 
         self.logger.info(
-            "webhook_troubleshooting_completed",
-            status="resolved",
-            issue_type=issue_type
+            "webhook_troubleshooting_completed", status="resolved", issue_type=issue_type
         )
 
         return state
@@ -135,11 +116,7 @@ class WebhookTroubleshooter(BaseAgent):
         # Default to general webhook help
         return "general"
 
-    def _generate_troubleshooting_guide(
-        self,
-        issue_type: str,
-        kb_results: list
-    ) -> str:
+    def _generate_troubleshooting_guide(self, issue_type: str, kb_results: list) -> str:
         """
         Generate webhook troubleshooting guidance based on issue type.
 
@@ -157,7 +134,7 @@ class WebhookTroubleshooter(BaseAgent):
             "payload": self._guide_payload_issues(),
             "ssl": self._guide_ssl_issues(),
             "firewall": self._guide_firewall_issues(),
-            "general": self._guide_general_setup()
+            "general": self._guide_general_setup(),
         }
 
         guide = guides.get(issue_type, guides["general"])
@@ -701,6 +678,7 @@ Settings > Webhooks > Delivery Logs
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
