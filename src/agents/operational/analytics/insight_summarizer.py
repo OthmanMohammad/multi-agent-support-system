@@ -5,13 +5,13 @@ Generates narrative insights from analytics data using Claude.
 Transforms data into actionable business intelligence.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("insight_summarizer", tier="operational", category="analytics")
@@ -32,11 +32,11 @@ class InsightSummarizerAgent(BaseAgent):
         config = AgentConfig(
             name="insight_summarizer",
             type=AgentType.GENERATOR,
-             # Use Sonnet for better narrative generation
+            # Use Sonnet for better narrative generation
             temperature=0.4,
             max_tokens=1500,
             capabilities=[],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -58,24 +58,22 @@ class InsightSummarizerAgent(BaseAgent):
         # Extract data to analyze
         metrics_data = state.get("entities", {}).get("metrics_data", {})
         analysis_type = state.get("entities", {}).get("analysis_type", "general")
-        audience = state.get("entities", {}).get("audience", "executive")  # executive, manager, analyst
+        audience = state.get("entities", {}).get(
+            "audience", "executive"
+        )  # executive, manager, analyst
 
         self.logger.debug(
             "insight_generation_details",
             analysis_type=analysis_type,
             audience=audience,
-            has_metrics=bool(metrics_data)
+            has_metrics=bool(metrics_data),
         )
 
         # Prepare data summary for Claude
         data_summary = self._prepare_data_summary(metrics_data, analysis_type)
 
         # Generate insights using Claude
-        insights = await self._generate_insights_with_llm(
-            data_summary,
-            analysis_type,
-            audience
-        )
+        insights = await self._generate_insights_with_llm(data_summary, analysis_type, audience)
 
         # Parse and structure insights
         structured_insights = self._structure_insights(insights)
@@ -88,10 +86,7 @@ class InsightSummarizerAgent(BaseAgent):
 
         # Format response
         response = self._format_insight_report(
-            structured_insights,
-            key_takeaways,
-            recommendations,
-            analysis_type
+            structured_insights, key_takeaways, recommendations, analysis_type
         )
 
         state["agent_response"] = response
@@ -106,16 +101,12 @@ class InsightSummarizerAgent(BaseAgent):
             "insight_generation_completed",
             analysis_type=analysis_type,
             insights_generated=len(structured_insights),
-            recommendations_count=len(recommendations)
+            recommendations_count=len(recommendations),
         )
 
         return state
 
-    def _prepare_data_summary(
-        self,
-        metrics_data: Dict[str, Any],
-        analysis_type: str
-    ) -> str:
+    def _prepare_data_summary(self, metrics_data: dict[str, Any], analysis_type: str) -> str:
         """
         Prepare data summary for LLM.
 
@@ -132,7 +123,7 @@ class InsightSummarizerAgent(BaseAgent):
                 "revenue": {"current": 542000, "previous": 498000, "change_pct": 8.8},
                 "customers": {"total": 15420, "new": 342, "churned": 87},
                 "engagement": {"dau": 8450, "mau": 14230, "session_duration": 24.5},
-                "support": {"tickets": 1823, "csat": 4.6, "resolution_time": 18.5}
+                "support": {"tickets": 1823, "csat": 4.6, "resolution_time": 18.5},
             }
 
         summary = f"Analysis Type: {analysis_type}\n\nKey Metrics:\n"
@@ -148,10 +139,7 @@ class InsightSummarizerAgent(BaseAgent):
         return summary
 
     async def _generate_insights_with_llm(
-        self,
-        data_summary: str,
-        analysis_type: str,
-        audience: str
+        self, data_summary: str, analysis_type: str, audience: str
     ) -> str:
         """
         Generate insights using Claude.
@@ -189,7 +177,7 @@ Generate insights that are:
                 system_prompt=system_prompt,
                 user_message=user_message,
                 conversation_history=[],  # Insight summaries use data context
-                max_tokens=1200
+                max_tokens=1200,
             )
             return insights
         except Exception as e:
@@ -199,7 +187,7 @@ Generate insights that are:
 
     def _generate_fallback_insights(self, data_summary: str) -> str:
         """Generate basic insights without LLM."""
-        return f"""Based on the data analysis:
+        return """Based on the data analysis:
 
 - Revenue shows positive growth trajectory
 - Customer acquisition remains strong with healthy net growth
@@ -212,7 +200,7 @@ Key recommendations:
 3. Optimize support response times
 4. Invest in product engagement features"""
 
-    def _structure_insights(self, insights_text: str) -> List[Dict[str, Any]]:
+    def _structure_insights(self, insights_text: str) -> list[dict[str, Any]]:
         """
         Structure raw insights into categorized format.
 
@@ -241,28 +229,33 @@ Key recommendations:
 
             # Determine priority
             priority = "medium"
-            if any(word in para.lower() for word in ["critical", "urgent", "concern", "risk"]):
-                priority = "high"
-            elif any(word in para.lower() for word in ["opportunity", "growth", "improve"]):
+            if any(
+                word in para.lower() for word in ["critical", "urgent", "concern", "risk"]
+            ) or any(word in para.lower() for word in ["opportunity", "growth", "improve"]):
                 priority = "high"
             elif any(word in para.lower() for word in ["maintain", "monitor", "continue"]):
                 priority = "low"
 
-            structured.append({
-                "id": i + 1,
-                "category": category,
-                "priority": priority,
-                "content": para,
-                "is_positive": any(word in para.lower() for word in ["growth", "increase", "improve", "strong", "positive"]),
-                "is_negative": any(word in para.lower() for word in ["decline", "decrease", "concern", "risk", "weak"])
-            })
+            structured.append(
+                {
+                    "id": i + 1,
+                    "category": category,
+                    "priority": priority,
+                    "content": para,
+                    "is_positive": any(
+                        word in para.lower()
+                        for word in ["growth", "increase", "improve", "strong", "positive"]
+                    ),
+                    "is_negative": any(
+                        word in para.lower()
+                        for word in ["decline", "decrease", "concern", "risk", "weak"]
+                    ),
+                }
+            )
 
         return structured
 
-    def _extract_key_takeaways(
-        self,
-        structured_insights: List[Dict[str, Any]]
-    ) -> List[str]:
+    def _extract_key_takeaways(self, structured_insights: list[dict[str, Any]]) -> list[str]:
         """Extract key takeaways from insights."""
         takeaways = []
 
@@ -288,9 +281,8 @@ Key recommendations:
         return takeaways[:5]  # Max 5 takeaways
 
     def _generate_recommendations(
-        self,
-        structured_insights: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, structured_insights: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Generate actionable recommendations."""
         recommendations = []
 
@@ -299,33 +291,39 @@ Key recommendations:
             content = insight["content"].lower()
 
             # Look for recommendation keywords
-            if any(word in content for word in ["recommend", "should", "need to", "must", "suggest"]):
-                recommendations.append({
-                    "category": insight["category"],
-                    "priority": insight["priority"],
-                    "recommendation": insight["content"],
-                    "action_type": "immediate" if insight["priority"] == "high" else "planned"
-                })
+            if any(
+                word in content for word in ["recommend", "should", "need to", "must", "suggest"]
+            ):
+                recommendations.append(
+                    {
+                        "category": insight["category"],
+                        "priority": insight["priority"],
+                        "recommendation": insight["content"],
+                        "action_type": "immediate" if insight["priority"] == "high" else "planned",
+                    }
+                )
 
         # If no explicit recommendations, generate based on insights
         if not recommendations:
             for insight in structured_insights[:3]:
                 if insight["is_negative"]:
-                    recommendations.append({
-                        "category": insight["category"],
-                        "priority": "high",
-                        "recommendation": f"Address {insight['category']} concerns identified in analysis",
-                        "action_type": "immediate"
-                    })
+                    recommendations.append(
+                        {
+                            "category": insight["category"],
+                            "priority": "high",
+                            "recommendation": f"Address {insight['category']} concerns identified in analysis",
+                            "action_type": "immediate",
+                        }
+                    )
 
         return recommendations[:5]  # Max 5 recommendations
 
     def _format_insight_report(
         self,
-        structured_insights: List[Dict[str, Any]],
-        key_takeaways: List[str],
-        recommendations: List[Dict[str, Any]],
-        analysis_type: str
+        structured_insights: list[dict[str, Any]],
+        key_takeaways: list[str],
+        recommendations: list[dict[str, Any]],
+        analysis_type: str,
     ) -> str:
         """Format insight report."""
         report = f"""**Analytics Insights Report**
@@ -352,7 +350,13 @@ Key recommendations:
         for category, insights in categories.items():
             report += f"**{category.title()}:**\n"
             for insight in insights:
-                priority_icon = "🔴" if insight["priority"] == "high" else "🟡" if insight["priority"] == "medium" else "🟢"
+                priority_icon = (
+                    "🔴"
+                    if insight["priority"] == "high"
+                    else "🟡"
+                    if insight["priority"] == "medium"
+                    else "🟢"
+                )
                 report += f"{priority_icon} {insight['content']}\n\n"
 
         # Recommendations
