@@ -6,23 +6,19 @@ for programmatic authentication.
 """
 
 import secrets
-from typing import Tuple
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
+
 from passlib.context import CryptContext
 
-from src.utils.logging.setup import get_logger
 from src.core.config import get_settings
+from src.utils.logging.setup import get_logger
 
 logger = get_logger(__name__)
 settings = get_settings()
 
 
 # API key hashing context (same as passwords - bcrypt)
-api_key_context = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto",
-    bcrypt__rounds=12
-)
+api_key_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=12)
 
 
 class APIKeyManager:
@@ -51,7 +47,7 @@ class APIKeyManager:
     KEY_LENGTH = 32  # 256 bits of entropy
 
     @classmethod
-    def generate_api_key(cls, is_test: bool = False) -> Tuple[str, str, str]:
+    def generate_api_key(cls, is_test: bool = False) -> tuple[str, str, str]:
         """
         Generate a new API key.
 
@@ -95,13 +91,13 @@ class APIKeyManager:
             "api_key_generated",
             prefix=key_prefix,
             is_test=is_test,
-            environment=settings.environment
+            environment=settings.environment,
         )
 
         return full_key, key_prefix, key_hash
 
     @classmethod
-    def validate_api_key_format(cls, api_key: str) -> Tuple[bool, str]:
+    def validate_api_key_format(cls, api_key: str) -> tuple[bool, str]:
         """
         Validate API key format.
 
@@ -122,8 +118,7 @@ class APIKeyManager:
             False, "API key must start with msa_live_ or msa_test_"
         """
         # Check prefix
-        if not (api_key.startswith(cls.PREFIX_PRODUCTION) or
-                api_key.startswith(cls.PREFIX_TEST)):
+        if not (api_key.startswith(cls.PREFIX_PRODUCTION) or api_key.startswith(cls.PREFIX_TEST)):
             return False, "API key must start with msa_live_ or msa_test_"
 
         # Check minimum length
@@ -133,9 +128,10 @@ class APIKeyManager:
 
         # Check characters (URL-safe base64: A-Za-z0-9_-)
         # Split into prefix and random part
-        prefix = (cls.PREFIX_PRODUCTION if api_key.startswith(cls.PREFIX_PRODUCTION)
-                  else cls.PREFIX_TEST)
-        random_part = api_key[len(prefix):]
+        prefix = (
+            cls.PREFIX_PRODUCTION if api_key.startswith(cls.PREFIX_PRODUCTION) else cls.PREFIX_TEST
+        )
+        random_part = api_key[len(prefix) :]
 
         allowed_chars = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-")
         if not all(c in allowed_chars for c in random_part):
@@ -214,10 +210,7 @@ class APIKeyManager:
         return api_key.startswith(cls.PREFIX_TEST)
 
     @classmethod
-    def calculate_expiration(
-        cls,
-        days: int = 90
-    ) -> datetime:
+    def calculate_expiration(cls, days: int = 90) -> datetime:
         """
         Calculate API key expiration date.
 
