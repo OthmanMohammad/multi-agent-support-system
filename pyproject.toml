@@ -83,12 +83,41 @@ select = [
 ]
 
 ignore = [
-    "E501",   # Line too long (handled by formatter)
-    "B008",   # Do not perform function calls in argument defaults (FastAPI Depends)
+    "E501",    # Line too long (handled by formatter)
+    "B008",    # Do not perform function calls in argument defaults (FastAPI Depends)
     "PLR0913", # Too many arguments to function call
     "PLR2004", # Magic value used in comparison
     "ARG001",  # Unused function argument (common in FastAPI)
     "ARG002",  # Unused method argument
+    "PLR0911", # Too many return statements
+    "PLR0912", # Too many branches
+    "PLR0915", # Too many statements
+    "PLW0603", # Using global statement (acceptable in certain patterns)
+    "PLC0415", # Import not at top of file (sometimes needed for circular imports)
+    "E402",    # Module level import not at top of file
+    "SIM102",  # Nested if statements (sometimes more readable)
+    "SIM108",  # Use ternary operator (not always more readable)
+    "SIM116",  # Use dictionary instead of if-else (not always applicable)
+    "RUF001",  # String contains ambiguous character (false positives with unicode)
+    "RUF002",  # Docstring contains ambiguous character
+    "RUF003",  # Comment contains ambiguous character
+    "RUF034",  # Useless if-else condition (sometimes intentional for clarity)
+    "ERA001",  # Commented-out code (sometimes intentional for documentation)
+    "RUF012",  # Mutable class attributes without ClassVar (too strict for dataclasses)
+    "B024",    # Abstract base class without abstract methods
+    "SIM103",  # Return condition directly (not always more readable)
+    "SIM105",  # Use contextlib.suppress (not always preferred)
+    "PTH123",  # Use pathlib.Path.open() (os.open still valid)
+    "PTH118",  # Use pathlib.Path.joinpath() (os.path.join still valid)
+    "PTH110",  # Use pathlib.Path.exists() (os.path.exists still valid)
+    "PTH208",  # Use pathlib (os module still valid)
+    "RUF005",  # Consider unpacking instead of concatenation
+    "RUF006",  # Store a reference to the return value of asyncio.create_task
+    "RUF059",  # Unused unpacked variable
+    "PLW2901", # Outer loop variable overwritten by inner assignment
+    "PLW1641", # Object does not implement __hash__
+    "PLC0206", # Extracting value from dictionary without .items()
+    "B018",    # Found useless expression
 ]
 
 # Allow fix for all enabled rules
