@@ -1,13 +1,14 @@
 """
 Agent handoff and collaboration repository - Business logic for agent coordination data access
 """
-from typing import Optional, List
-from sqlalchemy import select, func, and_
+
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
-from datetime import datetime, timedelta, UTC
+
+from sqlalchemy import and_, func, select
 
 from src.database.base import BaseRepository
-from src.database.models import AgentHandoff, AgentCollaboration, ConversationTag
+from src.database.models import AgentCollaboration, AgentHandoff, ConversationTag
 
 
 class AgentHandoffRepository(BaseRepository[AgentHandoff]):
@@ -16,10 +17,7 @@ class AgentHandoffRepository(BaseRepository[AgentHandoff]):
     def __init__(self, session):
         super().__init__(AgentHandoff, session)
 
-    async def get_by_conversation(
-        self,
-        conversation_id: UUID
-    ) -> List[AgentHandoff]:
+    async def get_by_conversation(self, conversation_id: UUID) -> list[AgentHandoff]:
         """Get all handoffs for a conversation"""
         result = await self.session.execute(
             select(AgentHandoff)
@@ -29,11 +27,8 @@ class AgentHandoffRepository(BaseRepository[AgentHandoff]):
         return list(result.scalars().all())
 
     async def get_by_agent(
-        self,
-        agent_name: str,
-        direction: str = 'both',
-        limit: int = 100
-    ) -> List[AgentHandoff]:
+        self, agent_name: str, direction: str = "both", limit: int = 100
+    ) -> list[AgentHandoff]:
         """
         Get handoffs involving a specific agent
 
@@ -42,9 +37,9 @@ class AgentHandoffRepository(BaseRepository[AgentHandoff]):
             direction: 'from', 'to', or 'both'
             limit: Maximum results
         """
-        if direction == 'from':
+        if direction == "from":
             query = select(AgentHandoff).where(AgentHandoff.from_agent == agent_name)
-        elif direction == 'to':
+        elif direction == "to":
             query = select(AgentHandoff).where(AgentHandoff.to_agent == agent_name)
         else:  # both
             query = select(AgentHandoff).where(
@@ -56,19 +51,15 @@ class AgentHandoffRepository(BaseRepository[AgentHandoff]):
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
-    async def get_handoff_patterns(
-        self,
-        days: int = 30,
-        limit: int = 20
-    ) -> List[dict]:
+    async def get_handoff_patterns(self, days: int = 30, limit: int = 20) -> list[dict]:
         """Get most common handoff patterns"""
         cutoff = datetime.now(UTC) - timedelta(days=days)
         result = await self.session.execute(
             select(
                 AgentHandoff.from_agent,
                 AgentHandoff.to_agent,
-                func.count(AgentHandoff.id).label('count'),
-                func.avg(AgentHandoff.latency_ms).label('avg_latency')
+                func.count(AgentHandoff.id).label("count"),
+                func.avg(AgentHandoff.latency_ms).label("avg_latency"),
             )
             .where(AgentHandoff.timestamp >= cutoff)
             .group_by(AgentHandoff.from_agent, AgentHandoff.to_agent)
@@ -78,18 +69,16 @@ class AgentHandoffRepository(BaseRepository[AgentHandoff]):
 
         return [
             {
-                'from_agent': row.from_agent,
-                'to_agent': row.to_agent,
-                'count': row.count,
-                'avg_latency_ms': float(row.avg_latency) if row.avg_latency else 0.0
+                "from_agent": row.from_agent,
+                "to_agent": row.to_agent,
+                "count": row.count,
+                "avg_latency_ms": float(row.avg_latency) if row.avg_latency else 0.0,
             }
             for row in result
         ]
 
     async def get_average_handoff_time(
-        self,
-        agent_name: Optional[str] = None,
-        days: Optional[int] = None
+        self, agent_name: str | None = None, days: int | None = None
     ) -> float:
         """Get average handoff latency in milliseconds"""
         conditions = [AgentHandoff.latency_ms.isnot(None)]
@@ -104,8 +93,7 @@ class AgentHandoffRepository(BaseRepository[AgentHandoff]):
             conditions.append(AgentHandoff.timestamp >= cutoff)
 
         result = await self.session.execute(
-            select(func.avg(AgentHandoff.latency_ms))
-            .where(and_(*conditions))
+            select(func.avg(AgentHandoff.latency_ms)).where(and_(*conditions))
         )
         return result.scalar() or 0.0
 
@@ -116,10 +104,7 @@ class AgentCollaborationRepository(BaseRepository[AgentCollaboration]):
     def __init__(self, session):
         super().__init__(AgentCollaboration, session)
 
-    async def get_by_conversation(
-        self,
-        conversation_id: UUID
-    ) -> List[AgentCollaboration]:
+    async def get_by_conversation(self, conversation_id: UUID) -> list[AgentCollaboration]:
         """Get all collaborations for a conversation"""
         result = await self.session.execute(
             select(AgentCollaboration)
@@ -128,10 +113,7 @@ class AgentCollaborationRepository(BaseRepository[AgentCollaboration]):
         )
         return list(result.scalars().all())
 
-    async def get_active_collaborations(
-        self,
-        limit: int = 100
-    ) -> List[AgentCollaboration]:
+    async def get_active_collaborations(self, limit: int = 100) -> list[AgentCollaboration]:
         """Get currently active collaborations"""
         result = await self.session.execute(
             select(AgentCollaboration)
@@ -142,10 +124,8 @@ class AgentCollaborationRepository(BaseRepository[AgentCollaboration]):
         return list(result.scalars().all())
 
     async def get_by_type(
-        self,
-        collaboration_type: str,
-        limit: int = 100
-    ) -> List[AgentCollaboration]:
+        self, collaboration_type: str, limit: int = 100
+    ) -> list[AgentCollaboration]:
         """Get collaborations by type"""
         result = await self.session.execute(
             select(AgentCollaboration)
@@ -155,11 +135,7 @@ class AgentCollaborationRepository(BaseRepository[AgentCollaboration]):
         )
         return list(result.scalars().all())
 
-    async def get_by_agent(
-        self,
-        agent_name: str,
-        limit: int = 100
-    ) -> List[AgentCollaboration]:
+    async def get_by_agent(self, agent_name: str, limit: int = 100) -> list[AgentCollaboration]:
         """Get collaborations involving a specific agent"""
         result = await self.session.execute(
             select(AgentCollaboration)
@@ -170,9 +146,7 @@ class AgentCollaborationRepository(BaseRepository[AgentCollaboration]):
         return list(result.scalars().all())
 
     async def get_consensus_rate(
-        self,
-        collaboration_type: Optional[str] = None,
-        days: Optional[int] = None
+        self, collaboration_type: str | None = None, days: int | None = None
     ) -> float:
         """Get percentage of collaborations that reached consensus"""
         conditions = [AgentCollaboration.consensus_reached.isnot(None)]
@@ -185,17 +159,14 @@ class AgentCollaborationRepository(BaseRepository[AgentCollaboration]):
             conditions.append(AgentCollaboration.start_time >= cutoff)
 
         total_result = await self.session.execute(
-            select(func.count(AgentCollaboration.id))
-            .where(and_(*conditions))
+            select(func.count(AgentCollaboration.id)).where(and_(*conditions))
         )
         total = total_result.scalar() or 0
 
         consensus_result = await self.session.execute(
-            select(func.count(AgentCollaboration.id))
-            .where(and_(
-                AgentCollaboration.consensus_reached == True,
-                *conditions
-            ))
+            select(func.count(AgentCollaboration.id)).where(
+                and_(AgentCollaboration.consensus_reached, *conditions)
+            )
         )
         consensus = consensus_result.scalar() or 0
 
@@ -208,10 +179,7 @@ class ConversationTagRepository(BaseRepository[ConversationTag]):
     def __init__(self, session):
         super().__init__(ConversationTag, session)
 
-    async def get_by_conversation(
-        self,
-        conversation_id: UUID
-    ) -> List[ConversationTag]:
+    async def get_by_conversation(self, conversation_id: UUID) -> list[ConversationTag]:
         """Get all tags for a conversation"""
         result = await self.session.execute(
             select(ConversationTag)
@@ -220,11 +188,7 @@ class ConversationTagRepository(BaseRepository[ConversationTag]):
         )
         return list(result.scalars().all())
 
-    async def get_by_tag(
-        self,
-        tag: str,
-        limit: int = 100
-    ) -> List[ConversationTag]:
+    async def get_by_tag(self, tag: str, limit: int = 100) -> list[ConversationTag]:
         """Get all conversations with a specific tag"""
         result = await self.session.execute(
             select(ConversationTag)
@@ -234,11 +198,7 @@ class ConversationTagRepository(BaseRepository[ConversationTag]):
         )
         return list(result.scalars().all())
 
-    async def get_by_category(
-        self,
-        tag_category: str,
-        limit: int = 100
-    ) -> List[ConversationTag]:
+    async def get_by_category(self, tag_category: str, limit: int = 100) -> list[ConversationTag]:
         """Get tags by category"""
         result = await self.session.execute(
             select(ConversationTag)
@@ -249,42 +209,40 @@ class ConversationTagRepository(BaseRepository[ConversationTag]):
         return list(result.scalars().all())
 
     async def get_tag_distribution(
-        self,
-        category: Optional[str] = None,
-        limit: int = 50
-    ) -> List[dict]:
+        self, category: str | None = None, limit: int = 50
+    ) -> list[dict]:
         """Get distribution of tags"""
         query = select(
             ConversationTag.tag,
-            func.count(ConversationTag.id).label('count'),
-            func.avg(ConversationTag.confidence).label('avg_confidence')
+            func.count(ConversationTag.id).label("count"),
+            func.avg(ConversationTag.confidence).label("avg_confidence"),
         )
 
         if category:
             query = query.where(ConversationTag.tag_category == category)
 
-        query = query.group_by(ConversationTag.tag).order_by(func.count(ConversationTag.id).desc()).limit(limit)
+        query = (
+            query.group_by(ConversationTag.tag)
+            .order_by(func.count(ConversationTag.id).desc())
+            .limit(limit)
+        )
 
         result = await self.session.execute(query)
 
         return [
             {
-                'tag': row.tag,
-                'count': row.count,
-                'avg_confidence': float(row.avg_confidence) if row.avg_confidence else 0.0
+                "tag": row.tag,
+                "count": row.count,
+                "avg_confidence": float(row.avg_confidence) if row.avg_confidence else 0.0,
             }
             for row in result
         ]
 
-    async def search_tags(
-        self,
-        pattern: str,
-        limit: int = 50
-    ) -> List[ConversationTag]:
+    async def search_tags(self, pattern: str, limit: int = 50) -> list[ConversationTag]:
         """Search tags by pattern"""
         result = await self.session.execute(
             select(ConversationTag)
-            .where(ConversationTag.tag.like(f'%{pattern}%'))
+            .where(ConversationTag.tag.like(f"%{pattern}%"))
             .order_by(ConversationTag.created_at.desc())
             .limit(limit)
         )
