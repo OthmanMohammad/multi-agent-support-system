@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { isGoogleConfigured, isGitHubConfigured } from "@/auth.config";
+import { isGitHubConfigured, isGoogleConfigured } from "@/auth.config";
 
 /**
  * GET /api/auth/providers
