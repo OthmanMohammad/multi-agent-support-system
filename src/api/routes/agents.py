@@ -11,33 +11,34 @@ Part of: Phase 2 - Agent & Workflow Endpoints
 """
 
 import asyncio
-from typing import Dict, Any, Optional
-from uuid import UUID, uuid4
-from datetime import datetime, timedelta, UTC
-from fastapi import APIRouter, Depends, HTTPException, status, Query
-import time
 import os
+import time
+from datetime import UTC, datetime, timedelta
+from typing import Any
+from uuid import UUID
 
-from src.api.models.agent_models import (
-    AgentListResponse,
-    AgentInfo,
-    AgentExecuteRequest,
-    AgentExecuteResponse,
-    AgentExecuteAsyncRequest,
-    AgentJobResponse,
-    AgentJobStatusResponse,
-    AgentMetricsResponse,
-    AgentMetrics,
-)
-from src.api.dependencies import get_current_user
-from src.api.auth.permissions import PermissionScope, require_scopes, require_any_scope
-from src.database.models.user import User
-from src.services.infrastructure.agent_registry import AgentRegistry
-from src.services.job_store import RedisJobStore, InMemoryJobStore, JobType, JobStatus
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+
 from src.agents.base.agent_types import AgentType
 from src.agents.base.base_agent import AgentConfig
-from src.workflow.state import AgentState
+from src.api.auth.permissions import PermissionScope, require_scopes
+from src.api.dependencies import get_current_user
+from src.api.models.agent_models import (
+    AgentExecuteAsyncRequest,
+    AgentExecuteRequest,
+    AgentExecuteResponse,
+    AgentInfo,
+    AgentJobResponse,
+    AgentJobStatusResponse,
+    AgentListResponse,
+    AgentMetrics,
+    AgentMetricsResponse,
+)
+from src.database.models.user import User
+from src.services.infrastructure.agent_registry import AgentRegistry
+from src.services.job_store import InMemoryJobStore, JobStatus, JobType, RedisJobStore
 from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 logger = get_logger(__name__)
 
@@ -48,6 +49,7 @@ router = APIRouter(prefix="/agents")
 # =============================================================================
 # PRODUCTION JOB STORE (Redis-backed with in-memory fallback)
 # =============================================================================
+
 
 # Initialize job store (Redis if available, otherwise in-memory)
 def _initialize_job_store():
@@ -62,7 +64,7 @@ def _initialize_job_store():
     else:
         logger.warning(
             "using_in_memory_job_store",
-            message="Using in-memory job store. Jobs will not persist across restarts."
+            message="Using in-memory job store. Jobs will not persist across restarts.",
         )
         return InMemoryJobStore()
 
@@ -89,6 +91,7 @@ async def shutdown_job_store():
 # =============================================================================
 # HELPER FUNCTIONS
 # =============================================================================
+
 
 def get_agent_tier_scope(tier: str) -> str:
     """Get required permission scope for agent tier"""
@@ -117,10 +120,10 @@ def check_agent_permission(user: User, agent_name: str) -> bool:
 async def execute_agent(
     agent_name: str,
     query: str,
-    context: Optional[Dict[str, Any]] = None,
+    context: dict[str, Any] | None = None,
     timeout: int = 30,
-    temperature: Optional[float] = None,
-    max_tokens: Optional[int] = None,
+    temperature: float | None = None,
+    max_tokens: int | None = None,
 ) -> AgentExecuteResponse:
     """
     Execute an agent and return response.
@@ -145,8 +148,7 @@ async def execute_agent(
     agent_class = AgentRegistry.get_agent(agent_name)
     if not agent_class:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Agent '{agent_name}' not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Agent '{agent_name}' not found"
         )
 
     # Get agent metadata
@@ -174,20 +176,13 @@ async def execute_agent(
 
         # Execute agent with timeout
         try:
-            result = await asyncio.wait_for(
-                agent.process(state),
-                timeout=timeout
-            )
-        except asyncio.TimeoutError:
-            logger.warning(
-                "agent_execution_timeout",
-                agent=agent_name,
-                timeout=timeout
-            )
+            result = await asyncio.wait_for(agent.process(state), timeout=timeout)
+        except TimeoutError:
+            logger.warning("agent_execution_timeout", agent=agent_name, timeout=timeout)
             raise HTTPException(
                 status_code=status.HTTP_408_REQUEST_TIMEOUT,
-                detail=f"Agent execution timed out after {timeout}s"
-            )
+                detail=f"Agent execution timed out after {timeout}s",
+            ) from None
 
         execution_time = time.time() - start_time
 
@@ -195,21 +190,25 @@ async def execute_agent(
         response = AgentExecuteResponse(
             success=True,
             agent_name=agent_name,
-            result=result.response if hasattr(result, 'response') else str(result),
+            result=result.response if hasattr(result, "response") else str(result),
             execution_time=round(execution_time, 2),
-            tokens_used=result.tokens_used if hasattr(result, 'tokens_used') else 0,
-            model_used=result.model_used if hasattr(result, 'model_used') else agent_config.model,
-            confidence=result.confidence if hasattr(result, 'confidence') else None,
-            suggested_actions=result.suggested_actions if hasattr(result, 'suggested_actions') else [],
-            escalation_needed=result.escalation_needed if hasattr(result, 'escalation_needed') else False,
-            knowledge_base_hits=result.kb_hits if hasattr(result, 'kb_hits') else 0,
+            tokens_used=result.tokens_used if hasattr(result, "tokens_used") else 0,
+            model_used=result.model_used if hasattr(result, "model_used") else agent_config.model,
+            confidence=result.confidence if hasattr(result, "confidence") else None,
+            suggested_actions=result.suggested_actions
+            if hasattr(result, "suggested_actions")
+            else [],
+            escalation_needed=result.escalation_needed
+            if hasattr(result, "escalation_needed")
+            else False,
+            knowledge_base_hits=result.kb_hits if hasattr(result, "kb_hits") else 0,
         )
 
         logger.info(
             "agent_execution_success",
             agent=agent_name,
             execution_time=execution_time,
-            tokens=response.tokens_used
+            tokens=response.tokens_used,
         )
 
         return response
@@ -224,7 +223,7 @@ async def execute_agent(
             agent=agent_name,
             error=str(e),
             execution_time=execution_time,
-            exc_info=True
+            exc_info=True,
         )
 
         # Return error response
@@ -244,12 +243,15 @@ async def execute_agent(
 # AGENT LISTING ENDPOINTS
 # =============================================================================
 
+
 @router.get("", response_model=AgentListResponse)
 @require_scopes(PermissionScope.READ_AGENTS)
 async def list_agents(
-    tier: Optional[str] = Query(None, description="Filter by tier (essential, revenue, operational, advanced)"),
-    category: Optional[str] = Query(None, description="Filter by category (billing, technical, etc.)"),
-    current_user: User = Depends(get_current_user)
+    tier: str | None = Query(
+        None, description="Filter by tier (essential, revenue, operational, advanced)"
+    ),
+    category: str | None = Query(None, description="Filter by category (billing, technical, etc.)"),
+    current_user: User = Depends(get_current_user),
 ):
     """
     List all available agents.
@@ -263,7 +265,7 @@ async def list_agents(
         "list_agents_request",
         user_id=str(current_user.id),
         tier_filter=tier,
-        category_filter=category
+        category_filter=category,
     )
 
     # Get all agents
@@ -312,7 +314,7 @@ async def list_agents(
         "list_agents_success",
         total=len(agent_infos),
         filtered_total=len(agent_infos),
-        user_id=str(current_user.id)
+        user_id=str(current_user.id),
     )
 
     return response
@@ -322,10 +324,10 @@ async def list_agents(
 # SYNCHRONOUS AGENT EXECUTION
 # =============================================================================
 
+
 @router.post("/execute", response_model=AgentExecuteResponse)
 async def execute_agent_sync(
-    request: AgentExecuteRequest,
-    current_user: User = Depends(get_current_user)
+    request: AgentExecuteRequest, current_user: User = Depends(get_current_user)
 ):
     """
     Execute an agent synchronously.
@@ -343,14 +345,13 @@ async def execute_agent_sync(
         "agent_execute_request",
         agent=request.agent_name,
         user_id=str(current_user.id),
-        conversation_id=str(request.conversation_id) if request.conversation_id else None
+        conversation_id=str(request.conversation_id) if request.conversation_id else None,
     )
 
     # Check if agent exists
     if not AgentRegistry.get_agent(request.agent_name):
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Agent '{request.agent_name}' not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Agent '{request.agent_name}' not found"
         )
 
     # Check permissions
@@ -363,12 +364,12 @@ async def execute_agent_sync(
             "agent_execution_permission_denied",
             agent=request.agent_name,
             user_id=str(current_user.id),
-            required_scope=required_scope
+            required_scope=required_scope,
         )
 
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Missing required permission: {required_scope}"
+            detail=f"Missing required permission: {required_scope}",
         )
 
     # Execute agent
@@ -388,10 +389,10 @@ async def execute_agent_sync(
 # ASYNCHRONOUS AGENT EXECUTION
 # =============================================================================
 
+
 @router.post("/execute-async", response_model=AgentJobResponse)
 async def execute_agent_async(
-    request: AgentExecuteAsyncRequest,
-    current_user: User = Depends(get_current_user)
+    request: AgentExecuteAsyncRequest, current_user: User = Depends(get_current_user)
 ):
     """
     Execute an agent asynchronously.
@@ -404,16 +405,13 @@ async def execute_agent_async(
     Permission required based on agent tier.
     """
     logger.info(
-        "agent_execute_async_request",
-        agent=request.agent_name,
-        user_id=str(current_user.id)
+        "agent_execute_async_request", agent=request.agent_name, user_id=str(current_user.id)
     )
 
     # Check if agent exists
     if not AgentRegistry.get_agent(request.agent_name):
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Agent '{request.agent_name}' not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Agent '{request.agent_name}' not found"
         )
 
     # Check permissions
@@ -424,7 +422,7 @@ async def execute_agent_async(
 
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Missing required permission: {required_scope}"
+            detail=f"Missing required permission: {required_scope}",
         )
 
     # Create job
@@ -436,13 +434,13 @@ async def execute_agent_async(
             "context": request.context,
             "timeout": request.timeout,
             "temperature": request.temperature,
-            "max_tokens": request.max_tokens
+            "max_tokens": request.max_tokens,
         },
         metadata={
             "user_id": str(current_user.id),
             "conversation_id": str(request.conversation_id) if request.conversation_id else None,
-            "callback_url": request.callback_url
-        }
+            "callback_url": request.callback_url,
+        },
     )
 
     # Start background task
@@ -472,10 +470,7 @@ async def execute_agent_async(
 
         except Exception as e:
             await job_store.update_job(
-                job_id,
-                status=JobStatus.FAILED,
-                error=str(e),
-                error_type=type(e).__name__
+                job_id, status=JobStatus.FAILED, error=str(e), error_type=type(e).__name__
             )
 
     # Start task in background (don't await)
@@ -491,16 +486,15 @@ async def execute_agent_async(
         status=job["status"],
         created_at=datetime.fromisoformat(job["created_at"]),
         started_at=datetime.fromisoformat(job["started_at"]) if job.get("started_at") else None,
-        completed_at=datetime.fromisoformat(job["completed_at"]) if job.get("completed_at") else None,
+        completed_at=datetime.fromisoformat(job["completed_at"])
+        if job.get("completed_at")
+        else None,
         estimated_completion=estimated_completion,
     )
 
 
 @router.get("/jobs/{job_id}", response_model=AgentJobStatusResponse)
-async def get_job_status(
-    job_id: UUID,
-    current_user: User = Depends(get_current_user)
-):
+async def get_job_status(job_id: UUID, current_user: User = Depends(get_current_user)):
     """
     Get status of an async agent job.
 
@@ -512,11 +506,10 @@ async def get_job_status(
 
     try:
         job = await job_store.get_job(job_id)
-    except Exception as e:
+    except Exception:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Job {job_id} not found"
-        )
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Job {job_id} not found"
+        ) from None
 
     # Build response
     result = None
@@ -536,12 +529,13 @@ async def get_job_status(
 # AGENT METRICS
 # =============================================================================
 
+
 @router.get("/metrics", response_model=AgentMetricsResponse)
 @require_scopes(PermissionScope.READ_ANALYTICS)
 async def get_agent_metrics(
     time_period: str = Query("24h", description="Time period (24h, 7d, 30d)"),
-    agent_name: Optional[str] = Query(None, description="Filter by specific agent"),
-    current_user: User = Depends(get_current_user)
+    agent_name: str | None = Query(None, description="Filter by specific agent"),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Get agent performance metrics.
@@ -555,7 +549,7 @@ async def get_agent_metrics(
         "agent_metrics_request",
         user_id=str(current_user.id),
         time_period=time_period,
-        agent_filter=agent_name
+        agent_filter=agent_name,
     )
 
     # TODO: Implement actual metrics collection from database/Redis
