@@ -18,7 +18,9 @@ interface ExportOptions {
 /**
  * Export conversation to the specified format
  */
-export async function exportConversation(options: ExportOptions): Promise<void> {
+export async function exportConversation(
+  options: ExportOptions
+): Promise<void> {
   const { format, conversation, messages, includeMetadata = true } = options;
 
   let content: string;
@@ -118,8 +120,11 @@ function formatAsMarkdown(
   lines.push("");
 
   for (const message of messages) {
-    const role = message.role === "user" ? "User" : message.agent_name || "Assistant";
-    const timestamp = includeMetadata ? ` (${formatDate(message.timestamp)})` : "";
+    const role =
+      message.role === "user" ? "User" : message.agent_name || "Assistant";
+    const timestamp = includeMetadata
+      ? ` (${formatDate(message.timestamp)})`
+      : "";
 
     lines.push(`### ${role}${timestamp}`);
     lines.push("");
@@ -193,8 +198,13 @@ function formatAsText(
 
   // Messages
   for (const message of messages) {
-    const role = message.role === "user" ? "USER" : (message.agent_name || "ASSISTANT").toUpperCase();
-    const timestamp = includeMetadata ? ` [${formatDate(message.timestamp)}]` : "";
+    const role =
+      message.role === "user"
+        ? "USER"
+        : (message.agent_name || "ASSISTANT").toUpperCase();
+    const timestamp = includeMetadata
+      ? ` [${formatDate(message.timestamp)}]`
+      : "";
 
     lines.push(`${role}${timestamp}:`);
     lines.push(message.content);
@@ -273,7 +283,9 @@ function markdownToHTML(markdown: string): string {
     .replace(/(<li>.*<\/li>\n?)+/g, "<ul>$&</ul>")
     .replace(/\n\n/g, "</p><p>")
     .replace(/^(.+)$/gm, (match) => {
-      if (match.startsWith("<")) return match;
+      if (match.startsWith("<")) {
+        return match;
+      }
       return `<p>${match}</p>`;
     })
     .replace(/<p><\/p>/g, "");
@@ -282,7 +294,11 @@ function markdownToHTML(markdown: string): string {
 /**
  * Trigger file download
  */
-function downloadFile(content: string, filename: string, mimeType: string): void {
+function downloadFile(
+  content: string,
+  filename: string,
+  mimeType: string
+): void {
   const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);
 
