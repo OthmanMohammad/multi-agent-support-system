@@ -4,15 +4,15 @@
  * Admin-related API calls for system monitoring and management.
  */
 
-import { apiClient } from '../api-client';
-import { type Result } from '../types/api';
+import { apiClient } from "../api-client";
+import { type Result } from "../types/api";
 
 // =============================================================================
 // TYPES
 // =============================================================================
 
 export interface HealthStatus {
-  status: 'healthy' | 'degraded' | 'unhealthy';
+  status: "healthy" | "degraded" | "unhealthy";
   database: boolean;
   redis: boolean;
   agents: boolean;
@@ -24,7 +24,7 @@ export interface HealthStatus {
 export interface AgentInfo {
   name: string;
   type: string;
-  status: 'active' | 'inactive' | 'error';
+  status: "active" | "inactive" | "error";
   description?: string;
   success_rate?: number;
   avg_response_time_ms?: number;
@@ -48,20 +48,22 @@ export const adminAPI = {
    * Get system health status
    */
   async getHealth(): Promise<Result<HealthStatus>> {
-    return apiClient.get<HealthStatus>('/api/health');
+    return apiClient.get<HealthStatus>("/api/health");
   },
 
   /**
    * Get list of all agents
    */
   async getAgents(): Promise<Result<AgentInfo[]>> {
-    return apiClient.get<AgentInfo[]>('/api/admin/agents');
+    return apiClient.get<AgentInfo[]>("/api/admin/agents");
   },
 
   /**
    * Get cost tracking data
    */
-  async getCostTracking(period: '24h' | '7d' | '30d' = '7d'): Promise<Result<CostTracking>> {
+  async getCostTracking(
+    period: "24h" | "7d" | "30d" = "7d"
+  ): Promise<Result<CostTracking>> {
     return apiClient.get<CostTracking>(`/api/admin/costs?period=${period}`);
   },
 
@@ -69,7 +71,7 @@ export const adminAPI = {
    * Switch backend provider
    */
   async switchBackend(provider: string): Promise<Result<{ success: boolean }>> {
-    return apiClient.post<{ success: boolean }>('/api/admin/switch-backend', {
+    return apiClient.post<{ success: boolean }>("/api/admin/switch-backend", {
       provider,
     });
   },
