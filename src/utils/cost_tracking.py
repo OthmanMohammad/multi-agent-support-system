@@ -10,10 +10,10 @@ Provides real-time cost monitoring and budget enforcement.
 Part of: Phase 2 - LiteLLM Multi-Backend Abstraction Layer
 """
 
-from typing import Dict, Optional
-from datetime import datetime
-import structlog
 from dataclasses import dataclass, field
+from datetime import datetime
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 
@@ -21,10 +21,11 @@ logger = structlog.get_logger(__name__)
 @dataclass
 class CostEntry:
     """Single cost entry for tracking"""
+
     backend: str
     cost: float
     timestamp: datetime = field(default_factory=datetime.utcnow)
-    details: Optional[Dict] = None
+    details: dict | None = None
 
 
 class CostCalculator:
@@ -77,15 +78,11 @@ class CostCalculator:
         """
         # Get pricing for model, fallback to Haiku if unknown
         input_price, output_price = CostCalculator.ANTHROPIC_PRICING.get(
-            model,
-            CostCalculator.ANTHROPIC_PRICING["claude-3-haiku-20240307"]
+            model, CostCalculator.ANTHROPIC_PRICING["claude-3-haiku-20240307"]
         )
 
         # Calculate cost
-        cost = (
-            (input_tokens / 1_000_000) * input_price +
-            (output_tokens / 1_000_000) * output_price
-        )
+        cost = (input_tokens / 1_000_000) * input_price + (output_tokens / 1_000_000) * output_price
 
         return round(cost, 6)
 
@@ -135,7 +132,7 @@ class CostTracker:
         Args:
             budget_limit: Maximum budget in USD (default: $15)
         """
-        self.costs: Dict[str, float] = {
+        self.costs: dict[str, float] = {
             "anthropic": 0.0,
             "vllm": 0.0,
         }
@@ -165,9 +162,7 @@ class CostTracker:
         Returns:
             Cost of this call
         """
-        cost = CostCalculator.calculate_anthropic_cost(
-            model, input_tokens, output_tokens
-        )
+        cost = CostCalculator.calculate_anthropic_cost(model, input_tokens, output_tokens)
 
         self.costs["anthropic"] += cost
 
@@ -179,7 +174,7 @@ class CostTracker:
                 "model": model,
                 "input_tokens": input_tokens,
                 "output_tokens": output_tokens,
-            }
+            },
         )
         self._add_to_history(entry)
 
@@ -219,7 +214,7 @@ class CostTracker:
             details={
                 "runtime_seconds": runtime_seconds,
                 "runtime_hours": round(runtime_seconds / 3600, 2),
-            }
+            },
         )
         self._add_to_history(entry)
 
@@ -241,7 +236,7 @@ class CostTracker:
         """Get total cost across all backends"""
         return sum(self.costs.values())
 
-    def get_breakdown(self) -> Dict[str, float]:
+    def get_breakdown(self) -> dict[str, float]:
         """
         Get cost breakdown by backend.
 
@@ -260,7 +255,7 @@ class CostTracker:
             "budget_used_percent": round((total / self.budget_limit) * 100, 2),
         }
 
-    def get_budget_status(self) -> Dict[str, any]:
+    def get_budget_status(self) -> dict[str, any]:
         """
         Get budget status with alerts.
 
@@ -322,7 +317,7 @@ class CostTracker:
         if len(self.cost_history) > self.max_history:
             self.cost_history.pop(0)
 
-    def get_recent_costs(self, limit: int = 10) -> list[Dict]:
+    def get_recent_costs(self, limit: int = 10) -> list[dict]:
         """
         Get recent cost entries.
 
