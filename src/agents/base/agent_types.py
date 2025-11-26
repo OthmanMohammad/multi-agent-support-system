@@ -12,6 +12,7 @@ from enum import Enum
 
 class AgentType(Enum):
     """Agent type classification"""
+
     ROUTER = "router"
     SPECIALIST = "specialist"
     COORDINATOR = "coordinator"
@@ -24,6 +25,7 @@ class AgentType(Enum):
 
 class AgentCapability(Enum):
     """Agent capabilities for enabling specific features"""
+
     KB_SEARCH = "kb_search"
     CONTEXT_AWARE = "context_aware"
     MULTI_TURN = "multi_turn"
@@ -37,6 +39,7 @@ class AgentCapability(Enum):
 
 class Domain(Enum):
     """Top-level business domains"""
+
     SUPPORT = "support"
     SALES = "sales"
     CUSTOMER_SUCCESS = "customer_success"
@@ -45,6 +48,7 @@ class Domain(Enum):
 
 class SupportIntent(Enum):
     """Support domain intents"""
+
     # Billing
     BILLING_UPGRADE = "billing_upgrade"
     BILLING_DOWNGRADE = "billing_downgrade"
@@ -92,6 +96,7 @@ class SupportIntent(Enum):
 
 class SalesIntent(Enum):
     """Sales domain intents"""
+
     QUALIFICATION = "qualification"
     DEMO_REQUEST = "demo_request"
     PRICING_INQUIRY = "pricing_inquiry"
@@ -103,6 +108,7 @@ class SalesIntent(Enum):
 
 class CSIntent(Enum):
     """Customer success intents"""
+
     ONBOARDING = "onboarding"
     HEALTH_CHECK = "health_check"
     ADOPTION_GUIDANCE = "adoption_guidance"
@@ -114,6 +120,7 @@ class CSIntent(Enum):
 
 class AgentRole(Enum):
     """Agent roles in the system"""
+
     META_ROUTER = "meta_router"
     DOMAIN_ROUTER = "domain_router"
     INTENT_CLASSIFIER = "intent_classifier"
@@ -129,6 +136,7 @@ class AgentRole(Enum):
 
 class Tier(Enum):
     """Agent tier classification"""
+
     ESSENTIAL = "essential"
     REVENUE = "revenue"
     OPERATIONAL = "operational"
@@ -137,6 +145,7 @@ class Tier(Enum):
 
 class ResponseType(Enum):
     """Types of responses agents can provide"""
+
     DIRECT_ANSWER = "direct_answer"
     ROUTING_DECISION = "routing_decision"
     ESCALATION = "escalation"
