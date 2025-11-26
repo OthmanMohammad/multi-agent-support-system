@@ -24,12 +24,13 @@ if result.is_success:
     # Proceed with creation
     pass
 """
+
 from src.services.domain.conversation.domain_service import ConversationDomainService
 from src.services.domain.customer.domain_service import CustomerDomainService
 
 version = "1.0.0"
 
-all = [
-"ConversationDomainService",
-"CustomerDomainService",
+__all__ = [
+    "ConversationDomainService",
+    "CustomerDomainService",
 ]
