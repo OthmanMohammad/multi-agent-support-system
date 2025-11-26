@@ -527,7 +527,11 @@ Your response should:
 
 Generate a compelling ROI analysis response with specific numbers."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # ROI calculations use analysis context
+        )
         return response
 
 
