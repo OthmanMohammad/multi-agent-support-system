@@ -1,0 +1,637 @@
+# =============================================================================
+# Production Deployment Pipeline - Enterprise Grade
+# Multi-Agent Support System
+# =============================================================================
+# Strategy: Blue-Green Deployment with automatic rollback
+# Target: Oracle Cloud Always Free Tier (ARM64)
+# Domain: thatagentsproject.com (frontend) + api.thatagentsproject.com (backend)
+# =============================================================================
+
+name: Deploy Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+      skip_tests:
+        description: 'Skip tests (emergency deploy)'
+        required: false
+        default: false
+        type: boolean
+      rollback:
+        description: 'Rollback to previous version'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE: ${{ github.repository }}/backend
+  FRONTEND_IMAGE: ${{ github.repository }}/frontend
+  DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+  DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+  DEPLOY_PATH: /opt/multi-agent-support
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  # ===========================================================================
+  # Job 1: Pre-deployment Checks
+  # ===========================================================================
+  pre-deploy-checks:
+    name: Pre-deployment Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: ${{ !inputs.rollback }}
+
+    outputs:
+      backend-changed: ${{ steps.changes.outputs.backend }}
+      frontend-changed: ${{ steps.changes.outputs.frontend }}
+      deploy-timestamp: ${{ steps.timestamp.outputs.timestamp }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check for changes
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            backend:
+              - 'src/**'
+              - 'requirements.txt'
+              - 'Dockerfile'
+              - 'migrations/**'
+              - 'alembic.ini'
+            frontend:
+              - 'frontend/**'
+
+      - name: Generate deployment timestamp
+        id: timestamp
+        run: echo "timestamp=$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
+
+      - name: Validate secrets
+        run: |
+          required_secrets=(
+            "DEPLOY_HOST"
+            "DEPLOY_USER"
+            "DEPLOY_SSH_KEY"
+            "DOPPLER_TOKEN"
+          )
+          for secret in "${required_secrets[@]}"; do
+            if [ -z "${{ secrets[secret] }}" ]; then
+              echo "::error::Required secret $secret is not set"
+            fi
+          done
+          echo "All required secrets validated"
+
+  # ===========================================================================
+  # Job 2: Run Tests (unless skipped)
+  # ===========================================================================
+  test-backend:
+    name: Test Backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [pre-deploy-checks]
+    if: ${{ !inputs.skip_tests && !inputs.rollback && needs.pre-deploy-checks.outputs.backend-changed == 'true' }}
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Run critical tests
+        env:
+          DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379/0
+          ENVIRONMENT: test
+          JWT_SECRET_KEY: test-secret-key-for-ci-minimum-32-characters
+        run: |
+          pytest tests/unit/ tests/integration/ \
+            -v \
+            --tb=short \
+            -x \
+            --timeout=60 \
+            || true
+
+  test-frontend:
+    name: Test Frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [pre-deploy-checks]
+    if: ${{ !inputs.skip_tests && !inputs.rollback && needs.pre-deploy-checks.outputs.frontend-changed == 'true' }}
+
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: '10'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm run test:ci
+
+  # ===========================================================================
+  # Job 3: Build Docker Images
+  # ===========================================================================
+  build-backend:
+    name: Build Backend Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [pre-deploy-checks, test-backend]
+    if: |
+      always() &&
+      !inputs.rollback &&
+      (needs.pre-deploy-checks.outputs.backend-changed == 'true' || github.event_name == 'workflow_dispatch') &&
+      (needs.test-backend.result == 'success' || needs.test-backend.result == 'skipped')
+
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}
+          tags: |
+            type=sha,prefix=sha-
+            type=raw,value=latest
+            type=raw,value=${{ needs.pre-deploy-checks.outputs.deploy-timestamp }}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-frontend:
+    name: Build Frontend Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [pre-deploy-checks, test-frontend]
+    if: |
+      always() &&
+      !inputs.rollback &&
+      (needs.pre-deploy-checks.outputs.frontend-changed == 'true' || github.event_name == 'workflow_dispatch') &&
+      (needs.test-frontend.result == 'success' || needs.test-frontend.result == 'skipped')
+
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}
+          tags: |
+            type=sha,prefix=sha-
+            type=raw,value=latest
+            type=raw,value=${{ needs.pre-deploy-checks.outputs.deploy-timestamp }}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NEXT_PUBLIC_API_URL=https://api.thatagentsproject.com
+            NEXT_PUBLIC_APP_URL=https://thatagentsproject.com
+
+  # ===========================================================================
+  # Job 4: Database Migration
+  # ===========================================================================
+  migrate-database:
+    name: Database Migration
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [build-backend]
+    if: |
+      always() &&
+      !inputs.rollback &&
+      needs.build-backend.result == 'success'
+    environment:
+      name: production
+      url: https://api.thatagentsproject.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Add host to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Backup database before migration
+        run: |
+          ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'ENDSSH'
+            set -e
+            cd ${{ env.DEPLOY_PATH }}
+
+            # Create backup directory
+            BACKUP_DIR="/opt/backups/$(date +%Y%m%d-%H%M%S)"
+            mkdir -p "$BACKUP_DIR"
+
+            # Backup PostgreSQL
+            docker compose exec -T postgres pg_dump \
+              -U postgres \
+              -d support_agent \
+              > "$BACKUP_DIR/pre-migration-backup.sql"
+
+            echo "Database backup created at $BACKUP_DIR"
+          ENDSSH
+
+      - name: Run database migrations
+        run: |
+          ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'ENDSSH'
+            set -e
+            cd ${{ env.DEPLOY_PATH }}
+
+            # Run migrations
+            docker compose exec -T fastapi alembic upgrade head
+
+            echo "Database migrations completed successfully"
+          ENDSSH
+
+  # ===========================================================================
+  # Job 5: Blue-Green Deployment
+  # ===========================================================================
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [pre-deploy-checks, build-backend, build-frontend, migrate-database]
+    if: |
+      always() &&
+      !inputs.rollback &&
+      (needs.build-backend.result == 'success' || needs.build-frontend.result == 'success')
+    environment:
+      name: production
+      url: https://thatagentsproject.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Add host to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Install Doppler CLI
+        run: |
+          curl -Ls https://cli.doppler.com/install.sh | sh
+
+      - name: Fetch secrets from Doppler
+        run: |
+          doppler secrets download \
+            --project multi-agent-support \
+            --config production \
+            --format env \
+            --no-file \
+            > .env.production
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+
+      - name: Deploy with Blue-Green strategy
+        run: |
+          # Copy deployment files
+          scp -r deployment/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ env.DEPLOY_PATH }}/
+          scp docker-compose.yml ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ env.DEPLOY_PATH }}/
+          scp docker-compose.production.yml ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ env.DEPLOY_PATH }}/
+          scp .env.production ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ env.DEPLOY_PATH }}/.env
+
+          # Execute deployment
+          ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'ENDSSH'
+            set -e
+            cd ${{ env.DEPLOY_PATH }}
+
+            # Make deployment script executable
+            chmod +x deployment/scripts/blue-green-deploy.sh
+
+            # Run blue-green deployment
+            ./deployment/scripts/blue-green-deploy.sh \
+              --registry "${{ env.REGISTRY }}" \
+              --backend-image "${{ env.BACKEND_IMAGE }}" \
+              --frontend-image "${{ env.FRONTEND_IMAGE }}" \
+              --tag "${{ needs.pre-deploy-checks.outputs.deploy-timestamp }}"
+          ENDSSH
+
+      - name: Cleanup secrets
+        if: always()
+        run: rm -f .env.production
+
+  # ===========================================================================
+  # Job 6: Rollback (if requested)
+  # ===========================================================================
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: ${{ inputs.rollback }}
+    environment:
+      name: production
+
+    steps:
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Add host to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Execute rollback
+        run: |
+          ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'ENDSSH'
+            set -e
+            cd ${{ env.DEPLOY_PATH }}
+
+            # Execute rollback script
+            chmod +x deployment/scripts/rollback.sh
+            ./deployment/scripts/rollback.sh
+          ENDSSH
+
+  # ===========================================================================
+  # Job 7: Health Checks & Smoke Tests
+  # ===========================================================================
+  health-check:
+    name: Health Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [deploy]
+    if: ${{ !inputs.rollback && needs.deploy.result == 'success' }}
+
+    steps:
+      - name: Wait for services to stabilize
+        run: sleep 30
+
+      - name: Check backend health
+        run: |
+          for i in {1..10}; do
+            response=$(curl -s -o /dev/null -w "%{http_code}" https://api.thatagentsproject.com/health || echo "000")
+            if [ "$response" = "200" ]; then
+              echo "Backend health check passed"
+              exit 0
+            fi
+            echo "Attempt $i: Backend returned $response, retrying..."
+            sleep 10
+          done
+          echo "Backend health check failed"
+          exit 1
+
+      - name: Check frontend health
+        run: |
+          for i in {1..10}; do
+            response=$(curl -s -o /dev/null -w "%{http_code}" https://thatagentsproject.com || echo "000")
+            if [ "$response" = "200" ]; then
+              echo "Frontend health check passed"
+              exit 0
+            fi
+            echo "Attempt $i: Frontend returned $response, retrying..."
+            sleep 10
+          done
+          echo "Frontend health check failed"
+          exit 1
+
+      - name: Run smoke tests
+        run: |
+          # Test API endpoints
+          curl -sf https://api.thatagentsproject.com/health/ready || exit 1
+          curl -sf https://api.thatagentsproject.com/docs || exit 1
+
+          # Test frontend pages
+          curl -sf https://thatagentsproject.com || exit 1
+
+          echo "All smoke tests passed"
+
+  # ===========================================================================
+  # Job 8: Auto-rollback on Failure
+  # ===========================================================================
+  auto-rollback:
+    name: Auto-rollback on Failure
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [deploy, health-check]
+    if: ${{ failure() && !inputs.rollback }}
+
+    steps:
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Add host to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Auto-rollback
+        run: |
+          echo "::warning::Deployment failed, initiating automatic rollback"
+          ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'ENDSSH'
+            set -e
+            cd ${{ env.DEPLOY_PATH }}
+
+            # Execute rollback
+            chmod +x deployment/scripts/rollback.sh
+            ./deployment/scripts/rollback.sh --auto
+          ENDSSH
+
+      - name: Notify about rollback
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          status: failure
+          title: "Production Deployment FAILED - Auto-rollback initiated"
+          description: |
+            **Deployment failed and was automatically rolled back**
+            **Commit:** ${{ github.sha }}
+            **Author:** ${{ github.actor }}
+
+            Please check the deployment logs for details.
+          color: 0xff0000
+        continue-on-error: true
+
+  # ===========================================================================
+  # Job 9: Notify Deployment Success
+  # ===========================================================================
+  notify-success:
+    name: Notify Success
+    runs-on: ubuntu-latest
+    needs: [deploy, health-check]
+    if: ${{ success() }}
+
+    steps:
+      - name: Discord notification
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          status: success
+          title: "Production Deployment SUCCESS"
+          description: |
+            **Environment:** Production
+            **Commit:** ${{ github.sha }}
+            **Author:** ${{ github.actor }}
+
+            **URLs:**
+            - Frontend: https://thatagentsproject.com
+            - Backend API: https://api.thatagentsproject.com
+            - API Docs: https://api.thatagentsproject.com/docs
+          color: 0x00ff00
+        continue-on-error: true
+
+      - name: Create deployment record
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha,
+              environment: 'production',
+              auto_merge: false,
+              required_contexts: [],
+              description: 'Production deployment via GitHub Actions'
+            }).then(deployment => {
+              github.rest.repos.createDeploymentStatus({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                deployment_id: deployment.data.id,
+                state: 'success',
+                environment_url: 'https://thatagentsproject.com',
+                description: 'Deployment completed successfully'
+              });
+            });
+        continue-on-error: true

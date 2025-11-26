@@ -1,0 +1,464 @@
+# =============================================================================
+# Security Scanning Pipeline - Enterprise Grade
+# Multi-Agent Support System
+# =============================================================================
+# Comprehensive security scanning: SAST, dependency audit, container scanning
+# Runs: Daily schedule, PRs, Push to main
+# =============================================================================
+
+name: Security Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run daily at 2:00 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '22'
+
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ===========================================================================
+  # Job 1: Backend SAST (Static Application Security Testing)
+  # ===========================================================================
+  backend-sast:
+    name: Backend SAST
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install security tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit safety pip-audit semgrep
+
+      - name: Run Bandit (Python SAST)
+        run: |
+          bandit -r src/ \
+            -f sarif \
+            -o bandit-results.sarif \
+            --severity-level medium \
+            || true
+
+      - name: Upload Bandit results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: bandit-results.sarif
+          category: bandit
+        continue-on-error: true
+
+      - name: Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/python
+            p/security-audit
+            p/secrets
+            p/owasp-top-ten
+            p/django
+            p/flask
+            p/sqlalchemy
+          generateSarif: true
+        continue-on-error: true
+
+      - name: Upload Semgrep results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep
+        continue-on-error: true
+
+  # ===========================================================================
+  # Job 2: Frontend SAST
+  # ===========================================================================
+  frontend-sast:
+    name: Frontend SAST
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      security-events: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep for JavaScript/TypeScript
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/javascript
+            p/typescript
+            p/react
+            p/nextjs
+            p/security-audit
+            p/secrets
+            p/owasp-top-ten
+            p/xss
+          generateSarif: true
+        continue-on-error: true
+
+      - name: Upload Semgrep results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep-frontend
+        continue-on-error: true
+
+  # ===========================================================================
+  # Job 3: Dependency Vulnerability Scanning
+  # ===========================================================================
+  dependency-scan:
+    name: Dependency Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: '10'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # Backend dependency scanning
+      - name: Run pip-audit (Python)
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt \
+            --format json \
+            --output pip-audit-results.json \
+            || true
+
+      - name: Run Safety check (Python)
+        run: |
+          pip install safety
+          safety check -r requirements.txt \
+            --full-report \
+            --output text \
+            || true
+
+      # Frontend dependency scanning
+      - name: Run npm audit (Frontend)
+        working-directory: ./frontend
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm audit --audit-level=moderate || true
+
+      - name: Run Snyk (if token available)
+        if: ${{ secrets.SNYK_TOKEN != '' }}
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --all-projects --severity-threshold=high
+
+      - name: Upload dependency scan results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-scan-results
+          path: |
+            pip-audit-results.json
+          retention-days: 30
+
+  # ===========================================================================
+  # Job 4: Secret Scanning
+  # ===========================================================================
+  secret-scan:
+    name: Secret Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run TruffleHog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified
+        continue-on-error: true
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Check for hardcoded secrets
+        run: |
+          # Custom pattern matching for common secrets
+          patterns=(
+            'api[_-]?key.*=.*["\x27][a-zA-Z0-9]{20,}'
+            'secret[_-]?key.*=.*["\x27][a-zA-Z0-9]{20,}'
+            'password.*=.*["\x27].+'
+            'aws_access_key_id.*=.*[A-Z0-9]{20}'
+            'aws_secret_access_key.*=.*[a-zA-Z0-9/+=]{40}'
+            'sk-ant-[a-zA-Z0-9-]+'
+            'ghp_[a-zA-Z0-9]{36}'
+          )
+
+          found_secrets=false
+          for pattern in "${patterns[@]}"; do
+            if grep -rE "$pattern" --include="*.py" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.json" --include="*.yml" --include="*.yaml" . 2>/dev/null | grep -v node_modules | grep -v .git | grep -v ".env.example"; then
+              echo "::warning::Potential secret found matching pattern: $pattern"
+              found_secrets=true
+            fi
+          done
+
+          if [ "$found_secrets" = true ]; then
+            echo "::warning::Potential secrets detected. Please review the matches above."
+          else
+            echo "No hardcoded secrets detected"
+          fi
+
+  # ===========================================================================
+  # Job 5: Container Image Scanning
+  # ===========================================================================
+  container-scan:
+    name: Container Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image for scanning
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          load: true
+          tags: backend:scan
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run Trivy vulnerability scanner (Backend)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'backend:scan'
+          format: 'sarif'
+          output: 'trivy-backend-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      - name: Upload Trivy Backend results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-backend-results.sarif'
+          category: trivy-backend
+        continue-on-error: true
+
+      - name: Build frontend image for scanning
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: false
+          load: true
+          tags: frontend:scan
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NEXT_PUBLIC_API_URL=https://api.thatagentsproject.com
+            NEXT_PUBLIC_APP_URL=https://thatagentsproject.com
+
+      - name: Run Trivy vulnerability scanner (Frontend)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'frontend:scan'
+          format: 'sarif'
+          output: 'trivy-frontend-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
+      - name: Upload Trivy Frontend results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-frontend-results.sarif'
+          category: trivy-frontend
+        continue-on-error: true
+
+  # ===========================================================================
+  # Job 6: CodeQL Analysis
+  # ===========================================================================
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['python', 'javascript-typescript']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended,security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
+
+  # ===========================================================================
+  # Job 7: Infrastructure as Code Security
+  # ===========================================================================
+  iac-scan:
+    name: IaC Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: .
+          framework: dockerfile,yaml,json
+          output_format: sarif
+          output_file_path: checkov-results.sarif
+          soft_fail: true
+        continue-on-error: true
+
+      - name: Upload Checkov results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: checkov-results.sarif
+          category: checkov
+        continue-on-error: true
+
+      - name: Scan Docker Compose files
+        run: |
+          # Check for security issues in docker-compose files
+          files=$(find . -name "docker-compose*.yml" -o -name "docker-compose*.yaml")
+          for file in $files; do
+            echo "Scanning $file..."
+            # Check for privileged containers
+            if grep -q "privileged: true" "$file"; then
+              echo "::warning file=$file::Privileged container detected"
+            fi
+            # Check for host network mode
+            if grep -q "network_mode: host" "$file"; then
+              echo "::warning file=$file::Host network mode detected"
+            fi
+            # Check for exposed sensitive ports
+            if grep -qE "ports:.*:(22|3306|5432|27017|6379)" "$file"; then
+              echo "::warning file=$file::Potentially sensitive port exposed"
+            fi
+          done
+
+  # ===========================================================================
+  # Job 8: Security Report Summary
+  # ===========================================================================
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [backend-sast, frontend-sast, dependency-scan, secret-scan, codeql, iac-scan]
+    if: always()
+
+    steps:
+      - name: Generate security summary
+        run: |
+          echo "## Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Scan | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend SAST | ${{ needs.backend-sast.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend SAST | ${{ needs.frontend-sast.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dependency Scan | ${{ needs.dependency-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Secret Scan | ${{ needs.secret-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| CodeQL | ${{ needs.codeql.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| IaC Scan | ${{ needs.iac-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "View detailed results in the Security tab of this repository." >> $GITHUB_STEP_SUMMARY
+
+      - name: Discord notification on critical findings
+        if: |
+          needs.backend-sast.result == 'failure' ||
+          needs.frontend-sast.result == 'failure' ||
+          needs.secret-scan.result == 'failure'
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          status: failure
+          title: "Security Scan - Critical Findings"
+          description: |
+            **Critical security issues detected!**
+
+            Please review the Security tab in GitHub for details.
+
+            **Scan Results:**
+            - Backend SAST: ${{ needs.backend-sast.result }}
+            - Frontend SAST: ${{ needs.frontend-sast.result }}
+            - Secret Scan: ${{ needs.secret-scan.result }}
+          color: 0xff0000
+        continue-on-error: true
