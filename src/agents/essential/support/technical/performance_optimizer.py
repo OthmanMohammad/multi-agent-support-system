@@ -4,12 +4,12 @@ Performance Optimizer Agent - Fixes slow performance issues.
 Specialist for performance optimization, cache clearing, query optimization.
 """
 
-from typing import Dict, Any, List
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("performance_optimizer", tier="essential", category="technical")
@@ -30,12 +30,9 @@ class PerformanceOptimizer(BaseAgent):
             name="performance_optimizer",
             type=AgentType.SPECIALIST,
             temperature=0.3,
-            capabilities=[
-                AgentCapability.KB_SEARCH,
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="technical",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -53,16 +50,13 @@ class PerformanceOptimizer(BaseAgent):
             "performance_optimization_started",
             message_preview=message[:100],
             customer_id=state.get("customer_id"),
-            turn_count=state["turn_count"]
+            turn_count=state["turn_count"],
         )
 
         # Detect performance issue type
         performance_issue = self._detect_performance_issue(message)
 
-        self.logger.info(
-            "performance_issue_detected",
-            issue_type=performance_issue
-        )
+        self.logger.info("performance_issue_detected", issue_type=performance_issue)
 
         # Diagnose performance bottleneck
         diagnosis = self._diagnose_performance(performance_issue, customer_context)
@@ -71,25 +65,18 @@ class PerformanceOptimizer(BaseAgent):
             "performance_diagnosis_completed",
             primary_bottleneck=diagnosis["primary_bottleneck"],
             severity=diagnosis["severity"],
-            bottleneck_count=len(diagnosis["all_bottlenecks"])
+            bottleneck_count=len(diagnosis["all_bottlenecks"]),
         )
 
         # Get optimization steps
         optimization = self._get_optimization_steps(diagnosis)
 
         # Search KB for performance tips
-        kb_results = await self.search_knowledge_base(
-            message,
-            category="technical",
-            limit=2
-        )
+        kb_results = await self.search_knowledge_base(message, category="technical", limit=2)
         state["kb_results"] = kb_results
 
         if kb_results:
-            self.logger.info(
-                "performance_kb_articles_found",
-                count=len(kb_results)
-            )
+            self.logger.info("performance_kb_articles_found", count=len(kb_results))
 
         response = self._format_response(optimization, kb_results)
 
@@ -102,9 +89,7 @@ class PerformanceOptimizer(BaseAgent):
         state["status"] = "resolved"
 
         self.logger.info(
-            "performance_optimization_completed",
-            response_length=len(response),
-            status="resolved"
+            "performance_optimization_completed", response_length=len(response), status="resolved"
         )
 
         return state
@@ -122,7 +107,7 @@ class PerformanceOptimizer(BaseAgent):
         else:
             return "general_slowness"
 
-    def _diagnose_performance(self, issue_type: str, context: Dict[str, Any]) -> Dict[str, Any]:
+    def _diagnose_performance(self, issue_type: str, context: dict[str, Any]) -> dict[str, Any]:
         """Diagnose performance bottleneck"""
         browser = context.get("browser", "unknown")
         data_size_mb = context.get("data_size_mb", 0)
@@ -134,7 +119,7 @@ class PerformanceOptimizer(BaseAgent):
             "diagnosing_performance",
             browser=browser,
             data_size=data_size_mb,
-            projects=active_projects
+            projects=active_projects,
         )
 
         bottlenecks = []
@@ -171,15 +156,15 @@ class PerformanceOptimizer(BaseAgent):
             "severity": severity,
             "browser": browser,
             "data_size_mb": data_size_mb,
-            "active_projects": active_projects
+            "active_projects": active_projects,
         }
 
-    def _get_optimization_steps(self, diagnosis: Dict[str, Any]) -> Dict[str, Any]:
+    def _get_optimization_steps(self, diagnosis: dict[str, Any]) -> dict[str, Any]:
         """Get optimization recommendations"""
         bottleneck = diagnosis["primary_bottleneck"]
 
         if bottleneck == "large_data":
-            message = f"""Your account has a lot of data ({diagnosis['data_size_mb']}+ MB), which can slow things down.
+            message = f"""Your account has a lot of data ({diagnosis["data_size_mb"]}+ MB), which can slow things down.
 
 **Speed it up:**
 1. **Archive old projects** (Settings > Projects > Archive)
@@ -199,11 +184,11 @@ Try archiving old projects first - this usually makes the biggest difference!"""
             return {
                 "message": message,
                 "expected_improvement": "50-70%",
-                "primary_action": "archive_old_projects"
+                "primary_action": "archive_old_projects",
             }
 
         elif bottleneck == "too_many_projects":
-            message = f"""You have {diagnosis['active_projects']}+ active projects, which impacts performance.
+            message = f"""You have {diagnosis["active_projects"]}+ active projects, which impacts performance.
 
 **Optimization tips:**
 1. **Close inactive projects** (Right-click > Close)
@@ -220,11 +205,11 @@ Would you like me to show you how to archive projects?"""
             return {
                 "message": message,
                 "expected_improvement": "40-60%",
-                "primary_action": "reduce_active_projects"
+                "primary_action": "reduce_active_projects",
             }
 
         elif bottleneck == "unsupported_browser":
-            message = f"""Internet Explorer is no longer supported and causes severe performance issues.
+            message = """Internet Explorer is no longer supported and causes severe performance issues.
 
 **Switch to a modern browser:**
 - **Chrome** (recommended) - https://www.google.com/chrome/
@@ -249,7 +234,7 @@ After switching, you'll notice:
             return {
                 "message": message,
                 "expected_improvement": "90%+",
-                "primary_action": "upgrade_browser"
+                "primary_action": "upgrade_browser",
             }
 
         elif bottleneck == "accumulated_data":
@@ -273,7 +258,7 @@ This keeps your account fast and organized!"""
             return {
                 "message": message,
                 "expected_improvement": "60-80%",
-                "primary_action": "spring_cleaning"
+                "primary_action": "spring_cleaning",
             }
 
         elif bottleneck == "plan_limitations":
@@ -302,7 +287,7 @@ Would you like to see Premium pricing?"""
             return {
                 "message": message,
                 "expected_improvement": "30-90%",
-                "primary_action": "optimize_or_upgrade"
+                "primary_action": "optimize_or_upgrade",
             }
 
         else:
@@ -332,10 +317,10 @@ Try the quick wins first and let me know if it helps!"""
             return {
                 "message": message,
                 "expected_improvement": "20-40%",
-                "primary_action": "general_optimization"
+                "primary_action": "general_optimization",
             }
 
-    def _format_response(self, optimization: Dict[str, Any], kb_results: list) -> str:
+    def _format_response(self, optimization: dict[str, Any], kb_results: list) -> str:
         """Format response with KB context"""
         kb_context = ""
         if kb_results:
@@ -348,6 +333,7 @@ Try the quick wins first and let me know if it helps!"""
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -361,7 +347,7 @@ if __name__ == "__main__":
             "browser": "Chrome",
             "data_size_mb": 150,
             "active_projects": 5,
-            "plan": "premium"
+            "plan": "premium",
         }
 
         agent = PerformanceOptimizer()
@@ -381,7 +367,7 @@ if __name__ == "__main__":
             "browser": "Firefox",
             "data_size_mb": 50,
             "active_projects": 15,
-            "plan": "free"
+            "plan": "free",
         }
 
         result2 = await agent.process(state2)
@@ -399,7 +385,7 @@ if __name__ == "__main__":
             "browser": "IE",
             "data_size_mb": 20,
             "active_projects": 2,
-            "plan": "free"
+            "plan": "free",
         }
 
         result3 = await agent.process(state3)
