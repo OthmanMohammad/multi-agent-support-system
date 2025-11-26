@@ -2,10 +2,12 @@
 Automation & Workflow models for Tier 3
 Automation Swarm database tables
 """
-from sqlalchemy import Column, String, Integer, Float, Boolean, ForeignKey, DateTime, Text, Index
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.orm import relationship
+
 import uuid
+
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, String, Text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import relationship
 
 from src.database.models.base import BaseModel
 
@@ -55,7 +57,9 @@ class AutomatedTask(BaseModel):
     created_by = Column(String(100), nullable=True)
 
     def __repr__(self) -> str:
-        return f"<AutomatedTask(type={self.task_type}, status={self.status}, success={self.success})>"
+        return (
+            f"<AutomatedTask(type={self.task_type}, status={self.status}, success={self.success})>"
+        )
 
 
 class AutomationWorkflowExecution(BaseModel):
@@ -102,9 +106,7 @@ class AutomationWorkflowExecution(BaseModel):
     sla_met = Column(Boolean, nullable=True)
     sla_buffer_seconds = Column(Integer, nullable=True)
 
-    __table_args__ = (
-        Index('idx_entity', 'entity_type', 'entity_id'),
-    )
+    __table_args__ = (Index("idx_entity", "entity_type", "entity_id"),)
 
     def __repr__(self) -> str:
         return f"<AutomationWorkflowExecution(workflow={self.workflow_name}, status={self.status}, steps={self.completed_steps}/{self.total_steps})>"
@@ -145,7 +147,7 @@ class SLACompliance(BaseModel):
         UUID(as_uuid=True),
         ForeignKey("customers.id", ondelete="SET NULL"),
         nullable=True,
-        index=True
+        index=True,
     )
     customer_plan = Column(String(100), nullable=True)
     escalated = Column(Boolean, default=False, nullable=False)
@@ -155,9 +157,7 @@ class SLACompliance(BaseModel):
     # Relationships
     customer = relationship("Customer", back_populates="sla_compliance")
 
-    __table_args__ = (
-        Index('idx_entity_sla', 'entity_type', 'entity_id'),
-    )
+    __table_args__ = (Index("idx_entity_sla", "entity_type", "entity_id"),)
 
     def __repr__(self) -> str:
         return f"<SLACompliance(type={self.sla_type}, met={self.sla_met}, buffer={self.sla_buffer_minutes}min)>"
