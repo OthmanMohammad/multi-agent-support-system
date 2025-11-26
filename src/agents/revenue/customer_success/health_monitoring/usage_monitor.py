@@ -5,13 +5,12 @@ Monitors product usage patterns, detects anomalies, and identifies feature adopt
 Tracks DAU/MAU metrics and benchmarks against cohorts.
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("usage_monitor", tier="revenue", category="customer_success")
@@ -34,7 +33,7 @@ class UsageMonitorAgent(BaseAgent):
             temperature=0.3,
             max_tokens=400,
             capabilities=[AgentCapability.CONTEXT_AWARE],
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -65,16 +64,12 @@ class UsageMonitorAgent(BaseAgent):
         self.logger.info(
             "usage_monitoring_completed",
             usage_status=analysis["status"],
-            anomaly_detected=analysis.get("anomaly_detected", False)
+            anomaly_detected=analysis.get("anomaly_detected", False),
         )
 
         return state
 
-    def _analyze_usage(
-        self,
-        current: Dict[str, Any],
-        previous: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _analyze_usage(self, current: dict[str, Any], previous: dict[str, Any]) -> dict[str, Any]:
         """Analyze usage patterns and detect anomalies."""
         dau_current = current.get("dau", 0)
         mau_current = current.get("mau", 0)
@@ -123,15 +118,10 @@ class UsageMonitorAgent(BaseAgent):
             "seat_utilization_pct": round(seat_utilization, 1),
             "anomaly_detected": anomaly_detected,
             "anomaly_type": anomaly_type,
-            "recommended_action": recommended_action
+            "recommended_action": recommended_action,
         }
 
-    def _get_recommended_action(
-        self,
-        status: str,
-        anomaly: bool,
-        seat_utilization: float
-    ) -> str:
+    def _get_recommended_action(self, status: str, anomaly: bool, seat_utilization: float) -> str:
         """Get recommended action based on usage analysis."""
         if anomaly and status == "declining":
             return "Investigate usage drop immediately - possible team turnover or product issue"
@@ -144,26 +134,22 @@ class UsageMonitorAgent(BaseAgent):
         else:
             return "Usage stable - continue monitoring"
 
-    def _format_usage_report(self, analysis: Dict[str, Any]) -> str:
+    def _format_usage_report(self, analysis: dict[str, Any]) -> str:
         """Format usage monitoring report."""
-        status_emoji = {
-            "declining": "????",
-            "stable": "??????",
-            "growing": "????"
-        }
+        status_emoji = {"declining": "????", "stable": "??????", "growing": "????"}
 
-        report = f"""**{status_emoji.get(analysis['status'], '????')} Usage Monitoring Report**
+        report = f"""**{status_emoji.get(analysis["status"], "????")} Usage Monitoring Report**
 
-**Status:** {analysis['status'].title()}
+**Status:** {analysis["status"].title()}
 
 **Current Metrics:**
-- Daily Active Users (DAU): {analysis['dau_current']}
-- Monthly Active Users (MAU): {analysis['mau_current']}
-- Seat Utilization: {analysis['seat_utilization_pct']}%
+- Daily Active Users (DAU): {analysis["dau_current"]}
+- Monthly Active Users (MAU): {analysis["mau_current"]}
+- Seat Utilization: {analysis["seat_utilization_pct"]}%
 
 **Changes:**
-- DAU Change: {analysis['dau_change_pct']:+.1f}%
-- MAU Change: {analysis['mau_change_pct']:+.1f}%
+- DAU Change: {analysis["dau_change_pct"]:+.1f}%
+- MAU Change: {analysis["mau_change_pct"]:+.1f}%
 """
 
         if analysis["anomaly_detected"]:
@@ -176,6 +162,7 @@ class UsageMonitorAgent(BaseAgent):
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -187,7 +174,7 @@ if __name__ == "__main__":
         state = create_initial_state("Monitor usage")
         state["entities"] = {
             "current_period_usage": {"dau": 10, "mau": 15, "total_seats": 20},
-            "previous_period_usage": {"dau": 18, "mau": 20}
+            "previous_period_usage": {"dau": 18, "mau": 20},
         }
 
         result = await agent.process(state)
