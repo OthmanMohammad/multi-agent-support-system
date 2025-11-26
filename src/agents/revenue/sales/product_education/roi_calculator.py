@@ -5,13 +5,12 @@ Calculates time savings ROI, cost savings ROI, and generates business case docum
 Performs payback period analysis with financial projections.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("roi_calculator", tier="revenue", category="sales")
@@ -33,52 +32,52 @@ class ROICalculator(BaseAgent):
         "manager": 85,
         "professional": 55,
         "support_staff": 35,
-        "entry_level": 25
+        "entry_level": 25,
     }
 
     # Time savings multipliers by company size
     TIME_SAVINGS_MULTIPLIERS = {
-        "small": 1.0,      # < 50 employees
-        "medium": 1.5,     # 50-500 employees
-        "large": 2.0,      # 500-1000 employees
-        "enterprise": 3.0  # > 1000 employees
+        "small": 1.0,  # < 50 employees
+        "medium": 1.5,  # 50-500 employees
+        "large": 2.0,  # 500-1000 employees
+        "enterprise": 3.0,  # > 1000 employees
     }
 
     # Cost reduction categories
     COST_REDUCTION_AREAS = {
         "automation": {
             "avg_reduction": 0.60,  # 60% reduction in manual tasks
-            "description": "Automated workflows reduce manual processing time"
+            "description": "Automated workflows reduce manual processing time",
         },
         "integration": {
             "avg_reduction": 0.45,  # 45% reduction in data entry
-            "description": "Integrated systems eliminate duplicate data entry"
+            "description": "Integrated systems eliminate duplicate data entry",
         },
         "analytics": {
             "avg_reduction": 0.70,  # 70% faster reporting
-            "description": "Automated analytics reduce report generation time"
+            "description": "Automated analytics reduce report generation time",
         },
         "collaboration": {
             "avg_reduction": 0.35,  # 35% reduction in coordination time
-            "description": "Streamlined collaboration reduces meeting overhead"
+            "description": "Streamlined collaboration reduces meeting overhead",
         },
         "compliance": {
             "avg_reduction": 0.55,  # 55% faster compliance processes
-            "description": "Automated compliance reduces audit preparation time"
-        }
+            "description": "Automated compliance reduces audit preparation time",
+        },
     }
 
     # Pricing tiers (annual per user)
     PRICING_TIERS = {
-        "starter": 600,     # $50/month per user
+        "starter": 600,  # $50/month per user
         "professional": 1200,  # $100/month per user
-        "enterprise": 2400     # $200/month per user
+        "enterprise": 2400,  # $200/month per user
     }
 
     # ROI benchmarks
     EXCELLENT_ROI = 300  # 300% ROI or higher
-    GOOD_ROI = 200       # 200-299% ROI
-    ACCEPTABLE_ROI = 100 # 100-199% ROI
+    GOOD_ROI = 200  # 200-299% ROI
+    ACCEPTABLE_ROI = 100  # 100-199% ROI
 
     def __init__(self):
         config = AgentConfig(
@@ -89,10 +88,10 @@ class ROICalculator(BaseAgent):
             capabilities=[
                 AgentCapability.KB_SEARCH,
                 AgentCapability.CONTEXT_AWARE,
-                AgentCapability.MULTI_TURN
+                AgentCapability.MULTI_TURN,
             ],
             kb_category="sales",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -125,10 +124,7 @@ class ROICalculator(BaseAgent):
         payback_analysis = self._calculate_payback_period(cost_savings, investment)
 
         # Generate 3-year projection
-        three_year_projection = self._generate_three_year_projection(
-            cost_savings,
-            investment
-        )
+        three_year_projection = self._generate_three_year_projection(cost_savings, investment)
 
         # Generate business case summary
         business_case = self._generate_business_case(
@@ -137,14 +133,12 @@ class ROICalculator(BaseAgent):
             cost_savings,
             roi_metrics,
             payback_analysis,
-            three_year_projection
+            three_year_projection,
         )
 
         # Search KB for ROI case studies
         kb_results = await self.search_knowledge_base(
-            f"roi case study {customer_metadata.get('industry', '')}",
-            category="sales",
-            limit=3
+            f"roi case study {customer_metadata.get('industry', '')}", category="sales", limit=3
         )
         state["kb_results"] = kb_results
 
@@ -156,7 +150,7 @@ class ROICalculator(BaseAgent):
             three_year_projection,
             business_case,
             kb_results,
-            customer_metadata
+            customer_metadata,
         )
 
         # Update state
@@ -175,16 +169,12 @@ class ROICalculator(BaseAgent):
         self.logger.info(
             "roi_calculator_completed",
             roi_percentage=roi_metrics["roi_percentage"],
-            payback_months=payback_analysis["payback_months"]
+            payback_months=payback_analysis["payback_months"],
         )
 
         return state
 
-    def _extract_roi_parameters(
-        self,
-        customer_metadata: Dict,
-        message: str
-    ) -> Dict[str, Any]:
+    def _extract_roi_parameters(self, customer_metadata: dict, message: str) -> dict[str, Any]:
         """Extract parameters needed for ROI calculation"""
         company_size = customer_metadata.get("company_size", 100)
 
@@ -210,7 +200,8 @@ class ROICalculator(BaseAgent):
         if "hour" in message_lower:
             # Try to extract number
             import re
-            numbers = re.findall(r'\d+', message)
+
+            numbers = re.findall(r"\d+", message)
             if numbers:
                 hours_saved_per_week = min(int(numbers[0]), 20)  # Cap at 20 hours/week
 
@@ -220,10 +211,10 @@ class ROICalculator(BaseAgent):
             "affected_users": affected_users,
             "hours_saved_per_week": hours_saved_per_week,
             "average_hourly_cost": self.HOURLY_COSTS["professional"],  # Default
-            "industry": customer_metadata.get("industry", "technology")
+            "industry": customer_metadata.get("industry", "technology"),
         }
 
-    def _calculate_time_savings(self, params: Dict) -> Dict[str, Any]:
+    def _calculate_time_savings(self, params: dict) -> dict[str, Any]:
         """Calculate time savings metrics"""
         hours_per_week = params["hours_saved_per_week"]
         affected_users = params["affected_users"]
@@ -245,14 +236,10 @@ class ROICalculator(BaseAgent):
             "hours_per_user_per_year": hours_per_year,
             "total_hours_per_month": total_hours_per_month,
             "total_hours_per_year": total_hours_per_year,
-            "affected_users": affected_users
+            "affected_users": affected_users,
         }
 
-    def _calculate_cost_savings(
-        self,
-        params: Dict,
-        time_savings: Dict
-    ) -> Dict[str, Any]:
+    def _calculate_cost_savings(self, params: dict, time_savings: dict) -> dict[str, Any]:
         """Calculate cost savings from time savings"""
         hourly_cost = params["average_hourly_cost"]
 
@@ -272,10 +259,10 @@ class ROICalculator(BaseAgent):
             "additional_annual": additional_savings["annual"],
             "total_monthly": total_monthly_savings,
             "total_annual": total_annual_savings,
-            "breakdown": additional_savings["breakdown"]
+            "breakdown": additional_savings["breakdown"],
         }
 
-    def _calculate_additional_savings(self, params: Dict) -> Dict[str, Any]:
+    def _calculate_additional_savings(self, params: dict) -> dict[str, Any]:
         """Calculate additional cost savings beyond time"""
         # Estimate additional savings (reduced errors, better compliance, etc.)
         base_monthly = params["affected_users"] * 100  # $100 per user/month in soft savings
@@ -284,16 +271,12 @@ class ROICalculator(BaseAgent):
             "reduced_errors": base_monthly * 0.3,
             "improved_compliance": base_monthly * 0.2,
             "better_decision_making": base_monthly * 0.3,
-            "reduced_turnover": base_monthly * 0.2
+            "reduced_turnover": base_monthly * 0.2,
         }
 
-        return {
-            "monthly": base_monthly,
-            "annual": base_monthly * 12,
-            "breakdown": breakdown
-        }
+        return {"monthly": base_monthly, "annual": base_monthly * 12, "breakdown": breakdown}
 
-    def _calculate_investment(self, params: Dict) -> Dict[str, Any]:
+    def _calculate_investment(self, params: dict) -> dict[str, Any]:
         """Calculate total investment cost"""
         affected_users = params["affected_users"]
         company_size = params["company_size"]
@@ -324,14 +307,10 @@ class ROICalculator(BaseAgent):
             "training_cost": training_cost,
             "one_time_costs": one_time_costs,
             "total_year_one": total_year_one,
-            "annual_recurring": annual_subscription
+            "annual_recurring": annual_subscription,
         }
 
-    def _calculate_roi_metrics(
-        self,
-        cost_savings: Dict,
-        investment: Dict
-    ) -> Dict[str, Any]:
+    def _calculate_roi_metrics(self, cost_savings: dict, investment: dict) -> dict[str, Any]:
         """Calculate ROI metrics"""
         annual_savings = cost_savings["total_annual"]
         year_one_cost = investment["total_year_one"]
@@ -361,14 +340,10 @@ class ROICalculator(BaseAgent):
             "roi_percentage": round(annual_roi, 1),  # Use annual for summary
             "rating": rating,
             "annual_net_benefit": annual_net,
-            "year_one_net_benefit": year_one_net
+            "year_one_net_benefit": year_one_net,
         }
 
-    def _calculate_payback_period(
-        self,
-        cost_savings: Dict,
-        investment: Dict
-    ) -> Dict[str, Any]:
+    def _calculate_payback_period(self, cost_savings: dict, investment: dict) -> dict[str, Any]:
         """Calculate payback period"""
         monthly_savings = cost_savings["total_monthly"]
         total_investment = investment["total_year_one"]
@@ -395,14 +370,12 @@ class ROICalculator(BaseAgent):
             "payback_years": round(payback_months / 12, 1),
             "monthly_savings": monthly_savings,
             "total_investment": total_investment,
-            "assessment": assessment
+            "assessment": assessment,
         }
 
     def _generate_three_year_projection(
-        self,
-        cost_savings: Dict,
-        investment: Dict
-    ) -> Dict[str, Any]:
+        self, cost_savings: dict, investment: dict
+    ) -> dict[str, Any]:
         """Generate 3-year financial projection"""
         annual_savings = cost_savings["total_annual"]
         annual_cost = investment["annual_recurring"]
@@ -413,21 +386,23 @@ class ROICalculator(BaseAgent):
             "savings": annual_savings,
             "costs": year_one_cost,
             "net_benefit": annual_savings - year_one_cost,
-            "cumulative_benefit": annual_savings - year_one_cost
+            "cumulative_benefit": annual_savings - year_one_cost,
         }
 
         year_2 = {
             "savings": annual_savings * 1.1,  # 10% improvement as users get more efficient
             "costs": annual_cost,
             "net_benefit": (annual_savings * 1.1) - annual_cost,
-            "cumulative_benefit": year_1["cumulative_benefit"] + ((annual_savings * 1.1) - annual_cost)
+            "cumulative_benefit": year_1["cumulative_benefit"]
+            + ((annual_savings * 1.1) - annual_cost),
         }
 
         year_3 = {
             "savings": annual_savings * 1.2,  # 20% improvement by year 3
             "costs": annual_cost,
             "net_benefit": (annual_savings * 1.2) - annual_cost,
-            "cumulative_benefit": year_2["cumulative_benefit"] + ((annual_savings * 1.2) - annual_cost)
+            "cumulative_benefit": year_2["cumulative_benefit"]
+            + ((annual_savings * 1.2) - annual_cost),
         }
 
         total_3year_benefit = year_3["cumulative_benefit"]
@@ -439,53 +414,53 @@ class ROICalculator(BaseAgent):
             "year_3": year_3,
             "total_3year_benefit": total_3year_benefit,
             "total_3year_investment": total_3year_investment,
-            "total_3year_roi": round((total_3year_benefit / total_3year_investment) * 100, 1)
+            "total_3year_roi": round((total_3year_benefit / total_3year_investment) * 100, 1),
         }
 
     def _generate_business_case(
         self,
-        params: Dict,
-        time_savings: Dict,
-        cost_savings: Dict,
-        roi_metrics: Dict,
-        payback_analysis: Dict,
-        projection: Dict
-    ) -> Dict[str, Any]:
+        params: dict,
+        time_savings: dict,
+        cost_savings: dict,
+        roi_metrics: dict,
+        payback_analysis: dict,
+        projection: dict,
+    ) -> dict[str, Any]:
         """Generate executive business case summary"""
         return {
             "executive_summary": {
                 "roi": f"{roi_metrics['roi_percentage']}%",
                 "payback_period": f"{payback_analysis['payback_months']} months",
                 "annual_savings": f"${cost_savings['total_annual']:,.0f}",
-                "3_year_benefit": f"${projection['total_3year_benefit']:,.0f}"
+                "3_year_benefit": f"${projection['total_3year_benefit']:,.0f}",
             },
             "investment_summary": {
                 "year_one_cost": f"${payback_analysis['total_investment']:,.0f}",
                 "annual_recurring": f"${cost_savings['total_annual']:,.0f}",
-                "affected_users": params["affected_users"]
+                "affected_users": params["affected_users"],
             },
             "value_drivers": [
                 f"{time_savings['total_hours_per_year']:,.0f} hours saved annually",
                 f"${cost_savings['total_annual']:,.0f} in annual cost savings",
                 f"{roi_metrics['roi_percentage']}% ROI",
-                f"Payback in {payback_analysis['payback_months']} months"
-            ]
+                f"Payback in {payback_analysis['payback_months']} months",
+            ],
         }
 
     async def _generate_roi_response(
         self,
         message: str,
-        roi_metrics: Dict,
-        payback_analysis: Dict,
-        projection: Dict,
-        business_case: Dict,
-        kb_results: List[Dict],
-        customer_metadata: Dict
+        roi_metrics: dict,
+        payback_analysis: dict,
+        projection: dict,
+        business_case: dict,
+        kb_results: list[dict],
+        customer_metadata: dict,
     ) -> str:
         """Generate ROI analysis response"""
 
         # Build projection context
-        projection_context = f"\n\n3-Year Financial Projection:\n"
+        projection_context = "\n\n3-Year Financial Projection:\n"
         projection_context += f"Year 1: ${projection['year_1']['net_benefit']:,.0f} net benefit\n"
         projection_context += f"Year 2: ${projection['year_2']['net_benefit']:,.0f} net benefit\n"
         projection_context += f"Year 3: ${projection['year_3']['net_benefit']:,.0f} net benefit\n"
@@ -501,15 +476,15 @@ class ROICalculator(BaseAgent):
         system_prompt = f"""You are an ROI Calculator specialist helping prospects understand the financial value.
 
 Financial Analysis Results:
-- ROI: {roi_metrics['roi_percentage']}% ({roi_metrics['rating']})
-- Payback Period: {payback_analysis['payback_months']} months
-- Annual Savings: ${payback_analysis['monthly_savings'] * 12:,.0f}
-- Total Investment: ${payback_analysis['total_investment']:,.0f}
-- 3-Year Cumulative Benefit: ${projection['total_3year_benefit']:,.0f}
+- ROI: {roi_metrics["roi_percentage"]}% ({roi_metrics["rating"]})
+- Payback Period: {payback_analysis["payback_months"]} months
+- Annual Savings: ${payback_analysis["monthly_savings"] * 12:,.0f}
+- Total Investment: ${payback_analysis["total_investment"]:,.0f}
+- 3-Year Cumulative Benefit: ${projection["total_3year_benefit"]:,.0f}
 
 Company Profile:
-- Industry: {customer_metadata.get('industry', 'Unknown')}
-- Size: {customer_metadata.get('company_size', 'Unknown')} employees
+- Industry: {customer_metadata.get("industry", "Unknown")}
+- Size: {customer_metadata.get("company_size", "Unknown")} employees
 
 Your response should:
 1. Present ROI metrics clearly and confidently
@@ -530,7 +505,7 @@ Generate a compelling ROI analysis response with specific numbers."""
         response = await self.call_llm(
             system_prompt=system_prompt,
             user_message=user_prompt,
-            conversation_history=[]  # ROI calculations use analysis context
+            conversation_history=[],  # ROI calculations use analysis context
         )
         return response
 
@@ -538,6 +513,7 @@ Generate a compelling ROI analysis response with specific numbers."""
 if __name__ == "__main__":
     """Test harness for ROICalculator"""
     import asyncio
+
     from src.workflow.state import AgentState
 
     async def test_roi_calculator():
@@ -546,13 +522,9 @@ if __name__ == "__main__":
         # Test case 1: Medium company
         state1 = AgentState(
             current_message="What kind of ROI can we expect? We have about 10 hours per week of manual work.",
-            customer_metadata={
-                "company_size": 250,
-                "industry": "technology",
-                "title": "CFO"
-            },
+            customer_metadata={"company_size": 250, "industry": "technology", "title": "CFO"},
             messages=[],
-            status="pending"
+            status="pending",
         )
 
         result1 = await agent.process(state1)
@@ -568,10 +540,10 @@ if __name__ == "__main__":
             customer_metadata={
                 "company_size": 2000,
                 "industry": "finance",
-                "title": "VP Operations"
+                "title": "VP Operations",
             },
             messages=[],
-            status="pending"
+            status="pending",
         )
 
         result2 = await agent.process(state2)
