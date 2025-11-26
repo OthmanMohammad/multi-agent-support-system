@@ -263,6 +263,9 @@ class MQLtoSQLConverter(BaseAgent):
     ) -> str:
         """Generate handoff summary for sales rep using Claude"""
 
+        # Get conversation history for context continuity
+        conversation_history = self.get_conversation_context(state)
+
         # Extract key information
         company = customer_metadata.get("company", "Unknown")
         contact_name = customer_metadata.get("name", "Unknown")
@@ -298,7 +301,11 @@ Create a brief handoff summary (3-4 sentences) covering:
 2. Key talking points for first call
 3. Recommended next steps"""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt,
+            user_prompt,
+            conversation_history=conversation_history
+        )
         return response
 
     def _create_opportunity_record(
