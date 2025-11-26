@@ -9,12 +9,14 @@ Provides persistent, reliable job tracking with:
 - Performance monitoring
 - Graceful fallback to in-memory for development
 """
+
 import asyncio
+import contextlib
 import json
-from datetime import datetime, timedelta, UTC
-from typing import Dict, Any, Optional, List
-from uuid import UUID, uuid4
+from datetime import UTC, datetime, timedelta
 from enum import Enum
+from typing import Any
+from uuid import UUID, uuid4
 
 import redis.asyncio as redis
 import structlog
@@ -24,6 +26,7 @@ logger = structlog.get_logger(__name__)
 
 class JobStatus(str, Enum):
     """Job execution status"""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -34,6 +37,7 @@ class JobStatus(str, Enum):
 
 class JobType(str, Enum):
     """Type of job"""
+
     AGENT_EXECUTION = "agent_execution"
     WORKFLOW_EXECUTION = "workflow_execution"
     BATCH_EXECUTION = "batch_execution"
@@ -41,11 +45,13 @@ class JobType(str, Enum):
 
 class JobNotFoundError(Exception):
     """Raised when job ID is not found"""
+
     pass
 
 
 class JobStoreError(Exception):
     """Base exception for job store errors"""
+
     pass
 
 
@@ -82,7 +88,7 @@ class RedisJobStore:
         redis_db: int = 0,
         key_prefix: str = "job:",
         default_ttl_hours: int = 24,
-        cleanup_interval_minutes: int = 60
+        cleanup_interval_minutes: int = 60,
     ):
         """
         Initialize Redis job store.
@@ -100,15 +106,15 @@ class RedisJobStore:
         self.default_ttl = timedelta(hours=default_ttl_hours)
         self.cleanup_interval = timedelta(minutes=cleanup_interval_minutes)
 
-        self._redis: Optional[redis.Redis] = None
-        self._cleanup_task: Optional[asyncio.Task] = None
+        self._redis: redis.Redis | None = None
+        self._cleanup_task: asyncio.Task | None = None
         self._initialized = False
 
         logger.info(
             "redis_job_store_created",
             redis_url=redis_url,
             redis_db=redis_db,
-            default_ttl_hours=default_ttl_hours
+            default_ttl_hours=default_ttl_hours,
         )
 
     async def initialize(self):
@@ -125,10 +131,7 @@ class RedisJobStore:
         try:
             # Create Redis connection
             self._redis = await redis.from_url(
-                self.redis_url,
-                db=self.redis_db,
-                encoding="utf-8",
-                decode_responses=True
+                self.redis_url, db=self.redis_db, encoding="utf-8", decode_responses=True
             )
 
             # Test connection
@@ -142,21 +145,15 @@ class RedisJobStore:
             logger.info("redis_job_store_initialized")
 
         except Exception as e:
-            logger.error(
-                "redis_job_store_initialization_failed",
-                error=str(e),
-                exc_info=True
-            )
-            raise JobStoreError(f"Failed to initialize Redis job store: {e}")
+            logger.error("redis_job_store_initialization_failed", error=str(e), exc_info=True)
+            raise JobStoreError(f"Failed to initialize Redis job store: {e}") from e
 
     async def close(self):
         """Close Redis connection and stop cleanup task"""
         if self._cleanup_task:
             self._cleanup_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._cleanup_task
-            except asyncio.CancelledError:
-                pass
 
         if self._redis:
             await self._redis.close()
@@ -166,16 +163,16 @@ class RedisJobStore:
 
     def _get_key(self, job_id: UUID) -> str:
         """Get Redis key for job ID"""
-        return f"{self.key_prefix}{str(job_id)}"
+        return f"{self.key_prefix}{job_id!s}"
 
     async def create_job(
         self,
         job_type: JobType,
-        agent_name: Optional[str] = None,
-        workflow_name: Optional[str] = None,
-        input_data: Optional[Dict[str, Any]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        ttl_hours: Optional[int] = None
+        agent_name: str | None = None,
+        workflow_name: str | None = None,
+        input_data: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+        ttl_hours: int | None = None,
     ) -> UUID:
         """
         Create a new job.
@@ -220,10 +217,7 @@ class RedisJobStore:
         try:
             # Store in Redis as JSON
             key = self._get_key(job_id)
-            await self._redis.set(
-                key,
-                json.dumps(job_data, default=str)
-            )
+            await self._redis.set(key, json.dumps(job_data, default=str))
 
             # Set TTL if specified (for cleanup)
             if ttl_hours:
@@ -234,21 +228,16 @@ class RedisJobStore:
                 job_id=str(job_id),
                 job_type=job_type.value,
                 agent_name=agent_name,
-                workflow_name=workflow_name
+                workflow_name=workflow_name,
             )
 
             return job_id
 
         except Exception as e:
-            logger.error(
-                "job_creation_failed",
-                job_id=str(job_id),
-                error=str(e),
-                exc_info=True
-            )
-            raise JobStoreError(f"Failed to create job: {e}")
+            logger.error("job_creation_failed", job_id=str(job_id), error=str(e), exc_info=True)
+            raise JobStoreError(f"Failed to create job: {e}") from e
 
-    async def get_job(self, job_id: UUID) -> Dict[str, Any]:
+    async def get_job(self, job_id: UUID) -> dict[str, Any]:
         """
         Get job by ID.
 
@@ -279,23 +268,18 @@ class RedisJobStore:
         except JobNotFoundError:
             raise
         except Exception as e:
-            logger.error(
-                "job_retrieval_failed",
-                job_id=str(job_id),
-                error=str(e),
-                exc_info=True
-            )
-            raise JobStoreError(f"Failed to get job: {e}")
+            logger.error("job_retrieval_failed", job_id=str(job_id), error=str(e), exc_info=True)
+            raise JobStoreError(f"Failed to get job: {e}") from e
 
     async def update_job(
         self,
         job_id: UUID,
-        status: Optional[JobStatus] = None,
-        progress: Optional[float] = None,
-        result: Optional[Any] = None,
-        error: Optional[str] = None,
-        error_type: Optional[str] = None,
-        **kwargs
+        status: JobStatus | None = None,
+        progress: float | None = None,
+        result: Any | None = None,
+        error: str | None = None,
+        error_type: str | None = None,
+        **kwargs,
     ):
         """
         Update job fields.
@@ -327,7 +311,12 @@ class RedisJobStore:
                 # Set timestamps based on status
                 if status == JobStatus.RUNNING and not job_data.get("started_at"):
                     job_data["started_at"] = datetime.now(UTC).isoformat()
-                elif status in [JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED, JobStatus.TIMEOUT]:
+                elif status in [
+                    JobStatus.COMPLETED,
+                    JobStatus.FAILED,
+                    JobStatus.CANCELLED,
+                    JobStatus.TIMEOUT,
+                ]:
                     job_data["completed_at"] = datetime.now(UTC).isoformat()
                     job_data["progress"] = 100.0
 
@@ -348,10 +337,7 @@ class RedisJobStore:
 
             # Save back to Redis
             key = self._get_key(job_id)
-            await self._redis.set(
-                key,
-                json.dumps(job_data, default=str)
-            )
+            await self._redis.set(key, json.dumps(job_data, default=str))
 
             # Apply TTL for completed jobs
             if status in [JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED]:
@@ -361,19 +347,14 @@ class RedisJobStore:
                 "job_updated",
                 job_id=str(job_id),
                 status=status.value if status else None,
-                progress=progress
+                progress=progress,
             )
 
         except JobNotFoundError:
             raise
         except Exception as e:
-            logger.error(
-                "job_update_failed",
-                job_id=str(job_id),
-                error=str(e),
-                exc_info=True
-            )
-            raise JobStoreError(f"Failed to update job: {e}")
+            logger.error("job_update_failed", job_id=str(job_id), error=str(e), exc_info=True)
+            raise JobStoreError(f"Failed to update job: {e}") from e
 
     async def delete_job(self, job_id: UUID):
         """
@@ -395,20 +376,12 @@ class RedisJobStore:
             logger.info("job_deleted", job_id=str(job_id))
 
         except Exception as e:
-            logger.error(
-                "job_deletion_failed",
-                job_id=str(job_id),
-                error=str(e),
-                exc_info=True
-            )
-            raise JobStoreError(f"Failed to delete job: {e}")
+            logger.error("job_deletion_failed", job_id=str(job_id), error=str(e), exc_info=True)
+            raise JobStoreError(f"Failed to delete job: {e}") from e
 
     async def list_jobs(
-        self,
-        status: Optional[JobStatus] = None,
-        job_type: Optional[JobType] = None,
-        limit: int = 100
-    ) -> List[Dict[str, Any]]:
+        self, status: JobStatus | None = None, job_type: JobType | None = None, limit: int = 100
+    ) -> list[dict[str, Any]]:
         """
         List jobs with optional filtering.
 
@@ -436,7 +409,7 @@ class RedisJobStore:
 
             # Get job data
             jobs = []
-            for key in keys[:limit * 2]:
+            for key in keys[: limit * 2]:
                 try:
                     data = await self._redis.get(key)
                     if data:
@@ -458,11 +431,7 @@ class RedisJobStore:
             return jobs
 
         except Exception as e:
-            logger.error(
-                "job_listing_failed",
-                error=str(e),
-                exc_info=True
-            )
+            logger.error("job_listing_failed", error=str(e), exc_info=True)
             return []
 
     async def cleanup_old_jobs(self, max_age_hours: int = 24) -> int:
@@ -501,7 +470,7 @@ class RedisJobStore:
                         JobStatus.COMPLETED.value,
                         JobStatus.FAILED.value,
                         JobStatus.CANCELLED.value,
-                        JobStatus.TIMEOUT.value
+                        JobStatus.TIMEOUT.value,
                     ]:
                         completed_time = datetime.fromisoformat(completed_at)
                         if completed_time < cutoff:
@@ -512,20 +481,12 @@ class RedisJobStore:
                     continue
 
             if deleted_count > 0:
-                logger.info(
-                    "jobs_cleaned_up",
-                    count=deleted_count,
-                    max_age_hours=max_age_hours
-                )
+                logger.info("jobs_cleaned_up", count=deleted_count, max_age_hours=max_age_hours)
 
             return deleted_count
 
         except Exception as e:
-            logger.error(
-                "job_cleanup_failed",
-                error=str(e),
-                exc_info=True
-            )
+            logger.error("job_cleanup_failed", error=str(e), exc_info=True)
             return deleted_count
 
     async def _cleanup_loop(self):
@@ -537,11 +498,7 @@ class RedisJobStore:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(
-                    "cleanup_loop_error",
-                    error=str(e),
-                    exc_info=True
-                )
+                logger.error("cleanup_loop_error", error=str(e), exc_info=True)
 
 
 class InMemoryJobStore:
@@ -554,12 +511,12 @@ class InMemoryJobStore:
 
     def __init__(self):
         """Initialize in-memory job store"""
-        self._jobs: Dict[UUID, Dict[str, Any]] = {}
+        self._jobs: dict[UUID, dict[str, Any]] = {}
         self._initialized = True
 
         logger.warning(
             "in_memory_job_store_created",
-            message="Using in-memory job store. Data will not persist!"
+            message="Using in-memory job store. Data will not persist!",
         )
 
     async def initialize(self):
@@ -573,11 +530,11 @@ class InMemoryJobStore:
     async def create_job(
         self,
         job_type: JobType,
-        agent_name: Optional[str] = None,
-        workflow_name: Optional[str] = None,
-        input_data: Optional[Dict[str, Any]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        ttl_hours: Optional[int] = None
+        agent_name: str | None = None,
+        workflow_name: str | None = None,
+        input_data: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+        ttl_hours: int | None = None,
     ) -> UUID:
         """Create a new job in memory"""
         job_id = uuid4()
@@ -602,7 +559,7 @@ class InMemoryJobStore:
 
         return job_id
 
-    async def get_job(self, job_id: UUID) -> Dict[str, Any]:
+    async def get_job(self, job_id: UUID) -> dict[str, Any]:
         """Get job from memory"""
         if job_id not in self._jobs:
             raise JobNotFoundError(f"Job {job_id} not found")
@@ -611,12 +568,12 @@ class InMemoryJobStore:
     async def update_job(
         self,
         job_id: UUID,
-        status: Optional[JobStatus] = None,
-        progress: Optional[float] = None,
-        result: Optional[Any] = None,
-        error: Optional[str] = None,
-        error_type: Optional[str] = None,
-        **kwargs
+        status: JobStatus | None = None,
+        progress: float | None = None,
+        result: Any | None = None,
+        error: str | None = None,
+        error_type: str | None = None,
+        **kwargs,
     ):
         """Update job in memory"""
         if job_id not in self._jobs:
@@ -628,7 +585,12 @@ class InMemoryJobStore:
             job["status"] = status.value
             if status == JobStatus.RUNNING and not job.get("started_at"):
                 job["started_at"] = datetime.now(UTC).isoformat()
-            elif status in [JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED, JobStatus.TIMEOUT]:
+            elif status in [
+                JobStatus.COMPLETED,
+                JobStatus.FAILED,
+                JobStatus.CANCELLED,
+                JobStatus.TIMEOUT,
+            ]:
                 job["completed_at"] = datetime.now(UTC).isoformat()
                 job["progress"] = 100.0
 
@@ -649,11 +611,8 @@ class InMemoryJobStore:
             del self._jobs[job_id]
 
     async def list_jobs(
-        self,
-        status: Optional[JobStatus] = None,
-        job_type: Optional[JobType] = None,
-        limit: int = 100
-    ) -> List[Dict[str, Any]]:
+        self, status: JobStatus | None = None, job_type: JobType | None = None, limit: int = 100
+    ) -> list[dict[str, Any]]:
         """List jobs from memory"""
         jobs = list(self._jobs.values())
 
