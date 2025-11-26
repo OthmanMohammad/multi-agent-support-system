@@ -197,6 +197,7 @@ export default {
      * JWT Callback - Runs when JWT is created or updated
      * Add backend tokens to JWT
      */
+    // eslint-disable-next-line complexity -- Complex auth flow handling multiple providers
     async jwt({ token, user, account }) {
       // Initial sign in
       if (user) {
@@ -217,8 +218,8 @@ export default {
         user
       ) {
         // Extract user info from OAuth profile
-        const email = user.email || token.email as string;
-        const name = user.name || token.name as string;
+        const email = user.email || (token.email as string);
+        const name = user.name || (token.name as string);
         const providerAccountId = account.providerAccountId;
 
         if (email && providerAccountId) {
