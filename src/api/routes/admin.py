@@ -12,17 +12,15 @@ Endpoints:
 Part of: Phase 2 - LiteLLM Multi-Backend Abstraction Layer
 """
 
-from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
-from typing import Optional
 import structlog
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 
+from src.api.dependencies.auth_dependencies import get_current_user
 from src.llm.litellm_config import LLMBackend
 from src.services.infrastructure.backend_manager import backend_manager
 from src.utils.cost_tracking import cost_tracker
 from src.utils.monitoring.metrics import llm_metrics
-from src.llm.client import llm_client
-from src.api.dependencies.auth_dependencies import get_current_user
 
 logger = structlog.get_logger(__name__)
 
@@ -32,22 +30,25 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 # Request Models
 class BackendSwitchRequest(BaseModel):
     """Request to switch LLM backend"""
+
     backend: LLMBackend
     skip_health_check: bool = False
 
 
 class VLLMEndpointRequest(BaseModel):
     """Request to configure vLLM endpoint"""
+
     endpoint: str
 
 
 class BudgetUpdateRequest(BaseModel):
     """Request to update budget limit"""
+
     budget_limit: float
 
 
 # Admin authentication dependency (simplified for now)
-async def require_admin(current_user = Depends(get_current_user)):
+async def require_admin(current_user=Depends(get_current_user)):
     """
     Require admin privileges.
 
@@ -56,7 +57,7 @@ async def require_admin(current_user = Depends(get_current_user)):
     """
     # In production, check if user has admin role
     # if not current_user.get("is_admin"):
-    #     raise HTTPException(status_code=403, detail="Admin access required")
+    #     raise HTTPException(status_code=403, detail="Admin access required") from None
 
     return current_user
 
@@ -65,10 +66,11 @@ async def require_admin(current_user = Depends(get_current_user)):
 # Backend Management Endpoints
 # ============================================================================
 
+
 @router.post("/backend/switch")
 async def switch_backend(
     request: BackendSwitchRequest,
-    _user = Depends(require_admin),
+    _user=Depends(require_admin),
 ):
     """
     Switch LLM backend.
@@ -87,15 +89,11 @@ async def switch_backend(
     """
     try:
         result = await backend_manager.switch_backend(
-            backend=request.backend,
-            skip_health_check=request.skip_health_check
+            backend=request.backend, skip_health_check=request.skip_health_check
         )
 
         if not result["success"]:
-            raise HTTPException(
-                status_code=400,
-                detail=result["message"]
-            )
+            raise HTTPException(status_code=400, detail=result["message"])
 
         logger.info(
             "admin_backend_switch",
@@ -107,14 +105,14 @@ async def switch_backend(
 
     except ValueError as e:
         logger.error("admin_backend_switch_failed", error=str(e))
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from None
     except Exception as e:
         logger.error("admin_backend_switch_error", error=str(e), exc_info=True)
-        raise HTTPException(status_code=500, detail="Backend switch failed")
+        raise HTTPException(status_code=500, detail="Backend switch failed") from None
 
 
 @router.get("/backend/current")
-async def get_current_backend(_user = Depends(require_admin)):
+async def get_current_backend(_user=Depends(require_admin)):
     """
     Get current LLM backend and status.
 
@@ -127,7 +125,7 @@ async def get_current_backend(_user = Depends(require_admin)):
 
 
 @router.get("/backend/health")
-async def check_backend_health(_user = Depends(require_admin)):
+async def check_backend_health(_user=Depends(require_admin)):
     """
     Check health of all LLM backends.
 
@@ -142,7 +140,7 @@ async def check_backend_health(_user = Depends(require_admin)):
 @router.post("/vllm/endpoint")
 async def set_vllm_endpoint(
     request: VLLMEndpointRequest,
-    _user = Depends(require_admin),
+    _user=Depends(require_admin),
 ):
     """
     Configure vLLM endpoint.
@@ -172,28 +170,31 @@ async def set_vllm_endpoint(
 
     except Exception as e:
         logger.error("admin_vllm_endpoint_error", error=str(e), exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to configure vLLM endpoint")
+        raise HTTPException(status_code=500, detail="Failed to configure vLLM endpoint") from None
 
 
 # ============================================================================
 # vLLM GPU Orchestration Endpoints (Phase 3)
 # ============================================================================
 
+
 class VLLMLaunchRequest(BaseModel):
     """Request to launch vLLM GPU instance"""
+
     keep_alive_minutes: int = 45
     auto_switch: bool = True
 
 
 class VLLMExtendRequest(BaseModel):
     """Request to extend keep-alive time"""
+
     additional_minutes: int = 15
 
 
 @router.post("/vllm/launch")
 async def launch_vllm_gpu(
     request: VLLMLaunchRequest,
-    _user = Depends(require_admin),
+    _user=Depends(require_admin),
 ):
     """
     Launch vLLM GPU instance on Vast.ai.
@@ -240,8 +241,7 @@ async def launch_vllm_gpu(
 
         if not result["success"]:
             raise HTTPException(
-                status_code=500,
-                detail=result.get("message", "Failed to launch vLLM GPU")
+                status_code=500, detail=result.get("message", "Failed to launch vLLM GPU")
             )
 
         logger.info(
@@ -256,14 +256,11 @@ async def launch_vllm_gpu(
         raise
     except Exception as e:
         logger.error("admin_vllm_launch_error", error=str(e), exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to launch vLLM GPU: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to launch vLLM GPU: {e!s}") from None
 
 
 @router.post("/vllm/destroy")
-async def destroy_vllm_gpu(_user = Depends(require_admin)):
+async def destroy_vllm_gpu(_user=Depends(require_admin)):
     """
     Destroy vLLM GPU instance.
 
@@ -289,11 +286,11 @@ async def destroy_vllm_gpu(_user = Depends(require_admin)):
 
     except Exception as e:
         logger.error("admin_vllm_destroy_error", error=str(e), exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to destroy vLLM GPU: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to destroy vLLM GPU: {e!s}") from None
 
 
 @router.get("/vllm/status")
-async def get_vllm_status(_user = Depends(require_admin)):
+async def get_vllm_status(_user=Depends(require_admin)):
     """
     Get vLLM GPU instance status.
 
@@ -327,13 +324,13 @@ async def get_vllm_status(_user = Depends(require_admin)):
 
     except Exception as e:
         logger.error("admin_vllm_status_error", error=str(e), exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to get vLLM status: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get vLLM status: {e!s}") from None
 
 
 @router.post("/vllm/extend")
 async def extend_vllm_keep_alive(
     request: VLLMExtendRequest,
-    _user = Depends(require_admin),
+    _user=Depends(require_admin),
 ):
     """
     Extend vLLM GPU keep-alive time.
@@ -356,10 +353,7 @@ async def extend_vllm_keep_alive(
         # Check if instance running
         status = gpu_orchestrator.get_status()
         if status["status"] != "running":
-            raise HTTPException(
-                status_code=400,
-                detail="No vLLM GPU instance running"
-            )
+            raise HTTPException(status_code=400, detail="No vLLM GPU instance running")
 
         # Extend keep-alive
         await gpu_orchestrator.extend_keep_alive(request.additional_minutes)
@@ -384,15 +378,16 @@ async def extend_vllm_keep_alive(
         raise
     except Exception as e:
         logger.error("admin_vllm_extend_error", error=str(e), exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to extend keep-alive: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to extend keep-alive: {e!s}") from None
 
 
 # ============================================================================
 # Cost Tracking Endpoints
 # ============================================================================
 
+
 @router.get("/costs")
-async def get_costs(_user = Depends(require_admin)):
+async def get_costs(_user=Depends(require_admin)):
     """
     Get cost breakdown by backend.
 
@@ -417,7 +412,7 @@ async def get_costs(_user = Depends(require_admin)):
 
 
 @router.get("/costs/budget")
-async def get_budget_status(_user = Depends(require_admin)):
+async def get_budget_status(_user=Depends(require_admin)):
     """
     Get budget status with alerts.
 
@@ -432,7 +427,7 @@ async def get_budget_status(_user = Depends(require_admin)):
 @router.post("/costs/budget")
 async def update_budget(
     request: BudgetUpdateRequest,
-    _user = Depends(require_admin),
+    _user=Depends(require_admin),
 ):
     """
     Update budget limit.
@@ -457,13 +452,13 @@ async def update_budget(
 
     except Exception as e:
         logger.error("admin_budget_update_error", error=str(e), exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to update budget")
+        raise HTTPException(status_code=500, detail="Failed to update budget") from None
 
 
 @router.get("/costs/recent")
 async def get_recent_costs(
     limit: int = 10,
-    _user = Depends(require_admin),
+    _user=Depends(require_admin),
 ):
     """
     Get recent cost entries.
@@ -480,7 +475,7 @@ async def get_recent_costs(
 
 
 @router.post("/costs/reset")
-async def reset_costs(_user = Depends(require_admin)):
+async def reset_costs(_user=Depends(require_admin)):
     """
     Reset all cost tracking.
 
@@ -507,8 +502,9 @@ async def reset_costs(_user = Depends(require_admin)):
 # Metrics Endpoints
 # ============================================================================
 
+
 @router.get("/metrics")
-async def get_metrics(_user = Depends(require_admin)):
+async def get_metrics(_user=Depends(require_admin)):
     """
     Get LLM usage metrics.
 
@@ -523,7 +519,7 @@ async def get_metrics(_user = Depends(require_admin)):
 @router.get("/metrics/backend/{backend}")
 async def get_backend_metrics(
     backend: str,
-    _user = Depends(require_admin),
+    _user=Depends(require_admin),
 ):
     """
     Get metrics for a specific backend.
@@ -540,7 +536,7 @@ async def get_backend_metrics(
 @router.get("/metrics/model/{model}")
 async def get_model_metrics(
     model: str,
-    _user = Depends(require_admin),
+    _user=Depends(require_admin),
 ):
     """
     Get metrics for a specific model.
@@ -557,7 +553,7 @@ async def get_model_metrics(
 @router.get("/metrics/recent")
 async def get_recent_metrics(
     limit: int = 10,
-    _user = Depends(require_admin),
+    _user=Depends(require_admin),
 ):
     """
     Get recent LLM calls.
@@ -574,7 +570,7 @@ async def get_recent_metrics(
 
 
 @router.post("/metrics/reset")
-async def reset_metrics(_user = Depends(require_admin)):
+async def reset_metrics(_user=Depends(require_admin)):
     """
     Reset all metrics.
 
@@ -596,8 +592,9 @@ async def reset_metrics(_user = Depends(require_admin)):
 # System Status Endpoint
 # ============================================================================
 
+
 @router.get("/status")
-async def get_system_status(_user = Depends(require_admin)):
+async def get_system_status(_user=Depends(require_admin)):
     """
     Get comprehensive system status.
 
