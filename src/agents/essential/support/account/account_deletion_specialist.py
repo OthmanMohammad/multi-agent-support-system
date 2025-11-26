@@ -2,11 +2,12 @@
 Account Deletion Specialist Agent - Handles account deletion with GDPR compliance.
 """
 
-from typing import Dict, Any
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from typing import Any
+
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("account_deletion_specialist", tier="essential", category="account")
@@ -14,11 +15,11 @@ class AccountDeletionSpecialist(BaseAgent):
     """Account Deletion Specialist - Handles GDPR-compliant account deletion."""
 
     DELETION_GRACE_PERIOD_DAYS = 30
-    
+
     RETENTION_REQUIREMENTS = {
         "billing": 2555,  # 7 years for tax
         "audit_logs": 90,
-        "support_tickets": 365
+        "support_tickets": 365,
     }
 
     def __init__(self):
@@ -28,7 +29,7 @@ class AccountDeletionSpecialist(BaseAgent):
             temperature=0.3,
             capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="account",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -36,22 +37,22 @@ class AccountDeletionSpecialist(BaseAgent):
     async def process(self, state: AgentState) -> AgentState:
         self.logger.info("deletion_processing_started")
         state = self.update_state(state)
-        
+
         message = state["current_message"]
         customer_context = state.get("customer_metadata", {})
         action = self._detect_deletion_action(message)
-        
+
         kb_results = await self.search_knowledge_base(message, category="account", limit=2)
         state["kb_results"] = kb_results
-        
+
         response = self._generate_deletion_guide(action, customer_context)
-        
+
         state["agent_response"] = response
         state["deletion_action"] = action
         state["response_confidence"] = 0.85
         state["next_agent"] = None
         state["status"] = "resolved"
-        
+
         self.logger.info("deletion_processing_completed", action=action)
         return state
 
@@ -65,7 +66,7 @@ class AccountDeletionSpecialist(BaseAgent):
             return "alternatives"
         return "request_deletion"
 
-    def _generate_deletion_guide(self, action: str, customer_context: Dict[str, Any]) -> str:
+    def _generate_deletion_guide(self, action: str, customer_context: dict[str, Any]) -> str:
         user_role = customer_context.get("role", "member")
         plan = customer_context.get("plan", "free")
         has_team = customer_context.get("team_size", 1) > 1
@@ -83,7 +84,7 @@ Only the **account owner** can delete the account.
    Settings > Team > Leave Team
 
 2. **Contact owner** to delete entire account
-   Owner email: {customer_context.get('owner_email', 'owner@example.com')}
+   Owner email: {customer_context.get("owner_email", "owner@example.com")}
 
 3. **Delete your personal data** (GDPR)
    Settings > Privacy > Delete My Data"""
@@ -263,15 +264,17 @@ I can start the export for you now"""
 **Which option sounds best?**
 Let me help you set it up!"""
 
+
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
         agent = AccountDeletionSpecialist()
         state = create_initial_state(
             "I want to delete my account",
-            context={"customer_metadata": {"plan": "free", "role": "owner", "team_size": 1}}
+            context={"customer_metadata": {"plan": "free", "role": "owner", "team_size": 1}},
         )
         result = await agent.process(state)
         print(f"Action: {result.get('deletion_action')}")
