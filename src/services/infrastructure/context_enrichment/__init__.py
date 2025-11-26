@@ -14,45 +14,45 @@ Usage:
     prompt_context = context.to_prompt_context()
 """
 
-from src.services.infrastructure.context_enrichment.service import (
-    ContextEnrichmentService,
-    get_context_service
-)
-from src.services.infrastructure.context_enrichment.models import (
-    EnrichedContext,
-    CustomerIntelligence,
-    EngagementMetrics,
-    SupportHistory,
-    SubscriptionDetails,
-    AccountHealth,
-    CompanyEnrichment,
-    ProductStatus,
-    ChurnRiskLevel,
-    HealthScoreLevel
-)
 from src.services.infrastructure.context_enrichment.exceptions import (
+    CacheError,
     ContextEnrichmentError,
     ProviderError,
-    CacheError
+)
+from src.services.infrastructure.context_enrichment.models import (
+    AccountHealth,
+    ChurnRiskLevel,
+    CompanyEnrichment,
+    CustomerIntelligence,
+    EngagementMetrics,
+    EnrichedContext,
+    HealthScoreLevel,
+    ProductStatus,
+    SubscriptionDetails,
+    SupportHistory,
+)
+from src.services.infrastructure.context_enrichment.service import (
+    ContextEnrichmentService,
+    get_context_service,
 )
 
 __all__ = [
-    # Main service
-    "ContextEnrichmentService",
-    "get_context_service",
-    # Models
-    "EnrichedContext",
-    "CustomerIntelligence",
-    "EngagementMetrics",
-    "SupportHistory",
-    "SubscriptionDetails",
     "AccountHealth",
-    "CompanyEnrichment",
-    "ProductStatus",
+    "CacheError",
     "ChurnRiskLevel",
-    "HealthScoreLevel",
+    "CompanyEnrichment",
     # Exceptions
     "ContextEnrichmentError",
+    # Main service
+    "ContextEnrichmentService",
+    "CustomerIntelligence",
+    "EngagementMetrics",
+    # Models
+    "EnrichedContext",
+    "HealthScoreLevel",
+    "ProductStatus",
     "ProviderError",
-    "CacheError",
+    "SubscriptionDetails",
+    "SupportHistory",
+    "get_context_service",
 ]
