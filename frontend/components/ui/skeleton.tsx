@@ -1,7 +1,7 @@
 import type { JSX } from "react";
 import { cn } from "@/lib/utils";
 
-export interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {}
+export type SkeletonProps = React.HTMLAttributes<HTMLDivElement>;
 
 /**
  * Skeleton Component
@@ -10,10 +10,7 @@ export interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {}
 export function Skeleton({ className, ...props }: SkeletonProps): JSX.Element {
   return (
     <div
-      className={cn(
-        "animate-pulse rounded-md bg-surface/50",
-        className
-      )}
+      className={cn("animate-pulse rounded-md bg-surface/50", className)}
       {...props}
     />
   );
