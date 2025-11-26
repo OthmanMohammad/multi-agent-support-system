@@ -4,12 +4,12 @@ Browser Compatibility Specialist Agent - Fixes browser-specific issues.
 Specialist for browser compatibility, version checking, browser recommendations.
 """
 
-from typing import Dict, Any, Optional
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("browser_compatibility_specialist", tier="essential", category="technical")
@@ -29,29 +29,24 @@ class BrowserCompatibilitySpecialist(BaseAgent):
         "Chrome": {
             "min_version": 90,
             "recommended": True,
-            "download_url": "https://www.google.com/chrome/"
+            "download_url": "https://www.google.com/chrome/",
         },
         "Firefox": {
             "min_version": 88,
             "recommended": True,
-            "download_url": "https://www.mozilla.org/firefox/"
+            "download_url": "https://www.mozilla.org/firefox/",
         },
         "Safari": {
             "min_version": 14,
             "recommended": True,
-            "download_url": "https://www.apple.com/safari/"
+            "download_url": "https://www.apple.com/safari/",
         },
         "Edge": {
             "min_version": 90,
             "recommended": True,
-            "download_url": "https://www.microsoft.com/edge/"
+            "download_url": "https://www.microsoft.com/edge/",
         },
-        "IE": {
-            "min_version": 0,
-            "recommended": False,
-            "deprecated": True,
-            "download_url": None
-        }
+        "IE": {"min_version": 0, "recommended": False, "deprecated": True, "download_url": None},
     }
 
     def __init__(self):
@@ -59,12 +54,9 @@ class BrowserCompatibilitySpecialist(BaseAgent):
             name="browser_compatibility_specialist",
             type=AgentType.SPECIALIST,
             temperature=0.3,
-            capabilities=[
-                AgentCapability.KB_SEARCH,
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="technical",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -87,7 +79,7 @@ class BrowserCompatibilitySpecialist(BaseAgent):
             message_preview=message[:100],
             browser=browser,
             browser_version=browser_version,
-            turn_count=state["turn_count"]
+            turn_count=state["turn_count"],
         )
 
         # Check browser compatibility
@@ -97,7 +89,7 @@ class BrowserCompatibilitySpecialist(BaseAgent):
             "compatibility_checked",
             browser=browser,
             supported=compatibility["supported"],
-            needs_update=compatibility.get("needs_update", False)
+            needs_update=compatibility.get("needs_update", False),
         )
 
         # Generate appropriate response
@@ -113,17 +105,12 @@ class BrowserCompatibilitySpecialist(BaseAgent):
 
         # Search KB for browser help
         kb_results = await self.search_knowledge_base(
-            f"{browser} {message}",
-            category="technical",
-            limit=2
+            f"{browser} {message}", category="technical", limit=2
         )
         state["kb_results"] = kb_results
 
         if kb_results:
-            self.logger.info(
-                "browser_kb_articles_found",
-                count=len(kb_results)
-            )
+            self.logger.info("browser_kb_articles_found", count=len(kb_results))
 
         formatted_response = self._format_response(response, kb_results)
 
@@ -139,7 +126,7 @@ class BrowserCompatibilitySpecialist(BaseAgent):
             "browser_compatibility_resolved",
             browser=browser,
             supported=compatibility["supported"],
-            status="resolved"
+            status="resolved",
         )
 
         return state
@@ -161,11 +148,11 @@ class BrowserCompatibilitySpecialist(BaseAgent):
 
         return "unknown"
 
-    def _check_compatibility(self, browser: str, version: int) -> Dict[str, Any]:
+    def _check_compatibility(self, browser: str, version: int) -> dict[str, Any]:
         """Check if browser is supported"""
         # Normalize browser name
         browser_key = None
-        for key in self.SUPPORTED_BROWSERS.keys():
+        for key in self.SUPPORTED_BROWSERS:
             if key.lower() == browser.lower() or browser.lower() in key.lower():
                 browser_key = key
                 break
@@ -179,19 +166,16 @@ class BrowserCompatibilitySpecialist(BaseAgent):
             "checking_browser_compatibility",
             browser=browser_key,
             version=version,
-            min_version=browser_info.get("min_version", 0)
+            min_version=browser_info.get("min_version", 0),
         )
 
         if browser_info.get("deprecated"):
-            self.logger.warning(
-                "deprecated_browser_detected",
-                browser=browser_key
-            )
+            self.logger.warning("deprecated_browser_detected", browser=browser_key)
             return {
                 "supported": False,
                 "reason": "deprecated",
                 "needs_update": False,
-                "browser_info": browser_info
+                "browser_info": browser_info,
             }
 
         min_version = browser_info.get("min_version", 0)
@@ -201,28 +185,21 @@ class BrowserCompatibilitySpecialist(BaseAgent):
                 "outdated_browser_version_detected",
                 browser=browser_key,
                 version=version,
-                min_version=min_version
+                min_version=min_version,
             )
             return {
                 "supported": False,
                 "reason": "outdated_version",
                 "needs_update": True,
                 "min_version": min_version,
-                "browser_info": browser_info
+                "browser_info": browser_info,
             }
 
-        return {
-            "supported": True,
-            "needs_update": False,
-            "browser_info": browser_info
-        }
+        return {"supported": True, "needs_update": False, "browser_info": browser_info}
 
     def _recommend_browser_upgrade(
-        self,
-        browser: str,
-        version: int,
-        compatibility: Dict[str, Any]
-    ) -> Dict[str, str]:
+        self, browser: str, version: int, compatibility: dict[str, Any]
+    ) -> dict[str, str]:
         """Recommend switching browsers"""
         if compatibility["reason"] == "deprecated":
             message = f"""**{browser} is no longer supported.**
@@ -270,24 +247,15 @@ Our app requires a modern browser for best performance and security.
 
 The switch takes just 2 minutes and you'll have a much better experience!"""
 
-            return {
-                "message": message,
-                "action": "recommend_upgrade"
-            }
+            return {"message": message, "action": "recommend_upgrade"}
 
         else:
             message = "Please use a supported browser for the best experience."
-            return {
-                "message": message,
-                "action": "recommend_upgrade"
-            }
+            return {"message": message, "action": "recommend_upgrade"}
 
     def _recommend_version_upgrade(
-        self,
-        browser: str,
-        version: int,
-        compatibility: Dict[str, Any]
-    ) -> Dict[str, str]:
+        self, browser: str, version: int, compatibility: dict[str, Any]
+    ) -> dict[str, str]:
         """Recommend updating browser version"""
         min_version = compatibility.get("min_version", 0)
 
@@ -307,7 +275,7 @@ The switch takes just 2 minutes and you'll have a much better experience!"""
 
 **Alternative method:**
 Download the latest version from:
-{compatibility['browser_info'].get('download_url', 'the official website')}
+{compatibility["browser_info"].get("download_url", "the official website")}
 
 **After updating:**
 1. Restart your browser
@@ -323,12 +291,9 @@ Download the latest version from:
 
 Updating usually takes 2-5 minutes and fixes most compatibility issues!"""
 
-        return {
-            "message": message,
-            "action": "recommend_update"
-        }
+        return {"message": message, "action": "recommend_update"}
 
-    async def _check_browser_specific_issues(self, browser: str, message: str) -> Dict[str, str]:
+    async def _check_browser_specific_issues(self, browser: str, message: str) -> dict[str, str]:
         """Check for known browser-specific issues"""
         message_lower = message.lower()
 
@@ -352,7 +317,7 @@ Safari blocks third-party cookies by default, which can cause issues.
 - Use Safari > Develop > Disable Cross-Origin Restrictions
 - (For testing only)
 
-This should fix login and session issues!"""
+This should fix login and session issues!""",
                 },
                 "cache": {
                     "keywords": ["cache", "old", "refresh", "update"],
@@ -369,8 +334,8 @@ Safari caches pages aggressively, which can show outdated content.
 - Enable "Show Develop menu" in Safari > Preferences > Advanced
 - Use hard refresh when you see stale content
 
-Try hard refresh first - it usually works!"""
-                }
+Try hard refresh first - it usually works!""",
+                },
             },
             "Firefox": {
                 "tracking": {
@@ -390,7 +355,7 @@ Firefox's Enhanced Tracking Protection may block some features.
 
 **Note:** This only affects our site, keeping protection on elsewhere.
 
-Try this and let me know if it helps!"""
+Try this and let me know if it helps!""",
                 },
                 "extensions": {
                     "keywords": ["extension", "addon", "blocked"],
@@ -411,8 +376,8 @@ Privacy extensions may interfere with features.
 **Alternative:**
 Add our site to extension whitelists
 
-Let me know if private window works!"""
-                }
+Let me know if private window works!""",
+                },
             },
             "Chrome": {
                 "memory": {
@@ -436,7 +401,7 @@ Chrome can use a lot of RAM with many tabs.
 **Check memory:**
 Chrome Menu > More Tools > Task Manager
 
-Try closing unused tabs first!"""
+Try closing unused tabs first!""",
                 },
                 "extensions": {
                     "keywords": ["extension", "blocked", "not working"],
@@ -457,8 +422,8 @@ Extensions may interfere with features.
 **Alternative:**
 Allow extensions in incognito to test specific ones
 
-Let me know if incognito mode works!"""
-                }
+Let me know if incognito mode works!""",
+                },
             },
             "Edge": {
                 "compatibility": {
@@ -478,9 +443,9 @@ Edge may be running in IE compatibility mode.
 - Use Edge (Chromium) not IE mode
 - Update to latest Edge version
 
-Try this and refresh!"""
+Try this and refresh!""",
                 }
-            }
+            },
         }
 
         browser_issues = known_issues.get(browser, {})
@@ -490,13 +455,11 @@ Try this and refresh!"""
             keywords = issue_data.get("keywords", [])
             if any(keyword in message_lower for keyword in keywords):
                 self.logger.info(
-                    "browser_specific_issue_detected",
-                    browser=browser,
-                    issue_type=issue_type
+                    "browser_specific_issue_detected", browser=browser, issue_type=issue_type
                 )
                 return {
                     "message": issue_data["solution"],
-                    "action": f"browser_specific_fix_{issue_type}"
+                    "action": f"browser_specific_fix_{issue_type}",
                 }
 
         # No specific issue found - provide general troubleshooting
@@ -545,12 +508,9 @@ Try this and refresh!"""
 
         message += "\n\nCan you describe the specific issue you're experiencing in more detail?"
 
-        return {
-            "message": message,
-            "action": "general_browser_troubleshooting"
-        }
+        return {"message": message, "action": "general_browser_troubleshooting"}
 
-    def _format_response(self, response: Dict[str, str], kb_results: list) -> str:
+    def _format_response(self, response: dict[str, str], kb_results: list) -> str:
         """Format response with KB context"""
         kb_context = ""
         if kb_results:
@@ -563,6 +523,7 @@ Try this and refresh!"""
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -572,10 +533,7 @@ if __name__ == "__main__":
         print("=" * 60)
 
         state = create_initial_state("Features not working in IE")
-        state["customer_metadata"] = {
-            "browser": "IE",
-            "browser_version": 11
-        }
+        state["customer_metadata"] = {"browser": "IE", "browser_version": 11}
 
         agent = BrowserCompatibilitySpecialist()
         result = await agent.process(state)
@@ -591,7 +549,7 @@ if __name__ == "__main__":
         state2 = create_initial_state("App is slow in Chrome")
         state2["customer_metadata"] = {
             "browser": "Chrome",
-            "browser_version": 80  # Below min 90
+            "browser_version": 80,  # Below min 90
         }
 
         result2 = await agent.process(state2)
@@ -605,10 +563,7 @@ if __name__ == "__main__":
         print("=" * 60)
 
         state3 = create_initial_state("Can't stay logged in Safari, cookies not working")
-        state3["customer_metadata"] = {
-            "browser": "Safari",
-            "browser_version": 15
-        }
+        state3["customer_metadata"] = {"browser": "Safari", "browser_version": 15}
 
         result3 = await agent.process(state3)
 
