@@ -5,9 +5,11 @@ This module provides decorators for agent methods to add
 cross-cutting concerns like logging, error handling, timing, etc.
 """
 
-import time
 import functools
-from typing import Callable, Any
+import time
+from collections.abc import Callable
+from typing import Any
+
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -25,10 +27,13 @@ def log_agent_action(action_name: str):
         async def classify_intent(self, message: str):
             ...
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         async def async_wrapper(self, *args, **kwargs) -> Any:
-            agent_name = getattr(self.config, 'name', 'unknown') if hasattr(self, 'config') else 'unknown'
+            agent_name = (
+                getattr(self.config, "name", "unknown") if hasattr(self, "config") else "unknown"
+            )
             log = logger.bind(agent=agent_name, action=action_name)
 
             log.info(f"{action_name}_started")
@@ -38,10 +43,7 @@ def log_agent_action(action_name: str):
                 result = await func(self, *args, **kwargs)
                 duration = time.time() - start_time
 
-                log.info(
-                    f"{action_name}_completed",
-                    duration_ms=round(duration * 1000, 2)
-                )
+                log.info(f"{action_name}_completed", duration_ms=round(duration * 1000, 2))
 
                 return result
 
@@ -51,13 +53,15 @@ def log_agent_action(action_name: str):
                     f"{action_name}_failed",
                     error=str(e),
                     error_type=type(e).__name__,
-                    duration_ms=round(duration * 1000, 2)
+                    duration_ms=round(duration * 1000, 2),
                 )
                 raise
 
         @functools.wraps(func)
         def sync_wrapper(self, *args, **kwargs) -> Any:
-            agent_name = getattr(self.config, 'name', 'unknown') if hasattr(self, 'config') else 'unknown'
+            agent_name = (
+                getattr(self.config, "name", "unknown") if hasattr(self, "config") else "unknown"
+            )
             log = logger.bind(agent=agent_name, action=action_name)
 
             log.info(f"{action_name}_started")
@@ -67,10 +71,7 @@ def log_agent_action(action_name: str):
                 result = func(self, *args, **kwargs)
                 duration = time.time() - start_time
 
-                log.info(
-                    f"{action_name}_completed",
-                    duration_ms=round(duration * 1000, 2)
-                )
+                log.info(f"{action_name}_completed", duration_ms=round(duration * 1000, 2))
 
                 return result
 
@@ -80,7 +81,7 @@ def log_agent_action(action_name: str):
                     f"{action_name}_failed",
                     error=str(e),
                     error_type=type(e).__name__,
-                    duration_ms=round(duration * 1000, 2)
+                    duration_ms=round(duration * 1000, 2),
                 )
                 raise
 
@@ -105,6 +106,7 @@ def retry_on_error(max_retries: int = 3, delay: float = 1.0):
         async def call_external_api(self):
             ...
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         async def async_wrapper(self, *args, **kwargs) -> Any:
@@ -120,15 +122,11 @@ def retry_on_error(max_retries: int = 3, delay: float = 1.0):
                             "retry_attempt",
                             attempt=attempt + 1,
                             max_retries=max_retries,
-                            error=str(e)
+                            error=str(e),
                         )
                         await asyncio.sleep(delay)
                     else:
-                        logger.error(
-                            "max_retries_exceeded",
-                            max_retries=max_retries,
-                            error=str(e)
-                        )
+                        logger.error("max_retries_exceeded", max_retries=max_retries, error=str(e))
 
             raise last_exception
 
@@ -146,15 +144,11 @@ def retry_on_error(max_retries: int = 3, delay: float = 1.0):
                             "retry_attempt",
                             attempt=attempt + 1,
                             max_retries=max_retries,
-                            error=str(e)
+                            error=str(e),
                         )
                         time.sleep(delay)
                     else:
-                        logger.error(
-                            "max_retries_exceeded",
-                            max_retries=max_retries,
-                            error=str(e)
-                        )
+                        logger.error("max_retries_exceeded", max_retries=max_retries, error=str(e))
 
             raise last_exception
 
@@ -177,32 +171,27 @@ def validate_state(required_fields: list):
         async def process(self, state: AgentState):
             ...
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         async def async_wrapper(self, state, *args, **kwargs) -> Any:
             missing_fields = [
-                field for field in required_fields
-                if field not in state or state[field] is None
+                field for field in required_fields if field not in state or state[field] is None
             ]
 
             if missing_fields:
-                raise ValueError(
-                    f"Missing required state fields: {', '.join(missing_fields)}"
-                )
+                raise ValueError(f"Missing required state fields: {', '.join(missing_fields)}")
 
             return await func(self, state, *args, **kwargs)
 
         @functools.wraps(func)
         def sync_wrapper(self, state, *args, **kwargs) -> Any:
             missing_fields = [
-                field for field in required_fields
-                if field not in state or state[field] is None
+                field for field in required_fields if field not in state or state[field] is None
             ]
 
             if missing_fields:
-                raise ValueError(
-                    f"Missing required state fields: {', '.join(missing_fields)}"
-                )
+                raise ValueError(f"Missing required state fields: {', '.join(missing_fields)}")
 
             return func(self, state, *args, **kwargs)
 
@@ -225,6 +214,7 @@ def cache_result(ttl_seconds: int = 300):
         async def get_customer_plan(self, customer_id: str):
             ...
     """
+
     def decorator(func: Callable) -> Callable:
         cache = {}
 
@@ -247,8 +237,7 @@ def cache_result(ttl_seconds: int = 300):
 
             # Clean old cache entries
             cache_keys_to_remove = [
-                k for k, (_, t) in cache.items()
-                if current_time - t >= ttl_seconds
+                k for k, (_, t) in cache.items() if current_time - t >= ttl_seconds
             ]
             for k in cache_keys_to_remove:
                 del cache[k]
@@ -270,8 +259,7 @@ def cache_result(ttl_seconds: int = 300):
             cache[cache_key] = (result, current_time)
 
             cache_keys_to_remove = [
-                k for k, (_, t) in cache.items()
-                if current_time - t >= ttl_seconds
+                k for k, (_, t) in cache.items() if current_time - t >= ttl_seconds
             ]
             for k in cache_keys_to_remove:
                 del cache[k]
