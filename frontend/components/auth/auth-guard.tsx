@@ -10,8 +10,8 @@
 
 "use client";
 
-import { useEffect, type ReactNode } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { type ReactNode, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -103,7 +103,15 @@ export function AuthGuard({
         return;
       }
     }
-  }, [isAuthenticated, isInitialized, user, requiredRoles, router, pathname, redirectTo]);
+  }, [
+    isAuthenticated,
+    isInitialized,
+    user,
+    requiredRoles,
+    router,
+    pathname,
+    redirectTo,
+  ]);
 
   // Show loading state
   if (isLoading || !isInitialized) {
