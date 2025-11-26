@@ -5,13 +5,13 @@ Shares best practices, provides templates and workflows, offers optimization tip
 and benchmarks customer performance against industry standards.
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("best_practices", tier="revenue", category="customer_success")
@@ -33,33 +33,17 @@ class BestPracticesAgent(BaseAgent):
         "workflow_optimization": {
             "priority": "high",
             "impact": "efficiency gains",
-            "difficulty": "medium"
+            "difficulty": "medium",
         },
         "feature_utilization": {
             "priority": "high",
             "impact": "value realization",
-            "difficulty": "low"
+            "difficulty": "low",
         },
-        "collaboration": {
-            "priority": "medium",
-            "impact": "team productivity",
-            "difficulty": "low"
-        },
-        "automation": {
-            "priority": "high",
-            "impact": "time savings",
-            "difficulty": "medium"
-        },
-        "reporting": {
-            "priority": "medium",
-            "impact": "data insights",
-            "difficulty": "low"
-        },
-        "integration": {
-            "priority": "medium",
-            "impact": "ecosystem value",
-            "difficulty": "high"
-        }
+        "collaboration": {"priority": "medium", "impact": "team productivity", "difficulty": "low"},
+        "automation": {"priority": "high", "impact": "time savings", "difficulty": "medium"},
+        "reporting": {"priority": "medium", "impact": "data insights", "difficulty": "low"},
+        "integration": {"priority": "medium", "impact": "ecosystem value", "difficulty": "high"},
     }
 
     # Performance benchmarks by tier
@@ -67,7 +51,7 @@ class BestPracticesAgent(BaseAgent):
         "top_quartile": {"percentile": 75, "rating": "excellent"},
         "above_average": {"percentile": 50, "rating": "good"},
         "average": {"percentile": 25, "rating": "acceptable"},
-        "below_average": {"percentile": 10, "rating": "needs_improvement"}
+        "below_average": {"percentile": 10, "rating": "needs_improvement"},
     }
 
     def __init__(self):
@@ -76,12 +60,9 @@ class BestPracticesAgent(BaseAgent):
             type=AgentType.SPECIALIST,
             temperature=0.4,
             max_tokens=800,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.KB_SEARCH
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.KB_SEARCH],
             kb_category="customer_success",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -109,47 +90,29 @@ class BestPracticesAgent(BaseAgent):
             "best_practices_details",
             customer_id=customer_id,
             industry=customer_metadata.get("industry", "unknown"),
-            plan=customer_metadata.get("plan", "unknown")
+            plan=customer_metadata.get("plan", "unknown"),
         )
 
         # Analyze current practices
         practices_analysis = self._analyze_current_practices(
-            usage_data,
-            current_practices,
-            customer_metadata
+            usage_data, current_practices, customer_metadata
         )
 
         # Generate best practice recommendations
-        recommendations = self._generate_best_practices(
-            practices_analysis,
-            customer_metadata
-        )
+        recommendations = self._generate_best_practices(practices_analysis, customer_metadata)
 
         # Benchmark against cohort
-        benchmarks = self._benchmark_performance(
-            usage_data,
-            customer_metadata
-        )
+        benchmarks = self._benchmark_performance(usage_data, customer_metadata)
 
         # Create optimization roadmap
-        roadmap = self._create_optimization_roadmap(
-            recommendations,
-            benchmarks
-        )
+        roadmap = self._create_optimization_roadmap(recommendations, benchmarks)
 
         # Provide templates and resources
-        resources = self._recommend_resources(
-            recommendations,
-            customer_metadata
-        )
+        resources = self._recommend_resources(recommendations, customer_metadata)
 
         # Format response
         response = self._format_best_practices_report(
-            practices_analysis,
-            recommendations,
-            benchmarks,
-            roadmap,
-            resources
+            practices_analysis, recommendations, benchmarks, roadmap, resources
         )
 
         state["agent_response"] = response
@@ -166,17 +129,17 @@ class BestPracticesAgent(BaseAgent):
             customer_id=customer_id,
             practice_score=practices_analysis["overall_score"],
             benchmark_rating=benchmarks["overall_rating"],
-            recommendations=len(recommendations)
+            recommendations=len(recommendations),
         )
 
         return state
 
     def _analyze_current_practices(
         self,
-        usage_data: Dict[str, Any],
-        current_practices: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        usage_data: dict[str, Any],
+        current_practices: dict[str, Any],
+        customer_metadata: dict[str, Any],
+    ) -> dict[str, Any]:
         """
         Analyze customer's current practices.
 
@@ -192,15 +155,11 @@ class BestPracticesAgent(BaseAgent):
         category_scores = {}
 
         for category, criteria in self.PRACTICE_CATEGORIES.items():
-            score = self._score_practice_category(
-                category,
-                usage_data,
-                current_practices
-            )
+            score = self._score_practice_category(category, usage_data, current_practices)
             category_scores[category] = {
                 "score": score,
                 "priority": criteria["priority"],
-                "impact": criteria["impact"]
+                "impact": criteria["impact"],
             }
 
         # Calculate overall practice score
@@ -208,15 +167,9 @@ class BestPracticesAgent(BaseAgent):
         overall_score = int(total_score / len(category_scores))
 
         # Identify strengths and gaps
-        strengths = [
-            cat for cat, data in category_scores.items()
-            if data["score"] >= 70
-        ]
+        strengths = [cat for cat, data in category_scores.items() if data["score"] >= 70]
 
-        gaps = [
-            cat for cat, data in category_scores.items()
-            if data["score"] < 50
-        ]
+        gaps = [cat for cat, data in category_scores.items() if data["score"] < 50]
 
         # Determine maturity level
         maturity_level = self._determine_maturity_level(overall_score)
@@ -227,14 +180,11 @@ class BestPracticesAgent(BaseAgent):
             "category_scores": category_scores,
             "strengths": strengths,
             "gaps": gaps,
-            "analyzed_at": datetime.now(UTC).isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat(),
         }
 
     def _score_practice_category(
-        self,
-        category: str,
-        usage_data: Dict[str, Any],
-        current_practices: Dict[str, Any]
+        self, category: str, usage_data: dict[str, Any], current_practices: dict[str, Any]
     ) -> int:
         """Score a specific practice category (0-100)."""
         score = 50  # Default baseline
@@ -325,10 +275,8 @@ class BestPracticesAgent(BaseAgent):
             return "initial"
 
     def _generate_best_practices(
-        self,
-        practices_analysis: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        self, practices_analysis: dict[str, Any], customer_metadata: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Generate personalized best practice recommendations."""
         recommendations = []
         gaps = practices_analysis.get("gaps", [])
@@ -348,7 +296,7 @@ class BestPracticesAgent(BaseAgent):
                 "impact": practice_info.get("impact", "value realization"),
                 "difficulty": practice_info.get("difficulty", "medium"),
                 "practices": self._get_category_practices(category, industry),
-                "expected_benefit": self._estimate_benefit(category)
+                "expected_benefit": self._estimate_benefit(category),
             }
 
             recommendations.append(recommendation)
@@ -358,16 +306,18 @@ class BestPracticesAgent(BaseAgent):
             if 50 <= data["score"] < 70 and category not in gaps:
                 practice_info = self.PRACTICE_CATEGORIES.get(category, {})
 
-                recommendations.append({
-                    "category": category,
-                    "priority": "low",
-                    "current_score": data["score"],
-                    "target_score": 85,
-                    "impact": practice_info.get("impact", "optimization"),
-                    "difficulty": "low",
-                    "practices": self._get_category_practices(category, industry)[:2],
-                    "expected_benefit": "Incremental improvement"
-                })
+                recommendations.append(
+                    {
+                        "category": category,
+                        "priority": "low",
+                        "current_score": data["score"],
+                        "target_score": 85,
+                        "impact": practice_info.get("impact", "optimization"),
+                        "difficulty": "low",
+                        "practices": self._get_category_practices(category, industry)[:2],
+                        "expected_benefit": "Incremental improvement",
+                    }
+                )
 
         # Sort by priority
         priority_order = {"high": 0, "medium": 1, "low": 2}
@@ -375,45 +325,45 @@ class BestPracticesAgent(BaseAgent):
 
         return recommendations[:8]
 
-    def _get_category_practices(self, category: str, industry: str) -> List[str]:
+    def _get_category_practices(self, category: str, industry: str) -> list[str]:
         """Get specific best practices for a category."""
         practices_db = {
             "workflow_optimization": [
                 "Create standardized workflow templates for common processes",
                 "Implement approval workflows to reduce bottlenecks",
                 "Use conditional logic to automate decision paths",
-                "Document and share team workflows across departments"
+                "Document and share team workflows across departments",
             ],
             "feature_utilization": [
                 "Enable advanced search and filtering for faster data access",
                 "Use bulk actions to process multiple items simultaneously",
                 "Set up custom views for different team roles",
-                "Leverage keyboard shortcuts for frequent actions"
+                "Leverage keyboard shortcuts for frequent actions",
             ],
             "collaboration": [
                 "Use @mentions to notify specific team members",
                 "Share project boards for cross-functional visibility",
                 "Enable commenting and activity feeds for async communication",
-                "Create team workspaces for departmental organization"
+                "Create team workspaces for departmental organization",
             ],
             "automation": [
                 "Automate status updates based on trigger conditions",
                 "Set up recurring task creation for routine processes",
                 "Use automation to assign tasks based on round-robin or workload",
-                "Implement notification rules to reduce manual follow-ups"
+                "Implement notification rules to reduce manual follow-ups",
             ],
             "reporting": [
                 "Build executive dashboards for high-level KPI tracking",
                 "Schedule automated report delivery to stakeholders",
                 "Create role-specific reports for different team needs",
-                "Use data visualization for trend analysis"
+                "Use data visualization for trend analysis",
             ],
             "integration": [
                 f"Connect with popular {industry} tools for seamless data flow",
                 "Use two-way sync to keep data updated across platforms",
                 "Automate workflows across integrated applications",
-                "Leverage webhooks for real-time event notifications"
-            ]
+                "Leverage webhooks for real-time event notifications",
+            ],
         }
 
         return practices_db.get(category, ["Optimize usage patterns", "Follow industry standards"])
@@ -426,23 +376,23 @@ class BestPracticesAgent(BaseAgent):
             "collaboration": "25-35% faster team communication",
             "automation": "50-70% time savings on repetitive tasks",
             "reporting": "80% reduction in manual reporting time",
-            "integration": "30-40% efficiency gain from unified data"
+            "integration": "30-40% efficiency gain from unified data",
         }
 
         return benefits.get(category, "Measurable productivity improvement")
 
     def _benchmark_performance(
-        self,
-        usage_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, usage_data: dict[str, Any], customer_metadata: dict[str, Any]
+    ) -> dict[str, Any]:
         """Benchmark customer performance against cohort."""
         # Simplified benchmarking - in production, would use real cohort data
         industry = customer_metadata.get("industry", "general")
         plan = customer_metadata.get("plan", "standard")
 
         # Calculate key metrics
-        feature_adoption = len(usage_data.get("features_used", [])) / 20 * 100  # Assume 20 total features
+        feature_adoption = (
+            len(usage_data.get("features_used", [])) / 20 * 100
+        )  # Assume 20 total features
         dau_mau_ratio = usage_data.get("dau", 0) / max(usage_data.get("mau", 1), 1) * 100
         automation_usage = usage_data.get("automation_count", 0)
 
@@ -450,7 +400,7 @@ class BestPracticesAgent(BaseAgent):
         benchmarks = {
             "feature_adoption": self._get_benchmark_tier(feature_adoption, [75, 50, 25]),
             "engagement": self._get_benchmark_tier(dau_mau_ratio, [60, 40, 20]),
-            "automation": self._get_benchmark_tier(automation_usage, [15, 8, 3])
+            "automation": self._get_benchmark_tier(automation_usage, [15, 8, 3]),
         }
 
         # Calculate overall rating
@@ -471,13 +421,16 @@ class BestPracticesAgent(BaseAgent):
             "industry": industry,
             "plan": plan,
             "metrics": {
-                "feature_adoption": {"value": round(feature_adoption, 1), "tier": benchmarks["feature_adoption"]},
+                "feature_adoption": {
+                    "value": round(feature_adoption, 1),
+                    "tier": benchmarks["feature_adoption"],
+                },
                 "engagement": {"value": round(dau_mau_ratio, 1), "tier": benchmarks["engagement"]},
-                "automation": {"value": automation_usage, "tier": benchmarks["automation"]}
-            }
+                "automation": {"value": automation_usage, "tier": benchmarks["automation"]},
+            },
         }
 
-    def _get_benchmark_tier(self, value: float, thresholds: List[int]) -> str:
+    def _get_benchmark_tier(self, value: float, thresholds: list[int]) -> str:
         """Determine benchmark tier based on value and thresholds."""
         if value >= thresholds[0]:
             return "top_quartile"
@@ -489,16 +442,10 @@ class BestPracticesAgent(BaseAgent):
             return "below_average"
 
     def _create_optimization_roadmap(
-        self,
-        recommendations: List[Dict[str, Any]],
-        benchmarks: Dict[str, Any]
-    ) -> Dict[str, List[str]]:
+        self, recommendations: list[dict[str, Any]], benchmarks: dict[str, Any]
+    ) -> dict[str, list[str]]:
         """Create 30-60-90 day optimization roadmap."""
-        roadmap = {
-            "30_days": [],
-            "60_days": [],
-            "90_days": []
-        }
+        roadmap = {"30_days": [], "60_days": [], "90_days": []}
 
         # 30 days: High priority, low difficulty
         for rec in recommendations:
@@ -510,9 +457,7 @@ class BestPracticesAgent(BaseAgent):
         # 60 days: Medium priority and medium difficulty
         for rec in recommendations:
             if rec["priority"] == "medium" or rec["difficulty"] == "medium":
-                roadmap["60_days"].append(
-                    f"Optimize {rec['category'].replace('_', ' ')}"
-                )
+                roadmap["60_days"].append(f"Optimize {rec['category'].replace('_', ' ')}")
 
         # 90 days: All remaining and high difficulty
         for rec in recommendations:
@@ -529,10 +474,8 @@ class BestPracticesAgent(BaseAgent):
         return roadmap
 
     def _recommend_resources(
-        self,
-        recommendations: List[Dict[str, Any]],
-        customer_metadata: Dict[str, Any]
-    ) -> List[Dict[str, str]]:
+        self, recommendations: list[dict[str, Any]], customer_metadata: dict[str, Any]
+    ) -> list[dict[str, str]]:
         """Recommend templates, guides, and resources."""
         resources = []
 
@@ -541,9 +484,11 @@ class BestPracticesAgent(BaseAgent):
 
             resource = {
                 "category": category,
-                "type": "template" if category in ["workflow_optimization", "reporting"] else "guide",
+                "type": "template"
+                if category in ["workflow_optimization", "reporting"]
+                else "guide",
                 "title": f"{category.replace('_', ' ').title()} Best Practices Guide",
-                "description": f"Step-by-step guide to implement {rec['impact']}"
+                "description": f"Step-by-step guide to implement {rec['impact']}",
             }
 
             resources.append(resource)
@@ -552,11 +497,11 @@ class BestPracticesAgent(BaseAgent):
 
     def _format_best_practices_report(
         self,
-        practices_analysis: Dict[str, Any],
-        recommendations: List[Dict[str, Any]],
-        benchmarks: Dict[str, Any],
-        roadmap: Dict[str, List[str]],
-        resources: List[Dict[str, str]]
+        practices_analysis: dict[str, Any],
+        recommendations: list[dict[str, Any]],
+        benchmarks: dict[str, Any],
+        roadmap: dict[str, list[str]],
+        resources: list[dict[str, str]],
     ) -> str:
         """Format best practices report."""
         maturity = practices_analysis["maturity_level"]
@@ -566,10 +511,10 @@ class BestPracticesAgent(BaseAgent):
             "optimized": "????",
             "advanced": "???",
             "developing": "????",
-            "initial": "????"
+            "initial": "????",
         }
 
-        report = f"""**{maturity_emoji.get(maturity, '????')} Best Practices Analysis**
+        report = f"""**{maturity_emoji.get(maturity, "????")} Best Practices Analysis**
 
 **Maturity Level:** {maturity.upper()}
 **Overall Score:** {overall_score}/100
@@ -578,7 +523,9 @@ class BestPracticesAgent(BaseAgent):
 """
 
         for category, data in practices_analysis["category_scores"].items():
-            score_icon = "????" if data["score"] >= 70 else "????" if data["score"] >= 50 else "????"
+            score_icon = (
+                "????" if data["score"] >= 70 else "????" if data["score"] >= 50 else "????"
+            )
             report += f"- {score_icon} {category.replace('_', ' ').title()}: {data['score']}/100 ({data['priority']} priority)\n"
 
         # Strengths
@@ -589,7 +536,9 @@ class BestPracticesAgent(BaseAgent):
 
         # Benchmarks
         rating = benchmarks["overall_rating"]
-        rating_emoji = "????" if rating == "top_quartile" else "???" if rating == "above_average" else "????"
+        rating_emoji = (
+            "????" if rating == "top_quartile" else "???" if rating == "above_average" else "????"
+        )
 
         report += f"\n**{rating_emoji} Performance Benchmarks**\n"
         report += f"**Overall Rating:** {rating.replace('_', ' ').title()}\n\n"
@@ -601,12 +550,20 @@ class BestPracticesAgent(BaseAgent):
         if recommendations:
             report += "\n**???? Top Optimization Opportunities:**\n"
             for i, rec in enumerate(recommendations[:4], 1):
-                priority_icon = "????" if rec["priority"] == "high" else "????" if rec["priority"] == "medium" else "????"
-                report += f"\n{i}. **{rec['category'].replace('_', ' ').title()}** {priority_icon}\n"
+                priority_icon = (
+                    "????"
+                    if rec["priority"] == "high"
+                    else "????"
+                    if rec["priority"] == "medium"
+                    else "????"
+                )
+                report += (
+                    f"\n{i}. **{rec['category'].replace('_', ' ').title()}** {priority_icon}\n"
+                )
                 report += f"   - Current: {rec['current_score']}/100 ??? Target: {rec['target_score']}/100\n"
                 report += f"   - Impact: {rec['impact']}\n"
                 report += f"   - Benefit: {rec['expected_benefit']}\n"
-                report += f"   - Key practices:\n"
+                report += "   - Key practices:\n"
                 for practice in rec["practices"][:2]:
                     report += f"     ??? {practice}\n"
 
@@ -629,6 +586,7 @@ class BestPracticesAgent(BaseAgent):
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -646,26 +604,23 @@ if __name__ == "__main__":
             "Analyze best practices",
             context={
                 "customer_id": "cust_developing",
-                "customer_metadata": {
-                    "plan": "premium",
-                    "industry": "healthcare"
-                }
-            }
+                "customer_metadata": {"plan": "premium", "industry": "healthcare"},
+            },
         )
         state1["entities"] = {
             "usage_data": {
                 "features_used": ["feature1", "feature2", "feature3", "feature4"],
                 "dau": 12,
                 "mau": 25,
-                "automation_count": 2
+                "automation_count": 2,
             },
             "current_practices": {
                 "workflows_created": 1,
                 "collaboration_features_used": 1,
                 "automation_rules": 2,
                 "custom_reports": 0,
-                "active_integrations": 0
-            }
+                "active_integrations": 0,
+            },
         }
 
         result1 = await agent.process(state1)
@@ -684,26 +639,23 @@ if __name__ == "__main__":
             "Check best practices",
             context={
                 "customer_id": "cust_advanced",
-                "customer_metadata": {
-                    "plan": "enterprise",
-                    "industry": "technology"
-                }
-            }
+                "customer_metadata": {"plan": "enterprise", "industry": "technology"},
+            },
         )
         state2["entities"] = {
             "usage_data": {
                 "features_used": [f"feature{i}" for i in range(1, 18)],
                 "dau": 45,
                 "mau": 60,
-                "automation_count": 25
+                "automation_count": 25,
             },
             "current_practices": {
                 "workflows_created": 15,
                 "collaboration_features_used": 6,
                 "automation_rules": 25,
                 "custom_reports": 12,
-                "active_integrations": 7
-            }
+                "active_integrations": 7,
+            },
         }
 
         result2 = await agent.process(state2)
