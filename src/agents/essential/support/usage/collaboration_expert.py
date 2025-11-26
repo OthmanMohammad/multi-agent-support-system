@@ -4,12 +4,10 @@ Collaboration Expert Agent - Teaches team collaboration features.
 Specialist for sharing, permissions, @mentions, comments, and team workflows.
 """
 
-from typing import Dict, Any, Optional
-
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("collaboration_expert", tier="essential", category="usage")
@@ -35,19 +33,19 @@ class CollaborationExpert(BaseAgent):
                 "Add email addresses or select from team",
                 "Set permission level for each person",
                 "Add optional message",
-                "Click 'Send Invites'"
+                "Click 'Send Invites'",
             ],
             "best_practices": [
                 "Give minimum permissions needed (principle of least privilege)",
                 "Use team workspaces for department-wide sharing",
                 "Review sharing settings quarterly",
-                "Create shared views for specific use cases"
+                "Create shared views for specific use cases",
             ],
             "common_issues": [
                 "User can't see shared project → Check they accepted invite",
                 "Can't find person to share with → Invite them to workspace first",
-                "Shared link not working → Check link hasn't expired"
-            ]
+                "Shared link not working → Check link hasn't expired",
+            ],
         },
         "mentions": {
             "description": "Notify team members with @mentions",
@@ -56,19 +54,19 @@ class CollaborationExpert(BaseAgent):
                 "Start typing person's name",
                 "Select from dropdown",
                 "Finish your message",
-                "They'll get instant notification"
+                "They'll get instant notification",
             ],
             "best_practices": [
                 "Use @mentions sparingly to avoid notification fatigue",
                 "Be specific about what you need",
                 "Set deadlines when requesting action",
-                "@mention at the right time (not middle of night)"
+                "@mention at the right time (not middle of night)",
             ],
             "common_issues": [
                 "Person not in dropdown → They need to join the workspace",
                 "@mention doesn't notify → Check their notification settings",
-                "Too many @mentions → Use @team sparingly"
-            ]
+                "Too many @mentions → Use @team sparingly",
+            ],
         },
         "permissions": {
             "description": "Control who can view, edit, and manage content",
@@ -78,36 +76,64 @@ class CollaborationExpert(BaseAgent):
                     "description": "Read-only access",
                     "can": ["View projects", "See comments", "Export data", "Follow items"],
                     "cannot": ["Edit", "Delete", "Share", "Change settings"],
-                    "use_for": ["Clients", "Stakeholders", "External partners", "Read-only team members"]
+                    "use_for": [
+                        "Clients",
+                        "Stakeholders",
+                        "External partners",
+                        "Read-only team members",
+                    ],
                 },
                 "editor": {
                     "name": "Editor",
                     "description": "Can make changes to content",
-                    "can": ["All Viewer permissions", "Create items", "Edit content", "Add comments", "Upload files"],
-                    "cannot": ["Delete projects", "Manage members", "Change billing", "Configure integrations"],
-                    "use_for": ["Team members", "Contributors", "Content creators"]
+                    "can": [
+                        "All Viewer permissions",
+                        "Create items",
+                        "Edit content",
+                        "Add comments",
+                        "Upload files",
+                    ],
+                    "cannot": [
+                        "Delete projects",
+                        "Manage members",
+                        "Change billing",
+                        "Configure integrations",
+                    ],
+                    "use_for": ["Team members", "Contributors", "Content creators"],
                 },
                 "admin": {
                     "name": "Admin",
                     "description": "Full control over workspace",
-                    "can": ["All Editor permissions", "Delete projects", "Manage members", "Change settings", "Configure integrations", "View analytics"],
+                    "can": [
+                        "All Editor permissions",
+                        "Delete projects",
+                        "Manage members",
+                        "Change settings",
+                        "Configure integrations",
+                        "View analytics",
+                    ],
                     "cannot": ["Change billing (Owner only)", "Delete workspace (Owner only)"],
-                    "use_for": ["Managers", "Team leads", "Department heads"]
+                    "use_for": ["Managers", "Team leads", "Department heads"],
                 },
                 "owner": {
                     "name": "Owner",
                     "description": "Complete control including billing",
-                    "can": ["Everything", "Manage billing", "Delete workspace", "Transfer ownership"],
+                    "can": [
+                        "Everything",
+                        "Manage billing",
+                        "Delete workspace",
+                        "Transfer ownership",
+                    ],
                     "cannot": ["Nothing - full access"],
-                    "use_for": ["Account owner", "Company admin"]
-                }
+                    "use_for": ["Account owner", "Company admin"],
+                },
             },
             "best_practices": [
                 "Give Viewer access by default, elevate as needed",
                 "Review permissions monthly",
                 "Use groups for easier management",
-                "Document who has what access"
-            ]
+                "Document who has what access",
+            ],
         },
         "comments": {
             "description": "Discuss tasks and projects asynchronously",
@@ -117,14 +143,14 @@ class CollaborationExpert(BaseAgent):
                 "Type your comment",
                 "@mention relevant people",
                 "Attach files if needed (drag & drop)",
-                "Click 'Post' or press Ctrl+Enter"
+                "Click 'Post' or press Ctrl+Enter",
             ],
             "best_practices": [
                 "Be specific and actionable",
                 "Use threads to keep conversations organized",
                 "@mention for important updates",
                 "Add context (don't assume everyone knows background)",
-                "Use emoji reactions instead of '+1' comments"
+                "Use emoji reactions instead of '+1' comments",
             ],
             "features": [
                 "Rich text formatting (bold, italic, lists)",
@@ -132,8 +158,8 @@ class CollaborationExpert(BaseAgent):
                 "File attachments and screenshots",
                 "Emoji reactions",
                 "Edit and delete comments",
-                "Comment history and audit trail"
-            ]
+                "Comment history and audit trail",
+            ],
         },
         "notifications": {
             "description": "Stay updated on relevant activity",
@@ -142,15 +168,15 @@ class CollaborationExpert(BaseAgent):
                 "email": "Email digest or instant emails",
                 "mobile": "Push notifications on mobile app",
                 "slack": "Integration with Slack channels",
-                "desktop": "Desktop notifications (when app is open)"
+                "desktop": "Desktop notifications (when app is open)",
             },
             "best_practices": [
                 "Customize by priority (only critical via mobile)",
                 "Use digest mode for low-priority updates",
                 "Set quiet hours for focused work",
                 "Mute threads you don't need to follow",
-                "Unsubscribe from completed projects"
-            ]
+                "Unsubscribe from completed projects",
+            ],
         },
         "realtime": {
             "description": "Collaborate in real-time with presence indicators",
@@ -159,14 +185,14 @@ class CollaborationExpert(BaseAgent):
                 "Live cursor tracking (optional)",
                 "Instant updates without refresh",
                 "Conflict resolution for simultaneous edits",
-                "Activity feed showing recent changes"
+                "Activity feed showing recent changes",
             ],
             "best_practices": [
                 "Communicate before making major changes",
                 "Use comments for async, realtime for urgent",
-                "Be aware of others' edits to avoid conflicts"
-            ]
-        }
+                "Be aware of others' edits to avoid conflicts",
+            ],
+        },
     }
 
     def __init__(self):
@@ -177,10 +203,10 @@ class CollaborationExpert(BaseAgent):
             capabilities=[
                 AgentCapability.KB_SEARCH,
                 AgentCapability.CONTEXT_AWARE,
-                AgentCapability.MULTI_TURN
+                AgentCapability.MULTI_TURN,
             ],
             kb_category="usage",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -199,17 +225,13 @@ class CollaborationExpert(BaseAgent):
             "collaboration_processing_started",
             message_preview=message[:100],
             team_size=team_size,
-            turn_count=state["turn_count"]
+            turn_count=state["turn_count"],
         )
 
         # Detect collaboration feature
         feature = self._detect_collaboration_feature(message)
 
-        self.logger.info(
-            "collaboration_feature_detected",
-            feature=feature,
-            team_size=team_size
-        )
+        self.logger.info("collaboration_feature_detected", feature=feature, team_size=team_size)
 
         # Generate appropriate response
         if team_size == 1:
@@ -223,15 +245,12 @@ class CollaborationExpert(BaseAgent):
         kb_results = await self.search_knowledge_base(
             f"team collaboration {feature}" if feature else "team collaboration features",
             category="usage",
-            limit=2
+            limit=2,
         )
         state["kb_results"] = kb_results
 
         if kb_results:
-            self.logger.info(
-                "collaboration_kb_articles_found",
-                count=len(kb_results)
-            )
+            self.logger.info("collaboration_kb_articles_found", count=len(kb_results))
             response += "\n\n**📚 Collaboration guides:**\n"
             for i, article in enumerate(kb_results, 1):
                 response += f"{i}. {article['title']}\n"
@@ -247,17 +266,17 @@ class CollaborationExpert(BaseAgent):
             "collaboration_guidance_completed",
             feature=feature,
             team_size=team_size,
-            status="resolved"
+            status="resolved",
         )
 
         return state
 
-    def _detect_collaboration_feature(self, message: str) -> Optional[str]:
+    def _detect_collaboration_feature(self, message: str) -> str | None:
         """Detect which collaboration feature user is asking about"""
         message_lower = message.lower()
 
         # Direct feature matches
-        for feature in self.COLLABORATION_FEATURES.keys():
+        for feature in self.COLLABORATION_FEATURES:
             if feature in message_lower:
                 return feature
 
@@ -266,9 +285,14 @@ class CollaborationExpert(BaseAgent):
             return "sharing"
         elif any(word in message_lower for word in ["@", "mention", "tag", "notify"]):
             return "mentions"
-        elif any(word in message_lower for word in ["permission", "access", "role", "viewer", "editor", "admin"]):
+        elif any(
+            word in message_lower
+            for word in ["permission", "access", "role", "viewer", "editor", "admin"]
+        ):
             return "permissions"
-        elif any(word in message_lower for word in ["comment", "discuss", "conversation", "thread"]):
+        elif any(
+            word in message_lower for word in ["comment", "discuss", "conversation", "thread"]
+        ):
             return "comments"
         elif any(word in message_lower for word in ["notification", "alert", "digest"]):
             return "notifications"
@@ -336,20 +360,20 @@ Collaboration features work best with a team! Here's how to get started:
         feat_info = self.COLLABORATION_FEATURES[feature]
 
         if feature == "sharing":
-            return f"""**📤 {feat_info['description']}**
+            return f"""**📤 {feat_info["description"]}**
 
 **How to share:**
-{chr(10).join([f"{i+1}. {step}" for i, step in enumerate(feat_info['steps'])])}
+{chr(10).join([f"{i + 1}. {step}" for i, step in enumerate(feat_info["steps"])])}
 
 **Permission levels explained:**
 
 {self._format_permission_levels()}
 
 **Best practices:**
-{chr(10).join(['• ' + practice for practice in feat_info['best_practices']])}
+{chr(10).join(["• " + practice for practice in feat_info["best_practices"]])}
 
 **Common issues:**
-{chr(10).join(['❓ ' + issue for issue in feat_info['common_issues']])}
+{chr(10).join(["❓ " + issue for issue in feat_info["common_issues"]])}
 
 **Pro tips:**
 • **Team workspaces:** Create workspace → auto-share with everyone
@@ -367,10 +391,10 @@ Collaboration features work best with a team! Here's how to get started:
 """
 
         elif feature == "mentions":
-            return f"""**👋 {feat_info['description']}**
+            return f"""**👋 {feat_info["description"]}**
 
 **How to @mention:**
-{chr(10).join([f"{i+1}. {step}" for i, step in enumerate(feat_info['steps'])])}
+{chr(10).join([f"{i + 1}. {step}" for i, step in enumerate(feat_info["steps"])])}
 
 **When to use @mentions:**
 
@@ -395,7 +419,7 @@ Collaboration features work best with a team! Here's how to get started:
 **@here** - Notify only active users
 
 **Best practices:**
-{chr(10).join(['• ' + practice for practice in feat_info['best_practices']])}
+{chr(10).join(["• " + practice for practice in feat_info["best_practices"]])}
 
 **Examples of good @mentions:**
 
@@ -413,14 +437,14 @@ Collaboration features work best with a team! Here's how to get started:
 • **Quiet hours:** Set in Settings → Notifications
 
 **Common issues:**
-{chr(10).join(['❓ ' + issue for issue in feat_info['common_issues']])}
+{chr(10).join(["❓ " + issue for issue in feat_info["common_issues"]])}
 
 **Want to customize your @mention notifications?**
 Settings → Notifications → Mentions
 """
 
         elif feature == "permissions":
-            return f"""**🔐 {feat_info['description']}**
+            return f"""**🔐 {feat_info["description"]}**
 
 {self._format_permission_levels()}
 
@@ -434,7 +458,7 @@ Settings → Notifications → Mentions
 6. Click **"Save"**
 
 **Best practices:**
-{chr(10).join(['• ' + practice for practice in feat_info['best_practices']])}
+{chr(10).join(["• " + practice for practice in feat_info["best_practices"]])}
 
 **Permission strategies by use case:**
 
@@ -479,16 +503,16 @@ A: They'll have highest permission level across all their roles
 """
 
         elif feature == "comments":
-            return f"""**💬 {feat_info['description']}**
+            return f"""**💬 {feat_info["description"]}**
 
 **How to comment:**
-{chr(10).join([f"{i+1}. {step}" for i, step in enumerate(feat_info['steps'])])}
+{chr(10).join([f"{i + 1}. {step}" for i, step in enumerate(feat_info["steps"])])}
 
 **Comment features:**
-{chr(10).join(['• ' + feat for feat in feat_info['features']])}
+{chr(10).join(["• " + feat for feat in feat_info["features"]])}
 
 **Best practices:**
-{chr(10).join(['• ' + practice for practice in feat_info['best_practices']])}
+{chr(10).join(["• " + practice for practice in feat_info["best_practices"]])}
 
 **Advanced commenting:**
 
@@ -552,10 +576,10 @@ A: They'll have highest permission level across all their roles
 """
 
         elif feature == "notifications":
-            return f"""**🔔 {feat_info['description']}**
+            return f"""**🔔 {feat_info["description"]}**
 
 **Notification channels:**
-{chr(10).join([f"• **{name.replace('_', ' ').title()}** - {desc}" for name, desc in feat_info['channels'].items()])}
+{chr(10).join([f"• **{name.replace('_', ' ').title()}** - {desc}" for name, desc in feat_info["channels"].items()])}
 
 **Customize your notifications:**
 
@@ -568,7 +592,7 @@ A: They'll have highest permission level across all their roles
 • **Noise:** Auto-generated → Disable
 
 **Best practices:**
-{chr(10).join(['• ' + practice for practice in feat_info['best_practices']])}
+{chr(10).join(["• " + practice for practice in feat_info["best_practices"]])}
 
 **Notification settings by role:**
 
@@ -649,10 +673,10 @@ Instead of instant emails, get:
 """
 
         elif feature == "realtime":
-            return f"""**⚡ {feat_info['description']}**
+            return f"""**⚡ {feat_info["description"]}**
 
 **Real-time features:**
-{chr(10).join(['• ' + feat for feat in feat_info['features']])}
+{chr(10).join(["• " + feat for feat in feat_info["features"]])}
 
 **How it works:**
 
@@ -689,7 +713,7 @@ Instead of instant emails, get:
 4. Comment for clarification
 
 **Best practices:**
-{chr(10).join(['• ' + practice for practice in feat_info['best_practices']])}
+{chr(10).join(["• " + practice for practice in feat_info["best_practices"]])}
 
 **Collaboration etiquette:**
 
@@ -741,17 +765,19 @@ Instead of instant emails, get:
 """
 
         # Default generic response
-        return f"""**{feat_info['description']}**
+        return f"""**{feat_info["description"]}**
 
 Let me know if you'd like detailed instructions for this feature!
 """
 
     def _overview_collaboration(self) -> str:
         """Overview of all collaboration features"""
-        features = "\n".join([
-            f"**{name.replace('_', ' ').title()}** - {info['description']}"
-            for name, info in self.COLLABORATION_FEATURES.items()
-        ])
+        features = "\n".join(
+            [
+                f"**{name.replace('_', ' ').title()}** - {info['description']}"
+                for name, info in self.COLLABORATION_FEATURES.items()
+            ]
+        )
 
         return f"""**🤝 Team Collaboration Features**
 
@@ -820,11 +846,11 @@ Just ask about:
 
         output = "**Permission levels:**\n\n"
 
-        for level_key, level_info in perms.items():
-            output += f"""**{level_info['name']}** - {level_info['description']}
-   ✓ Can: {', '.join(level_info['can'][:3])}
-   ✗ Cannot: {', '.join(level_info['cannot'][:2])}
-   👥 Best for: {', '.join(level_info['use_for'][:2])}
+        for _level_key, level_info in perms.items():
+            output += f"""**{level_info["name"]}** - {level_info["description"]}
+   ✓ Can: {", ".join(level_info["can"][:3])}
+   ✗ Cannot: {", ".join(level_info["cannot"][:2])}
+   👥 Best for: {", ".join(level_info["use_for"][:2])}
 
 """
 
@@ -833,6 +859,7 @@ Just ask about:
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
