@@ -16,16 +16,12 @@ Timeline: Months 7-12
 Dependencies: Tiers 1-3 must be complete
 """
 
-from src.agents.advanced import predictive
-from src.agents.advanced import personalization
-from src.agents.advanced import competitive
-from src.agents.advanced import content
-from src.agents.advanced import learning
+from src.agents.advanced import competitive, content, learning, personalization, predictive
 
 __all__ = [
-    "predictive",
-    "personalization",
     "competitive",
     "content",
     "learning",
+    "personalization",
+    "predictive",
 ]
