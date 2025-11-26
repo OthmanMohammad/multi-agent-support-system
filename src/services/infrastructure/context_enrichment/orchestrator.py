@@ -5,27 +5,30 @@ Coordinates multiple providers to gather and enrich customer context data.
 Implements parallel execution, timeout handling, caching, and result aggregation.
 """
 
-from typing import Dict, Any, Optional, List, Set
 import asyncio
-from datetime import datetime, UTC
-import structlog
-from uuid import UUID
+from datetime import UTC, datetime
+from typing import Any
 
-from src.services.infrastructure.context_enrichment.types import (
-    EnrichedContext,
-    ProviderResult,
-    AgentType,
-    ProviderPriority,
-    PIIFilterLevel,
-    ProviderStatus
-)
-from src.services.infrastructure.context_enrichment.registry import ProviderRegistry
-from src.services.infrastructure.context_enrichment.cache import ContextCache
-from src.services.infrastructure.context_enrichment.utils.scoring import RelevanceScorer
-from src.services.infrastructure.context_enrichment.utils.filtering import PIIFilter
-from src.services.infrastructure.context_enrichment.utils.monitoring import ContextMetrics, MetricsTimer
-from src.services.infrastructure.context_enrichment.utils.aggregation import ResultAggregator
+import structlog
+
 from src.core.config import get_settings
+from src.services.infrastructure.context_enrichment.cache import ContextCache
+from src.services.infrastructure.context_enrichment.registry import ProviderRegistry
+from src.services.infrastructure.context_enrichment.types import (
+    AgentType,
+    EnrichedContext,
+    PIIFilterLevel,
+    ProviderPriority,
+    ProviderResult,
+    ProviderStatus,
+)
+from src.services.infrastructure.context_enrichment.utils.aggregation import ResultAggregator
+from src.services.infrastructure.context_enrichment.utils.filtering import PIIFilter
+from src.services.infrastructure.context_enrichment.utils.monitoring import (
+    ContextMetrics,
+    MetricsTimer,
+)
+from src.services.infrastructure.context_enrichment.utils.scoring import RelevanceScorer
 
 logger = structlog.get_logger(__name__)
 
@@ -53,12 +56,12 @@ class ContextOrchestrator:
 
     def __init__(
         self,
-        registry: Optional[ProviderRegistry] = None,
-        cache: Optional[ContextCache] = None,
-        scorer: Optional[RelevanceScorer] = None,
-        pii_filter: Optional[PIIFilter] = None,
-        metrics: Optional[ContextMetrics] = None,
-        aggregator: Optional[ResultAggregator] = None
+        registry: ProviderRegistry | None = None,
+        cache: ContextCache | None = None,
+        scorer: RelevanceScorer | None = None,
+        pii_filter: PIIFilter | None = None,
+        metrics: ContextMetrics | None = None,
+        aggregator: ResultAggregator | None = None,
     ):
         """
         Initialize orchestrator.
@@ -87,11 +90,11 @@ class ContextOrchestrator:
         self,
         customer_id: str,
         agent_type: AgentType,
-        conversation_id: Optional[str] = None,
+        conversation_id: str | None = None,
         force_refresh: bool = False,
-        timeout_ms: Optional[int] = None,
-        providers: Optional[List[str]] = None,
-        **kwargs
+        timeout_ms: int | None = None,
+        providers: list[str] | None = None,
+        **kwargs,
     ) -> EnrichedContext:
         """
         Enrich customer context for an agent.
@@ -124,7 +127,7 @@ class ContextOrchestrator:
                 customer_id=customer_id,
                 agent_type=agent_type.value,
                 conversation_id=conversation_id,
-                force_refresh=force_refresh
+                force_refresh=force_refresh,
             )
 
             # Check cache first (unless force_refresh)
@@ -132,30 +135,23 @@ class ContextOrchestrator:
                 cached = await self._get_from_cache(customer_id, agent_type, conversation_id)
                 if cached:
                     self.metrics.cache_hits.labels(
-                        cache_tier="l1_or_l2",
-                        agent_type=agent_type.value
+                        cache_tier="l1_or_l2", agent_type=agent_type.value
                     ).inc()
 
                     self.logger.info(
-                        "enrichment_cache_hit",
-                        customer_id=customer_id,
-                        agent_type=agent_type.value
+                        "enrichment_cache_hit", customer_id=customer_id, agent_type=agent_type.value
                     )
                     return cached
 
                 self.metrics.cache_misses.labels(
-                    cache_tier="l1_or_l2",
-                    agent_type=agent_type.value
+                    cache_tier="l1_or_l2", agent_type=agent_type.value
                 ).inc()
 
             # Determine which providers to use
             provider_names = providers or self.registry.get_providers_for_agent(agent_type)
 
             if not provider_names:
-                self.logger.warning(
-                    "no_providers_for_agent",
-                    agent_type=agent_type.value
-                )
+                self.logger.warning("no_providers_for_agent", agent_type=agent_type.value)
                 return self._create_empty_context(customer_id, agent_type, conversation_id)
 
             # Execute providers in parallel
@@ -165,18 +161,14 @@ class ContextOrchestrator:
                 conversation_id=conversation_id,
                 provider_names=provider_names,
                 timeout_ms=timeout,
-                **kwargs
+                **kwargs,
             )
 
             # Aggregate results
             aggregated_data = await self.aggregator.aggregate(results, agent_type)
 
             # Calculate relevance scores
-            scored_data = await self._score_data(
-                aggregated_data,
-                agent_type,
-                conversation_id
-            )
+            scored_data = await self._score_data(aggregated_data, agent_type, conversation_id)
 
             # Apply PII filtering
             filtered_data = await self._filter_pii(scored_data, agent_type)
@@ -191,7 +183,7 @@ class ContextOrchestrator:
                 enriched_at=datetime.now(UTC),
                 cache_hit=False,
                 relevance_score=self._calculate_overall_score(scored_data),
-                latency_ms=int((datetime.now(UTC) - start_time).total_seconds() * 1000)
+                latency_ms=int((datetime.now(UTC) - start_time).total_seconds() * 1000),
             )
 
             # Store in cache
@@ -200,13 +192,12 @@ class ContextOrchestrator:
 
             # Record metrics
             self.metrics.enrichment_requests.labels(
-                agent_type=agent_type.value,
-                status="success"
+                agent_type=agent_type.value, status="success"
             ).inc()
 
-            self.metrics.provider_data_points.labels(
-                agent_type=agent_type.value
-            ).observe(len(filtered_data))
+            self.metrics.provider_data_points.labels(agent_type=agent_type.value).observe(
+                len(filtered_data)
+            )
 
             self.logger.info(
                 "enrichment_completed",
@@ -214,7 +205,7 @@ class ContextOrchestrator:
                 agent_type=agent_type.value,
                 latency_ms=context.latency_ms,
                 providers_count=len(results),
-                data_points=len(filtered_data)
+                data_points=len(filtered_data),
             )
 
             return context
@@ -222,11 +213,11 @@ class ContextOrchestrator:
     async def _execute_providers(
         self,
         customer_id: str,
-        conversation_id: Optional[str],
-        provider_names: List[str],
+        conversation_id: str | None,
+        provider_names: list[str],
         timeout_ms: int,
-        **kwargs
-    ) -> List[ProviderResult]:
+        **kwargs,
+    ) -> list[ProviderResult]:
         """
         Execute multiple providers in parallel with timeout.
 
@@ -251,7 +242,7 @@ class ContextOrchestrator:
             if not provider:
                 continue
 
-            priority = getattr(provider, 'priority', ProviderPriority.NORMAL)
+            priority = getattr(provider, "priority", ProviderPriority.NORMAL)
 
             if priority == ProviderPriority.CRITICAL:
                 critical_providers.append(name)
@@ -273,7 +264,7 @@ class ContextOrchestrator:
                 conversation_id,
                 timeout_ms,
                 wait_for_all=True,
-                **kwargs
+                **kwargs,
             )
             all_results.extend(critical_results)
 
@@ -286,7 +277,7 @@ class ContextOrchestrator:
                 conversation_id,
                 int(remaining_timeout * 0.8),
                 wait_for_all=False,
-                **kwargs
+                **kwargs,
             )
             all_results.extend(high_results)
 
@@ -299,7 +290,7 @@ class ContextOrchestrator:
                 conversation_id,
                 int(remaining_timeout * 0.5),
                 wait_for_all=False,
-                **kwargs
+                **kwargs,
             )
             all_results.extend(normal_results)
 
@@ -312,7 +303,7 @@ class ContextOrchestrator:
                 conversation_id,
                 remaining_timeout,
                 wait_for_all=False,
-                **kwargs
+                **kwargs,
             )
             all_results.extend(low_results)
 
@@ -320,13 +311,13 @@ class ContextOrchestrator:
 
     async def _execute_provider_group(
         self,
-        provider_names: List[str],
+        provider_names: list[str],
         customer_id: str,
-        conversation_id: Optional[str],
+        conversation_id: str | None,
         timeout_ms: int,
         wait_for_all: bool = False,
-        **kwargs
-    ) -> List[ProviderResult]:
+        **kwargs,
+    ) -> list[ProviderResult]:
         """
         Execute a group of providers in parallel.
 
@@ -344,11 +335,7 @@ class ContextOrchestrator:
         tasks = []
         for name in provider_names:
             task = self._execute_single_provider(
-                name,
-                customer_id,
-                conversation_id,
-                timeout_ms,
-                **kwargs
+                name, customer_id, conversation_id, timeout_ms, **kwargs
             )
             tasks.append(task)
 
@@ -362,9 +349,7 @@ class ContextOrchestrator:
         else:
             # Return as soon as possible, don't wait for slow providers
             done, pending = await asyncio.wait(
-                tasks,
-                timeout=timeout_ms / 1000.0,
-                return_when=asyncio.ALL_COMPLETED
+                tasks, timeout=timeout_ms / 1000.0, return_when=asyncio.ALL_COMPLETED
             )
 
             # Cancel pending tasks
@@ -378,9 +363,7 @@ class ContextOrchestrator:
         for result in results:
             if isinstance(result, Exception):
                 self.logger.warning(
-                    "provider_exception",
-                    error=str(result),
-                    error_type=type(result).__name__
+                    "provider_exception", error=str(result), error_type=type(result).__name__
                 )
                 continue
 
@@ -393,9 +376,9 @@ class ContextOrchestrator:
         self,
         provider_name: str,
         customer_id: str,
-        conversation_id: Optional[str],
+        conversation_id: str | None,
         timeout_ms: int,
-        **kwargs
+        **kwargs,
     ) -> ProviderResult:
         """
         Execute a single provider with timeout and error handling.
@@ -418,7 +401,7 @@ class ContextOrchestrator:
                 data={},
                 error="Provider not found",
                 latency_ms=0,
-                fetched_at=datetime.now(UTC)
+                fetched_at=datetime.now(UTC),
             )
 
         start_time = datetime.now(UTC)
@@ -426,25 +409,16 @@ class ContextOrchestrator:
         try:
             # Execute with timeout
             data = await asyncio.wait_for(
-                provider.fetch(
-                    customer_id=customer_id,
-                    conversation_id=conversation_id,
-                    **kwargs
-                ),
-                timeout=timeout_ms / 1000.0
+                provider.fetch(customer_id=customer_id, conversation_id=conversation_id, **kwargs),
+                timeout=timeout_ms / 1000.0,
             )
 
             latency_ms = int((datetime.now(UTC) - start_time).total_seconds() * 1000)
 
             # Record metrics
-            self.metrics.provider_calls.labels(
-                provider=provider_name,
-                status="success"
-            ).inc()
+            self.metrics.provider_calls.labels(provider=provider_name, status="success").inc()
 
-            self.metrics.provider_latency.labels(
-                provider=provider_name
-            ).observe(latency_ms)
+            self.metrics.provider_latency.labels(provider=provider_name).observe(latency_ms)
 
             return ProviderResult(
                 provider_name=provider_name,
@@ -452,10 +426,10 @@ class ContextOrchestrator:
                 data=data,
                 error=None,
                 latency_ms=latency_ms,
-                fetched_at=datetime.now(UTC)
+                fetched_at=datetime.now(UTC),
             )
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             latency_ms = int((datetime.now(UTC) - start_time).total_seconds() * 1000)
 
             self.logger.warning(
@@ -463,17 +437,12 @@ class ContextOrchestrator:
                 provider=provider_name,
                 customer_id=customer_id,
                 timeout_ms=timeout_ms,
-                latency_ms=latency_ms
+                latency_ms=latency_ms,
             )
 
-            self.metrics.provider_calls.labels(
-                provider=provider_name,
-                status="timeout"
-            ).inc()
+            self.metrics.provider_calls.labels(provider=provider_name, status="timeout").inc()
 
-            self.metrics.provider_timeouts.labels(
-                provider=provider_name
-            ).inc()
+            self.metrics.provider_timeouts.labels(provider=provider_name).inc()
 
             return ProviderResult(
                 provider_name=provider_name,
@@ -481,7 +450,7 @@ class ContextOrchestrator:
                 data={},
                 error=f"Timeout after {timeout_ms}ms",
                 latency_ms=latency_ms,
-                fetched_at=datetime.now(UTC)
+                fetched_at=datetime.now(UTC),
             )
 
         except Exception as e:
@@ -493,17 +462,13 @@ class ContextOrchestrator:
                 customer_id=customer_id,
                 error=str(e),
                 error_type=type(e).__name__,
-                latency_ms=latency_ms
+                latency_ms=latency_ms,
             )
 
-            self.metrics.provider_calls.labels(
-                provider=provider_name,
-                status="error"
-            ).inc()
+            self.metrics.provider_calls.labels(provider=provider_name, status="error").inc()
 
             self.metrics.provider_errors.labels(
-                provider=provider_name,
-                error_type=type(e).__name__
+                provider=provider_name, error_type=type(e).__name__
             ).inc()
 
             return ProviderResult(
@@ -512,15 +477,12 @@ class ContextOrchestrator:
                 data={},
                 error=str(e),
                 latency_ms=latency_ms,
-                fetched_at=datetime.now(UTC)
+                fetched_at=datetime.now(UTC),
             )
 
     async def _get_from_cache(
-        self,
-        customer_id: str,
-        agent_type: AgentType,
-        conversation_id: Optional[str]
-    ) -> Optional[EnrichedContext]:
+        self, customer_id: str, agent_type: AgentType, conversation_id: str | None
+    ) -> EnrichedContext | None:
         """Get enriched context from cache"""
         cache_key = self._build_cache_key(customer_id, agent_type, conversation_id)
 
@@ -534,18 +496,13 @@ class ContextOrchestrator:
     async def _store_in_cache(self, context: EnrichedContext):
         """Store enriched context in cache"""
         cache_key = self._build_cache_key(
-            context.customer_id,
-            context.agent_type,
-            context.conversation_id
+            context.customer_id, context.agent_type, context.conversation_id
         )
 
         await self.cache.set(cache_key, context)
 
     def _build_cache_key(
-        self,
-        customer_id: str,
-        agent_type: AgentType,
-        conversation_id: Optional[str]
+        self, customer_id: str, agent_type: AgentType, conversation_id: str | None
     ) -> str:
         """Build cache key from parameters"""
         if conversation_id:
@@ -553,19 +510,12 @@ class ContextOrchestrator:
         return f"context:{customer_id}:{agent_type.value}"
 
     async def _score_data(
-        self,
-        data: Dict[str, Any],
-        agent_type: AgentType,
-        conversation_id: Optional[str]
-    ) -> Dict[str, Any]:
+        self, data: dict[str, Any], agent_type: AgentType, conversation_id: str | None
+    ) -> dict[str, Any]:
         """Score and rank data by relevance"""
         return await self.scorer.score(data, agent_type, conversation_id)
 
-    async def _filter_pii(
-        self,
-        data: Dict[str, Any],
-        agent_type: AgentType
-    ) -> Dict[str, Any]:
+    async def _filter_pii(self, data: dict[str, Any], agent_type: AgentType) -> dict[str, Any]:
         """Apply PII filtering based on agent type"""
         # Determine filter level based on agent type
         filter_level = self._get_filter_level_for_agent(agent_type)
@@ -582,7 +532,7 @@ class ContextOrchestrator:
         else:
             return PIIFilterLevel.FULL
 
-    def _calculate_overall_score(self, data: Dict[str, Any]) -> float:
+    def _calculate_overall_score(self, data: dict[str, Any]) -> float:
         """Calculate overall relevance score from scored data"""
         if not data:
             return 0.0
@@ -590,8 +540,8 @@ class ContextOrchestrator:
         # Extract scores from scored data
         scores = []
         for value in data.values():
-            if isinstance(value, dict) and '_score' in value:
-                scores.append(value['_score'])
+            if isinstance(value, dict) and "_score" in value:
+                scores.append(value["_score"])
 
         if not scores:
             return 0.0
@@ -600,10 +550,7 @@ class ContextOrchestrator:
         return sum(scores) / len(scores)
 
     def _create_empty_context(
-        self,
-        customer_id: str,
-        agent_type: AgentType,
-        conversation_id: Optional[str]
+        self, customer_id: str, agent_type: AgentType, conversation_id: str | None
     ) -> EnrichedContext:
         """Create empty context when no providers available"""
         return EnrichedContext(
@@ -615,14 +562,14 @@ class ContextOrchestrator:
             enriched_at=datetime.now(UTC),
             cache_hit=False,
             relevance_score=0.0,
-            latency_ms=0
+            latency_ms=0,
         )
 
     async def invalidate_cache(
         self,
         customer_id: str,
-        agent_type: Optional[AgentType] = None,
-        conversation_id: Optional[str] = None
+        agent_type: AgentType | None = None,
+        conversation_id: str | None = None,
     ):
         """
         Invalidate cache for customer.
@@ -644,10 +591,10 @@ class ContextOrchestrator:
         self.logger.info(
             "cache_invalidated",
             customer_id=customer_id,
-            agent_type=agent_type.value if agent_type else "all"
+            agent_type=agent_type.value if agent_type else "all",
         )
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """
         Check health of orchestrator and all providers.
 
@@ -657,27 +604,24 @@ class ContextOrchestrator:
         health = {
             "orchestrator": "healthy",
             "cache": await self.cache.health_check(),
-            "providers": {}
+            "providers": {},
         }
 
         # Check all registered providers
         for name in self.registry.list_providers():
             provider = self.registry.get_provider(name)
-            if provider and hasattr(provider, 'health_check'):
+            if provider and hasattr(provider, "health_check"):
                 try:
                     provider_health = await provider.health_check()
                     health["providers"][name] = provider_health
                 except Exception as e:
-                    health["providers"][name] = {
-                        "status": "unhealthy",
-                        "error": str(e)
-                    }
+                    health["providers"][name] = {"status": "unhealthy", "error": str(e)}
             else:
                 health["providers"][name] = {"status": "unknown"}
 
         return health
 
-    async def get_metrics(self) -> Dict[str, Any]:
+    async def get_metrics(self) -> dict[str, Any]:
         """
         Get current metrics.
 
@@ -688,7 +632,7 @@ class ContextOrchestrator:
 
 
 # Global orchestrator instance
-_orchestrator: Optional[ContextOrchestrator] = None
+_orchestrator: ContextOrchestrator | None = None
 
 
 def get_orchestrator() -> ContextOrchestrator:
