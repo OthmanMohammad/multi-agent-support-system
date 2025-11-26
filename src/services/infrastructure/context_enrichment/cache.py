@@ -9,18 +9,20 @@ Implements L1 (in-memory LRU) + L2 (Redis) caching strategy with:
 - Graceful fallback when Redis unavailable
 """
 
-from typing import Optional, Dict, Any, List
-from datetime import datetime, timedelta, UTC
-from collections import OrderedDict
 import asyncio
+import contextlib
 import json
 import pickle
-import structlog
-from dataclasses import dataclass, asdict
+from collections import OrderedDict
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
+import structlog
+
+from src.core.config import get_settings
 from src.services.infrastructure.context_enrichment.models import EnrichedContext
 from src.services.infrastructure.context_enrichment.types import AgentType
-from src.core.config import get_settings
 
 logger = structlog.get_logger(__name__)
 
@@ -28,6 +30,7 @@ logger = structlog.get_logger(__name__)
 @dataclass
 class CacheStats:
     """Cache statistics"""
+
     l1_hits: int = 0
     l1_misses: int = 0
     l2_hits: int = 0
@@ -78,7 +81,7 @@ class LRUCache:
         self._lock = asyncio.Lock()
         self._evictions = 0
 
-    async def get(self, key: str) -> Optional[Any]:
+    async def get(self, key: str) -> Any | None:
         """
         Get item from cache.
 
@@ -154,8 +157,7 @@ class LRUCache:
         async with self._lock:
             now = datetime.now(UTC)
             expired_keys = [
-                key for key, (_, expires_at) in self._cache.items()
-                if now >= expires_at
+                key for key, (_, expires_at) in self._cache.items() if now >= expires_at
             ]
             for key in expired_keys:
                 del self._cache[key]
@@ -185,12 +187,12 @@ class ContextCache:
 
     def __init__(
         self,
-        l1_max_size: Optional[int] = None,
-        l1_ttl: Optional[int] = None,
-        l2_ttl: Optional[int] = None,
-        redis_url: Optional[str] = None,
+        l1_max_size: int | None = None,
+        l1_ttl: int | None = None,
+        l2_ttl: int | None = None,
+        redis_url: str | None = None,
         enable_l1: bool = True,
-        enable_l2: bool = True
+        enable_l2: bool = True,
     ):
         """
         Initialize two-tier cache.
@@ -234,10 +236,11 @@ class ContextCache:
         """Initialize Redis connection"""
         try:
             import redis.asyncio as redis
+
             self.redis_client = redis.from_url(
                 redis_url,
                 encoding="utf-8",
-                decode_responses=False  # We'll handle serialization
+                decode_responses=False,  # We'll handle serialization
             )
             self.redis_available = True
             self.logger.info("redis_initialized", url=redis_url)
@@ -246,13 +249,11 @@ class ContextCache:
             self.redis_available = False
         except Exception as e:
             self.logger.error(
-                "redis_initialization_failed",
-                error=str(e),
-                error_type=type(e).__name__
+                "redis_initialization_failed", error=str(e), error_type=type(e).__name__
             )
             self.redis_available = False
 
-    async def get(self, key: str) -> Optional[EnrichedContext]:
+    async def get(self, key: str) -> EnrichedContext | None:
         """
         Get enriched context from cache.
 
@@ -301,11 +302,7 @@ class ContextCache:
                 self.stats.l2_misses += 1
 
             except Exception as e:
-                self.logger.warning(
-                    "l2_cache_error",
-                    error=str(e),
-                    error_type=type(e).__name__
-                )
+                self.logger.warning("l2_cache_error", error=str(e), error_type=type(e).__name__)
                 self.stats.l2_misses += 1
 
         # Cache miss on both tiers
@@ -328,9 +325,7 @@ class ContextCache:
                 self.logger.debug("l1_cache_set", key=key, ttl=self.l1_ttl)
             except Exception as e:
                 self.logger.warning(
-                    "l1_cache_set_failed",
-                    error=str(e),
-                    error_type=type(e).__name__
+                    "l1_cache_set_failed", error=str(e), error_type=type(e).__name__
                 )
 
         # Store in L2
@@ -341,9 +336,7 @@ class ContextCache:
                 self.logger.debug("l2_cache_set", key=key, ttl=self.l2_ttl)
             except Exception as e:
                 self.logger.warning(
-                    "l2_cache_set_failed",
-                    error=str(e),
-                    error_type=type(e).__name__
+                    "l2_cache_set_failed", error=str(e), error_type=type(e).__name__
                 )
 
     async def delete(self, key: str):
@@ -377,9 +370,7 @@ class ContextCache:
                 cursor = 0
                 while True:
                     cursor, keys = await self.redis_client.scan(
-                        cursor=cursor,
-                        match=pattern,
-                        count=100
+                        cursor=cursor, match=pattern, count=100
                     )
                     if keys:
                         await self.redis_client.delete(*keys)
@@ -389,10 +380,7 @@ class ContextCache:
                 self.logger.warning("l2_cache_clear_failed", error=str(e))
 
     async def warm_cache(
-        self,
-        customer_ids: List[str],
-        agent_type: AgentType,
-        fetch_func: callable
+        self, customer_ids: list[str], agent_type: AgentType, fetch_func: callable
     ):
         """
         Warm cache by pre-fetching contexts.
@@ -403,15 +391,13 @@ class ContextCache:
             fetch_func: Async function to fetch context (customer_id, agent_type) -> EnrichedContext
         """
         self.logger.info(
-            "cache_warming_started",
-            customer_count=len(customer_ids),
-            agent_type=agent_type.value
+            "cache_warming_started", customer_count=len(customer_ids), agent_type=agent_type.value
         )
 
         # Warm in batches to avoid overwhelming the system
         batch_size = 10
         for i in range(0, len(customer_ids), batch_size):
-            batch = customer_ids[i:i + batch_size]
+            batch = customer_ids[i : i + batch_size]
 
             tasks = []
             for customer_id in batch:
@@ -420,17 +406,9 @@ class ContextCache:
 
             await asyncio.gather(*tasks, return_exceptions=True)
 
-        self.logger.info(
-            "cache_warming_completed",
-            customer_count=len(customer_ids)
-        )
+        self.logger.info("cache_warming_completed", customer_count=len(customer_ids))
 
-    async def _warm_single(
-        self,
-        customer_id: str,
-        agent_type: AgentType,
-        fetch_func: callable
-    ):
+    async def _warm_single(self, customer_id: str, agent_type: AgentType, fetch_func: callable):
         """Warm cache for single customer"""
         try:
             cache_key = f"context:{customer_id}:{agent_type.value}"
@@ -446,11 +424,7 @@ class ContextCache:
                 await self.set(cache_key, context)
 
         except Exception as e:
-            self.logger.warning(
-                "cache_warm_failed",
-                customer_id=customer_id,
-                error=str(e)
-            )
+            self.logger.warning("cache_warm_failed", customer_id=customer_id, error=str(e))
 
     async def get_stats(self) -> CacheStats:
         """
@@ -472,9 +446,7 @@ class ContextCache:
                 count = 0
                 while True:
                     cursor, keys = await self.redis_client.scan(
-                        cursor=cursor,
-                        match=pattern,
-                        count=100
+                        cursor=cursor, match=pattern, count=100
                     )
                     count += len(keys)
                     if cursor == 0:
@@ -489,7 +461,7 @@ class ContextCache:
         """Reset cache statistics"""
         self.stats = CacheStats()
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """
         Check cache health.
 
@@ -544,20 +516,18 @@ class ContextCache:
             # Use pickle for efficient serialization
             return pickle.dumps(context)
         except Exception as e:
-            self.logger.error(
-                "serialization_failed",
-                error=str(e),
-                error_type=type(e).__name__
-            )
+            self.logger.error("serialization_failed", error=str(e), error_type=type(e).__name__)
             # Fallback to JSON
             try:
-                data = asdict(context) if hasattr(context, '__dataclass_fields__') else vars(context)
-                return json.dumps(data, default=str).encode('utf-8')
+                data = (
+                    asdict(context) if hasattr(context, "__dataclass_fields__") else vars(context)
+                )
+                return json.dumps(data, default=str).encode("utf-8")
             except Exception as e2:
                 self.logger.error("json_serialization_failed", error=str(e2))
                 raise
 
-    def _deserialize(self, data: bytes) -> Optional[EnrichedContext]:
+    def _deserialize(self, data: bytes) -> EnrichedContext | None:
         """
         Deserialize bytes to EnrichedContext.
 
@@ -575,7 +545,7 @@ class ContextCache:
 
             # Fallback to JSON
             try:
-                json_str = data.decode('utf-8')
+                json_str = data.decode("utf-8")
                 context_dict = json.loads(json_str)
 
                 # Reconstruct EnrichedContext from dict
@@ -584,9 +554,7 @@ class ContextCache:
 
             except Exception as e2:
                 self.logger.error(
-                    "deserialization_failed",
-                    error=str(e2),
-                    error_type=type(e2).__name__
+                    "deserialization_failed", error=str(e2), error_type=type(e2).__name__
                 )
                 return None
 
@@ -598,14 +566,12 @@ class ContextCache:
         """Async context manager exit"""
         # Close Redis connection if needed
         if self.redis_client:
-            try:
+            with contextlib.suppress(Exception):
                 await self.redis_client.close()
-            except Exception:
-                pass
 
 
 # Global cache instance
-_cache: Optional[ContextCache] = None
+_cache: ContextCache | None = None
 
 
 def get_cache() -> ContextCache:
