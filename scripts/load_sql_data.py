@@ -16,7 +16,7 @@ import json
 import sys
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Set
 from decimal import Decimal
 import uuid
 
@@ -101,6 +101,20 @@ TABLE_TO_MODEL = {
     "agent_handoffs": AgentHandoff,
 }
 
+# Unique fields per table that need deduplication
+UNIQUE_FIELDS = {
+    "customers": ["email", "id"],
+    "employees": ["email", "id"],
+    "leads": ["email", "id"],
+    "quotes": ["quote_number", "id"],
+    "subscriptions": ["id"],
+    "invoices": ["id"],
+    "payments": ["id"],
+    "deals": ["id"],
+    "conversations": ["id"],
+    "messages": ["id"],
+}
+
 # Fields that should be converted to UUID
 UUID_FIELDS = [
     "id", "customer_id", "conversation_id", "message_id", "subscription_id",
@@ -110,7 +124,8 @@ UUID_FIELDS = [
 
 # Fields that should be converted to Decimal
 DECIMAL_FIELDS = [
-    "mrr", "arr", "value", "amount", "total_amount", "price", "balance"
+    "mrr", "arr", "value", "amount", "total_amount", "price", "balance",
+    "need_score"
 ]
 
 # Fields that should be converted to datetime
@@ -139,7 +154,10 @@ def parse_value(key: str, value: Any) -> Any:
     # Decimal fields
     if key in DECIMAL_FIELDS:
         if isinstance(value, (int, float, str)):
-            return Decimal(str(value))
+            try:
+                return Decimal(str(value))
+            except:
+                return None
 
     # Datetime fields
     if key in DATETIME_FIELDS:
@@ -174,11 +192,52 @@ def load_json_file(file_path: Path) -> List[Dict[str, Any]]:
         return data
     elif isinstance(data, dict):
         # Try common keys for data arrays
-        for key in ['data', 'records', 'items', data.keys().__iter__().__next__()]:
+        for key in ['data', 'records', 'items']:
             if key in data and isinstance(data[key], list):
                 return data[key]
+        # Try first key that's a list
+        for key, val in data.items():
+            if isinstance(val, list):
+                return val
 
     return []
+
+
+def deduplicate_records(
+    table_name: str,
+    records: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """Remove duplicate records based on unique fields."""
+    unique_fields = UNIQUE_FIELDS.get(table_name, ["id"])
+
+    seen: Dict[str, Set] = {field: set() for field in unique_fields}
+    deduplicated = []
+    duplicates_removed = 0
+
+    for record in records:
+        is_duplicate = False
+
+        for field in unique_fields:
+            if field in record and record[field] is not None:
+                value = str(record[field]).lower() if field == "email" else str(record[field])
+                if value in seen[field]:
+                    is_duplicate = True
+                    break
+
+        if not is_duplicate:
+            # Add to seen sets
+            for field in unique_fields:
+                if field in record and record[field] is not None:
+                    value = str(record[field]).lower() if field == "email" else str(record[field])
+                    seen[field].add(value)
+            deduplicated.append(record)
+        else:
+            duplicates_removed += 1
+
+    if duplicates_removed > 0:
+        print(f"   ⚠ Removed {duplicates_removed} duplicate records")
+
+    return deduplicated
 
 
 def process_record(record: Dict[str, Any], model_class) -> Dict[str, Any]:
@@ -199,31 +258,43 @@ async def clear_tables(session: AsyncSession):
     """Clear all tables in reverse order (to handle FK constraints)."""
     print("\n⚠️  Clearing existing data...")
 
-    # Reverse order for deletion
-    for table_name in reversed(TABLE_ORDER):
-        if table_name in TABLE_TO_MODEL:
-            try:
-                await session.execute(text(f"TRUNCATE TABLE {table_name} CASCADE"))
-                print(f"  ✓ Cleared {table_name}")
-            except Exception as e:
-                print(f"  ⚠ Could not clear {table_name}: {e}")
+    # Use a separate transaction for clearing
+    try:
+        # Disable FK checks temporarily and truncate all at once
+        await session.execute(text("SET session_replication_role = 'replica'"))
 
-    await session.commit()
-    print("✅ All tables cleared")
+        for table_name in reversed(TABLE_ORDER):
+            if table_name in TABLE_TO_MODEL:
+                try:
+                    await session.execute(text(f"DELETE FROM {table_name}"))
+                    print(f"  ✓ Cleared {table_name}")
+                except Exception as e:
+                    print(f"  ⚠ Could not clear {table_name}: {e}")
+
+        # Re-enable FK checks
+        await session.execute(text("SET session_replication_role = 'origin'"))
+        await session.commit()
+        print("✅ All tables cleared")
+
+    except Exception as e:
+        print(f"  ❌ Error during clear: {e}")
+        await session.rollback()
+        raise
 
 
 async def load_table_data(
     session: AsyncSession,
     table_name: str,
     data: List[Dict[str, Any]]
-) -> int:
-    """Load data into a specific table."""
+) -> tuple[int, int]:
+    """Load data into a specific table. Returns (loaded, skipped)."""
     if table_name not in TABLE_TO_MODEL:
         print(f"  ⚠ Unknown table: {table_name}, skipping")
-        return 0
+        return 0, 0
 
     model_class = TABLE_TO_MODEL[table_name]
     loaded = 0
+    skipped = 0
     errors = []
 
     for i, record in enumerate(data):
@@ -232,6 +303,7 @@ async def load_table_data(
             processed = process_record(record, model_class)
 
             if not processed:
+                skipped += 1
                 continue
 
             # Create model instance
@@ -239,21 +311,36 @@ async def load_table_data(
             session.add(instance)
             loaded += 1
 
-            # Flush periodically to catch errors early
-            if loaded % 100 == 0:
-                await session.flush()
+            # Commit every 50 records to catch errors early and not lose all progress
+            if loaded % 50 == 0:
+                try:
+                    await session.commit()
+                except Exception as flush_error:
+                    await session.rollback()
+                    # Try to identify problematic record
+                    errors.append(f"Batch ending at record {i}: {str(flush_error)[:80]}")
+                    skipped += 1
+                    loaded -= 1
 
         except Exception as e:
-            errors.append(f"Record {i}: {str(e)[:100]}")
-            if len(errors) >= 10:
-                break
+            errors.append(f"Record {i}: {str(e)[:80]}")
+            skipped += 1
+
+    # Final commit for remaining records
+    try:
+        await session.commit()
+    except Exception as e:
+        await session.rollback()
+        errors.append(f"Final commit: {str(e)[:80]}")
 
     if errors:
-        print(f"  ⚠ {len(errors)} errors (first few):")
-        for error in errors[:5]:
+        print(f"  ⚠ {len(errors)} errors:")
+        for error in errors[:3]:
             print(f"    - {error}")
+        if len(errors) > 3:
+            print(f"    ... and {len(errors) - 3} more")
 
-    return loaded
+    return loaded, skipped
 
 
 async def load_sql_data(folder: str = "data/sql_seed", reset: bool = False):
@@ -286,89 +373,88 @@ async def load_sql_data(folder: str = "data/sql_seed", reset: bool = False):
     for f in sorted(json_files):
         print(f"  • {f.name}")
 
-    async with AsyncSessionLocal() as session:
+    # Optionally clear existing data (separate session)
+    if reset:
+        async with AsyncSessionLocal() as clear_session:
+            await clear_tables(clear_session)
+
+    # Process files in the correct order
+    total_loaded = 0
+    total_skipped = 0
+    stats = {}
+
+    print("\n" + "-" * 70)
+    print("LOADING DATA")
+    print("-" * 70)
+
+    # Process each table in a separate session to avoid transaction issues
+    for table_name in TABLE_ORDER:
+        # Find the matching file (try different naming conventions)
+        possible_names = [
+            f"{table_name}.json",
+            f"{table_name}s.json",
+            f"{table_name.replace('_', '-')}.json",
+        ]
+
+        file_path = None
+        for name in possible_names:
+            candidate = folder_path / name
+            if candidate.exists():
+                file_path = candidate
+                break
+
+        if not file_path:
+            continue
+
+        print(f"\n📄 Loading {table_name} from {file_path.name}...")
+
         try:
-            # Optionally clear existing data
-            if reset:
-                await clear_tables(session)
+            data = load_json_file(file_path)
+            print(f"   Found {len(data)} records in file")
 
-            # Process files in the correct order
-            total_loaded = 0
-            stats = {}
+            if data:
+                # Deduplicate before loading
+                data = deduplicate_records(table_name, data)
+                print(f"   {len(data)} records after deduplication")
 
-            print("\n" + "-" * 70)
-            print("LOADING DATA")
-            print("-" * 70)
-
-            # First, process tables in order
-            for table_name in TABLE_ORDER:
-                # Find the matching file (try different naming conventions)
-                possible_names = [
-                    f"{table_name}.json",
-                    f"{table_name}s.json",
-                    f"{table_name.replace('_', '-')}.json",
-                ]
-
-                file_path = None
-                for name in possible_names:
-                    candidate = folder_path / name
-                    if candidate.exists():
-                        file_path = candidate
-                        break
-
-                if not file_path:
-                    continue
-
-                print(f"\n📄 Loading {table_name} from {file_path.name}...")
-
-                try:
-                    data = load_json_file(file_path)
-                    print(f"   Found {len(data)} records")
-
-                    if data:
-                        loaded = await load_table_data(session, table_name, data)
-                        await session.flush()
-                        stats[table_name] = loaded
-                        total_loaded += loaded
-                        print(f"   ✓ Loaded {loaded} records")
-
-                except Exception as e:
-                    print(f"   ❌ Error: {e}")
-                    stats[table_name] = f"Error: {str(e)[:50]}"
-
-            # Also check for any files that weren't in TABLE_ORDER
-            processed_names = set(TABLE_ORDER)
-            for json_file in json_files:
-                table_name = json_file.stem.lower().replace('-', '_').rstrip('s')
-                # Try singular form too
-                if table_name not in processed_names and f"{table_name}s" not in processed_names:
-                    print(f"\n⚠️  Unknown file: {json_file.name} (not in TABLE_ORDER)")
-
-            # Commit all changes
-            print("\n💾 Committing to database...")
-            await session.commit()
-
-            # Summary
-            print("\n" + "=" * 70)
-            print("✅ SQL DATA LOAD COMPLETE!")
-            print("=" * 70)
-            print(f"\nTotal records loaded: {total_loaded}")
-            print("\nBy table:")
-            for table, count in sorted(stats.items()):
-                if isinstance(count, int):
-                    print(f"  • {table}: {count:,} records")
-                else:
-                    print(f"  • {table}: {count}")
-
-            print("\n🎉 Your database is now populated with data!")
-            print("\nNext steps:")
-            print("  1. Load KB articles: python scripts/init_knowledge_base.py")
-            print("  2. Start the API: python -m uvicorn src.api.main:app --reload")
+                # Use a fresh session for each table
+                async with AsyncSessionLocal() as session:
+                    loaded, skipped = await load_table_data(session, table_name, data)
+                    stats[table_name] = loaded
+                    total_loaded += loaded
+                    total_skipped += skipped
+                    print(f"   ✓ Loaded {loaded} records" + (f" (skipped {skipped})" if skipped else ""))
 
         except Exception as e:
-            print(f"\n❌ Error during loading: {e}")
-            await session.rollback()
-            raise
+            print(f"   ❌ Error: {e}")
+            stats[table_name] = f"Error: {str(e)[:50]}"
+
+    # Also check for any files that weren't in TABLE_ORDER
+    processed_names = set(TABLE_ORDER)
+    for json_file in json_files:
+        table_name = json_file.stem.lower().replace('-', '_').rstrip('s')
+        # Try singular form too
+        if table_name not in processed_names and f"{table_name}s" not in processed_names:
+            print(f"\n⚠️  Unknown file: {json_file.name} (not in TABLE_ORDER)")
+
+    # Summary
+    print("\n" + "=" * 70)
+    print("✅ SQL DATA LOAD COMPLETE!")
+    print("=" * 70)
+    print(f"\nTotal records loaded: {total_loaded}")
+    if total_skipped > 0:
+        print(f"Total records skipped: {total_skipped}")
+    print("\nBy table:")
+    for table, count in sorted(stats.items()):
+        if isinstance(count, int):
+            print(f"  • {table}: {count:,} records")
+        else:
+            print(f"  • {table}: {count}")
+
+    print("\n🎉 Your database is now populated with data!")
+    print("\nNext steps:")
+    print("  1. Load KB articles: python scripts/init_knowledge_base.py")
+    print("  2. Start the API: python -m uvicorn src.api.main:app --reload")
 
 
 def main():
