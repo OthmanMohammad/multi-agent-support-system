@@ -11,22 +11,19 @@ Environment Variables (via config):
     ENVIRONMENT: Environment name (staging or production)
 """
 
-import sys
 import logging
-from typing import Any, Dict
+import sys
+from typing import Any
+
 import structlog
 
 from src.core.config import get_settings
 
 
-def add_correlation_id(
-    logger: Any, 
-    method_name: str, 
-    event_dict: Dict[str, Any]
-) -> Dict[str, Any]:
+def add_correlation_id(logger: Any, method_name: str, event_dict: dict[str, Any]) -> dict[str, Any]:
     """
     Processor to inject correlation ID into logs
-    
+
     Gets correlation ID from context (set by middleware or context manager)
     and adds it to every log entry.
     """
@@ -35,39 +32,39 @@ def add_correlation_id(
     correlation_id = get_correlation_id()
     if correlation_id:
         event_dict["correlation_id"] = correlation_id
-    
+
     return event_dict
 
 
 def setup_logging() -> None:
     """
     Initialize structured logging with structlog
-    
+
     Configures different output formats based on LOG_FORMAT setting:
     - json: JSON output for production parsing
     - pretty: Pretty console output with colors for debugging
-    
+
     Call this once at application startup.
-    
+
     Example:
         from utils.logging import setup_logging
-        
+
         setup_logging()
     """
     # Get configuration from centralized settings
     settings = get_settings()
-    
+
     log_level = settings.logging.level
     log_format = settings.logging.format
     environment = settings.environment
-    
+
     # Configure standard logging
     logging.basicConfig(
         format="%(message)s",
         stream=sys.stdout,
         level=getattr(logging, log_level, logging.INFO),
     )
-    
+
     # Shared processors for all formats
     shared_processors = [
         structlog.contextvars.merge_contextvars,
@@ -77,21 +74,20 @@ def setup_logging() -> None:
         add_correlation_id,
         structlog.processors.StackInfoRenderer(),
     ]
-    
+
     # Format-specific processors
     if log_format == "json":
         # Production/Staging: JSON output
-        processors = shared_processors + [
+        processors = [
+            *shared_processors,
             structlog.processors.format_exc_info,
             structlog.processors.UnicodeDecoder(),
             structlog.processors.JSONRenderer(),
         ]
     else:
         # Pretty format: Console output with colors
-        processors = shared_processors + [
-            structlog.dev.ConsoleRenderer(),
-        ]
-    
+        processors = [*shared_processors, structlog.dev.ConsoleRenderer()]
+
     # Configure structlog
     structlog.configure(
         processors=processors,
@@ -100,7 +96,7 @@ def setup_logging() -> None:
         logger_factory=structlog.stdlib.LoggerFactory(),
         cache_logger_on_first_use=True,
     )
-    
+
     # Log startup
     logger = get_logger(__name__)
     logger.info(
@@ -111,16 +107,16 @@ def setup_logging() -> None:
     )
 
 
-def get_logger(name: str = None) -> structlog.stdlib.BoundLogger:
+def get_logger(name: str | None = None) -> structlog.stdlib.BoundLogger:
     """
     Get a structured logger instance
-    
+
     Args:
         name: Logger name (typically __name__)
-    
+
     Returns:
         Configured structlog logger
-    
+
     Example:
         logger = get_logger(__name__)
         logger.info("operation_complete", status="success", duration_ms=42)
