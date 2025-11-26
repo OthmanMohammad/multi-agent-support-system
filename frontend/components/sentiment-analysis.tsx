@@ -323,6 +323,7 @@ export function SentimentAnalysis({
       <div className="rounded-lg border border-border bg-background p-4">
         <p className="mb-2 text-sm font-medium">Conversation Trend</p>
         <div className="flex items-center gap-3">
+          {/* eslint-disable-next-line no-nested-ternary -- Trend direction conditional */}
           {analysis.trend > 0.1 ? (
             <>
               <TrendingUp className="h-6 w-6 text-green-500" />
