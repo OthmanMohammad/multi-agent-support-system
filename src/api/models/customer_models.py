@@ -5,27 +5,27 @@ Extended request/response models for customer endpoints with
 full CRUD operations, filtering, and pagination.
 """
 
-from typing import List, Optional
 from datetime import datetime
 from uuid import UUID
-from pydantic import BaseModel, EmailStr, Field
 
+from pydantic import BaseModel, EmailStr, Field
 
 # =============================================================================
 # CUSTOMER MODELS
 # =============================================================================
+
 
 class CustomerResponse(BaseModel):
     """Customer profile response"""
 
     id: UUID
     email: EmailStr
-    name: Optional[str] = None
+    name: str | None = None
     plan: str = Field(..., description="free, starter, professional, enterprise")
     status: str = Field(default="active", description="active, inactive, suspended")
     created_at: datetime
     updated_at: datetime
-    last_activity_at: Optional[datetime] = None
+    last_activity_at: datetime | None = None
 
     # Statistics
     total_conversations: int = 0
@@ -33,25 +33,27 @@ class CustomerResponse(BaseModel):
     total_spent: float = Field(default=0.0, description="Total amount spent")
 
     # Metadata
-    metadata: Optional[dict] = None
+    metadata: dict | None = None
 
     model_config = {
         "from_attributes": True,
         "json_schema_extra": {
-            "examples": [{
-                "id": "123e4567-e89b-12d3-a456-426614174000",
-                "email": "customer@example.com",
-                "name": "John Doe",
-                "plan": "professional",
-                "status": "active",
-                "created_at": "2025-01-01T00:00:00Z",
-                "updated_at": "2025-11-16T12:00:00Z",
-                "last_activity_at": "2025-11-16T12:00:00Z",
-                "total_conversations": 25,
-                "open_conversations": 2,
-                "total_spent": 499.99
-            }]
-        }
+            "examples": [
+                {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "email": "customer@example.com",
+                    "name": "John Doe",
+                    "plan": "professional",
+                    "status": "active",
+                    "created_at": "2025-01-01T00:00:00Z",
+                    "updated_at": "2025-11-16T12:00:00Z",
+                    "last_activity_at": "2025-11-16T12:00:00Z",
+                    "total_conversations": 25,
+                    "open_conversations": 2,
+                    "total_spent": 499.99,
+                }
+            ]
+        },
     }
 
 
@@ -60,13 +62,13 @@ class CustomerListItem(BaseModel):
 
     id: UUID
     email: EmailStr
-    name: Optional[str] = None
+    name: str | None = None
     plan: str
     status: str
     total_conversations: int
     open_conversations: int
     created_at: datetime
-    last_activity_at: Optional[datetime] = None
+    last_activity_at: datetime | None = None
 
     model_config = {"from_attributes": True}
 
@@ -74,7 +76,7 @@ class CustomerListItem(BaseModel):
 class CustomerListResponse(BaseModel):
     """Paginated list of customers"""
 
-    customers: List[CustomerListItem]
+    customers: list[CustomerListItem]
     total: int
     page: int
     page_size: int
@@ -82,25 +84,27 @@ class CustomerListResponse(BaseModel):
 
     model_config = {
         "json_schema_extra": {
-            "examples": [{
-                "customers": [
-                    {
-                        "id": "123e4567-e89b-12d3-a456-426614174000",
-                        "email": "customer@example.com",
-                        "name": "John Doe",
-                        "plan": "professional",
-                        "status": "active",
-                        "total_conversations": 25,
-                        "open_conversations": 2,
-                        "created_at": "2025-01-01T00:00:00Z",
-                        "last_activity_at": "2025-11-16T12:00:00Z"
-                    }
-                ],
-                "total": 1542,
-                "page": 1,
-                "page_size": 20,
-                "total_pages": 78
-            }]
+            "examples": [
+                {
+                    "customers": [
+                        {
+                            "id": "123e4567-e89b-12d3-a456-426614174000",
+                            "email": "customer@example.com",
+                            "name": "John Doe",
+                            "plan": "professional",
+                            "status": "active",
+                            "total_conversations": 25,
+                            "open_conversations": 2,
+                            "created_at": "2025-01-01T00:00:00Z",
+                            "last_activity_at": "2025-11-16T12:00:00Z",
+                        }
+                    ],
+                    "total": 1542,
+                    "page": 1,
+                    "page_size": 20,
+                    "total_pages": 78,
+                }
+            ]
         }
     }
 
@@ -109,21 +113,20 @@ class CustomerListResponse(BaseModel):
 # CUSTOMER MUTATIONS
 # =============================================================================
 
+
 class CustomerCreateRequest(BaseModel):
     """Create new customer"""
 
     email: EmailStr
-    name: Optional[str] = Field(None, max_length=255)
+    name: str | None = Field(None, max_length=255)
     plan: str = Field(default="free", description="free, starter, professional, enterprise")
-    metadata: Optional[dict] = None
+    metadata: dict | None = None
 
     model_config = {
         "json_schema_extra": {
-            "examples": [{
-                "email": "newcustomer@example.com",
-                "name": "Jane Smith",
-                "plan": "starter"
-            }]
+            "examples": [
+                {"email": "newcustomer@example.com", "name": "Jane Smith", "plan": "starter"}
+            ]
         }
     }
 
@@ -131,18 +134,16 @@ class CustomerCreateRequest(BaseModel):
 class CustomerUpdateRequest(BaseModel):
     """Update customer details"""
 
-    name: Optional[str] = Field(None, max_length=255)
-    plan: Optional[str] = Field(None, description="free, starter, professional, enterprise")
-    status: Optional[str] = Field(None, description="active, inactive, suspended")
-    metadata: Optional[dict] = None
+    name: str | None = Field(None, max_length=255)
+    plan: str | None = Field(None, description="free, starter, professional, enterprise")
+    status: str | None = Field(None, description="active, inactive, suspended")
+    metadata: dict | None = None
 
     model_config = {
         "json_schema_extra": {
-            "examples": [{
-                "name": "Jane Doe",
-                "plan": "professional",
-                "metadata": {"notes": "VIP customer"}
-            }]
+            "examples": [
+                {"name": "Jane Doe", "plan": "professional", "metadata": {"notes": "VIP customer"}}
+            ]
         }
     }
 
@@ -150,6 +151,7 @@ class CustomerUpdateRequest(BaseModel):
 # =============================================================================
 # CUSTOMER STATISTICS
 # =============================================================================
+
 
 class CustomerStats(BaseModel):
     """Customer statistics"""
@@ -166,21 +168,18 @@ class CustomerStats(BaseModel):
 
     model_config = {
         "json_schema_extra": {
-            "examples": [{
-                "total_customers": 1542,
-                "active_customers": 1489,
-                "inactive_customers": 53,
-                "by_plan": {
-                    "free": 892,
-                    "starter": 421,
-                    "professional": 189,
-                    "enterprise": 40
-                },
-                "new_customers_today": 12,
-                "new_customers_this_week": 87,
-                "new_customers_this_month": 234,
-                "churn_rate": 2.5,
-                "average_lifetime_value": 349.99
-            }]
+            "examples": [
+                {
+                    "total_customers": 1542,
+                    "active_customers": 1489,
+                    "inactive_customers": 53,
+                    "by_plan": {"free": 892, "starter": 421, "professional": 189, "enterprise": 40},
+                    "new_customers_today": 12,
+                    "new_customers_this_week": 87,
+                    "new_customers_this_month": 234,
+                    "churn_rate": 2.5,
+                    "average_lifetime_value": 349.99,
+                }
+            ]
         }
     }
