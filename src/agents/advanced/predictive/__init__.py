@@ -18,26 +18,26 @@ Agents:
 - Feature Demand Predictor: Predict feature demand trends (TASK-4020)
 """
 
-from src.agents.advanced.predictive.churn_predictor import ChurnPredictorAgent
-from src.agents.advanced.predictive.upsell_predictor import UpsellPredictorAgent
-from src.agents.advanced.predictive.support_volume_predictor import SupportVolumePredictorAgent
-from src.agents.advanced.predictive.renewal_predictor import RenewalPredictorAgent
 from src.agents.advanced.predictive.bug_predictor import BugPredictorAgent
 from src.agents.advanced.predictive.capacity_predictor import CapacityPredictorAgent
-from src.agents.advanced.predictive.ltv_predictor import LTVPredictorAgent
+from src.agents.advanced.predictive.churn_predictor import ChurnPredictorAgent
 from src.agents.advanced.predictive.conversion_predictor import ConversionPredictorAgent
-from src.agents.advanced.predictive.sentiment_predictor import SentimentPredictorAgent
 from src.agents.advanced.predictive.feature_demand_predictor import FeatureDemandPredictorAgent
+from src.agents.advanced.predictive.ltv_predictor import LTVPredictorAgent
+from src.agents.advanced.predictive.renewal_predictor import RenewalPredictorAgent
+from src.agents.advanced.predictive.sentiment_predictor import SentimentPredictorAgent
+from src.agents.advanced.predictive.support_volume_predictor import SupportVolumePredictorAgent
+from src.agents.advanced.predictive.upsell_predictor import UpsellPredictorAgent
 
 __all__ = [
-    "ChurnPredictorAgent",
-    "UpsellPredictorAgent",
-    "SupportVolumePredictorAgent",
-    "RenewalPredictorAgent",
     "BugPredictorAgent",
     "CapacityPredictorAgent",
-    "LTVPredictorAgent",
+    "ChurnPredictorAgent",
     "ConversionPredictorAgent",
-    "SentimentPredictorAgent",
     "FeatureDemandPredictorAgent",
+    "LTVPredictorAgent",
+    "RenewalPredictorAgent",
+    "SentimentPredictorAgent",
+    "SupportVolumePredictorAgent",
+    "UpsellPredictorAgent",
 ]
