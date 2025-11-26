@@ -13,15 +13,12 @@ This package contains FastAPI middleware for:
 from src.api.middleware.correlation_middleware import CorrelationMiddleware
 from src.api.middleware.logging_middleware import LoggingMiddleware
 from src.api.middleware.rate_limit_middleware import RateLimitMiddleware
-from src.api.middleware.security_middleware import (
-    SecurityHeadersMiddleware,
-    CORSSecurityMiddleware
-)
+from src.api.middleware.security_middleware import CORSSecurityMiddleware, SecurityHeadersMiddleware
 
 __all__ = [
+    "CORSSecurityMiddleware",
     "CorrelationMiddleware",
     "LoggingMiddleware",
     "RateLimitMiddleware",
     "SecurityHeadersMiddleware",
-    "CORSSecurityMiddleware",
 ]
