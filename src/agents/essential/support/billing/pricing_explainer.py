@@ -5,12 +5,10 @@ This agent helps customers understand pricing tiers, compare plans,
 calculate costs for their team size, and understand volume discounts.
 """
 
-from typing import Dict, Any, Optional, List
-
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("pricing_explainer", tier="essential", category="billing")
@@ -39,8 +37,8 @@ class PricingExplainer(BaseAgent):
                 "Task lists and boards",
                 "File attachments (100MB)",
                 "Community support",
-                "Mobile app access"
-            ]
+                "Mobile app access",
+            ],
         },
         "basic": {
             "price": 10,
@@ -56,8 +54,8 @@ class PricingExplainer(BaseAgent):
                 "Email support",
                 "Standard integrations (Slack, Google Drive)",
                 "Basic reporting",
-                "Custom fields"
-            ]
+                "Custom fields",
+            ],
         },
         "premium": {
             "price": 25,
@@ -76,8 +74,8 @@ class PricingExplainer(BaseAgent):
                 "Time tracking",
                 "Gantt charts",
                 "Advanced security features",
-                "Custom workflows"
-            ]
+                "Custom workflows",
+            ],
         },
         "enterprise": {
             "price": "custom",
@@ -95,16 +93,16 @@ class PricingExplainer(BaseAgent):
                 "On-premise deployment option",
                 "White-label options",
                 "Advanced admin controls",
-                "Custom training sessions"
-            ]
-        }
+                "Custom training sessions",
+            ],
+        },
     }
 
     # Volume discounts
     VOLUME_DISCOUNTS = {
         "10_users": {"min_seats": 10, "discount": 10, "description": "10% off for 10-49 users"},
         "50_users": {"min_seats": 50, "discount": 15, "description": "15% off for 50-99 users"},
-        "100_users": {"min_seats": 100, "discount": 20, "description": "20% off for 100+ users"}
+        "100_users": {"min_seats": 100, "discount": 20, "description": "20% off for 100+ users"},
     }
 
     # Annual discount
@@ -115,12 +113,9 @@ class PricingExplainer(BaseAgent):
             name="pricing_explainer",
             type=AgentType.SPECIALIST,
             temperature=0.3,
-            capabilities=[
-                AgentCapability.KB_SEARCH,
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="billing",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -151,7 +146,7 @@ class PricingExplainer(BaseAgent):
             message_preview=user_message[:100],
             query_type=query_type,
             customer_id=state.get("customer_id"),
-            turn_count=state["turn_count"]
+            turn_count=state["turn_count"],
         )
 
         # Generate appropriate response
@@ -179,7 +174,7 @@ class PricingExplainer(BaseAgent):
         self.logger.info(
             "pricing_explanation_completed",
             customer_id=state.get("customer_id"),
-            query_type=query_type
+            query_type=query_type,
         )
 
         return state
@@ -213,12 +208,14 @@ class PricingExplainer(BaseAgent):
             return "volume_discount"
         elif any(word in message_lower for word in ["annual", "yearly", "monthly"]):
             return "annual_vs_monthly"
-        elif any(word in message_lower for word in ["features", "what's included", "what do i get"]):
+        elif any(
+            word in message_lower for word in ["features", "what's included", "what do i get"]
+        ):
             return "features"
         else:
             return "overview"
 
-    def _extract_plans_to_compare(self, state: AgentState) -> List[str]:
+    def _extract_plans_to_compare(self, state: AgentState) -> list[str]:
         """
         Extract plans to compare from state.
 
@@ -243,7 +240,7 @@ class PricingExplainer(BaseAgent):
         else:
             return ["basic", "premium"]
 
-    def _compare_plans(self, plans: List[str]) -> str:
+    def _compare_plans(self, plans: list[str]) -> str:
         """
         Compare multiple plans.
 
@@ -260,15 +257,17 @@ class PricingExplainer(BaseAgent):
                 continue
 
             plan = self.PLANS[plan_name]
-            price_str = f"${plan['price']}/user/month" if plan['price'] != "custom" else "Custom pricing"
+            price_str = (
+                f"${plan['price']}/user/month" if plan["price"] != "custom" else "Custom pricing"
+            )
 
             comparison += f"**{plan_name.title()} Plan:** {price_str}\n"
             comparison += f"- Users: {plan['seats_description']}\n"
             comparison += f"- Projects: {plan['projects']}\n"
             comparison += f"- Storage: {plan['storage']}\n"
-            comparison += f"- Key features:\n"
+            comparison += "- Key features:\n"
 
-            for feature in plan['features'][:5]:  # Show first 5 features
+            for feature in plan["features"][:5]:  # Show first 5 features
                 comparison += f"  • {feature}\n"
 
             comparison += "\n"
@@ -277,7 +276,7 @@ class PricingExplainer(BaseAgent):
 
         return comparison
 
-    def _calculate_cost(self, state: AgentState, customer_metadata: Dict) -> str:
+    def _calculate_cost(self, state: AgentState, customer_metadata: dict) -> str:
         """
         Calculate cost for specific team size.
 
@@ -305,7 +304,7 @@ class PricingExplainer(BaseAgent):
             return f"""For {plan.title()} plan with {team_size} users, we'll need to create a custom quote.
 
 **What's included:**
-{chr(10).join(f'- {feature}' for feature in plan_info['features'][:8])}
+{chr(10).join(f"- {feature}" for feature in plan_info["features"][:8])}
 
 I can connect you with our sales team to discuss pricing and your specific needs.
 Would you like me to set up a call?"""
@@ -337,7 +336,9 @@ Would you like me to set up a call?"""
 - Base: ${monthly_per_user}/user × {team_size} users = ${monthly_total:.2f}/month
 """
             if volume_savings > 0:
-                response += f"- Volume discount ({volume_discount}%): -${volume_savings:.2f}/month\n"
+                response += (
+                    f"- Volume discount ({volume_discount}%): -${volume_savings:.2f}/month\n"
+                )
                 response += f"- Subtotal: ${monthly_total_discounted:.2f}/month\n"
 
             response += f"""
@@ -360,7 +361,9 @@ Would you like to proceed with the {plan.title()} plan?"""
 - Base: ${monthly_per_user}/user × {team_size} users = ${monthly_total:.2f}/month
 """
             if volume_savings > 0:
-                response += f"- Volume discount ({volume_discount}%): -${volume_savings:.2f}/month\n"
+                response += (
+                    f"- Volume discount ({volume_discount}%): -${volume_savings:.2f}/month\n"
+                )
                 response += f"- **Monthly total: ${monthly_total_discounted:.2f}/month**\n"
             else:
                 response += f"- **Monthly total: ${monthly_total:.2f}/month**\n"
@@ -371,7 +374,7 @@ Would you like to proceed with the {plan.title()} plan?"""
 
             response += f"""
 **💡 Pro tip:** Switch to annual billing and save ${annual_savings:.2f}/year (20% off)!
-Annual price would be: ${annual_if_switched:.2f}/year (${annual_if_switched/12:.2f}/month equivalent)
+Annual price would be: ${annual_if_switched:.2f}/year (${annual_if_switched / 12:.2f}/month equivalent)
 
 Would you like to proceed with the {plan.title()} plan?"""
 
@@ -430,7 +433,7 @@ Want me to calculate the exact cost for your team? Just let me know how many use
 
         return response
 
-    def _explain_annual_vs_monthly(self, state: AgentState, customer_metadata: Dict) -> str:
+    def _explain_annual_vs_monthly(self, state: AgentState, customer_metadata: dict) -> str:
         """
         Explain annual vs monthly billing.
 
@@ -458,7 +461,7 @@ Want me to calculate the exact cost for your team? Just let me know how many use
 **Annual billing:**
 - Pay once per year
 - **20% discount (same as 2 months free!)**
-- Price: ${annual_price:.2f}/year (${annual_price/12:.2f}/month equivalent)
+- Price: ${annual_price:.2f}/year (${annual_price / 12:.2f}/month equivalent)
 - **You save: ${annual_savings:.2f}/year**
 
 **Current plan ({current_plan.title()}):**
@@ -493,25 +496,31 @@ Would you like to switch to annual billing and start saving?"""
             plan = "basic"
 
         plan_info = self.PLANS[plan]
-        price_str = f"${plan_info['price']}/user/month" if plan_info['price'] != "custom" else "Custom pricing"
+        price_str = (
+            f"${plan_info['price']}/user/month"
+            if plan_info["price"] != "custom"
+            else "Custom pricing"
+        )
 
         response = f"""**{plan.title()} Plan - {price_str}**
 
 **Capacity:**
-- Users: {plan_info['seats_description']}
-- Projects: {plan_info['projects']}
-- Storage: {plan_info['storage']}
+- Users: {plan_info["seats_description"]}
+- Projects: {plan_info["projects"]}
+- Storage: {plan_info["storage"]}
 
 **Features:**
 """
-        for feature in plan_info['features']:
+        for feature in plan_info["features"]:
             response += f"✓ {feature}\n"
 
-        response += f"""
+        response += """
 **Best for:**
 """
         if plan == "free":
-            response += "- Individuals or very small teams\n- Testing our platform\n- Personal projects"
+            response += (
+                "- Individuals or very small teams\n- Testing our platform\n- Personal projects"
+            )
         elif plan == "basic":
             response += "- Small to medium teams (up to 25 users)\n- Growing businesses\n- Standard project management needs"
         elif plan == "premium":
@@ -567,6 +576,7 @@ Just let me know!"""
 if __name__ == "__main__":
     # Test pricing explainer
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -579,60 +589,43 @@ if __name__ == "__main__":
         # Test 1: Compare plans
         state1 = create_initial_state(
             "What's the difference between Basic and Premium?",
-            context={
-                "customer_metadata": {
-                    "plan": "free"
-                }
-            }
+            context={"customer_metadata": {"plan": "free"}},
         )
         state1["entities"] = {"plans_to_compare": ["basic", "premium"]}
 
         result1 = await explainer.process(state1)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("TEST 1: Compare Plans")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Query type: {result1.get('pricing_query_type')}")
         print(f"\nResponse:\n{result1['agent_response']}")
 
         # Test 2: Calculate cost
         state2 = create_initial_state(
             "How much for 15 users on Premium plan, paid annually?",
-            context={
-                "customer_metadata": {
-                    "plan": "basic"
-                }
-            }
+            context={"customer_metadata": {"plan": "basic"}},
         )
-        state2["entities"] = {
-            "desired_plan": "premium",
-            "team_size": 15,
-            "billing_cycle": "annual"
-        }
+        state2["entities"] = {"desired_plan": "premium", "team_size": 15, "billing_cycle": "annual"}
 
         result2 = await explainer.process(state2)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("TEST 2: Calculate Cost")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Query type: {result2.get('pricing_query_type')}")
         print(f"\nResponse:\n{result2['agent_response']}")
 
         # Test 3: Volume discounts
         state3 = create_initial_state(
-            "Do you offer volume discounts?",
-            context={
-                "customer_metadata": {
-                    "plan": "basic"
-                }
-            }
+            "Do you offer volume discounts?", context={"customer_metadata": {"plan": "basic"}}
         )
 
         result3 = await explainer.process(state3)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("TEST 3: Volume Discounts")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Query type: {result3.get('pricing_query_type')}")
         print(f"\nResponse:\n{result3['agent_response'][:300]}...")
 
