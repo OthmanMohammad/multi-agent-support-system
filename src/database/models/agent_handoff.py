@@ -1,10 +1,22 @@
 """
 Agent handoff and collaboration models
 """
-from sqlalchemy import Column, String, Integer, DECIMAL, Text, ForeignKey, CheckConstraint, DateTime, Boolean
-from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
-from sqlalchemy.orm import relationship
+
 import uuid
+
+from sqlalchemy import (
+    DECIMAL,
+    Boolean,
+    CheckConstraint,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
+from sqlalchemy.orm import relationship
 
 from src.database.models.base import BaseModel
 
@@ -19,7 +31,7 @@ class AgentHandoff(BaseModel):
         UUID(as_uuid=True),
         ForeignKey("conversations.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
     from_agent = Column(String(50), nullable=False, index=True)
     to_agent = Column(String(50), nullable=False, index=True)
@@ -34,10 +46,7 @@ class AgentHandoff(BaseModel):
     conversation = relationship("Conversation", back_populates="handoffs")
 
     __table_args__ = (
-        CheckConstraint(
-            "from_agent != to_agent",
-            name="check_handoff_different_agents"
-        ),
+        CheckConstraint("from_agent != to_agent", name="check_handoff_different_agents"),
     )
 
     @property
@@ -61,7 +70,7 @@ class AgentCollaboration(BaseModel):
         UUID(as_uuid=True),
         ForeignKey("conversations.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
     collaboration_type = Column(String(50), nullable=False, index=True)
     agents_involved = Column(ARRAY(String), nullable=False)
@@ -79,7 +88,7 @@ class AgentCollaboration(BaseModel):
     __table_args__ = (
         CheckConstraint(
             "collaboration_type IN ('sequential', 'parallel', 'debate', 'verification', 'expert_panel')",
-            name="check_collaboration_type"
+            name="check_collaboration_type",
         ),
     )
 
@@ -114,7 +123,7 @@ class ConversationTag(BaseModel):
         UUID(as_uuid=True),
         ForeignKey("conversations.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
     tag = Column(String(50), nullable=False, index=True)
     tag_category = Column(String(50), nullable=True)
