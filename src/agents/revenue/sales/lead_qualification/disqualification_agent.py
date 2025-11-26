@@ -186,7 +186,8 @@ class DisqualificationAgent(BaseAgent):
             primary_reason,
             route_to,
             customer_metadata,
-            kb_results
+            kb_results,
+            state
         )
 
         # Get recommended resources
@@ -338,9 +339,13 @@ class DisqualificationAgent(BaseAgent):
         reason: str,
         route_to: str,
         customer_metadata: Dict,
-        kb_results: List[Dict]
+        kb_results: List[Dict],
+        state: AgentState
     ) -> str:
         """Generate polite disqualification response using Claude"""
+
+        # Get conversation history for context continuity
+        conversation_history = self.get_conversation_context(state)
 
         kb_context = ""
         if kb_results:
@@ -375,7 +380,11 @@ Recommended resources to mention:
 
 Generate a polite, helpful disqualification response."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt,
+            user_prompt,
+            conversation_history=conversation_history
+        )
         return response
 
 
