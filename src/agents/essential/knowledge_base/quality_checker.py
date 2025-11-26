@@ -6,16 +6,15 @@ Ensures knowledge base maintains high standards.
 
 """
 
-from typing import Dict, List
-import re
 import json
+import re
 from datetime import datetime, timedelta
 
-from src.agents.base.base_agent import BaseAgent
-from src.agents.base.agent_types import AgentType
 from src.agents.base import AgentConfig
-from src.workflow.state import AgentState
+from src.agents.base.agent_types import AgentType
+from src.agents.base.base_agent import BaseAgent
 from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 class KBQualityChecker(BaseAgent):
@@ -31,10 +30,10 @@ class KBQualityChecker(BaseAgent):
         config = AgentConfig(
             name="kb_quality_checker",
             type=AgentType.SPECIALIST,
-             # Fast for quality checks
+            # Fast for quality checks
             temperature=0.1,  # Low temperature for consistency
             max_tokens=1024,
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -57,13 +56,13 @@ class KBQualityChecker(BaseAgent):
             "content": state.get("article_content"),
             "category": state.get("article_category"),
             "created_at": state.get("article_created_at"),
-            "updated_at": state.get("article_updated_at")
+            "updated_at": state.get("article_updated_at"),
         }
 
         self.logger.info(
             "kb_quality_check_started",
             article_id=article.get("article_id"),
-            title=article.get("title", "")[:50]
+            title=article.get("title", "")[:50],
         )
 
         # Check quality
@@ -71,21 +70,19 @@ class KBQualityChecker(BaseAgent):
 
         # Update state
         state = self.update_state(
-            state,
-            quality_score=quality_report["quality_score"],
-            quality_report=quality_report
+            state, quality_score=quality_report["quality_score"], quality_report=quality_report
         )
 
         self.logger.info(
             "kb_quality_check_completed",
             article_id=article.get("article_id"),
             quality_score=quality_report["quality_score"],
-            issues_count=len(quality_report.get("issues", []))
+            issues_count=len(quality_report.get("issues", [])),
         )
 
         return state
 
-    async def check_quality(self, article: Dict) -> Dict:
+    async def check_quality(self, article: dict) -> dict:
         """
         Check article quality.
 
@@ -103,20 +100,22 @@ class KBQualityChecker(BaseAgent):
 
         # Combine scores
         final_scores = {
-            "completeness": int((automated_scores["completeness"] + llm_assessment["completeness"]) / 2),
+            "completeness": int(
+                (automated_scores["completeness"] + llm_assessment["completeness"]) / 2
+            ),
             "clarity": llm_assessment["clarity"],
             "accuracy": llm_assessment["accuracy"],
             "examples": int((automated_scores["examples"] + llm_assessment["examples"]) / 2),
-            "formatting": automated_scores["formatting"]
+            "formatting": automated_scores["formatting"],
         }
 
         # Calculate overall quality score (weighted average)
         quality_score = int(
-            final_scores["completeness"] * 0.25 +
-            final_scores["clarity"] * 0.25 +
-            final_scores["accuracy"] * 0.20 +
-            final_scores["examples"] * 0.15 +
-            final_scores["formatting"] * 0.15
+            final_scores["completeness"] * 0.25
+            + final_scores["clarity"] * 0.25
+            + final_scores["accuracy"] * 0.20
+            + final_scores["examples"] * 0.15
+            + final_scores["formatting"] * 0.15
         )
 
         return {
@@ -126,10 +125,10 @@ class KBQualityChecker(BaseAgent):
             "issues": llm_assessment.get("issues", []),
             "strengths": llm_assessment.get("strengths", []),
             "needs_update": self._needs_update(article),
-            "confidence": llm_assessment.get("confidence", 0.8)
+            "confidence": llm_assessment.get("confidence", 0.8),
         }
 
-    def _automated_checks(self, article: Dict) -> Dict:
+    def _automated_checks(self, article: dict) -> dict:
         """
         Perform automated quality checks (no LLM).
 
@@ -153,7 +152,7 @@ class KBQualityChecker(BaseAgent):
         return {
             "completeness": completeness_score,
             "examples": examples_score,
-            "formatting": formatting_score
+            "formatting": formatting_score,
         }
 
     def _check_completeness(self, content: str) -> int:
@@ -169,19 +168,19 @@ class KBQualityChecker(BaseAgent):
         sections_found = 0
         total_sections = 5
 
-        if re.search(r'(##\s*Overview|##\s*Introduction)', content, re.IGNORECASE):
+        if re.search(r"(##\s*Overview|##\s*Introduction)", content, re.IGNORECASE):
             sections_found += 1
 
-        if re.search(r'(##\s*Steps|##\s*Instructions|##\s*How to)', content, re.IGNORECASE):
+        if re.search(r"(##\s*Steps|##\s*Instructions|##\s*How to)", content, re.IGNORECASE):
             sections_found += 1
 
-        if re.search(r'(##\s*Examples?|##\s*Usage)', content, re.IGNORECASE):
+        if re.search(r"(##\s*Examples?|##\s*Usage)", content, re.IGNORECASE):
             sections_found += 1
 
-        if re.search(r'(##\s*Notes?|##\s*Important|##\s*Tips)', content, re.IGNORECASE):
+        if re.search(r"(##\s*Notes?|##\s*Important|##\s*Tips)", content, re.IGNORECASE):
             sections_found += 1
 
-        if re.search(r'(##\s*Related|##\s*See also|##\s*Resources)', content, re.IGNORECASE):
+        if re.search(r"(##\s*Related|##\s*See also|##\s*Resources)", content, re.IGNORECASE):
             sections_found += 1
 
         # Add bonus for sections found
@@ -199,22 +198,22 @@ class KBQualityChecker(BaseAgent):
         score = 0
 
         # Check for code blocks
-        code_blocks = len(re.findall(r'```[\s\S]*?```', content))
+        code_blocks = len(re.findall(r"```[\s\S]*?```", content))
         if code_blocks > 0:
             score += 40
 
         # Check for inline code
-        inline_code = len(re.findall(r'`[^`]+`', content))
+        inline_code = len(re.findall(r"`[^`]+`", content))
         if inline_code > 3:
             score += 20
 
         # Check for images
-        images = len(re.findall(r'!\[.*?\]\(.*?\)', content))
+        images = len(re.findall(r"!\[.*?\]\(.*?\)", content))
         if images > 0:
             score += 20
 
         # Check for links
-        links = len(re.findall(r'\[.*?\]\(.*?\)', content))
+        links = len(re.findall(r"\[.*?\]\(.*?\)", content))
         if links > 2:
             score += 20
 
@@ -230,31 +229,31 @@ class KBQualityChecker(BaseAgent):
         score = 50  # Base score
 
         # Check for headings
-        headings = len(re.findall(r'^#+\s+.+$', content, re.MULTILINE))
+        headings = len(re.findall(r"^#+\s+.+$", content, re.MULTILINE))
         if headings >= 3:
             score += 15
 
         # Check for lists
-        lists = len(re.findall(r'^[\*\-\+]\s+.+$', content, re.MULTILINE))
+        lists = len(re.findall(r"^[\*\-\+]\s+.+$", content, re.MULTILINE))
         if lists >= 3:
             score += 10
 
         # Check for numbered lists
-        numbered = len(re.findall(r'^\d+\.\s+.+$', content, re.MULTILINE))
+        numbered = len(re.findall(r"^\d+\.\s+.+$", content, re.MULTILINE))
         if numbered >= 2:
             score += 10
 
         # Check for bold/italic
-        if re.search(r'\*\*.+?\*\*|__.+?__', content):
+        if re.search(r"\*\*.+?\*\*|__.+?__", content):
             score += 5
 
         # Check for tables
-        if re.search(r'\|.+\|', content):
+        if re.search(r"\|.+\|", content):
             score += 10
 
         return min(score, 100)
 
-    async def _llm_quality_check(self, article: Dict) -> Dict:
+    async def _llm_quality_check(self, article: dict) -> dict:
         """
         Use LLM to assess quality.
 
@@ -298,12 +297,12 @@ Return ONLY valid JSON with this structure:
   "confidence": 0.88
 }"""
 
-        user_prompt = f"""**Article Title:** {article.get('title', 'Untitled')}
+        user_prompt = f"""**Article Title:** {article.get("title", "Untitled")}
 
-**Category:** {article.get('category', 'general')}
+**Category:** {article.get("category", "general")}
 
 **Content:**
-{article.get('content', '')[:3000]}
+{article.get("content", "")[:3000]}
 
 Evaluate this article's quality."""
 
@@ -312,24 +311,19 @@ Evaluate this article's quality."""
                 system_prompt=system_prompt,
                 user_message=user_prompt,
                 max_tokens=1024,
-                conversation_history=[]  # Quality checks are standalone, no conversation context
+                conversation_history=[],  # Quality checks are standalone, no conversation context
             )
 
             # Parse JSON response
             # Extract JSON from response (in case there's extra text)
-            json_match = re.search(r'\{[\s\S]*\}', response)
-            if json_match:
-                assessment = json.loads(json_match.group(0))
-            else:
-                assessment = json.loads(response)
+            json_match = re.search(r"\{[\s\S]*\}", response)
+            assessment = json.loads(json_match.group(0)) if json_match else json.loads(response)
 
             return assessment
 
         except (json.JSONDecodeError, Exception) as e:
             self.logger.warning(
-                "llm_quality_check_parsing_failed",
-                error=str(e),
-                error_type=type(e).__name__
+                "llm_quality_check_parsing_failed", error=str(e), error_type=type(e).__name__
             )
             # Fallback if LLM doesn't return valid JSON
             return {
@@ -339,10 +333,10 @@ Evaluate this article's quality."""
                 "examples": 70,
                 "issues": [],
                 "strengths": [],
-                "confidence": 0.5
+                "confidence": 0.5,
             }
 
-    def _needs_update(self, article: Dict) -> bool:
+    def _needs_update(self, article: dict) -> bool:
         """
         Determine if article needs updating based on age.
 
@@ -359,7 +353,7 @@ Evaluate this article's quality."""
         try:
             # Parse date
             if isinstance(updated_at, str):
-                updated_date = datetime.fromisoformat(updated_at.replace('Z', '+00:00'))
+                updated_date = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
             else:
                 updated_date = updated_at
 
@@ -370,7 +364,7 @@ Evaluate this article's quality."""
         except (ValueError, AttributeError, TypeError):
             return False
 
-    async def batch_check_articles(self, articles: List[Dict]) -> List[Dict]:
+    async def batch_check_articles(self, articles: list[dict]) -> list[dict]:
         """
         Check quality of multiple articles.
 
@@ -391,7 +385,6 @@ Evaluate this article's quality."""
 if __name__ == "__main__":
     # Test KB Quality Checker
     import asyncio
-    from src.workflow.state import create_initial_state
 
     async def test():
         print("=" * 60)
@@ -428,23 +421,23 @@ upgrade_plan(user_id="123", plan="premium")
 - [Plan Comparison](/kb/plans)
             """,
             "category": "billing",
-            "updated_at": (datetime.now() - timedelta(days=30)).isoformat()
+            "updated_at": (datetime.now() - timedelta(days=30)).isoformat(),
         }
 
         print("\nChecking article quality...")
         report = await checker.check_quality(test_article)
 
         print(f"\nQuality Score: {report['quality_score']}/100")
-        print(f"\nComponent Scores:")
-        for component, score in report['scores'].items():
+        print("\nComponent Scores:")
+        for component, score in report["scores"].items():
             print(f"  {component.capitalize()}: {score}/100")
 
         print(f"\nIssues: {len(report['issues'])}")
-        for issue in report['issues']:
+        for issue in report["issues"]:
             print(f"  - [{issue.get('severity', 'unknown')}] {issue.get('description', 'N/A')}")
 
         print(f"\nStrengths: {len(report['strengths'])}")
-        for strength in report['strengths']:
+        for strength in report["strengths"]:
             print(f"  - {strength}")
 
         print(f"\nNeeds Update: {report['needs_update']}")
