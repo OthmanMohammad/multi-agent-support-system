@@ -6,14 +6,13 @@ Achieves >85% accuracy through XGBoost classification with 25 features.
 Provides SHAP explanations and triggers proactive interventions for high-risk customers.
 """
 
-from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime, timedelta, UTC
-import json
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("churn_predictor", tier="advanced", category="predictive")
@@ -38,9 +37,9 @@ class ChurnPredictorAgent(BaseAgent):
 
     # Risk level thresholds
     RISK_THRESHOLDS = {
-        "low": 0.3,      # Probability < 0.3
-        "medium": 0.6,   # Probability 0.3 - 0.6
-        "high": 1.0      # Probability > 0.6
+        "low": 0.3,  # Probability < 0.3
+        "medium": 0.6,  # Probability 0.3 - 0.6
+        "high": 1.0,  # Probability > 0.6
     }
 
     # Feature importance weights (for rule-based fallback)
@@ -52,22 +51,22 @@ class ChurnPredictorAgent(BaseAgent):
         "days_since_last_login": 0.10,
         "payment_failures_30d": 0.08,
         "avg_csat_30d": 0.07,
-        "feature_adoption_score": 0.05
+        "feature_adoption_score": 0.05,
     }
 
     def __init__(self):
         config = AgentConfig(
             name="churn_predictor",
             type=AgentType.ANALYZER,
-             # For explainability
+            # For explainability
             temperature=0.1,
             max_tokens=1500,
             capabilities=[
                 AgentCapability.DATABASE_READ,
                 AgentCapability.DATABASE_WRITE,
-                AgentCapability.CONTEXT_AWARE
+                AgentCapability.CONTEXT_AWARE,
             ],
-            tier="advanced"
+            tier="advanced",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -87,7 +86,9 @@ class ChurnPredictorAgent(BaseAgent):
         state = self.update_state(state)
 
         # Extract customer ID
-        customer_id = state.get("entities", {}).get("customer_id") or state.get("customer_context", {}).get("customer_id")
+        customer_id = state.get("entities", {}).get("customer_id") or state.get(
+            "customer_context", {}
+        ).get("customer_id")
 
         if not customer_id:
             return self.update_state(
@@ -95,7 +96,7 @@ class ChurnPredictorAgent(BaseAgent):
                 agent_response="Error: No customer ID provided for churn prediction",
                 status="failed",
                 response_confidence=0.0,
-                next_agent=None
+                next_agent=None,
             )
 
         self.logger.debug("predicting_churn", customer_id=customer_id)
@@ -129,7 +130,7 @@ class ChurnPredictorAgent(BaseAgent):
                 "confidence": confidence,
                 "prediction_date": datetime.now(UTC).isoformat(),
                 "valid_until": (datetime.now(UTC) + timedelta(days=1)).isoformat(),
-                "model_version": "rule_based_v1.0"
+                "model_version": "rule_based_v1.0",
             }
 
             # 8. Store prediction in state
@@ -147,7 +148,7 @@ class ChurnPredictorAgent(BaseAgent):
                 churn_risk=risk_level,
                 status="resolved",
                 response_confidence=confidence,
-                next_agent=None
+                next_agent=None,
             )
 
         except Exception as e:
@@ -155,18 +156,18 @@ class ChurnPredictorAgent(BaseAgent):
                 "churn_prediction_failed",
                 error=str(e),
                 error_type=type(e).__name__,
-                customer_id=customer_id
+                customer_id=customer_id,
             )
 
             return self.update_state(
                 state,
-                agent_response=f"Error predicting churn: {str(e)}",
+                agent_response=f"Error predicting churn: {e!s}",
                 status="failed",
                 response_confidence=0.0,
-                next_agent=None
+                next_agent=None,
             )
 
-    async def _extract_features(self, customer_id: str) -> Dict[str, Any]:
+    async def _extract_features(self, customer_id: str) -> dict[str, Any]:
         """
         Extract churn prediction features from customer data.
 
@@ -179,10 +180,10 @@ class ChurnPredictorAgent(BaseAgent):
         # Get enriched context if available
         context = await self.get_enriched_context(customer_id)
 
-        if context and hasattr(context, 'customer'):
+        if context and hasattr(context, "customer"):
             customer = context.customer
-            usage = context.usage_stats if hasattr(context, 'usage_stats') else {}
-            support = context.support_stats if hasattr(context, 'support_stats') else {}
+            usage = context.usage_stats if hasattr(context, "usage_stats") else {}
+            support = context.support_stats if hasattr(context, "support_stats") else {}
 
             features = {
                 # Engagement features
@@ -194,25 +195,22 @@ class ChurnPredictorAgent(BaseAgent):
                 "active_users_ratio": usage.get("active_users_ratio", 0.0),
                 "usage_trend_30d": usage.get("usage_trend_30d", 0.0),
                 "api_calls_30d": usage.get("api_calls_30d", 0),
-
                 # Support features
                 "support_tickets_30d": support.get("tickets_30d", 0),
                 "avg_csat_30d": support.get("avg_csat_30d", 3.0),
                 "escalations_30d": support.get("escalations_30d", 0),
                 "time_to_resolution_avg": support.get("avg_resolution_time", 120),
-
                 # Account health features
                 "health_score": customer.get("health_score", 50),
                 "nps_score": customer.get("nps_score", 0),
                 "payment_failures_30d": customer.get("payment_failures_30d", 0),
                 "billing_disputes_30d": customer.get("billing_disputes_30d", 0),
-
                 # Product features
                 "plan": customer.get("plan", "free"),
                 "mrr": customer.get("mrr", 0),
                 "seats_utilization": customer.get("seats_utilization", 0.0),
                 "customer_age_days": customer.get("customer_age_days", 0),
-                "is_annual_contract": customer.get("is_annual_contract", False)
+                "is_annual_contract": customer.get("is_annual_contract", False),
             }
         else:
             # Fallback with defaults (would query database in production)
@@ -238,12 +236,12 @@ class ChurnPredictorAgent(BaseAgent):
                 "mrr": 100,
                 "seats_utilization": 0.8,
                 "customer_age_days": 180,
-                "is_annual_contract": False
+                "is_annual_contract": False,
             }
 
         return features
 
-    def _calculate_churn_probability(self, features: Dict[str, Any]) -> float:
+    def _calculate_churn_probability(self, features: dict[str, Any]) -> float:
         """
         Calculate churn probability using rule-based model.
 
@@ -320,7 +318,7 @@ class ChurnPredictorAgent(BaseAgent):
         else:
             return "high"
 
-    def _identify_risk_factors(self, features: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _identify_risk_factors(self, features: dict[str, Any]) -> list[dict[str, Any]]:
         """
         Identify top risk factors using feature analysis.
 
@@ -334,67 +332,81 @@ class ChurnPredictorAgent(BaseAgent):
 
         # Analyze each feature
         if features["login_count_30d"] < 5:
-            risk_factors.append({
-                "factor": "login_count_30d",
-                "value": features["login_count_30d"],
-                "importance": 0.25,
-                "direction": "negative",
-                "description": f"Only {features['login_count_30d']} logins in last 30 days (low engagement)"
-            })
+            risk_factors.append(
+                {
+                    "factor": "login_count_30d",
+                    "value": features["login_count_30d"],
+                    "importance": 0.25,
+                    "direction": "negative",
+                    "description": f"Only {features['login_count_30d']} logins in last 30 days (low engagement)",
+                }
+            )
 
         if features["support_tickets_30d"] > 5:
-            risk_factors.append({
-                "factor": "support_tickets_30d",
-                "value": features["support_tickets_30d"],
-                "importance": 0.18,
-                "direction": "negative",
-                "description": f"{features['support_tickets_30d']} support tickets indicate potential issues"
-            })
+            risk_factors.append(
+                {
+                    "factor": "support_tickets_30d",
+                    "value": features["support_tickets_30d"],
+                    "importance": 0.18,
+                    "direction": "negative",
+                    "description": f"{features['support_tickets_30d']} support tickets indicate potential issues",
+                }
+            )
 
         if features["health_score"] < 40:
-            risk_factors.append({
-                "factor": "health_score",
-                "value": features["health_score"],
-                "importance": 0.15,
-                "direction": "negative",
-                "description": f"Low health score of {features['health_score']}/100"
-            })
+            risk_factors.append(
+                {
+                    "factor": "health_score",
+                    "value": features["health_score"],
+                    "importance": 0.15,
+                    "direction": "negative",
+                    "description": f"Low health score of {features['health_score']}/100",
+                }
+            )
 
         if features["avg_csat_30d"] < 3.0:
-            risk_factors.append({
-                "factor": "avg_csat_30d",
-                "value": features["avg_csat_30d"],
-                "importance": 0.15,
-                "direction": "negative",
-                "description": f"Low CSAT score of {features['avg_csat_30d']}/5"
-            })
+            risk_factors.append(
+                {
+                    "factor": "avg_csat_30d",
+                    "value": features["avg_csat_30d"],
+                    "importance": 0.15,
+                    "direction": "negative",
+                    "description": f"Low CSAT score of {features['avg_csat_30d']}/5",
+                }
+            )
 
         if features["nps_score"] < 0:
-            risk_factors.append({
-                "factor": "nps_score",
-                "value": features["nps_score"],
-                "importance": 0.12,
-                "direction": "negative",
-                "description": f"Negative NPS score of {features['nps_score']}"
-            })
+            risk_factors.append(
+                {
+                    "factor": "nps_score",
+                    "value": features["nps_score"],
+                    "importance": 0.12,
+                    "direction": "negative",
+                    "description": f"Negative NPS score of {features['nps_score']}",
+                }
+            )
 
         if features["payment_failures_30d"] > 0:
-            risk_factors.append({
-                "factor": "payment_failures_30d",
-                "value": features["payment_failures_30d"],
-                "importance": 0.10,
-                "direction": "negative",
-                "description": f"{features['payment_failures_30d']} payment failures"
-            })
+            risk_factors.append(
+                {
+                    "factor": "payment_failures_30d",
+                    "value": features["payment_failures_30d"],
+                    "importance": 0.10,
+                    "direction": "negative",
+                    "description": f"{features['payment_failures_30d']} payment failures",
+                }
+            )
 
         if features["feature_adoption_score"] < 0.3:
-            risk_factors.append({
-                "factor": "feature_adoption_score",
-                "value": features["feature_adoption_score"],
-                "importance": 0.10,
-                "direction": "negative",
-                "description": f"Low feature adoption ({features['feature_adoption_score']*100:.0f}%)"
-            })
+            risk_factors.append(
+                {
+                    "factor": "feature_adoption_score",
+                    "value": features["feature_adoption_score"],
+                    "importance": 0.10,
+                    "direction": "negative",
+                    "description": f"Low feature adoption ({features['feature_adoption_score'] * 100:.0f}%)",
+                }
+            )
 
         # Sort by importance
         risk_factors.sort(key=lambda x: x["importance"], reverse=True)
@@ -402,11 +414,8 @@ class ChurnPredictorAgent(BaseAgent):
         return risk_factors[:5]  # Top 5 factors
 
     def _generate_actions(
-        self,
-        risk_level: str,
-        risk_factors: List[Dict[str, Any]],
-        features: Dict[str, Any]
-    ) -> List[str]:
+        self, risk_level: str, risk_factors: list[dict[str, Any]], features: dict[str, Any]
+    ) -> list[str]:
         """
         Generate recommended intervention actions.
 
@@ -460,7 +469,7 @@ class ChurnPredictorAgent(BaseAgent):
 
         return unique_actions
 
-    def _calculate_confidence(self, features: Dict[str, Any]) -> float:
+    def _calculate_confidence(self, features: dict[str, Any]) -> float:
         """
         Calculate prediction confidence based on data completeness.
 
@@ -488,7 +497,7 @@ class ChurnPredictorAgent(BaseAgent):
 
         return round(min(0.95, max(0.5, confidence)), 2)
 
-    async def _trigger_intervention(self, customer_id: str, prediction: Dict[str, Any]):
+    async def _trigger_intervention(self, customer_id: str, prediction: dict[str, Any]):
         """
         Trigger automatic interventions for high-risk customers.
 
@@ -500,7 +509,7 @@ class ChurnPredictorAgent(BaseAgent):
             "triggering_churn_intervention",
             customer_id=customer_id,
             churn_probability=prediction["churn_probability"],
-            risk_level=prediction["churn_risk"]
+            risk_level=prediction["churn_risk"],
         )
 
         # In production, this would:
@@ -514,10 +523,10 @@ class ChurnPredictorAgent(BaseAgent):
             "high_churn_risk_detected",
             customer_id=customer_id,
             probability=prediction["churn_probability"],
-            actions=prediction["recommended_actions"]
+            actions=prediction["recommended_actions"],
         )
 
-    def _format_prediction_report(self, prediction: Dict[str, Any]) -> str:
+    def _format_prediction_report(self, prediction: dict[str, Any]) -> str:
         """
         Format churn prediction as human-readable report.
 
@@ -527,19 +536,15 @@ class ChurnPredictorAgent(BaseAgent):
         Returns:
             Formatted report
         """
-        risk_icons = {
-            "low": "✅",
-            "medium": "⚠️",
-            "high": "🚨"
-        }
+        risk_icons = {"low": "✅", "medium": "⚠️", "high": "🚨"}
 
         icon = risk_icons.get(prediction["churn_risk"], "❓")
 
         report = f"""**Churn Risk Prediction**
 
 {icon} **Risk Level:** {prediction["churn_risk"].upper()}
-**Churn Probability:** {prediction["churn_probability"]*100:.1f}%
-**Confidence:** {prediction["confidence"]*100:.0f}%
+**Churn Probability:** {prediction["churn_probability"] * 100:.1f}%
+**Confidence:** {prediction["confidence"] * 100:.0f}%
 
 """
 
@@ -547,7 +552,9 @@ class ChurnPredictorAgent(BaseAgent):
         if prediction["risk_factors"]:
             report += "**Key Risk Factors:**\n"
             for factor in prediction["risk_factors"]:
-                report += f"• {factor['description']} (importance: {factor['importance']*100:.0f}%)\n"
+                report += (
+                    f"• {factor['description']} (importance: {factor['importance'] * 100:.0f}%)\n"
+                )
             report += "\n"
 
         # Recommended actions
