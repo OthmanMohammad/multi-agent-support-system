@@ -15,9 +15,8 @@ interface DropdownMenuContextValue {
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const DropdownMenuContext = React.createContext<DropdownMenuContextValue | null>(
-  null
-);
+const DropdownMenuContext =
+  React.createContext<DropdownMenuContextValue | null>(null);
 
 function useDropdownMenu() {
   const context = React.useContext(DropdownMenuContext);
@@ -60,11 +59,18 @@ export function DropdownMenuTrigger({
   };
 
   if (asChild && React.isValidElement(children)) {
-    return React.cloneElement(children as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void; 'aria-expanded'?: boolean; 'aria-haspopup'?: boolean }>, {
-      onClick: handleClick,
-      "aria-expanded": isOpen,
-      "aria-haspopup": true,
-    });
+    return React.cloneElement(
+      children as React.ReactElement<{
+        onClick?: (e: React.MouseEvent) => void;
+        "aria-expanded"?: boolean;
+        "aria-haspopup"?: boolean;
+      }>,
+      {
+        onClick: handleClick,
+        "aria-expanded": isOpen,
+        "aria-haspopup": true,
+      }
+    );
   }
 
   return (
@@ -77,7 +83,7 @@ export function DropdownMenuTrigger({
       )}
       onClick={handleClick}
       aria-expanded={isOpen}
-      aria-haspopup={true}
+      aria-haspopup
     >
       {children}
     </button>
@@ -100,7 +106,9 @@ export function DropdownMenuContent({
 
   // Close on click outside
   React.useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      return;
+    }
 
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -126,7 +134,9 @@ export function DropdownMenuContent({
     };
   }, [isOpen, setIsOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <div
@@ -165,7 +175,9 @@ export function DropdownMenuItem({
   const { setIsOpen } = useDropdownMenu();
 
   const handleClick = () => {
-    if (disabled) return;
+    if (disabled) {
+      return;
+    }
     onClick?.();
     setIsOpen(false);
   };
