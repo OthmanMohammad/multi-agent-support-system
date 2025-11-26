@@ -5,13 +5,12 @@ Automates customer onboarding workflows including account setup,
 welcome sequences, training scheduling, and initial configuration.
 """
 
-from typing import Dict, Any
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("onboarding_automator", tier="operational", category="automation")
@@ -24,7 +23,7 @@ class OnboardingAutomatorAgent(BaseAgent):
         "setup_workspace",
         "schedule_kickoff",
         "assign_csm",
-        "send_resources"
+        "send_resources",
     ]
 
     def __init__(self):
@@ -34,7 +33,7 @@ class OnboardingAutomatorAgent(BaseAgent):
             temperature=0.1,
             max_tokens=700,
             capabilities=[AgentCapability.DATABASE_WRITE],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -54,8 +53,8 @@ class OnboardingAutomatorAgent(BaseAgent):
 
         response = f"""**Customer Onboarding Initiated**
 
-Customer: {customer_metadata.get('customer_name', 'New Customer')}
-Plan: {customer_metadata.get('plan_name', 'Standard')}
+Customer: {customer_metadata.get("customer_name", "New Customer")}
+Plan: {customer_metadata.get("plan_name", "Standard")}
 
 **Completed Steps:**
 """
@@ -72,10 +71,6 @@ Plan: {customer_metadata.get('plan_name', 'Standard')}
         self.logger.info("onboarding_completed", steps=len(results))
         return state
 
-    async def _execute_onboarding_step(self, step: str, customer: Dict) -> Dict:
+    async def _execute_onboarding_step(self, step: str, customer: dict) -> dict:
         """Execute a single onboarding step."""
-        return {
-            "step": step,
-            "status": "completed",
-            "completed_at": datetime.now(UTC).isoformat()
-        }
+        return {"step": step, "status": "completed", "completed_at": datetime.now(UTC).isoformat()}
