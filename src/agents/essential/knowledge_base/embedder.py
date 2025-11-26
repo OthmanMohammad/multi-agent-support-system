@@ -6,20 +6,20 @@ Generates vector embeddings for new and updated KB articles and loads them into 
 Part of: STORY-002 Knowledge Base Swarm (TASK-210)
 """
 
-from typing import List, Dict
 import uuid
 
-from src.agents.base.base_agent import BaseAgent
-from src.agents.base.agent_types import AgentType
 from src.agents.base import AgentConfig
-from src.workflow.state import AgentState
+from src.agents.base.agent_types import AgentType
+from src.agents.base.base_agent import BaseAgent
 from src.core.config import get_settings
 from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 try:
-    from sentence_transformers import SentenceTransformer
     from qdrant_client import QdrantClient
-    from qdrant_client.models import PointStruct, Filter, FieldCondition, MatchValue
+    from qdrant_client.models import FieldCondition, Filter, MatchValue, PointStruct
+    from sentence_transformers import SentenceTransformer
+
     EMBEDDING_AVAILABLE = True
 except ImportError:
     EMBEDDING_AVAILABLE = False
@@ -47,7 +47,7 @@ class KBEmbedder(BaseAgent):
             type=AgentType.UTILITY,
             model="",  # No LLM needed
             temperature=0.0,
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -55,7 +55,7 @@ class KBEmbedder(BaseAgent):
         if not EMBEDDING_AVAILABLE:
             self.logger.error(
                 "embedding_dependencies_missing",
-                message="sentence-transformers or qdrant-client not installed"
+                message="sentence-transformers or qdrant-client not installed",
             )
             self.qdrant_client = None
             self.embedding_model = None
@@ -68,31 +68,26 @@ class KBEmbedder(BaseAgent):
             self.qdrant_client = QdrantClient(
                 url=settings.qdrant.url,
                 api_key=settings.qdrant.api_key,
-                timeout=settings.qdrant.timeout
+                timeout=settings.qdrant.timeout,
             )
             self.collection_name = settings.qdrant.collection_name
         except Exception as e:
             self.logger.error(
-                "qdrant_client_initialization_failed",
-                error=str(e),
-                error_type=type(e).__name__
+                "qdrant_client_initialization_failed", error=str(e), error_type=type(e).__name__
             )
             self.qdrant_client = None
 
         # Initialize embedding model
         try:
-            self.embedding_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+            self.embedding_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
         except Exception as e:
             self.logger.error(
-                "embedding_model_initialization_failed",
-                error=str(e),
-                error_type=type(e).__name__
+                "embedding_model_initialization_failed", error=str(e), error_type=type(e).__name__
             )
             self.embedding_model = None
 
         self.logger.info(
-            "kb_embedder_initialized",
-            collection_name=getattr(self, 'collection_name', 'unknown')
+            "kb_embedder_initialized", collection_name=getattr(self, "collection_name", "unknown")
         )
 
     async def process(self, state: AgentState) -> AgentState:
@@ -111,29 +106,23 @@ class KBEmbedder(BaseAgent):
             self.logger.info("kb_embedder_no_articles")
             return state
 
-        self.logger.info(
-            "kb_embedding_started",
-            articles_count=len(articles)
-        )
+        self.logger.info("kb_embedding_started", articles_count=len(articles))
 
         # Batch embed articles
         results = await self.batch_embed_articles(articles)
 
         # Update state
-        state = self.update_state(
-            state,
-            embedding_results=results
-        )
+        state = self.update_state(state, embedding_results=results)
 
         self.logger.info(
             "kb_embedding_completed",
             success_count=results["success"],
-            failed_count=results["failed"]
+            failed_count=results["failed"],
         )
 
         return state
 
-    async def embed_article(self, article: Dict) -> Dict:
+    async def embed_article(self, article: dict) -> dict:
         """
         Generate embeddings for article and store in Qdrant.
 
@@ -144,10 +133,7 @@ class KBEmbedder(BaseAgent):
             Result dict with success status
         """
         if not self.qdrant_client or not self.embedding_model:
-            return {
-                "success": False,
-                "error": "Embedder not properly initialized"
-            }
+            return {"success": False, "error": "Embedder not properly initialized"}
 
         article_id = str(article.get("id", article.get("article_id", "")))
         title = article.get("title", "")
@@ -158,10 +144,7 @@ class KBEmbedder(BaseAgent):
 
         # Check if needs chunking
         word_count = len(full_text.split())
-        if word_count > self.CHUNK_SIZE:
-            chunks = self._chunk_text(full_text)
-        else:
-            chunks = [full_text]
+        chunks = self._chunk_text(full_text) if word_count > self.CHUNK_SIZE else [full_text]
 
         try:
             # Generate embeddings
@@ -169,7 +152,7 @@ class KBEmbedder(BaseAgent):
 
             # Create points for Qdrant
             points = []
-            for idx, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
+            for idx, (chunk, embedding) in enumerate(zip(chunks, embeddings, strict=False)):
                 point = PointStruct(
                     id=str(uuid.uuid4()),
                     vector=embedding.tolist(),
@@ -182,28 +165,21 @@ class KBEmbedder(BaseAgent):
                         "tags": article.get("tags", []),
                         "url": article.get("url", f"/kb/{article_id}"),
                         "chunk_index": idx,
-                        "total_chunks": len(chunks)
-                    }
+                        "total_chunks": len(chunks),
+                    },
                 )
                 points.append(point)
 
             # Upload to Qdrant
-            self.qdrant_client.upsert(
-                collection_name=self.collection_name,
-                points=points
-            )
+            self.qdrant_client.upsert(collection_name=self.collection_name, points=points)
 
-            self.logger.info(
-                "article_embedded",
-                article_id=article_id,
-                chunks_created=len(chunks)
-            )
+            self.logger.info("article_embedded", article_id=article_id, chunks_created=len(chunks))
 
             return {
                 "success": True,
                 "article_id": article_id,
                 "chunks_created": len(chunks),
-                "embeddings_generated": len(embeddings)
+                "embeddings_generated": len(embeddings),
             }
 
         except Exception as e:
@@ -211,15 +187,11 @@ class KBEmbedder(BaseAgent):
                 "article_embedding_failed",
                 error=str(e),
                 error_type=type(e).__name__,
-                article_id=article_id
+                article_id=article_id,
             )
-            return {
-                "success": False,
-                "article_id": article_id,
-                "error": str(e)
-            }
+            return {"success": False, "article_id": article_id, "error": str(e)}
 
-    def _chunk_text(self, text: str) -> List[str]:
+    def _chunk_text(self, text: str) -> list[str]:
         """
         Split long text into chunks with overlap.
 
@@ -233,13 +205,13 @@ class KBEmbedder(BaseAgent):
         chunks = []
 
         for i in range(0, len(words), self.CHUNK_SIZE - self.CHUNK_OVERLAP):
-            chunk_words = words[i:i + self.CHUNK_SIZE]
+            chunk_words = words[i : i + self.CHUNK_SIZE]
             chunk = " ".join(chunk_words)
             chunks.append(chunk)
 
         return chunks
 
-    async def batch_embed_articles(self, articles: List[Dict]) -> Dict:
+    async def batch_embed_articles(self, articles: list[dict]) -> dict:
         """
         Embed multiple articles in batch.
 
@@ -249,12 +221,7 @@ class KBEmbedder(BaseAgent):
         Returns:
             Batch result summary
         """
-        results = {
-            "total": len(articles),
-            "success": 0,
-            "failed": 0,
-            "total_chunks": 0
-        }
+        results = {"total": len(articles), "success": 0, "failed": 0, "total_chunks": 0}
 
         for article in articles:
             result = await self.embed_article(article)
@@ -285,19 +252,11 @@ class KBEmbedder(BaseAgent):
             self.qdrant_client.delete(
                 collection_name=self.collection_name,
                 points_selector=Filter(
-                    must=[
-                        FieldCondition(
-                            key="article_id",
-                            match=MatchValue(value=article_id)
-                        )
-                    ]
-                )
+                    must=[FieldCondition(key="article_id", match=MatchValue(value=article_id))]
+                ),
             )
 
-            self.logger.info(
-                "article_embeddings_deleted",
-                article_id=article_id
-            )
+            self.logger.info("article_embeddings_deleted", article_id=article_id)
 
             return True
 
@@ -306,7 +265,7 @@ class KBEmbedder(BaseAgent):
                 "article_embeddings_deletion_failed",
                 error=str(e),
                 error_type=type(e).__name__,
-                article_id=article_id
+                article_id=article_id,
             )
             return False
 
@@ -314,7 +273,6 @@ class KBEmbedder(BaseAgent):
 if __name__ == "__main__":
     # Test KB Embedder
     import asyncio
-    from src.workflow.state import create_initial_state
 
     async def test():
         print("=" * 60)
@@ -330,7 +288,7 @@ if __name__ == "__main__":
             "title": "Short Article",
             "content": "This is a short article about testing.",
             "category": "test",
-            "tags": ["test"]
+            "tags": ["test"],
         }
 
         result = await embedder.embed_article(short_article)
@@ -344,7 +302,7 @@ if __name__ == "__main__":
             "id": "kb_test_long",
             "title": "Long Article",
             "content": long_content,
-            "category": "test"
+            "category": "test",
         }
 
         result = await embedder.embed_article(long_article)
