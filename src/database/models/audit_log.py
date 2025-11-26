@@ -1,9 +1,11 @@
 """
 Security and compliance models
 """
-from sqlalchemy import Column, String, Text, CheckConstraint, DateTime, Index
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+
 import uuid
+
+from sqlalchemy import CheckConstraint, Column, DateTime, Index, String, Text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 
 from src.database.models.base import Base  # Use Base instead of BaseModel for immutable logs
 
@@ -33,11 +35,10 @@ class AuditLog(Base):
     __table_args__ = (
         CheckConstraint(
             "action IN ('create', 'read', 'update', 'delete', 'login', 'logout', 'export')",
-            name="check_audit_action"
+            name="check_audit_action",
         ),
         CheckConstraint(
-            "actor_type IN ('user', 'agent', 'system', 'api')",
-            name="check_audit_actor_type"
+            "actor_type IN ('user', 'agent', 'system', 'api')", name="check_audit_actor_type"
         ),
         Index("idx_audit_logs_entity", "entity_type", "entity_id"),
         Index("idx_audit_logs_actor", "actor_type", "actor_id"),
