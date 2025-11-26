@@ -14,7 +14,7 @@ Features:
 
 Quick Start:
     from src.utils.exceptions import enrich_exception, capture_exceptions
-    
+
     # Enrich exception with context
     try:
         process_payment()
@@ -22,7 +22,7 @@ Quick Start:
         enriched = enrich_exception(e)
         logger.error("payment_failed", exception=enriched)
         raise
-    
+
     # Or use decorator
     @capture_exceptions(log_errors=True, send_to_sentry=True)
     async def risky_operation():
@@ -30,35 +30,35 @@ Quick Start:
         await process()
 """
 
-from src.utils.exceptions.enrichment import (
-    enrich_exception,
-    get_exception_context,
-    EnrichedExceptionMixin,
+from src.utils.exceptions.context import (
+    get_exception_agent_name,
+    get_exception_conversation_id,
+    get_exception_correlation_id,
+    get_exception_customer_id,
 )
 from src.utils.exceptions.decorators import (
     capture_exceptions,
     handle_workflow_errors,
 )
-from src.utils.exceptions.context import (
-    get_exception_correlation_id,
-    get_exception_customer_id,
-    get_exception_conversation_id,
-    get_exception_agent_name,
+from src.utils.exceptions.enrichment import (
+    EnrichedExceptionMixin,
+    enrich_exception,
+    get_exception_context,
 )
 
 __version__ = "1.0.0"
 
 __all__ = [
-    # Enrichment
-    "enrich_exception",
-    "get_exception_context",
     "EnrichedExceptionMixin",
     # Decorators
     "capture_exceptions",
-    "handle_workflow_errors",
+    # Enrichment
+    "enrich_exception",
+    "get_exception_agent_name",
+    "get_exception_context",
+    "get_exception_conversation_id",
     # Context extraction
     "get_exception_correlation_id",
     "get_exception_customer_id",
-    "get_exception_conversation_id",
-    "get_exception_agent_name",
+    "handle_workflow_errors",
 ]
