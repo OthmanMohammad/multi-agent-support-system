@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import type { components } from "@/types/api";
 
@@ -81,7 +81,10 @@ export function useUpdateAgent(agentId: string) {
 
   return useMutation({
     mutationFn: async (data: UpdateAgentRequest): Promise<Agent> => {
-      const result = await apiClient.patch<Agent>(`/api/agents/${agentId}`, data);
+      const result = await apiClient.patch<Agent>(
+        `/api/agents/${agentId}`,
+        data
+      );
       if (!result.success) {
         throw result.error;
       }
