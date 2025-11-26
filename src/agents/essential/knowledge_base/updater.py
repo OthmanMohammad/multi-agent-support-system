@@ -6,19 +6,19 @@ Ensures KB stays current with product changes.
 
 """
 
-from typing import Dict, List, Optional
-from datetime import datetime, timedelta, UTC
 import re
+from datetime import UTC, datetime, timedelta
+
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
-from src.agents.base.base_agent import BaseAgent
-from src.agents.base.agent_types import AgentType
 from src.agents.base import AgentConfig
-from src.workflow.state import AgentState
+from src.agents.base.agent_types import AgentType
+from src.agents.base.base_agent import BaseAgent
 from src.database.connection import get_db_session
 from src.database.models import KBArticle
 from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 class KBUpdater(BaseAgent):
@@ -42,10 +42,10 @@ class KBUpdater(BaseAgent):
         config = AgentConfig(
             name="kb_updater",
             type=AgentType.SPECIALIST,
-             # For content analysis
+            # For content analysis
             temperature=0.1,
             max_tokens=512,
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -54,7 +54,7 @@ class KBUpdater(BaseAgent):
             "kb_updater_initialized",
             age_threshold_days=self.AGE_THRESHOLD_DAYS,
             low_helpfulness_threshold=self.LOW_HELPFULNESS_THRESHOLD,
-            min_quality_score=self.MIN_QUALITY_SCORE
+            min_quality_score=self.MIN_QUALITY_SCORE,
         )
 
     async def process(self, state: AgentState) -> AgentState:
@@ -75,13 +75,13 @@ class KBUpdater(BaseAgent):
             "created_at": state.get("article_created_at"),
             "updated_at": state.get("article_updated_at"),
             "quality_score": state.get("quality_score"),
-            "helpfulness_ratio": state.get("helpfulness_ratio")
+            "helpfulness_ratio": state.get("helpfulness_ratio"),
         }
 
         self.logger.info(
             "kb_update_check_started",
             article_id=article.get("article_id"),
-            title=article.get("title", "")[:50]
+            title=article.get("title", "")[:50],
         )
 
         # Check if needs update
@@ -89,21 +89,19 @@ class KBUpdater(BaseAgent):
 
         # Update state
         state = self.update_state(
-            state,
-            needs_update=update_check["needs_update"],
-            update_assessment=update_check
+            state, needs_update=update_check["needs_update"], update_assessment=update_check
         )
 
         self.logger.info(
             "kb_update_check_completed",
             article_id=article.get("article_id"),
             needs_update=update_check["needs_update"],
-            priority=update_check.get("update_priority", "none")
+            priority=update_check.get("update_priority", "none"),
         )
 
         return state
 
-    async def check_needs_update(self, article: Dict) -> Dict:
+    async def check_needs_update(self, article: dict) -> dict:
         """
         Check if article needs updating.
 
@@ -162,10 +160,10 @@ class KBUpdater(BaseAgent):
             "reasons": reasons,
             "suggested_updates": suggestions,
             "estimated_effort": effort,
-            "last_checked_at": datetime.now(UTC).isoformat()
+            "last_checked_at": datetime.now(UTC).isoformat(),
         }
 
-    def _check_age(self, article: Dict) -> Optional[Dict]:
+    def _check_age(self, article: dict) -> dict | None:
         """Check if article is too old."""
         updated_at = article.get("updated_at")
         if not updated_at:
@@ -173,7 +171,7 @@ class KBUpdater(BaseAgent):
 
         try:
             if isinstance(updated_at, str):
-                updated_date = datetime.fromisoformat(updated_at.replace('Z', '+00:00'))
+                updated_date = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
             else:
                 updated_date = updated_at
 
@@ -185,19 +183,17 @@ class KBUpdater(BaseAgent):
                     "type": "age",
                     "severity": severity,
                     "description": f"Article not updated in {days_old // 30} months",
-                    "detail": f"Last updated: {updated_at}"
+                    "detail": f"Last updated: {updated_at}",
                 }
 
         except (ValueError, AttributeError, TypeError) as e:
             self.logger.warning(
-                "age_check_failed",
-                error=str(e),
-                article_id=article.get("article_id")
+                "age_check_failed", error=str(e), article_id=article.get("article_id")
             )
 
         return None
 
-    def _check_quality(self, article: Dict) -> Optional[Dict]:
+    def _check_quality(self, article: dict) -> dict | None:
         """Check if article has low quality score."""
         quality_score = article.get("quality_score")
 
@@ -206,12 +202,12 @@ class KBUpdater(BaseAgent):
                 "type": "low_quality",
                 "severity": "medium",
                 "description": f"Quality score below threshold ({quality_score}/100)",
-                "detail": f"Minimum quality score: {self.MIN_QUALITY_SCORE}"
+                "detail": f"Minimum quality score: {self.MIN_QUALITY_SCORE}",
             }
 
         return None
 
-    def _check_helpfulness(self, article: Dict) -> Optional[Dict]:
+    def _check_helpfulness(self, article: dict) -> dict | None:
         """Check if article has low helpfulness ratio."""
         helpfulness = article.get("helpfulness_ratio")
 
@@ -220,12 +216,12 @@ class KBUpdater(BaseAgent):
                 "type": "low_helpfulness",
                 "severity": "medium",
                 "description": f"Low helpfulness ratio ({helpfulness:.0%})",
-                "detail": "Users find this article not helpful"
+                "detail": "Users find this article not helpful",
             }
 
         return None
 
-    def _check_deprecated_features(self, article: Dict) -> List[Dict]:
+    def _check_deprecated_features(self, article: dict) -> list[dict]:
         """Check if article references deprecated features."""
         content = article.get("content", "")
         reasons = []
@@ -237,28 +233,30 @@ class KBUpdater(BaseAgent):
             # Check if article mentions this feature
             pattern = re.compile(feature["name"], re.IGNORECASE)
             if pattern.search(content):
-                reasons.append({
-                    "type": "deprecated_feature",
-                    "severity": "high",
-                    "description": f"References deprecated {feature['name']}",
-                    "detail": f"{feature['name']} was deprecated in version {feature['deprecated_in']}"
-                })
+                reasons.append(
+                    {
+                        "type": "deprecated_feature",
+                        "severity": "high",
+                        "description": f"References deprecated {feature['name']}",
+                        "detail": f"{feature['name']} was deprecated in version {feature['deprecated_in']}",
+                    }
+                )
 
         return reasons
 
-    def _check_broken_links(self, article: Dict) -> Optional[Dict]:
+    def _check_broken_links(self, article: dict) -> dict | None:
         """Check for broken internal links."""
         content = article.get("content", "")
 
         # Find all markdown links
-        links = re.findall(r'\[([^\]]+)\]\(([^\)]+)\)', content)
+        links = re.findall(r"\[([^\]]+)\]\(([^\)]+)\)", content)
 
         broken_count = 0
-        for link_text, link_url in links:
+        for _link_text, link_url in links:
             # Check if internal link (starts with /)
-            if link_url.startswith('/'):
+            if link_url.startswith("/"):
                 # Simple check: see if URL contains common broken patterns
-                if any(pattern in link_url for pattern in ['old', 'deprecated', 'v1', 'legacy']):
+                if any(pattern in link_url for pattern in ["old", "deprecated", "v1", "legacy"]):
                     broken_count += 1
 
         if broken_count > 0:
@@ -266,12 +264,12 @@ class KBUpdater(BaseAgent):
                 "type": "broken_links",
                 "severity": "low",
                 "description": f"Potentially {broken_count} broken link(s)",
-                "detail": "Review and update internal links"
+                "detail": "Review and update internal links",
             }
 
         return None
 
-    def _get_deprecated_features(self) -> List[Dict]:
+    def _get_deprecated_features(self) -> list[dict]:
         """
         Get list of deprecated features from database or config.
 
@@ -284,10 +282,10 @@ class KBUpdater(BaseAgent):
             {"name": "Dashboard v1", "deprecated_in": "2.0.0"},
             {"name": "Old API", "deprecated_in": "2.2.0"},
             {"name": "Legacy UI", "deprecated_in": "2.3.0"},
-            {"name": "Classic Mode", "deprecated_in": "2.4.0"}
+            {"name": "Classic Mode", "deprecated_in": "2.4.0"},
         ]
 
-    def _calculate_priority(self, reasons: List[Dict]) -> str:
+    def _calculate_priority(self, reasons: list[dict]) -> str:
         """
         Calculate update priority based on reasons.
 
@@ -301,12 +299,7 @@ class KBUpdater(BaseAgent):
             return "none"
 
         # Count severity levels
-        severity_counts = {
-            "critical": 0,
-            "high": 0,
-            "medium": 0,
-            "low": 0
-        }
+        severity_counts = {"critical": 0, "high": 0, "medium": 0, "low": 0}
 
         for reason in reasons:
             severity = reason.get("severity", "low")
@@ -315,16 +308,14 @@ class KBUpdater(BaseAgent):
         # Determine priority
         if severity_counts["critical"] > 0:
             return "critical"
-        elif severity_counts["high"] >= 2:
-            return "high"
-        elif severity_counts["high"] >= 1:
+        elif severity_counts["high"] >= 2 or severity_counts["high"] >= 1:
             return "high"
         elif severity_counts["medium"] >= 2:
             return "medium"
         else:
             return "low"
 
-    def _generate_suggestions(self, reasons: List[Dict], article: Dict) -> List[str]:
+    def _generate_suggestions(self, reasons: list[dict], article: dict) -> list[str]:
         """
         Generate actionable update suggestions.
 
@@ -350,7 +341,9 @@ class KBUpdater(BaseAgent):
                     seen_suggestions.add("Update screenshots")
 
             elif reason_type == "deprecated_feature":
-                suggestions.append(f"Remove or update references to {reason.get('detail', 'deprecated features')}")
+                suggestions.append(
+                    f"Remove or update references to {reason.get('detail', 'deprecated features')}"
+                )
                 if "Update to current" not in seen_suggestions:
                     suggestions.append("Update to current feature equivalents")
                     seen_suggestions.add("Update to current")
@@ -379,7 +372,7 @@ class KBUpdater(BaseAgent):
 
         return suggestions[:5]  # Limit to top 5
 
-    def _estimate_effort(self, reasons: List[Dict]) -> str:
+    def _estimate_effort(self, reasons: list[dict]) -> str:
         """
         Estimate effort to update article.
 
@@ -390,10 +383,7 @@ class KBUpdater(BaseAgent):
             Effort estimate string
         """
         severity_scores = {"critical": 4, "high": 3, "medium": 2, "low": 1}
-        total_severity = sum(
-            severity_scores.get(r.get("severity", "low"), 1)
-            for r in reasons
-        )
+        total_severity = sum(severity_scores.get(r.get("severity", "low"), 1) for r in reasons)
 
         if total_severity >= 8:
             return "4+ hours (major rewrite)"
@@ -404,7 +394,7 @@ class KBUpdater(BaseAgent):
         else:
             return "30-60 minutes (minor updates)"
 
-    async def find_articles_needing_update(self, limit: int = 20) -> List[Dict]:
+    async def find_articles_needing_update(self, limit: int = 20) -> list[dict]:
         """
         Find all articles that need updating.
 
@@ -417,9 +407,7 @@ class KBUpdater(BaseAgent):
         try:
             async with get_db_session() as session:
                 # Get all active articles
-                result = await session.execute(
-                    select(KBArticle).where(KBArticle.is_active == 1)
-                )
+                result = await session.execute(select(KBArticle).where(KBArticle.is_active == 1))
                 articles = result.scalars().all()
 
                 articles_needing_update = []
@@ -433,7 +421,7 @@ class KBUpdater(BaseAgent):
                         "created_at": article.created_at,
                         "updated_at": article.updated_at,
                         "quality_score": article.quality_score,
-                        "helpfulness_ratio": self._calculate_helpfulness_ratio(article)
+                        "helpfulness_ratio": self._calculate_helpfulness_ratio(article),
                     }
 
                     check_result = await self.check_needs_update(article_dict)
@@ -451,9 +439,7 @@ class KBUpdater(BaseAgent):
 
         except SQLAlchemyError as e:
             self.logger.error(
-                "find_articles_needing_update_failed",
-                error=str(e),
-                error_type=type(e).__name__
+                "find_articles_needing_update_failed", error=str(e), error_type=type(e).__name__
             )
             return []
 
@@ -469,7 +455,6 @@ class KBUpdater(BaseAgent):
 if __name__ == "__main__":
     # Test KB Updater
     import asyncio
-    from src.workflow.state import create_initial_state
 
     async def test():
         print("=" * 60)
@@ -489,7 +474,7 @@ if __name__ == "__main__":
                 "content": "Use Dashboard v1 to access...",
                 "updated_at": old_date,
                 "quality_score": 60,
-                "helpfulness_ratio": 0.35
+                "helpfulness_ratio": 0.35,
             },
             {
                 "article_id": "kb_recent",
@@ -497,8 +482,8 @@ if __name__ == "__main__":
                 "content": "Modern guide to...",
                 "updated_at": recent_date,
                 "quality_score": 90,
-                "helpfulness_ratio": 0.92
-            }
+                "helpfulness_ratio": 0.92,
+            },
         ]
 
         print("\nTest 1: Check old article")
@@ -506,10 +491,10 @@ if __name__ == "__main__":
         print(f"Needs update: {check1['needs_update']}")
         print(f"Priority: {check1['update_priority']}")
         print(f"Reasons: {len(check1['reasons'])}")
-        for reason in check1['reasons']:
+        for reason in check1["reasons"]:
             print(f"  - [{reason['severity']}] {reason['description']}")
         print(f"Suggestions: {len(check1['suggested_updates'])}")
-        for suggestion in check1['suggested_updates']:
+        for suggestion in check1["suggested_updates"]:
             print(f"  - {suggestion}")
 
         print("\nTest 2: Check recent article")
