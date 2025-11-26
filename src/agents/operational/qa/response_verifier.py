@@ -5,13 +5,13 @@ Final quality gate before sending response to customer.
 Orchestrates comprehensive quality checks and produces final pass/fail verdict.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("response_verifier", tier="operational", category="qa")
@@ -39,15 +39,15 @@ class ResponseVerifierAgent(BaseAgent):
         "links",
         "sensitivity",
         "hallucination",
-        "citations"
+        "citations",
     ]
 
     # Severity levels for quality issues
     SEVERITY_LEVELS = {
         "critical": 1,  # Immediate blocker, cannot send
-        "high": 2,      # Should fix before sending
-        "medium": 3,    # Should review
-        "low": 4        # Minor improvement
+        "high": 2,  # Should fix before sending
+        "medium": 3,  # Should review
+        "low": 4,  # Minor improvement
     }
 
     def __init__(self):
@@ -57,7 +57,7 @@ class ResponseVerifierAgent(BaseAgent):
             temperature=0.1,
             max_tokens=2000,
             capabilities=[AgentCapability.DATABASE_WRITE],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -77,17 +77,21 @@ class ResponseVerifierAgent(BaseAgent):
         state = self.update_state(state)
 
         # Extract parameters
-        response_text = state.get("entities", {}).get("response_text", state.get("agent_response", ""))
+        response_text = state.get("entities", {}).get(
+            "response_text", state.get("agent_response", "")
+        )
         # Ensure response_text is a string
         if response_text is None:
             response_text = ""
-        check_level = state.get("entities", {}).get("check_level", "standard")  # standard, strict, minimal
+        check_level = state.get("entities", {}).get(
+            "check_level", "standard"
+        )  # standard, strict, minimal
         context = state.get("entities", {}).get("context", {})
 
         self.logger.debug(
             "response_verification_details",
             response_length=len(response_text),
-            check_level=check_level
+            check_level=check_level,
         )
 
         # Run all quality checks
@@ -107,19 +111,12 @@ class ResponseVerifierAgent(BaseAgent):
 
         # Prepare response
         response = self._format_verification_report(
-            verdict,
-            quality_score,
-            aggregated_results,
-            feedback,
-            check_level
+            verdict, quality_score, aggregated_results, feedback, check_level
         )
 
         # Store results (would save to response_quality_checks table)
         verification_record = self._create_verification_record(
-            response_text,
-            check_results,
-            verdict,
-            quality_score
+            response_text, check_results, verdict, quality_score
         )
 
         state["agent_response"] = response
@@ -136,17 +133,14 @@ class ResponseVerifierAgent(BaseAgent):
             "response_verification_completed",
             verdict=verdict["status"],
             quality_score=quality_score,
-            issues_found=len(aggregated_results["issues"])
+            issues_found=len(aggregated_results["issues"]),
         )
 
         return state
 
     def _run_quality_checks(
-        self,
-        response_text: str,
-        context: Dict[str, Any],
-        check_level: str
-    ) -> Dict[str, Dict[str, Any]]:
+        self, response_text: str, context: dict[str, Any], check_level: str
+    ) -> dict[str, dict[str, Any]]:
         """
         Run all quality checks on the response.
 
@@ -185,79 +179,92 @@ class ResponseVerifierAgent(BaseAgent):
 
         return results
 
-    def _check_structure(self, response_text: str) -> Dict[str, Any]:
+    def _check_structure(self, response_text: str) -> dict[str, Any]:
         """Check basic structure and formatting."""
         issues = []
 
         # Check for empty response
         if not response_text or len(response_text.strip()) == 0:
-            issues.append({
-                "type": "empty_response",
-                "severity": "critical",
-                "message": "Response is empty"
-            })
+            issues.append(
+                {"type": "empty_response", "severity": "critical", "message": "Response is empty"}
+            )
 
         # Check for minimum content
         if len(response_text.strip()) < 10:
-            issues.append({
-                "type": "too_short",
-                "severity": "critical",
-                "message": "Response is too short to be meaningful"
-            })
+            issues.append(
+                {
+                    "type": "too_short",
+                    "severity": "critical",
+                    "message": "Response is too short to be meaningful",
+                }
+            )
 
         # Check for greeting/closing
-        has_greeting = any(word in response_text.lower()[:100] for word in ["hello", "hi", "thank you for"])
-        has_closing = any(word in response_text.lower()[-200:] for word in ["thank", "regards", "help", "let me know"])
+        has_greeting = any(
+            word in response_text.lower()[:100] for word in ["hello", "hi", "thank you for"]
+        )
+        has_closing = any(
+            word in response_text.lower()[-200:]
+            for word in ["thank", "regards", "help", "let me know"]
+        )
 
         if not has_greeting and len(response_text) > 100:
-            issues.append({
-                "type": "missing_greeting",
-                "severity": "low",
-                "message": "Consider adding a greeting to make response more personable"
-            })
+            issues.append(
+                {
+                    "type": "missing_greeting",
+                    "severity": "low",
+                    "message": "Consider adding a greeting to make response more personable",
+                }
+            )
 
         if not has_closing and len(response_text) > 100:
-            issues.append({
-                "type": "missing_closing",
-                "severity": "low",
-                "message": "Consider adding a closing statement"
-            })
+            issues.append(
+                {
+                    "type": "missing_closing",
+                    "severity": "low",
+                    "message": "Consider adding a closing statement",
+                }
+            )
 
         return {
             "passed": len([i for i in issues if i["severity"] in ["critical", "high"]]) == 0,
             "issues": issues,
-            "confidence": 0.99
+            "confidence": 0.99,
         }
 
-    def _check_length(self, response_text: str) -> Dict[str, Any]:
+    def _check_length(self, response_text: str) -> dict[str, Any]:
         """Check response length appropriateness."""
         issues = []
         word_count = len(response_text.split())
 
         # Too short
         if word_count < 20:
-            issues.append({
-                "type": "insufficient_detail",
-                "severity": "high",
-                "message": f"Response is too brief ({word_count} words). Provide more detail."
-            })
+            issues.append(
+                {
+                    "type": "insufficient_detail",
+                    "severity": "high",
+                    "message": f"Response is too brief ({word_count} words). Provide more detail.",
+                }
+            )
 
         # Too long
         if word_count > 800:
-            issues.append({
-                "type": "excessive_length",
-                "severity": "medium",
-                "message": f"Response is very long ({word_count} words). Consider being more concise."
-            })
+            issues.append(
+                {
+                    "type": "excessive_length",
+                    "severity": "medium",
+                    "message": f"Response is very long ({word_count} words). Consider being more concise.",
+                }
+            )
 
         return {
             "passed": len([i for i in issues if i["severity"] in ["critical", "high"]]) == 0,
             "issues": issues,
             "confidence": 0.99,
-            "word_count": word_count
+            "word_count": word_count,
         }
 
-    def _aggregate_results(self, check_results: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
+    def _aggregate_results(self, check_results: dict[str, dict[str, Any]]) -> dict[str, Any]:
         """
         Aggregate results from all checks.
 
@@ -275,17 +282,14 @@ class ResponseVerifierAgent(BaseAgent):
         all_issues = []
         for category, result in check_results.items():
             for issue in result.get("issues", []):
-                all_issues.append({
-                    **issue,
-                    "category": category
-                })
+                all_issues.append({**issue, "category": category})
 
         # Group by severity
         issues_by_severity = {
             "critical": [i for i in all_issues if i.get("severity") == "critical"],
             "high": [i for i in all_issues if i.get("severity") == "high"],
             "medium": [i for i in all_issues if i.get("severity") == "medium"],
-            "low": [i for i in all_issues if i.get("severity") == "low"]
+            "low": [i for i in all_issues if i.get("severity") == "low"],
         }
 
         # Calculate average confidence
@@ -300,14 +304,12 @@ class ResponseVerifierAgent(BaseAgent):
             "issues": all_issues,
             "issues_by_severity": issues_by_severity,
             "avg_confidence": round(avg_confidence, 3),
-            "timestamp": datetime.now(UTC).isoformat()
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     def _determine_verdict(
-        self,
-        aggregated_results: Dict[str, Any],
-        check_level: str
-    ) -> Dict[str, Any]:
+        self, aggregated_results: dict[str, Any], check_level: str
+    ) -> dict[str, Any]:
         """
         Determine final pass/fail verdict.
 
@@ -327,24 +329,39 @@ class ResponseVerifierAgent(BaseAgent):
             # Strict: no critical or high issues allowed
             passed = len(critical_issues) == 0 and len(high_issues) == 0
             status = "PASS" if passed else "FAIL"
-            reason = "All quality checks passed at strict level" if passed else \
-                     f"Found {len(critical_issues)} critical and {len(high_issues)} high severity issues"
+            reason = (
+                "All quality checks passed at strict level"
+                if passed
+                else f"Found {len(critical_issues)} critical and {len(high_issues)} high severity issues"
+            )
 
         elif check_level == "minimal":
             # Minimal: only critical issues block
             passed = len(critical_issues) == 0
             status = "PASS" if passed else "FAIL"
-            reason = "No critical issues found" if passed else \
-                     f"Found {len(critical_issues)} critical issues"
+            reason = (
+                "No critical issues found"
+                if passed
+                else f"Found {len(critical_issues)} critical issues"
+            )
 
         else:  # standard
             # Standard: critical issues block, warn on high
             passed = len(critical_issues) == 0
-            status = "PASS_WITH_WARNINGS" if passed and len(high_issues) > 0 else \
-                     "PASS" if passed else "FAIL"
-            reason = "All checks passed" if passed and len(high_issues) == 0 else \
-                     f"Passed with {len(high_issues)} warnings" if passed else \
-                     f"Found {len(critical_issues)} critical issues"
+            status = (
+                "PASS_WITH_WARNINGS"
+                if passed and len(high_issues) > 0
+                else "PASS"
+                if passed
+                else "FAIL"
+            )
+            reason = (
+                "All checks passed"
+                if passed and len(high_issues) == 0
+                else f"Passed with {len(high_issues)} warnings"
+                if passed
+                else f"Found {len(critical_issues)} critical issues"
+            )
 
         return {
             "passed": passed,
@@ -352,15 +369,15 @@ class ResponseVerifierAgent(BaseAgent):
             "reason": reason,
             "check_level": check_level,
             "requires_review": len(high_issues) > 0 or len(medium_issues) > 3,
-            "can_send": passed
+            "can_send": passed,
         }
 
     def _generate_feedback(
         self,
-        check_results: Dict[str, Dict[str, Any]],
-        aggregated_results: Dict[str, Any],
-        verdict: Dict[str, Any]
-    ) -> List[str]:
+        check_results: dict[str, dict[str, Any]],
+        aggregated_results: dict[str, Any],
+        verdict: dict[str, Any],
+    ) -> list[str]:
         """
         Generate actionable feedback for quality issues.
 
@@ -380,7 +397,9 @@ class ResponseVerifierAgent(BaseAgent):
             # Add warnings if any
             high_issues = aggregated_results["issues_by_severity"]["high"]
             if high_issues:
-                feedback.append(f"Note: {len(high_issues)} high-priority recommendations for improvement")
+                feedback.append(
+                    f"Note: {len(high_issues)} high-priority recommendations for improvement"
+                )
         else:
             feedback.append("Response failed quality verification - must fix before sending")
 
@@ -396,7 +415,7 @@ class ResponseVerifierAgent(BaseAgent):
 
         return feedback
 
-    def _calculate_quality_score(self, check_results: Dict[str, Dict[str, Any]]) -> float:
+    def _calculate_quality_score(self, check_results: dict[str, dict[str, Any]]) -> float:
         """
         Calculate overall quality score (0-100).
 
@@ -413,17 +432,12 @@ class ResponseVerifierAgent(BaseAgent):
         score = 100.0
 
         # Deduct points for issues
-        for category, result in check_results.items():
+        for _category, result in check_results.items():
             for issue in result.get("issues", []):
                 severity = issue.get("severity", "low")
 
                 # Deduct based on severity
-                deductions = {
-                    "critical": 25.0,
-                    "high": 10.0,
-                    "medium": 5.0,
-                    "low": 1.0
-                }
+                deductions = {"critical": 25.0, "high": 10.0, "medium": 5.0, "low": 1.0}
                 score -= deductions.get(severity, 0)
 
         # Floor at 0
@@ -432,10 +446,10 @@ class ResponseVerifierAgent(BaseAgent):
     def _create_verification_record(
         self,
         response_text: str,
-        check_results: Dict[str, Dict[str, Any]],
-        verdict: Dict[str, Any],
-        quality_score: float
-    ) -> Dict[str, Any]:
+        check_results: dict[str, dict[str, Any]],
+        verdict: dict[str, Any],
+        quality_score: float,
+    ) -> dict[str, Any]:
         """Create record for storage in response_quality_checks table."""
         return {
             "timestamp": datetime.now(UTC).isoformat(),
@@ -444,39 +458,39 @@ class ResponseVerifierAgent(BaseAgent):
             "check_results": check_results,
             "verdict": verdict,
             "quality_score": quality_score,
-            "agent": "response_verifier"
+            "agent": "response_verifier",
         }
 
     def _format_verification_report(
         self,
-        verdict: Dict[str, Any],
+        verdict: dict[str, Any],
         quality_score: float,
-        aggregated_results: Dict[str, Any],
-        feedback: List[str],
-        check_level: str
+        aggregated_results: dict[str, Any],
+        feedback: list[str],
+        check_level: str,
     ) -> str:
         """Format verification report."""
         status_icon = "✅" if verdict["passed"] else "❌"
 
         report = f"""**Response Quality Verification Report**
 
-**Verdict:** {status_icon} {verdict['status']}
+**Verdict:** {status_icon} {verdict["status"]}
 **Quality Score:** {quality_score}/100
 **Check Level:** {check_level}
 **Can Send:** {"Yes" if verdict["can_send"] else "No"}
 
 **Summary:**
-- Total Checks: {aggregated_results['total_checks']}
-- Passed: {aggregated_results['passed_checks']}
-- Failed: {aggregated_results['failed_checks']}
-- Pass Rate: {aggregated_results['pass_rate']:.1f}%
-- Avg Confidence: {aggregated_results['avg_confidence']:.2f}
+- Total Checks: {aggregated_results["total_checks"]}
+- Passed: {aggregated_results["passed_checks"]}
+- Failed: {aggregated_results["failed_checks"]}
+- Pass Rate: {aggregated_results["pass_rate"]:.1f}%
+- Avg Confidence: {aggregated_results["avg_confidence"]:.2f}
 
 **Issues by Severity:**
-- Critical: {len(aggregated_results['issues_by_severity']['critical'])}
-- High: {len(aggregated_results['issues_by_severity']['high'])}
-- Medium: {len(aggregated_results['issues_by_severity']['medium'])}
-- Low: {len(aggregated_results['issues_by_severity']['low'])}
+- Critical: {len(aggregated_results["issues_by_severity"]["critical"])}
+- High: {len(aggregated_results["issues_by_severity"]["high"])}
+- Medium: {len(aggregated_results["issues_by_severity"]["medium"])}
+- Low: {len(aggregated_results["issues_by_severity"]["low"])}
 
 **Feedback:**
 """
