@@ -4,13 +4,13 @@ Sync Troubleshooter Agent - Debugs data sync issues, resolves conflicts.
 Specialist for sync troubleshooting, conflict resolution, and manual sync triggers.
 """
 
-from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("sync_troubleshooter", tier="essential", category="technical")
@@ -31,12 +31,9 @@ class SyncTroubleshooter(BaseAgent):
             name="sync_troubleshooter",
             type=AgentType.SPECIALIST,
             temperature=0.3,
-            capabilities=[
-                AgentCapability.KB_SEARCH,
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="technical",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -54,16 +51,13 @@ class SyncTroubleshooter(BaseAgent):
             "sync_troubleshooting_started",
             message_preview=message[:100],
             customer_id=state.get("customer_id"),
-            turn_count=state["turn_count"]
+            turn_count=state["turn_count"],
         )
 
         # Detect sync issue type from message
         sync_issue_type = self._detect_sync_issue_type(message)
 
-        self.logger.info(
-            "sync_issue_detected",
-            issue_type=sync_issue_type
-        )
+        self.logger.info("sync_issue_detected", issue_type=sync_issue_type)
 
         # Check sync status
         sync_status = self._check_sync_status(customer_context)
@@ -79,18 +73,11 @@ class SyncTroubleshooter(BaseAgent):
             solution = self._diagnose_sync_issue(sync_status)
 
         # Search KB for sync solutions
-        kb_results = await self.search_knowledge_base(
-            message,
-            category="technical",
-            limit=2
-        )
+        kb_results = await self.search_knowledge_base(message, category="technical", limit=2)
         state["kb_results"] = kb_results
 
         if kb_results:
-            self.logger.info(
-                "sync_kb_articles_found",
-                count=len(kb_results)
-            )
+            self.logger.info("sync_kb_articles_found", count=len(kb_results))
 
         response = self._format_response(solution, kb_results)
 
@@ -106,7 +93,7 @@ class SyncTroubleshooter(BaseAgent):
             "sync_troubleshooting_completed",
             issue_type=sync_issue_type,
             fixed=solution.get("fixed", False),
-            status=state["status"]
+            status=state["status"],
         )
 
         return state
@@ -115,7 +102,10 @@ class SyncTroubleshooter(BaseAgent):
         """Detect the type of sync issue from message"""
         message_lower = message.lower()
 
-        if any(word in message_lower for word in ["not syncing", "won't sync", "doesn't sync", "stopped syncing"]):
+        if any(
+            word in message_lower
+            for word in ["not syncing", "won't sync", "doesn't sync", "stopped syncing"]
+        ):
             return "not_syncing"
         elif any(word in message_lower for word in ["conflict", "duplicate", "multiple versions"]):
             return "conflict"
@@ -124,7 +114,7 @@ class SyncTroubleshooter(BaseAgent):
         else:
             return "unknown"
 
-    def _check_sync_status(self, customer_context: Dict[str, Any]) -> Dict[str, Any]:
+    def _check_sync_status(self, customer_context: dict[str, Any]) -> dict[str, Any]:
         """Check current sync status"""
         # In production: Call sync API
         # For now, simulate sync status
@@ -138,10 +128,12 @@ class SyncTroubleshooter(BaseAgent):
             "conflicts": 0,
             "sync_enabled": True,
             "sync_speed": "normal",
-            "connection_status": "connected"
+            "connection_status": "connected",
         }
 
-    def _fix_not_syncing(self, sync_status: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
+    def _fix_not_syncing(
+        self, sync_status: dict[str, Any], context: dict[str, Any]
+    ) -> dict[str, Any]:
         """Fix sync that's not working"""
         if not sync_status["sync_enabled"]:
             self.logger.info("sync_disabled_detected")
@@ -159,12 +151,9 @@ Your data should sync within the next 5 minutes. Refresh to see changes."""
             return {"message": message, "fixed": True, "action": "re_enabled"}
 
         elif sync_status["pending_items"] > 0:
-            self.logger.info(
-                "pending_items_detected",
-                count=sync_status["pending_items"]
-            )
+            self.logger.info("pending_items_detected", count=sync_status["pending_items"])
 
-            message = f"""Sync is working, but you have {sync_status['pending_items']} items in the queue.
+            message = f"""Sync is working, but you have {sync_status["pending_items"]} items in the queue.
 
 **Common causes:**
 - Large files (sync takes longer)
@@ -198,10 +187,10 @@ If the issue persists, try logging out and back in."""
         return {
             "message": "Sync status looks normal. Can you describe what's not syncing?",
             "fixed": False,
-            "action": "needs_clarification"
+            "action": "needs_clarification",
         }
 
-    def _resolve_conflict(self, context: Dict[str, Any]) -> Dict[str, Any]:
+    def _resolve_conflict(self, context: dict[str, Any]) -> dict[str, Any]:
         """Resolve sync conflicts"""
         self.logger.info("conflict_resolution_started")
 
@@ -227,13 +216,11 @@ You can enable auto-resolve in Settings > Sync > Conflict Resolution:
 
 Would you like me to enable automatic conflict resolution for you?"""
 
-        return {
-            "message": message,
-            "fixed": False,
-            "action": "conflict_resolution_steps"
-        }
+        return {"message": message, "fixed": False, "action": "conflict_resolution_steps"}
 
-    def _fix_slow_sync(self, sync_status: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
+    def _fix_slow_sync(
+        self, sync_status: dict[str, Any], context: dict[str, Any]
+    ) -> dict[str, Any]:
         """Fix slow sync performance"""
         self.logger.info("slow_sync_troubleshooting_started")
 
@@ -258,13 +245,9 @@ Would you like me to enable selective sync for you? This can speed up sync by 50
             pending=sync_status.get("pending_items", 0)
         )
 
-        return {
-            "message": message,
-            "fixed": False,
-            "action": "performance_optimization"
-        }
+        return {"message": message, "fixed": False, "action": "performance_optimization"}
 
-    def _diagnose_sync_issue(self, sync_status: Dict[str, Any]) -> Dict[str, Any]:
+    def _diagnose_sync_issue(self, sync_status: dict[str, Any]) -> dict[str, Any]:
         """Diagnose general sync issue"""
         self.logger.info("general_sync_diagnosis_started")
 
@@ -278,7 +261,7 @@ Would you like me to enable selective sync for you? This can speed up sync by 50
 - Last sync: {last_sync}
 - Pending items: {pending}
 - Conflicts: {conflicts}
-- Connection: {sync_status.get('connection_status', 'unknown')}
+- Connection: {sync_status.get("connection_status", "unknown")}
 
 **Common sync issues:**
 1. **Not syncing** - Check internet connection and sync settings
@@ -294,13 +277,9 @@ Can you describe the specific issue you're experiencing?
 - Verify internet connection
 - Check for app updates"""
 
-        return {
-            "message": message,
-            "fixed": False,
-            "action": "diagnosis_provided"
-        }
+        return {"message": message, "fixed": False, "action": "diagnosis_provided"}
 
-    def _format_response(self, solution: Dict[str, Any], kb_results: list) -> str:
+    def _format_response(self, solution: dict[str, Any], kb_results: list) -> str:
         """Format response with KB context"""
         kb_context = ""
         if kb_results:
@@ -313,6 +292,7 @@ Can you describe the specific issue you're experiencing?
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
