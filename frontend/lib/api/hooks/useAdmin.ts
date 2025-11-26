@@ -4,11 +4,16 @@
  * Provides admin functionality for system monitoring and management.
  */
 
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import useSWR from 'swr';
-import { adminAPI, type HealthStatus, type AgentInfo, type CostTracking } from '../admin';
+import { useCallback, useState } from "react";
+import useSWR from "swr";
+import {
+  adminAPI,
+  type AgentInfo,
+  type CostTracking,
+  type HealthStatus,
+} from "../admin";
 
 // =============================================================================
 // USE HEALTH CHECK
@@ -21,7 +26,7 @@ export function useHealthCheck() {
     mutate,
     isLoading,
   } = useSWR<HealthStatus>(
-    'health',
+    "health",
     async () => {
       const result = await adminAPI.getHealth();
       if (result.success) {
@@ -56,7 +61,7 @@ export function useAgents() {
     mutate,
     isLoading,
   } = useSWR<AgentInfo[]>(
-    'admin/agents',
+    "admin/agents",
     async () => {
       const result = await adminAPI.getAgents();
       if (result.success) {
@@ -83,14 +88,14 @@ export function useAgents() {
 // USE COST TRACKING
 // =============================================================================
 
-export function useCostTracking(period: '24h' | '7d' | '30d' = '7d') {
+export function useCostTracking(period: "24h" | "7d" | "30d" = "7d") {
   const {
     data: costs,
     error,
     mutate,
     isLoading,
   } = useSWR<CostTracking>(
-    ['admin/costs', period],
+    ["admin/costs", period],
     async () => {
       const result = await adminAPI.getCostTracking(period);
       if (result.success) {
