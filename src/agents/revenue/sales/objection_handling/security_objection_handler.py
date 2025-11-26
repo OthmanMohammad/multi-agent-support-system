@@ -305,7 +305,8 @@ class SecurityObjectionHandler(BaseAgent):
             strategy,
             case_studies,
             kb_results,
-            customer_metadata
+            customer_metadata,
+            state
         )
 
         # Calculate resolution confidence
@@ -515,9 +516,13 @@ class SecurityObjectionHandler(BaseAgent):
         strategy: Dict,
         case_studies: List[Dict],
         kb_results: List[Dict],
-        customer_metadata: Dict
+        customer_metadata: Dict,
+        state: AgentState
     ) -> str:
         """Generate personalized security response"""
+
+        # Get conversation history for context continuity
+        conversation_history = self.get_conversation_context(state)
 
         # Build KB context
         kb_context = ""
@@ -600,7 +605,11 @@ IMPORTANT: Be factual and precise. Security is critical - provide specific detai
 
 Generate a professional, factual response that addresses their security concern."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt,
+            user_prompt,
+            conversation_history=conversation_history
+        )
         return response
 
 
