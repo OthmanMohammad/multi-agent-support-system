@@ -287,7 +287,11 @@ Customer: {customer_metadata.get('customer_name', 'Unknown')}
 
 Return JSON with title, body, priority, action_url, and additional_context."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # Notification parsing uses message context
+        )
 
         # Parse LLM response
         try:
