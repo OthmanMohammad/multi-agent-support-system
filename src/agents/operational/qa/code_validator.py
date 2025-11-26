@@ -6,14 +6,14 @@ Supports Python, JavaScript, cURL, SQL, and other common languages.
 Uses Claude Haiku for efficient code validation.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, UTC
 import re
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("code_validator", tier="operational", category="qa")
@@ -41,36 +41,28 @@ class CodeValidatorAgent(BaseAgent):
                 r"eval\(",
                 r"exec\(",
                 r"os\.system\(",
-                r"subprocess\.call\(['\"].*shell=True"
+                r"subprocess\.call\(['\"].*shell=True",
             ],
-            "required_patterns": []
+            "required_patterns": [],
         },
         "javascript": {
             "markers": ["```javascript", "```js", "```jsx"],
-            "dangerous_patterns": [
-                r"eval\(",
-                r"innerHTML\s*=",
-                r"document\.write\("
-            ],
-            "required_patterns": []
+            "dangerous_patterns": [r"eval\(", r"innerHTML\s*=", r"document\.write\("],
+            "required_patterns": [],
         },
         "sql": {
             "markers": ["```sql"],
-            "dangerous_patterns": [
-                r"DROP\s+TABLE",
-                r"DELETE\s+FROM.*WHERE.*1\s*=\s*1",
-                r"--\s*$"
-            ],
-            "required_patterns": []
+            "dangerous_patterns": [r"DROP\s+TABLE", r"DELETE\s+FROM.*WHERE.*1\s*=\s*1", r"--\s*$"],
+            "required_patterns": [],
         },
         "curl": {
             "markers": ["```bash", "```curl", "```sh"],
             "dangerous_patterns": [
                 r"-k\s+",  # insecure SSL
-                r"--insecure"
+                r"--insecure",
             ],
-            "required_patterns": []
-        }
+            "required_patterns": [],
+        },
     }
 
     # Common code quality issues
@@ -78,16 +70,10 @@ class CodeValidatorAgent(BaseAgent):
         "hardcoded_credentials": [
             r"password\s*=\s*['\"][\w]+['\"]",
             r"api[_-]?key\s*=\s*['\"][\w]+['\"]",
-            r"secret\s*=\s*['\"][\w]+['\"]"
+            r"secret\s*=\s*['\"][\w]+['\"]",
         ],
-        "missing_error_handling": [
-            r"requests\.(get|post|put|delete)\(",
-            r"fetch\("
-        ],
-        "insecure_practices": [
-            r"md5\(",
-            r"sha1\("
-        ]
+        "missing_error_handling": [r"requests\.(get|post|put|delete)\(", r"fetch\("],
+        "insecure_practices": [r"md5\(", r"sha1\("],
     }
 
     def __init__(self):
@@ -97,7 +83,7 @@ class CodeValidatorAgent(BaseAgent):
             temperature=0.1,
             max_tokens=2000,
             capabilities=[],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -117,16 +103,16 @@ class CodeValidatorAgent(BaseAgent):
         state = self.update_state(state)
 
         # Extract parameters
-        response_text = state.get("entities", {}).get("response_text", state.get("agent_response", ""))
+        response_text = state.get("entities", {}).get(
+            "response_text", state.get("agent_response", "")
+        )
         # Ensure response_text is a string
         if response_text is None:
             response_text = ""
         strict_mode = state.get("entities", {}).get("strict_mode", False)
 
         self.logger.debug(
-            "code_validation_details",
-            response_length=len(response_text),
-            strict_mode=strict_mode
+            "code_validation_details", response_length=len(response_text), strict_mode=strict_mode
         )
 
         # Extract code blocks
@@ -163,12 +149,7 @@ class CodeValidatorAgent(BaseAgent):
 
         # Format response
         response = self._format_validation_report(
-            code_blocks,
-            validation_results,
-            all_issues,
-            recommendations,
-            validation_score,
-            passed
+            code_blocks, validation_results, all_issues, recommendations, validation_score, passed
         )
 
         state["agent_response"] = response
@@ -187,12 +168,12 @@ class CodeValidatorAgent(BaseAgent):
             blocks_validated=len(code_blocks),
             issues_found=len(all_issues),
             validation_score=validation_score,
-            passed=passed
+            passed=passed,
         )
 
         return state
 
-    def _extract_code_blocks(self, response_text: str) -> List[Dict[str, Any]]:
+    def _extract_code_blocks(self, response_text: str) -> list[dict[str, Any]]:
         """
         Extract code blocks from response.
 
@@ -212,13 +193,15 @@ class CodeValidatorAgent(BaseAgent):
             language = match.group(1) or "unknown"
             code = match.group(2).strip()
 
-            code_blocks.append({
-                "block_id": f"block_{i}",
-                "language": language.lower(),
-                "code": code,
-                "line_count": len(code.split("\n")),
-                "char_count": len(code)
-            })
+            code_blocks.append(
+                {
+                    "block_id": f"block_{i}",
+                    "language": language.lower(),
+                    "code": code,
+                    "line_count": len(code.split("\n")),
+                    "char_count": len(code),
+                }
+            )
 
         # Also check for inline code with backticks (for small snippets)
         inline_pattern = r"`([^`]+)`"
@@ -228,21 +211,19 @@ class CodeValidatorAgent(BaseAgent):
             code = match.group(1).strip()
             # Only include if looks like code (has special chars)
             if any(char in code for char in ["(", ")", "{", "}", "[", "]", "=", ";"]):
-                code_blocks.append({
-                    "block_id": f"inline_{i}",
-                    "language": "inline",
-                    "code": code,
-                    "line_count": 1,
-                    "char_count": len(code)
-                })
+                code_blocks.append(
+                    {
+                        "block_id": f"inline_{i}",
+                        "language": "inline",
+                        "code": code,
+                        "line_count": 1,
+                        "char_count": len(code),
+                    }
+                )
 
         return code_blocks
 
-    def _validate_code_block(
-        self,
-        code_block: Dict[str, Any],
-        strict_mode: bool
-    ) -> Dict[str, Any]:
+    def _validate_code_block(self, code_block: dict[str, Any], strict_mode: bool) -> dict[str, Any]:
         """
         Validate a single code block.
 
@@ -284,10 +265,10 @@ class CodeValidatorAgent(BaseAgent):
             "line_count": code_block["line_count"],
             "issues": issues,
             "passed": len([i for i in issues if i["severity"] in ["critical", "high"]]) == 0,
-            "validated_at": datetime.now(UTC).isoformat()
+            "validated_at": datetime.now(UTC).isoformat(),
         }
 
-    def _check_dangerous_patterns(self, code: str, language: str) -> List[Dict[str, Any]]:
+    def _check_dangerous_patterns(self, code: str, language: str) -> list[dict[str, Any]]:
         """Check for dangerous code patterns."""
         issues = []
 
@@ -296,56 +277,64 @@ class CodeValidatorAgent(BaseAgent):
 
             for pattern in patterns:
                 if re.search(pattern, code, re.IGNORECASE):
-                    issues.append({
-                        "type": "dangerous_pattern",
-                        "severity": "critical",
-                        "message": f"Dangerous pattern detected: {pattern}",
-                        "pattern": pattern
-                    })
+                    issues.append(
+                        {
+                            "type": "dangerous_pattern",
+                            "severity": "critical",
+                            "message": f"Dangerous pattern detected: {pattern}",
+                            "pattern": pattern,
+                        }
+                    )
 
         return issues
 
-    def _check_hardcoded_credentials(self, code: str) -> List[Dict[str, Any]]:
+    def _check_hardcoded_credentials(self, code: str) -> list[dict[str, Any]]:
         """Check for hardcoded credentials."""
         issues = []
 
         for pattern in self.CODE_ISSUES["hardcoded_credentials"]:
             matches = re.finditer(pattern, code, re.IGNORECASE)
             for match in matches:
-                issues.append({
-                    "type": "hardcoded_credential",
-                    "severity": "critical",
-                    "message": "Hardcoded credential detected - use environment variables",
-                    "snippet": match.group(0)
-                })
+                issues.append(
+                    {
+                        "type": "hardcoded_credential",
+                        "severity": "critical",
+                        "message": "Hardcoded credential detected - use environment variables",
+                        "snippet": match.group(0),
+                    }
+                )
 
         return issues
 
-    def _check_security_issues(self, code: str, language: str) -> List[Dict[str, Any]]:
+    def _check_security_issues(self, code: str, language: str) -> list[dict[str, Any]]:
         """Check for common security issues."""
         issues = []
 
         # Check for weak cryptography
         for pattern in self.CODE_ISSUES["insecure_practices"]:
             if re.search(pattern, code, re.IGNORECASE):
-                issues.append({
-                    "type": "weak_cryptography",
-                    "severity": "high",
-                    "message": "Weak cryptographic algorithm detected - use SHA-256 or stronger"
-                })
+                issues.append(
+                    {
+                        "type": "weak_cryptography",
+                        "severity": "high",
+                        "message": "Weak cryptographic algorithm detected - use SHA-256 or stronger",
+                    }
+                )
 
         # Check for SQL injection risk (if SQL or contains SQL)
         if language == "sql" or "SELECT" in code.upper():
             if re.search(r"['\"].*\+.*['\"]", code) or re.search(r"f['\"].*\{.*\}.*['\"]", code):
-                issues.append({
-                    "type": "sql_injection_risk",
-                    "severity": "critical",
-                    "message": "Potential SQL injection vulnerability - use parameterized queries"
-                })
+                issues.append(
+                    {
+                        "type": "sql_injection_risk",
+                        "severity": "critical",
+                        "message": "Potential SQL injection vulnerability - use parameterized queries",
+                    }
+                )
 
         return issues
 
-    def _check_basic_syntax(self, code: str, language: str) -> List[Dict[str, Any]]:
+    def _check_basic_syntax(self, code: str, language: str) -> list[dict[str, Any]]:
         """Check basic syntax issues."""
         issues = []
 
@@ -359,29 +348,35 @@ class CodeValidatorAgent(BaseAgent):
             close_brackets = code.count("]")
 
             if open_parens != close_parens:
-                issues.append({
-                    "type": "syntax_error",
-                    "severity": "high",
-                    "message": f"Unmatched parentheses: {open_parens} open, {close_parens} close"
-                })
+                issues.append(
+                    {
+                        "type": "syntax_error",
+                        "severity": "high",
+                        "message": f"Unmatched parentheses: {open_parens} open, {close_parens} close",
+                    }
+                )
 
             if open_braces != close_braces:
-                issues.append({
-                    "type": "syntax_error",
-                    "severity": "high",
-                    "message": f"Unmatched braces: {open_braces} open, {close_braces} close"
-                })
+                issues.append(
+                    {
+                        "type": "syntax_error",
+                        "severity": "high",
+                        "message": f"Unmatched braces: {open_braces} open, {close_braces} close",
+                    }
+                )
 
             if open_brackets != close_brackets:
-                issues.append({
-                    "type": "syntax_error",
-                    "severity": "high",
-                    "message": f"Unmatched brackets: {open_brackets} open, {close_brackets} close"
-                })
+                issues.append(
+                    {
+                        "type": "syntax_error",
+                        "severity": "high",
+                        "message": f"Unmatched brackets: {open_brackets} open, {close_brackets} close",
+                    }
+                )
 
         return issues
 
-    def _check_completeness(self, code: str, language: str) -> List[Dict[str, Any]]:
+    def _check_completeness(self, code: str, language: str) -> list[dict[str, Any]]:
         """Check code completeness."""
         issues = []
 
@@ -391,44 +386,44 @@ class CodeValidatorAgent(BaseAgent):
             has_import = "import requests" in code or "from requests" in code
 
             if uses_requests and not has_import:
-                issues.append({
-                    "type": "missing_import",
-                    "severity": "medium",
-                    "message": "Using 'requests' without import statement"
-                })
+                issues.append(
+                    {
+                        "type": "missing_import",
+                        "severity": "medium",
+                        "message": "Using 'requests' without import statement",
+                    }
+                )
 
         # Check for error handling in HTTP requests
         if any(pattern in code for pattern in ["requests.get", "requests.post", "fetch("]):
             has_try_catch = "try:" in code or "except" in code or "catch" in code
 
             if not has_try_catch:
-                issues.append({
-                    "type": "missing_error_handling",
-                    "severity": "medium",
-                    "message": "HTTP request without error handling"
-                })
+                issues.append(
+                    {
+                        "type": "missing_error_handling",
+                        "severity": "medium",
+                        "message": "HTTP request without error handling",
+                    }
+                )
 
         return issues
 
-    def _aggregate_issues(self, validation_results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _aggregate_issues(self, validation_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Aggregate all issues from validation results."""
         all_issues = []
 
         for result in validation_results:
             for issue in result["issues"]:
-                all_issues.append({
-                    **issue,
-                    "block_id": result["block_id"],
-                    "language": result["language"]
-                })
+                all_issues.append(
+                    {**issue, "block_id": result["block_id"], "language": result["language"]}
+                )
 
         return all_issues
 
     def _generate_recommendations(
-        self,
-        validation_results: List[Dict[str, Any]],
-        all_issues: List[Dict[str, Any]]
-    ) -> List[str]:
+        self, validation_results: list[dict[str, Any]], all_issues: list[dict[str, Any]]
+    ) -> list[str]:
         """Generate code validation recommendations."""
         recommendations = []
 
@@ -439,7 +434,7 @@ class CodeValidatorAgent(BaseAgent):
         # Group by severity
         critical = [i for i in all_issues if i["severity"] == "critical"]
         high = [i for i in all_issues if i["severity"] == "high"]
-        medium = [i for i in all_issues if i["severity"] == "medium"]
+        [i for i in all_issues if i["severity"] == "medium"]
 
         if critical:
             recommendations.append(
@@ -447,9 +442,7 @@ class CodeValidatorAgent(BaseAgent):
             )
 
         if high:
-            recommendations.append(
-                f"HIGH PRIORITY: Address {len(high)} high-severity code issues"
-            )
+            recommendations.append(f"HIGH PRIORITY: Address {len(high)} high-severity code issues")
 
         # Specific recommendations by issue type
         issue_types = {}
@@ -463,18 +456,14 @@ class CodeValidatorAgent(BaseAgent):
             )
 
         if "sql_injection_risk" in issue_types:
-            recommendations.append(
-                "Use parameterized queries to prevent SQL injection"
-            )
+            recommendations.append("Use parameterized queries to prevent SQL injection")
 
         if "missing_error_handling" in issue_types:
-            recommendations.append(
-                "Add try/catch blocks for better error handling"
-            )
+            recommendations.append("Add try/catch blocks for better error handling")
 
         return recommendations
 
-    def _calculate_validation_score(self, validation_results: List[Dict[str, Any]]) -> float:
+    def _calculate_validation_score(self, validation_results: list[dict[str, Any]]) -> float:
         """Calculate validation score (0-100)."""
         if not validation_results:
             return 100.0
@@ -492,7 +481,7 @@ class CodeValidatorAgent(BaseAgent):
 
         return round(score, 1)
 
-    def _determine_pass_fail(self, all_issues: List[Dict[str, Any]], strict_mode: bool) -> bool:
+    def _determine_pass_fail(self, all_issues: list[dict[str, Any]], strict_mode: bool) -> bool:
         """Determine if code validation passes."""
         critical = [i for i in all_issues if i["severity"] == "critical"]
         high = [i for i in all_issues if i["severity"] == "high"]
@@ -504,12 +493,12 @@ class CodeValidatorAgent(BaseAgent):
 
     def _format_validation_report(
         self,
-        code_blocks: List[Dict[str, Any]],
-        validation_results: List[Dict[str, Any]],
-        all_issues: List[Dict[str, Any]],
-        recommendations: List[str],
+        code_blocks: list[dict[str, Any]],
+        validation_results: list[dict[str, Any]],
+        all_issues: list[dict[str, Any]],
+        recommendations: list[str],
         validation_score: float,
-        passed: bool
+        passed: bool,
     ) -> str:
         """Format code validation report."""
         status_icon = "✅" if passed else "❌"
@@ -530,20 +519,22 @@ class CodeValidatorAgent(BaseAgent):
 
         # Issues
         if all_issues:
-            report += f"\n**Issues Detected:**\n"
+            report += "\n**Issues Detected:**\n"
 
             # Group by severity
             for severity in ["critical", "high", "medium"]:
                 severity_issues = [i for i in all_issues if i["severity"] == severity]
                 if severity_issues:
                     for issue in severity_issues[:3]:  # Top 3 per severity
-                        icon = "🔴" if severity == "critical" else "⚠️" if severity == "high" else "ℹ️"
+                        icon = (
+                            "🔴" if severity == "critical" else "⚠️" if severity == "high" else "ℹ️"
+                        )
                         report += f"{icon} [{severity.upper()}] {issue['message']}\n"
                         report += f"   Block: {issue['block_id']} ({issue['language']})\n"
 
         # Recommendations
         if recommendations:
-            report += f"\n**Recommendations:**\n"
+            report += "\n**Recommendations:**\n"
             for rec in recommendations:
                 report += f"- {rec}\n"
 
