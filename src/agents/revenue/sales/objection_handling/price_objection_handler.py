@@ -5,13 +5,12 @@ Handles "too expensive" objections by providing ROI justification,
 payment terms, discounts, and competitor pricing comparisons.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("price_objection_handler", tier="revenue", category="sales")
@@ -32,35 +31,35 @@ class PriceObjectionHandler(BaseAgent):
         "too_expensive": {
             "approach": "roi_justification",
             "tactics": ["show_cost_savings", "calculate_roi", "compare_alternatives"],
-            "supporting_materials": ["roi_calculator", "case_studies", "cost_comparison"]
+            "supporting_materials": ["roi_calculator", "case_studies", "cost_comparison"],
         },
         "budget_constraints": {
             "approach": "flexible_payment",
             "tactics": ["payment_plans", "phased_rollout", "starter_package"],
-            "supporting_materials": ["payment_options", "pricing_tiers", "starter_guide"]
+            "supporting_materials": ["payment_options", "pricing_tiers", "starter_guide"],
         },
         "competitor_cheaper": {
             "approach": "value_differentiation",
             "tactics": ["feature_comparison", "tco_analysis", "quality_difference"],
-            "supporting_materials": ["competitive_analysis", "feature_matrix", "customer_reviews"]
+            "supporting_materials": ["competitive_analysis", "feature_matrix", "customer_reviews"],
         },
         "no_budget": {
             "approach": "value_demonstration",
             "tactics": ["free_trial", "pilot_program", "budget_justification_template"],
-            "supporting_materials": ["trial_guide", "business_case_template", "success_stories"]
+            "supporting_materials": ["trial_guide", "business_case_template", "success_stories"],
         },
         "unclear_value": {
             "approach": "value_clarification",
             "tactics": ["use_case_mapping", "roi_examples", "customer_testimonials"],
-            "supporting_materials": ["value_proposition", "industry_benchmarks", "testimonials"]
-        }
+            "supporting_materials": ["value_proposition", "industry_benchmarks", "testimonials"],
+        },
     }
 
     # Objection severity levels
     SEVERITY_INDICATORS = {
         "blocker": ["can't afford", "no budget", "way too expensive", "not in budget"],
         "major": ["too expensive", "too pricey", "costs too much", "overpriced"],
-        "minor": ["a bit expensive", "seems high", "concerned about cost", "price point"]
+        "minor": ["a bit expensive", "seems high", "concerned about cost", "price point"],
     }
 
     # ROI templates by industry
@@ -69,32 +68,32 @@ class PriceObjectionHandler(BaseAgent):
             "time_savings": "30% reduction in development time",
             "cost_savings": "40% lower operational costs",
             "revenue_impact": "25% faster time-to-market",
-            "payback_period": "6-9 months"
+            "payback_period": "6-9 months",
         },
         "healthcare": {
             "time_savings": "20 hours/week saved per clinician",
             "cost_savings": "35% reduction in administrative overhead",
             "revenue_impact": "15% increase in patient throughput",
-            "payback_period": "8-12 months"
+            "payback_period": "8-12 months",
         },
         "finance": {
             "time_savings": "50% faster transaction processing",
             "cost_savings": "45% reduction in manual errors",
             "revenue_impact": "20% improvement in compliance",
-            "payback_period": "4-8 months"
+            "payback_period": "4-8 months",
         },
         "retail": {
             "time_savings": "25% faster inventory management",
             "cost_savings": "30% reduction in stockouts",
             "revenue_impact": "18% increase in sales conversion",
-            "payback_period": "6-10 months"
+            "payback_period": "6-10 months",
         },
         "default": {
             "time_savings": "25% productivity improvement",
             "cost_savings": "35% operational cost reduction",
             "revenue_impact": "20% faster growth",
-            "payback_period": "6-12 months"
-        }
+            "payback_period": "6-12 months",
+        },
     }
 
     # Payment options and discounts
@@ -104,7 +103,7 @@ class PriceObjectionHandler(BaseAgent):
         "volume_discount": "Volume discounts for 50+ users",
         "startup_program": "50% off for early-stage startups",
         "nonprofit_discount": "30% discount for nonprofits",
-        "pilot_pricing": "Special pilot program pricing"
+        "pilot_pricing": "Special pilot program pricing",
     }
 
     # Competitor pricing positioning
@@ -113,7 +112,7 @@ class PriceObjectionHandler(BaseAgent):
         "no_hidden_fees": "Transparent pricing - no setup fees, no hidden costs",
         "included_features": "Support and core features included (competitors charge extra)",
         "scalability": "No pricing jumps - linear scaling as you grow",
-        "flexibility": "No long-term contracts required (competitors lock you in)"
+        "flexibility": "No long-term contracts required (competitors lock you in)",
     }
 
     def __init__(self):
@@ -125,10 +124,10 @@ class PriceObjectionHandler(BaseAgent):
             capabilities=[
                 AgentCapability.KB_SEARCH,
                 AgentCapability.CONTEXT_AWARE,
-                AgentCapability.ENTITY_EXTRACTION
+                AgentCapability.ENTITY_EXTRACTION,
             ],
             kb_category="sales",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -151,9 +150,7 @@ class PriceObjectionHandler(BaseAgent):
         customer_metadata = state.get("customer_metadata", {})
 
         self.logger.debug(
-            "price_objection_details",
-            message_preview=message[:100],
-            turn_count=state["turn_count"]
+            "price_objection_details", message_preview=message[:100], turn_count=state["turn_count"]
         )
 
         # Detect objection type and severity
@@ -161,7 +158,9 @@ class PriceObjectionHandler(BaseAgent):
         objection_severity = self._assess_severity(message)
 
         # Get response strategy
-        strategy = self.RESPONSE_STRATEGIES.get(objection_type, self.RESPONSE_STRATEGIES["unclear_value"])
+        strategy = self.RESPONSE_STRATEGIES.get(
+            objection_type, self.RESPONSE_STRATEGIES["unclear_value"]
+        )
 
         # Calculate ROI for prospect's industry
         roi_data = self._calculate_roi(customer_metadata)
@@ -173,11 +172,7 @@ class PriceObjectionHandler(BaseAgent):
         competitor_comparisons = self._get_competitor_comparisons(objection_type)
 
         # Search knowledge base
-        kb_results = await self.search_knowledge_base(
-            message,
-            category="sales",
-            limit=4
-        )
+        kb_results = await self.search_knowledge_base(message, category="sales", limit=4)
         state["kb_results"] = kb_results
 
         # Generate personalized response
@@ -191,21 +186,16 @@ class PriceObjectionHandler(BaseAgent):
             competitor_comparisons,
             kb_results,
             customer_metadata,
-            state
+            state,
         )
 
         # Calculate resolution confidence
         resolution_confidence = self._calculate_resolution_confidence(
-            objection_type,
-            objection_severity,
-            customer_metadata
+            objection_type, objection_severity, customer_metadata
         )
 
         # Determine if escalation is needed
-        needs_escalation = self._check_escalation_needed(
-            objection_severity,
-            resolution_confidence
-        )
+        needs_escalation = self._check_escalation_needed(objection_severity, resolution_confidence)
 
         # Update state
         state["agent_response"] = response
@@ -223,7 +213,7 @@ class PriceObjectionHandler(BaseAgent):
             objection_type=objection_type,
             severity=objection_severity,
             confidence=resolution_confidence,
-            escalated=needs_escalation
+            escalated=needs_escalation,
         )
 
         return state
@@ -237,11 +227,20 @@ class PriceObjectionHandler(BaseAgent):
             return "no_budget"
         elif any(phrase in message_lower for phrase in ["competitor", "cheaper", "less expensive"]):
             return "competitor_cheaper"
-        elif any(phrase in message_lower for phrase in ["budget constraint", "limited budget", "tight budget"]):
+        elif any(
+            phrase in message_lower
+            for phrase in ["budget constraint", "limited budget", "tight budget"]
+        ):
             return "budget_constraints"
-        elif any(phrase in message_lower for phrase in ["don't see value", "worth it", "justify", "why so expensive"]):
+        elif any(
+            phrase in message_lower
+            for phrase in ["don't see value", "worth it", "justify", "why so expensive"]
+        ):
             return "unclear_value"
-        elif any(phrase in message_lower for phrase in ["too expensive", "too pricey", "costs too much", "price"]):
+        elif any(
+            phrase in message_lower
+            for phrase in ["too expensive", "too pricey", "costs too much", "price"]
+        ):
             return "too_expensive"
         else:
             return "unclear_value"
@@ -257,7 +256,7 @@ class PriceObjectionHandler(BaseAgent):
 
         return "minor"  # Default to minor if no strong indicators
 
-    def _calculate_roi(self, customer_metadata: Dict) -> Dict[str, Any]:
+    def _calculate_roi(self, customer_metadata: dict) -> dict[str, Any]:
         """Calculate ROI metrics based on customer's industry and size"""
         industry = customer_metadata.get("industry", "default").lower()
         company_size = customer_metadata.get("company_size", 50)
@@ -274,10 +273,10 @@ class PriceObjectionHandler(BaseAgent):
             "estimated_monthly_cost": estimated_cost,
             "estimated_annual_savings": estimated_savings,
             "roi_multiplier": "2.5x",
-            "industry": industry
+            "industry": industry,
         }
 
-    def _get_payment_options(self, customer_metadata: Dict, severity: str) -> List[str]:
+    def _get_payment_options(self, customer_metadata: dict, severity: str) -> list[str]:
         """Get relevant payment options based on customer profile and objection severity"""
         options = []
 
@@ -304,7 +303,7 @@ class PriceObjectionHandler(BaseAgent):
 
         return options
 
-    def _get_competitor_comparisons(self, objection_type: str) -> Dict[str, str]:
+    def _get_competitor_comparisons(self, objection_type: str) -> dict[str, str]:
         """Get relevant competitor comparisons based on objection type"""
         if objection_type == "competitor_cheaper":
             # Return all comparisons for competitor objections
@@ -314,24 +313,17 @@ class PriceObjectionHandler(BaseAgent):
             return {
                 "total_cost_ownership": self.COMPETITOR_COMPARISONS["total_cost_ownership"],
                 "no_hidden_fees": self.COMPETITOR_COMPARISONS["no_hidden_fees"],
-                "included_features": self.COMPETITOR_COMPARISONS["included_features"]
+                "included_features": self.COMPETITOR_COMPARISONS["included_features"],
             }
 
     def _calculate_resolution_confidence(
-        self,
-        objection_type: str,
-        severity: str,
-        customer_metadata: Dict
+        self, objection_type: str, severity: str, customer_metadata: dict
     ) -> float:
         """Calculate confidence that the objection can be resolved"""
         base_confidence = 0.75
 
         # Adjust for severity
-        severity_adjustments = {
-            "minor": 0.15,
-            "major": 0.0,
-            "blocker": -0.15
-        }
+        severity_adjustments = {"minor": 0.15, "major": 0.0, "blocker": -0.15}
         confidence = base_confidence + severity_adjustments.get(severity, 0.0)
 
         # Adjust for objection type (some are easier to handle)
@@ -340,7 +332,7 @@ class PriceObjectionHandler(BaseAgent):
             "too_expensive": 0.05,
             "budget_constraints": 0.00,
             "competitor_cheaper": -0.05,
-            "no_budget": -0.10  # Hardest to overcome
+            "no_budget": -0.10,  # Hardest to overcome
         }
         confidence += type_adjustments.get(objection_type, 0.0)
 
@@ -356,22 +348,20 @@ class PriceObjectionHandler(BaseAgent):
         # Escalate if blocker severity or low confidence
         if severity == "blocker":
             return True
-        if confidence < 0.60:
-            return True
-        return False
+        return confidence < 0.6
 
     async def _generate_objection_response(
         self,
         message: str,
         objection_type: str,
         severity: str,
-        strategy: Dict,
-        roi_data: Dict,
-        payment_options: List[str],
-        competitor_comparisons: Dict,
-        kb_results: List[Dict],
-        customer_metadata: Dict,
-        state: AgentState
+        strategy: dict,
+        roi_data: dict,
+        payment_options: list[str],
+        competitor_comparisons: dict,
+        kb_results: list[dict],
+        customer_metadata: dict,
+        state: AgentState,
     ) -> str:
         """Generate personalized response to price objection"""
         # Extract conversation history for context continuity
@@ -386,13 +376,13 @@ class PriceObjectionHandler(BaseAgent):
 
         # Build ROI context
         roi_context = f"""
-ROI Data for {roi_data['industry'].title()} Industry:
-- Time Savings: {roi_data['template']['time_savings']}
-- Cost Savings: {roi_data['template']['cost_savings']}
-- Revenue Impact: {roi_data['template']['revenue_impact']}
-- Typical Payback: {roi_data['template']['payback_period']}
-- Estimated Annual Savings: ${roi_data['estimated_annual_savings']:,.0f}
-- ROI Multiplier: {roi_data['roi_multiplier']}
+ROI Data for {roi_data["industry"].title()} Industry:
+- Time Savings: {roi_data["template"]["time_savings"]}
+- Cost Savings: {roi_data["template"]["cost_savings"]}
+- Revenue Impact: {roi_data["template"]["revenue_impact"]}
+- Typical Payback: {roi_data["template"]["payback_period"]}
+- Estimated Annual Savings: ${roi_data["estimated_annual_savings"]:,.0f}
+- ROI Multiplier: {roi_data["roi_multiplier"]}
 """
 
         # Build payment options context
@@ -404,32 +394,32 @@ ROI Data for {roi_data['industry'].title()} Industry:
         competitor_context = ""
         if competitor_comparisons:
             competitor_context = "\n\nCompetitive Advantages:\n"
-            for key, value in competitor_comparisons.items():
+            for _key, value in competitor_comparisons.items():
                 competitor_context += f"- {value}\n"
 
         system_prompt = f"""You are a Price Objection Handler specialist helping overcome pricing concerns.
 
 Objection Analysis:
-- Type: {objection_type.replace('_', ' ').title()}
+- Type: {objection_type.replace("_", " ").title()}
 - Severity: {severity.upper()}
-- Response Strategy: {strategy['approach'].replace('_', ' ').title()}
+- Response Strategy: {strategy["approach"].replace("_", " ").title()}
 
 Customer Profile:
-- Company: {customer_metadata.get('company', 'Unknown')}
-- Industry: {customer_metadata.get('industry', 'Unknown')}
-- Company Size: {customer_metadata.get('company_size', 'Unknown')}
+- Company: {customer_metadata.get("company", "Unknown")}
+- Industry: {customer_metadata.get("industry", "Unknown")}
+- Company Size: {customer_metadata.get("company_size", "Unknown")}
 
 Your response should:
 1. Acknowledge their pricing concern empathetically
-2. Use the {strategy['approach']} approach
+2. Use the {strategy["approach"]} approach
 3. Highlight relevant ROI metrics and cost savings
 4. Present payment options that match their situation
 5. Include competitive advantages when relevant
 6. Be consultative and focused on value, not just price
 7. Offer concrete next steps (ROI calculator, pilot program, etc.)
 
-Key Tactics to Use: {', '.join(strategy['tactics'])}
-Supporting Materials: {', '.join(strategy['supporting_materials'])}"""
+Key Tactics to Use: {", ".join(strategy["tactics"])}
+Supporting Materials: {", ".join(strategy["supporting_materials"])}"""
 
         user_prompt = f"""Customer message: {message}
 
@@ -441,9 +431,7 @@ Supporting Materials: {', '.join(strategy['supporting_materials'])}"""
 Generate a empathetic, value-focused response that addresses their pricing concern."""
 
         response = await self.call_llm(
-            system_prompt,
-            user_prompt,
-            conversation_history=conversation_history
+            system_prompt, user_prompt, conversation_history=conversation_history
         )
         return response
 
@@ -468,15 +456,15 @@ if __name__ == "__main__":
                     "title": "VP of Engineering",
                     "company_size": 300,
                     "industry": "technology",
-                    "email": "vp@techcorp.com"
+                    "email": "vp@techcorp.com",
                 }
-            }
+            },
         )
 
         agent = PriceObjectionHandler()
         result1 = await agent.process(state1)
 
-        print(f"\nTest 1 - Enterprise 'Too Expensive' Objection")
+        print("\nTest 1 - Enterprise 'Too Expensive' Objection")
         print(f"Objection Type: {result1['objection_type']}")
         print(f"Severity: {result1['objection_severity']}")
         print(f"Resolution Confidence: {result1['response_confidence']:.2f}")
@@ -493,14 +481,14 @@ if __name__ == "__main__":
                     "company": "Startup Labs",
                     "title": "Founder",
                     "company_size": 8,
-                    "industry": "technology"
+                    "industry": "technology",
                 }
-            }
+            },
         )
 
         result2 = await agent.process(state2)
 
-        print(f"\nTest 2 - Startup Budget Blocker")
+        print("\nTest 2 - Startup Budget Blocker")
         print(f"Objection Type: {result2['objection_type']}")
         print(f"Severity: {result2['objection_severity']}")
         print(f"Resolution Confidence: {result2['response_confidence']:.2f}")
@@ -516,19 +504,21 @@ if __name__ == "__main__":
                     "company": "MidMarket Co",
                     "title": "Director of Operations",
                     "company_size": 150,
-                    "industry": "retail"
+                    "industry": "retail",
                 }
-            }
+            },
         )
 
         result3 = await agent.process(state3)
 
-        print(f"\nTest 3 - Competitor Pricing Comparison")
+        print("\nTest 3 - Competitor Pricing Comparison")
         print(f"Objection Type: {result3['objection_type']}")
         print(f"Severity: {result3['objection_severity']}")
         print(f"Resolution Confidence: {result3['response_confidence']:.2f}")
         print(f"Needs Escalation: {result3['needs_escalation']}")
-        print(f"Competitor Comparisons Provided: {len(result3.get('response_strategy', {}).get('supporting_materials', []))}")
+        print(
+            f"Competitor Comparisons Provided: {len(result3.get('response_strategy', {}).get('supporting_materials', []))}"
+        )
         print(f"Response:\n{result3['agent_response']}\n")
 
     asyncio.run(test())
