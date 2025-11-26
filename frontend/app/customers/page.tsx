@@ -9,6 +9,22 @@ import Link from "next/link";
 import { format } from "date-fns";
 
 /**
+ * Get plan badge classes based on plan type
+ */
+function getPlanBadgeClasses(plan: string): string {
+  switch (plan) {
+    case "enterprise":
+      return "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300";
+    case "premium":
+      return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300";
+    case "basic":
+      return "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300";
+    default:
+      return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
+  }
+}
+
+/**
  * Customers Page
  * List and manage all customers
  */
@@ -58,6 +74,7 @@ export default function CustomersPage(): JSX.Element {
         </div>
 
         {/* Customers Grid */}
+        {/* eslint-disable-next-line no-nested-ternary -- Loading/data/empty conditional */}
         {isLoading ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -83,15 +100,7 @@ export default function CustomersPage(): JSX.Element {
                     </p>
                   </div>
                   <span
-                    className={`rounded-full px-2 py-1 text-xs font-medium capitalize ${
-                      customer.plan === "enterprise"
-                        ? "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
-                        : customer.plan === "premium"
-                          ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
-                          : customer.plan === "basic"
-                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-                            : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                    }`}
+                    className={`rounded-full px-2 py-1 text-xs font-medium capitalize ${getPlanBadgeClasses(customer.plan)}`}
                   >
                     {customer.plan}
                   </span>
