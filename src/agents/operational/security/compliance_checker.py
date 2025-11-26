@@ -5,13 +5,13 @@ Continuous compliance monitoring for GDPR, SOC 2, HIPAA, and CCPA.
 Validates system configuration and data handling practices.
 """
 
-from typing import Dict, Any, List, Optional, Set
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("compliance_checker", tier="operational", category="security")
@@ -48,9 +48,9 @@ class ComplianceCheckerAgent(BaseAgent):
                 "privacy_by_design",
                 "dpo_appointed",
                 "breach_notification",
-                "data_retention_policy"
+                "data_retention_policy",
             ],
-            "severity_weight": 10.0
+            "severity_weight": 10.0,
         },
         "SOC2": {
             "requirements": [
@@ -61,9 +61,9 @@ class ComplianceCheckerAgent(BaseAgent):
                 "incident_response",
                 "change_management",
                 "vendor_management",
-                "security_monitoring"
+                "security_monitoring",
             ],
-            "severity_weight": 8.0
+            "severity_weight": 8.0,
         },
         "HIPAA": {
             "requirements": [
@@ -73,9 +73,9 @@ class ComplianceCheckerAgent(BaseAgent):
                 "business_associate_agreements",
                 "breach_notification_60_days",
                 "security_risk_assessment",
-                "contingency_plan"
+                "contingency_plan",
             ],
-            "severity_weight": 10.0
+            "severity_weight": 10.0,
         },
         "CCPA": {
             "requirements": [
@@ -84,9 +84,9 @@ class ComplianceCheckerAgent(BaseAgent):
                 "opt_out_mechanism",
                 "data_sale_disclosure",
                 "privacy_policy",
-                "data_deletion"
+                "data_deletion",
             ],
-            "severity_weight": 7.0
+            "severity_weight": 7.0,
         },
         "PCI_DSS": {
             "requirements": [
@@ -95,10 +95,10 @@ class ComplianceCheckerAgent(BaseAgent):
                 "access_restriction",
                 "vulnerability_management",
                 "secure_storage_prohibition",
-                "audit_trail"
+                "audit_trail",
             ],
-            "severity_weight": 9.0
-        }
+            "severity_weight": 9.0,
+        },
     }
 
     # Compliance check intervals
@@ -106,7 +106,7 @@ class ComplianceCheckerAgent(BaseAgent):
         "critical": timedelta(hours=1),
         "high": timedelta(hours=24),
         "medium": timedelta(days=7),
-        "low": timedelta(days=30)
+        "low": timedelta(days=30),
     }
 
     def __init__(self):
@@ -117,7 +117,7 @@ class ComplianceCheckerAgent(BaseAgent):
             temperature=0.1,
             max_tokens=3000,
             capabilities=[AgentCapability.DATABASE_READ],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -143,21 +143,14 @@ class ComplianceCheckerAgent(BaseAgent):
         security_controls = state.get("entities", {}).get("security_controls", {})
         check_mode = state.get("entities", {}).get("check_mode", "comprehensive")
 
-        self.logger.debug(
-            "compliance_check_details",
-            frameworks=frameworks,
-            check_mode=check_mode
-        )
+        self.logger.debug("compliance_check_details", frameworks=frameworks, check_mode=check_mode)
 
         # Run compliance checks for each framework
         compliance_results = {}
         for framework in frameworks:
             if framework in self.COMPLIANCE_FRAMEWORKS:
                 results = self._check_framework_compliance(
-                    framework,
-                    system_config,
-                    data_policies,
-                    security_controls
+                    framework, system_config, data_policies, security_controls
                 )
                 compliance_results[framework] = results
 
@@ -168,19 +161,14 @@ class ComplianceCheckerAgent(BaseAgent):
         compliance_score = self._calculate_compliance_score(compliance_results)
 
         # Determine compliance status
-        compliance_status = self._determine_compliance_status(
-            compliance_score,
-            violations
-        )
+        compliance_status = self._determine_compliance_status(compliance_score, violations)
 
         # Generate remediation plan
         remediation_plan = self._generate_remediation_plan(violations)
 
         # Generate recommendations
         recommendations = self._generate_recommendations(
-            compliance_results,
-            violations,
-            remediation_plan
+            compliance_results, violations, remediation_plan
         )
 
         # Check for critical gaps
@@ -194,7 +182,7 @@ class ComplianceCheckerAgent(BaseAgent):
             compliance_status,
             violations,
             remediation_plan,
-            recommendations
+            recommendations,
         )
 
         state["agent_response"] = response
@@ -220,7 +208,7 @@ class ComplianceCheckerAgent(BaseAgent):
             frameworks=len(frameworks),
             compliance_score=compliance_score,
             violations=len(violations),
-            critical_gaps=len(critical_gaps)
+            critical_gaps=len(critical_gaps),
         )
 
         return state
@@ -228,10 +216,10 @@ class ComplianceCheckerAgent(BaseAgent):
     def _check_framework_compliance(
         self,
         framework: str,
-        system_config: Dict[str, Any],
-        data_policies: Dict[str, Any],
-        security_controls: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        system_config: dict[str, Any],
+        data_policies: dict[str, Any],
+        security_controls: dict[str, Any],
+    ) -> dict[str, Any]:
         """
         Check compliance with specific framework.
 
@@ -252,15 +240,12 @@ class ComplianceCheckerAgent(BaseAgent):
             "total_requirements": len(requirements),
             "requirements_met": 0,
             "requirements_failed": 0,
-            "requirement_details": []
+            "requirement_details": [],
         }
 
         for requirement in requirements:
             check_result = self._check_requirement(
-                requirement,
-                system_config,
-                data_policies,
-                security_controls
+                requirement, system_config, data_policies, security_controls
             )
             results["requirement_details"].append(check_result)
 
@@ -271,8 +256,7 @@ class ComplianceCheckerAgent(BaseAgent):
 
         # Calculate framework compliance percentage
         results["compliance_percentage"] = round(
-            (results["requirements_met"] / results["total_requirements"]) * 100,
-            1
+            (results["requirements_met"] / results["total_requirements"]) * 100, 1
         )
 
         return results
@@ -280,10 +264,10 @@ class ComplianceCheckerAgent(BaseAgent):
     def _check_requirement(
         self,
         requirement: str,
-        system_config: Dict[str, Any],
-        data_policies: Dict[str, Any],
-        security_controls: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        system_config: dict[str, Any],
+        data_policies: dict[str, Any],
+        security_controls: dict[str, Any],
+    ) -> dict[str, Any]:
         """
         Check specific compliance requirement.
 
@@ -358,13 +342,12 @@ class ComplianceCheckerAgent(BaseAgent):
             "status": status,
             "evidence": evidence,
             "gaps": gaps,
-            "checked_at": datetime.now(UTC).isoformat()
+            "checked_at": datetime.now(UTC).isoformat(),
         }
 
     def _identify_violations(
-        self,
-        compliance_results: Dict[str, Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, compliance_results: dict[str, dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """
         Identify compliance violations across frameworks.
 
@@ -381,14 +364,16 @@ class ComplianceCheckerAgent(BaseAgent):
                 if requirement["status"] == "non_compliant":
                     severity_weight = self.COMPLIANCE_FRAMEWORKS[framework]["severity_weight"]
 
-                    violations.append({
-                        "framework": framework,
-                        "requirement": requirement["requirement"],
-                        "gaps": requirement["gaps"],
-                        "severity": self._calculate_violation_severity(severity_weight),
-                        "severity_weight": severity_weight,
-                        "detected_at": datetime.now(UTC).isoformat()
-                    })
+                    violations.append(
+                        {
+                            "framework": framework,
+                            "requirement": requirement["requirement"],
+                            "gaps": requirement["gaps"],
+                            "severity": self._calculate_violation_severity(severity_weight),
+                            "severity_weight": severity_weight,
+                            "detected_at": datetime.now(UTC).isoformat(),
+                        }
+                    )
 
         return violations
 
@@ -411,10 +396,7 @@ class ComplianceCheckerAgent(BaseAgent):
         else:
             return "low"
 
-    def _calculate_compliance_score(
-        self,
-        compliance_results: Dict[str, Dict[str, Any]]
-    ) -> float:
+    def _calculate_compliance_score(self, compliance_results: dict[str, dict[str, Any]]) -> float:
         """
         Calculate overall compliance score (0-100).
 
@@ -444,9 +426,7 @@ class ComplianceCheckerAgent(BaseAgent):
         return round(overall_score, 1)
 
     def _determine_compliance_status(
-        self,
-        compliance_score: float,
-        violations: List[Dict[str, Any]]
+        self, compliance_score: float, violations: list[dict[str, Any]]
     ) -> str:
         """
         Determine overall compliance status.
@@ -471,10 +451,7 @@ class ComplianceCheckerAgent(BaseAgent):
         else:
             return "non_compliant"
 
-    def _generate_remediation_plan(
-        self,
-        violations: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+    def _generate_remediation_plan(self, violations: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
         Generate remediation plan for violations.
 
@@ -486,10 +463,7 @@ class ComplianceCheckerAgent(BaseAgent):
         """
         # Sort violations by severity
         severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
-        sorted_violations = sorted(
-            violations,
-            key=lambda x: severity_order.get(x["severity"], 999)
-        )
+        sorted_violations = sorted(violations, key=lambda x: severity_order.get(x["severity"], 999))
 
         remediation_plan = []
 
@@ -501,13 +475,13 @@ class ComplianceCheckerAgent(BaseAgent):
                 "gaps": violation["gaps"],
                 "recommended_actions": self._get_recommended_actions(violation),
                 "estimated_effort": self._estimate_remediation_effort(violation),
-                "compliance_deadline": self._calculate_deadline(violation["severity"])
+                "compliance_deadline": self._calculate_deadline(violation["severity"]),
             }
             remediation_plan.append(plan_item)
 
         return remediation_plan
 
-    def _get_recommended_actions(self, violation: Dict[str, Any]) -> List[str]:
+    def _get_recommended_actions(self, violation: dict[str, Any]) -> list[str]:
         """Get recommended actions for violation."""
         requirement = violation["requirement"]
         actions = []
@@ -537,7 +511,7 @@ class ComplianceCheckerAgent(BaseAgent):
 
         return actions
 
-    def _estimate_remediation_effort(self, violation: Dict[str, Any]) -> str:
+    def _estimate_remediation_effort(self, violation: dict[str, Any]) -> str:
         """Estimate effort to remediate violation."""
         requirement = violation["requirement"]
 
@@ -565,10 +539,10 @@ class ComplianceCheckerAgent(BaseAgent):
 
     def _generate_recommendations(
         self,
-        compliance_results: Dict[str, Dict[str, Any]],
-        violations: List[Dict[str, Any]],
-        remediation_plan: List[Dict[str, Any]]
-    ) -> List[str]:
+        compliance_results: dict[str, dict[str, Any]],
+        violations: list[dict[str, Any]],
+        remediation_plan: list[dict[str, Any]],
+    ) -> list[str]:
         """Generate compliance recommendations."""
         recommendations = []
 
@@ -594,35 +568,40 @@ class ComplianceCheckerAgent(BaseAgent):
         if not violations:
             recommendations.append("All compliance requirements met. Continue regular monitoring.")
 
-        recommendations.append("Schedule quarterly compliance reviews to maintain compliance posture.")
+        recommendations.append(
+            "Schedule quarterly compliance reviews to maintain compliance posture."
+        )
 
         return recommendations
 
-    def _identify_critical_gaps(
-        self,
-        violations: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+    def _identify_critical_gaps(self, violations: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Identify critical compliance gaps."""
         return [v for v in violations if v["severity"] == "critical"]
 
     def _format_compliance_report(
         self,
-        frameworks: List[str],
-        compliance_results: Dict[str, Dict[str, Any]],
+        frameworks: list[str],
+        compliance_results: dict[str, dict[str, Any]],
         compliance_score: float,
         compliance_status: str,
-        violations: List[Dict[str, Any]],
-        remediation_plan: List[Dict[str, Any]],
-        recommendations: List[str]
+        violations: list[dict[str, Any]],
+        remediation_plan: list[dict[str, Any]],
+        recommendations: list[str],
     ) -> str:
         """Format compliance report."""
-        status_icon = "✅" if compliance_status == "fully_compliant" else "⚠️" if "compliant" in compliance_status else "❌"
+        status_icon = (
+            "✅"
+            if compliance_status == "fully_compliant"
+            else "⚠️"
+            if "compliant" in compliance_status
+            else "❌"
+        )
 
         report = f"""**Compliance Assessment Report**
 
-**Overall Status:** {status_icon} {compliance_status.replace('_', ' ').upper()}
+**Overall Status:** {status_icon} {compliance_status.replace("_", " ").upper()}
 **Compliance Score:** {compliance_score}/100
-**Frameworks Assessed:** {', '.join(frameworks)}
+**Frameworks Assessed:** {", ".join(frameworks)}
 **Violations Found:** {len(violations)}
 
 **Framework Compliance:**
@@ -635,9 +614,15 @@ class ComplianceCheckerAgent(BaseAgent):
 
         # Violations
         if violations:
-            report += f"\n**Compliance Violations:**\n"
+            report += "\n**Compliance Violations:**\n"
             for violation in violations[:5]:
-                severity_icon = "🔴" if violation["severity"] == "critical" else "⚠️" if violation["severity"] == "high" else "ℹ️"
+                severity_icon = (
+                    "🔴"
+                    if violation["severity"] == "critical"
+                    else "⚠️"
+                    if violation["severity"] == "high"
+                    else "ℹ️"
+                )
                 report += f"{severity_icon} [{violation['severity'].upper()}] {violation['framework']} - {violation['requirement']}\n"
                 for gap in violation["gaps"]:
                     report += f"   • {gap}\n"
@@ -647,18 +632,18 @@ class ComplianceCheckerAgent(BaseAgent):
 
         # Remediation plan
         if remediation_plan:
-            report += f"\n**Remediation Plan (Top 3):**\n"
+            report += "\n**Remediation Plan (Top 3):**\n"
             for i, item in enumerate(remediation_plan[:3], 1):
                 report += f"{i}. [{item['priority'].upper()}] {item['requirement']}\n"
                 report += f"   Effort: {item['estimated_effort']} | Deadline: {item['compliance_deadline'][:10]}\n"
 
         # Recommendations
         if recommendations:
-            report += f"\n**Recommendations:**\n"
+            report += "\n**Recommendations:**\n"
             for rec in recommendations:
                 report += f"- {rec}\n"
 
         report += f"\n*Compliance check completed at {datetime.now(UTC).isoformat()}*"
-        report += f"\n*Next check recommended within 30 days*"
+        report += "\n*Next check recommended within 30 days*"
 
         return report
