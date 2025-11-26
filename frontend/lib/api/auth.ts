@@ -5,17 +5,17 @@
  * Handles login, signup, logout, token refresh, OAuth.
  */
 
-import { apiClient, TokenManager } from '../api-client';
+import { apiClient, TokenManager } from "../api-client";
 import {
   type LoginResponse,
-  type RegisterResponse,
-  type RegisterRequest,
-  type UserProfile,
-  type Result,
   LoginResponseSchema,
+  type RegisterRequest,
+  type RegisterResponse,
   RegisterResponseSchema,
+  type Result,
+  type UserProfile,
   UserProfileSchema,
-} from '../types/api';
+} from "../types/api";
 
 // =============================================================================
 // AUTHENTICATION
@@ -26,14 +26,17 @@ export const authAPI = {
    * Register new user
    */
   async register(data: RegisterRequest): Promise<Result<RegisterResponse>> {
-    const result = await apiClient.post<RegisterResponse>('/api/auth/register', data);
+    const result = await apiClient.post<RegisterResponse>(
+      "/api/auth/register",
+      data
+    );
 
     if (result.success) {
       // Validate response
       const validated = RegisterResponseSchema.safeParse(result.data);
       if (!validated.success) {
-        console.error('Register response validation failed:', validated.error);
-        return { success: false, error: new Error('Invalid response format') };
+        console.error("Register response validation failed:", validated.error);
+        return { success: false, error: new Error("Invalid response format") };
       }
 
       // Store tokens
@@ -52,7 +55,7 @@ export const authAPI = {
    * Login user
    */
   async login(email: string, password: string): Promise<Result<LoginResponse>> {
-    const result = await apiClient.post<LoginResponse>('/api/auth/login', {
+    const result = await apiClient.post<LoginResponse>("/api/auth/login", {
       email,
       password,
     });
@@ -61,7 +64,7 @@ export const authAPI = {
       // Validate response
       const validated = LoginResponseSchema.safeParse(result.data);
       if (!validated.success) {
-        return { success: false, error: new Error('Invalid response format') };
+        return { success: false, error: new Error("Invalid response format") };
       }
 
       // Store tokens
@@ -82,7 +85,7 @@ export const authAPI = {
   async logout(): Promise<Result<void>> {
     try {
       // Call backend logout (blacklists token)
-      await apiClient.post('/api/auth/logout');
+      await apiClient.post("/api/auth/logout");
 
       // Clear local tokens
       TokenManager.clearTokens();
@@ -99,13 +102,13 @@ export const authAPI = {
    * Get current user profile
    */
   async me(): Promise<Result<UserProfile>> {
-    const result = await apiClient.get<UserProfile>('/api/auth/me');
+    const result = await apiClient.get<UserProfile>("/api/auth/me");
 
     if (result.success) {
       // Validate response
       const validated = UserProfileSchema.safeParse(result.data);
       if (!validated.success) {
-        return { success: false, error: new Error('Invalid response format') };
+        return { success: false, error: new Error("Invalid response format") };
       }
 
       return { success: true, data: validated.data };
@@ -117,20 +120,22 @@ export const authAPI = {
   /**
    * Refresh access token
    */
-  async refresh(): Promise<Result<{ access_token: string; refresh_token: string }>> {
+  async refresh(): Promise<
+    Result<{ access_token: string; refresh_token: string }>
+  > {
     const refreshToken = TokenManager.getRefreshToken();
 
     if (!refreshToken) {
       return {
         success: false,
-        error: new Error('No refresh token available'),
+        error: new Error("No refresh token available"),
       };
     }
 
-    const result = await apiClient.post<{ access_token: string; refresh_token: string }>(
-      '/api/auth/refresh',
-      { refresh_token: refreshToken }
-    );
+    const result = await apiClient.post<{
+      access_token: string;
+      refresh_token: string;
+    }>("/api/auth/refresh", { refresh_token: refreshToken });
 
     if (result.success) {
       // Store new tokens
@@ -146,8 +151,10 @@ export const authAPI = {
   /**
    * Request password reset
    */
-  async requestPasswordReset(email: string): Promise<Result<{ message: string }>> {
-    return apiClient.post('/api/auth/request-password-reset', { email });
+  async requestPasswordReset(
+    email: string
+  ): Promise<Result<{ message: string }>> {
+    return apiClient.post("/api/auth/request-password-reset", { email });
   },
 
   /**
@@ -158,7 +165,7 @@ export const authAPI = {
     newPassword: string
   ): Promise<Result<{ message: string }>> {
     // Backend expects the confirm endpoint for actual password reset
-    return apiClient.post('/api/auth/reset-password/confirm', {
+    return apiClient.post("/api/auth/reset-password/confirm", {
       token,
       new_password: newPassword,
     });
@@ -168,7 +175,7 @@ export const authAPI = {
    * Verify email
    */
   async verifyEmail(token: string): Promise<Result<{ message: string }>> {
-    return apiClient.post('/api/auth/verify-email', { token });
+    return apiClient.post("/api/auth/verify-email", { token });
   },
 };
 
@@ -180,8 +187,17 @@ export const oauthAPI = {
   /**
    * Get available OAuth providers
    */
-  async getProviders(): Promise<Result<{ providers: Array<{ name: string; display_name: string; auth_url: string; enabled: boolean }> }>> {
-    return apiClient.get('/api/oauth/providers');
+  async getProviders(): Promise<
+    Result<{
+      providers: Array<{
+        name: string;
+        display_name: string;
+        auth_url: string;
+        enabled: boolean;
+      }>;
+    }>
+  > {
+    return apiClient.get("/api/oauth/providers");
   },
 
   /**
@@ -189,7 +205,9 @@ export const oauthAPI = {
    */
   initiateGoogle(redirectUri?: string): void {
     const params = new URLSearchParams();
-    if (redirectUri) params.set('redirect_uri', redirectUri);
+    if (redirectUri) {
+      params.set("redirect_uri", redirectUri);
+    }
 
     window.location.href = `${apiClient.getRawClient().defaults.baseURL}/api/oauth/google?${params}`;
   },
@@ -199,7 +217,9 @@ export const oauthAPI = {
    */
   initiateGitHub(redirectUri?: string): void {
     const params = new URLSearchParams();
-    if (redirectUri) params.set('redirect_uri', redirectUri);
+    if (redirectUri) {
+      params.set("redirect_uri", redirectUri);
+    }
 
     window.location.href = `${apiClient.getRawClient().defaults.baseURL}/api/oauth/github?${params}`;
   },
