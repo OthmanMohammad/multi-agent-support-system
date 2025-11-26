@@ -10,15 +10,16 @@ Classifies user messages into 500+ intents across 4 levels:
 Part of: STORY-01 Routing & Orchestration Swarm (TASK-102)
 """
 
-from typing import Dict, Any, Optional, List
 import json
 import time
+from typing import Any
+
 import structlog
 
-from src.agents.base.base_agent import BaseAgent, RoutingAgent, AgentConfig
-from src.agents.base.agent_types import AgentType, AgentCapability
-from src.workflow.state import AgentState
+from src.agents.base.agent_types import AgentCapability, AgentType
+from src.agents.base.base_agent import AgentConfig, RoutingAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.workflow.state import AgentState
 
 logger = structlog.get_logger(__name__)
 
@@ -42,16 +43,13 @@ class IntentClassifier(RoutingAgent):
         config = AgentConfig(
             name="intent_classifier",
             type=AgentType.ROUTER,
-             # Fast and accurate
+            # Fast and accurate
             temperature=0.1,  # Low for consistent classification
             max_tokens=400,  # Slightly higher for detailed classification
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.ENTITY_EXTRACTION
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.ENTITY_EXTRACTION],
             system_prompt_template=self._get_system_prompt(),
             tier="essential",
-            role="intent_classifier"
+            role="intent_classifier",
         )
         super().__init__(config=config, **kwargs)
         self.logger = logger.bind(agent="intent_classifier", agent_type="router")
@@ -187,7 +185,7 @@ class IntentClassifier(RoutingAgent):
         self.logger.info(
             "intent_classifier_processing_started",
             conversation_id=state.get("conversation_id"),
-            message_preview=state.get("current_message", "")[:50]
+            message_preview=state.get("current_message", "")[:50],
         )
 
         try:
@@ -199,9 +197,7 @@ class IntentClassifier(RoutingAgent):
             context_str = self._format_customer_context(customer_context)
 
             # Build system prompt with context
-            system_prompt = self._get_system_prompt().format(
-                customer_context=context_str
-            )
+            system_prompt = self._get_system_prompt().format(customer_context=context_str)
 
             # Get message
             message = state.get("current_message", "")
@@ -217,7 +213,7 @@ class IntentClassifier(RoutingAgent):
             response = await self.call_llm(
                 system_prompt=system_prompt,
                 user_message=f"Classify this message into the hierarchical taxonomy:\n\n{message}",
-                conversation_history=conversation_history
+                conversation_history=conversation_history,
             )
 
             # Parse response
@@ -228,7 +224,7 @@ class IntentClassifier(RoutingAgent):
             classification["metadata"] = {
                 "model": self.config.model,
                 "latency_ms": latency_ms,
-                "tokens_used": getattr(self, "_last_tokens_used", 0)
+                "tokens_used": getattr(self, "_last_tokens_used", 0),
             }
 
             # Update state with classification results
@@ -241,7 +237,7 @@ class IntentClassifier(RoutingAgent):
                 subcategory=classification.get("subcategory"),
                 action=classification.get("action"),
                 confidence=classification["confidence_scores"]["overall"],
-                latency_ms=latency_ms
+                latency_ms=latency_ms,
             )
 
             return state
@@ -251,13 +247,13 @@ class IntentClassifier(RoutingAgent):
                 "intent_classifier_failed",
                 error=str(e),
                 error_type=type(e).__name__,
-                conversation_id=state.get("conversation_id")
+                conversation_id=state.get("conversation_id"),
             )
 
             # Fallback classification
             return self._handle_error(state, e)
 
-    def _format_customer_context(self, context: Dict[str, Any]) -> str:
+    def _format_customer_context(self, context: dict[str, Any]) -> str:
         """
         Format customer context for prompt injection.
 
@@ -278,7 +274,7 @@ class IntentClassifier(RoutingAgent):
 
         # Health score
         if "health_score" in context:
-            score = context['health_score']
+            score = context["health_score"]
             parts.append(f"Health Score: {score}/100")
 
         # Team size
@@ -291,18 +287,18 @@ class IntentClassifier(RoutingAgent):
 
         # Churn risk
         if "churn_risk" in context:
-            risk = context['churn_risk']
+            risk = context["churn_risk"]
             risk_label = "high" if risk > 0.7 else "medium" if risk > 0.4 else "low"
             parts.append(f"Churn Risk: {risk_label}")
 
         # Account age
         if "account_age_days" in context:
-            days = context['account_age_days']
+            days = context["account_age_days"]
             parts.append(f"Account Age: {days} days")
 
         return "\n".join(parts) if parts else "No relevant context"
 
-    def _parse_response(self, response: str) -> Dict[str, Any]:
+    def _parse_response(self, response: str) -> dict[str, Any]:
         """
         Parse LLM response into structured classification.
 
@@ -321,8 +317,7 @@ class IntentClassifier(RoutingAgent):
             if cleaned_response.startswith("```"):
                 lines = cleaned_response.split("\n")
                 cleaned_response = "\n".join(
-                    line for line in lines
-                    if not line.strip().startswith("```")
+                    line for line in lines if not line.strip().startswith("```")
                 )
 
             # Try to parse as JSON
@@ -365,15 +360,13 @@ class IntentClassifier(RoutingAgent):
 
         except json.JSONDecodeError as e:
             self.logger.warning(
-                "intent_classifier_invalid_json",
-                response_preview=response[:200],
-                error=str(e)
+                "intent_classifier_invalid_json", response_preview=response[:200], error=str(e)
             )
 
             # Fallback to simple extraction
             return self._extract_intent_from_text(response)
 
-    def _extract_intent_from_text(self, response: str) -> Dict[str, Any]:
+    def _extract_intent_from_text(self, response: str) -> dict[str, Any]:
         """
         Extract intent from text response when JSON parsing fails.
 
@@ -409,26 +402,20 @@ class IntentClassifier(RoutingAgent):
             "intent_classifier_fallback_extraction",
             domain=domain,
             category=category,
-            method="text_analysis"
+            method="text_analysis",
         )
 
         return {
             "domain": domain,
             "category": category,
-            "confidence_scores": {
-                "domain": 0.5,
-                "category": 0.5,
-                "overall": 0.5
-            },
+            "confidence_scores": {"domain": 0.5, "category": 0.5, "overall": 0.5},
             "entities": {},
             "alternative_intents": [],
-            "reasoning": "Fallback classification due to JSON parsing error"
+            "reasoning": "Fallback classification due to JSON parsing error",
         }
 
     def _update_state_with_classification(
-        self,
-        state: AgentState,
-        classification: Dict[str, Any]
+        self, state: AgentState, classification: dict[str, Any]
     ) -> AgentState:
         """
         Update agent state with classification results.
@@ -440,17 +427,19 @@ class IntentClassifier(RoutingAgent):
         Returns:
             Updated agent state
         """
-        state.update({
-            "intent_domain": classification.get("domain"),
-            "intent_category": classification.get("category"),
-            "intent_subcategory": classification.get("subcategory"),
-            "intent_action": classification.get("action"),
-            "intent_confidence_scores": classification["confidence_scores"],
-            "intent_alternatives": classification.get("alternative_intents", []),
-            "intent_entities": classification.get("entities", {}),
-            "intent_reasoning": classification.get("reasoning", ""),
-            "intent_metadata": classification.get("metadata", {})
-        })
+        state.update(
+            {
+                "intent_domain": classification.get("domain"),
+                "intent_category": classification.get("category"),
+                "intent_subcategory": classification.get("subcategory"),
+                "intent_action": classification.get("action"),
+                "intent_confidence_scores": classification["confidence_scores"],
+                "intent_alternatives": classification.get("alternative_intents", []),
+                "intent_entities": classification.get("entities", {}),
+                "intent_reasoning": classification.get("reasoning", ""),
+                "intent_metadata": classification.get("metadata", {}),
+            }
+        )
 
         return state
 
@@ -464,19 +453,17 @@ class IntentClassifier(RoutingAgent):
         Returns:
             Updated state with default classification
         """
-        state.update({
-            "intent_domain": "support",
-            "intent_category": "general",
-            "intent_confidence_scores": {
-                "domain": 0.3,
-                "category": 0.3,
-                "overall": 0.3
-            },
-            "intent_entities": {},
-            "intent_alternatives": [],
-            "intent_reasoning": "Empty message - default classification",
-            "intent_metadata": {"error": "empty_message"}
-        })
+        state.update(
+            {
+                "intent_domain": "support",
+                "intent_category": "general",
+                "intent_confidence_scores": {"domain": 0.3, "category": 0.3, "overall": 0.3},
+                "intent_entities": {},
+                "intent_alternatives": [],
+                "intent_reasoning": "Empty message - default classification",
+                "intent_metadata": {"error": "empty_message"},
+            }
+        )
 
         return state
 
@@ -491,20 +478,17 @@ class IntentClassifier(RoutingAgent):
         Returns:
             Updated state with fallback classification
         """
-        state.update({
-            "intent_domain": "support",
-            "intent_category": "general",
-            "intent_confidence_scores": {
-                "overall": 0.3
-            },
-            "intent_entities": {},
-            "intent_alternatives": [],
-            "intent_reasoning": f"Fallback due to error: {str(error)}",
-            "intent_metadata": {
-                "error": str(error),
-                "error_type": type(error).__name__
+        state.update(
+            {
+                "intent_domain": "support",
+                "intent_category": "general",
+                "intent_confidence_scores": {"overall": 0.3},
+                "intent_entities": {},
+                "intent_alternatives": [],
+                "intent_reasoning": f"Fallback due to error: {error!s}",
+                "intent_metadata": {"error": str(error), "error_type": type(error).__name__},
             }
-        })
+        )
 
         return state
 
@@ -540,6 +524,7 @@ def create_intent_classifier(**kwargs) -> IntentClassifier:
 # Example usage (for development/testing)
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test_intent_classifier():
@@ -556,68 +541,68 @@ if __name__ == "__main__":
             {
                 "message": "I want to upgrade to Premium for 25 users",
                 "context": {"plan": "basic", "team_size": 10},
-                "expected": {"domain": "support", "category": "billing", "action": "upgrade"}
+                "expected": {"domain": "support", "category": "billing", "action": "upgrade"},
             },
             {
                 "message": "Cancel my subscription please",
                 "context": {"plan": "premium"},
-                "expected": {"domain": "support", "category": "billing", "action": "cancel"}
+                "expected": {"domain": "support", "category": "billing", "action": "cancel"},
             },
-
             # Technical intents
             {
                 "message": "The app crashes when I try to export data",
                 "context": {"plan": "premium"},
-                "expected": {"domain": "support", "category": "technical", "subcategory": "bug"}
+                "expected": {"domain": "support", "category": "technical", "subcategory": "bug"},
             },
             {
                 "message": "My data is not syncing across devices",
                 "context": {},
-                "expected": {"domain": "support", "category": "technical", "subcategory": "sync"}
+                "expected": {"domain": "support", "category": "technical", "subcategory": "sync"},
             },
-
             # Sales intents
             {
                 "message": "I'd like to schedule a demo of your product",
                 "context": {"plan": "free"},
-                "expected": {"domain": "sales", "category": "qualification"}
+                "expected": {"domain": "sales", "category": "qualification"},
             },
-
             # Customer Success intents
             {
                 "message": "We're not getting the ROI we expected",
                 "context": {"plan": "enterprise", "health_score": 30},
-                "expected": {"domain": "customer_success", "category": "health"}
+                "expected": {"domain": "customer_success", "category": "health"},
             },
         ]
 
         for i, test in enumerate(test_cases, 1):
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"TEST CASE {i}: {test['message'][:50]}...")
-            print(f"{'='*60}")
+            print(f"{'=' * 60}")
 
             state = create_initial_state(
-                message=test["message"],
-                context={"customer_metadata": test["context"]}
+                message=test["message"], context={"customer_metadata": test["context"]}
             )
 
             result = await classifier.process(state)
 
-            print(f"\n✓ Classification:")
+            print("\n✓ Classification:")
             print(f"  Domain: {result.get('intent_domain')}")
             print(f"  Category: {result.get('intent_category')}")
             print(f"  Subcategory: {result.get('intent_subcategory', 'N/A')}")
             print(f"  Action: {result.get('intent_action', 'N/A')}")
-            print(f"  Confidence: {result.get('intent_confidence_scores', {}).get('overall', 0):.2%}")
+            print(
+                f"  Confidence: {result.get('intent_confidence_scores', {}).get('overall', 0):.2%}"
+            )
             print(f"  Entities: {result.get('intent_entities', {})}")
             print(f"  Reasoning: {result.get('intent_reasoning', '')[:100]}")
 
             # Check if matches expected
             expected = test["expected"]
-            matches = all([
-                result.get("intent_domain") == expected.get("domain"),
-                result.get("intent_category") == expected.get("category")
-            ])
+            matches = all(
+                [
+                    result.get("intent_domain") == expected.get("domain"),
+                    result.get("intent_category") == expected.get("category"),
+                ]
+            )
 
             status = "✓ PASS" if matches else "✗ FAIL"
             print(f"\n{status}")
