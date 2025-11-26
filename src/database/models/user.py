@@ -8,6 +8,7 @@ Supports JWT authentication, API keys, and role-based access control (RBAC).
 from __future__ import annotations
 
 import enum
+from datetime import datetime  # noqa: TC003 - Required at runtime for SQLAlchemy ORM
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, String
@@ -17,8 +18,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.database.models.base import BaseModel
 
 if TYPE_CHECKING:
-    from datetime import datetime
-
     from src.database.models.api_key import APIKey
 
 
