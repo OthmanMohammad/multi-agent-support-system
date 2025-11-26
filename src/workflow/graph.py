@@ -5,12 +5,14 @@ Refactored to use new tier-based agent architecture with AgentRegistry
 This module provides backward compatibility with the original SupportGraph
 interface while using the new 4-tier agent system.
 """
-from typing import Optional, Dict, Any
-from langgraph.graph import StateGraph, END
 
-from src.workflow.state import AgentState, create_initial_state
+from typing import Any
+
+from langgraph.graph import END, StateGraph
+
 from src.services.infrastructure.agent_registry import AgentRegistry
 from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState, create_initial_state
 
 
 class SupportGraph:
@@ -61,19 +63,16 @@ class SupportGraph:
             "support_domain_router": "support_domain_router",
             "sales_domain_router": "sales_domain_router",
             "cs_domain_router": "cs_domain_router",
-
             # Support specialist agents
             "billing": "billing_agent",
             "technical": "technical_agent",
             "usage": "usage_agent",
             "api": "api_agent",
             "account": "account_deletion_specialist",
-
             # Sales specialist agents - Qualification
             "sales_qualification": "inbound_qualifier",
             "inbound_qualifier": "inbound_qualifier",
             "bant_qualifier": "bant_qualifier",
-
             # Sales specialist agents - Education
             "sales_education": "demo_scheduler",
             "feature_explainer": "feature_explainer",
@@ -81,7 +80,6 @@ class SupportGraph:
             "value_proposition": "value_proposition",
             "use_case_matcher": "use_case_matcher",
             "roi_calculator": "roi_calculator",
-
             # Sales specialist agents - Objection Handling
             "sales_objection": "price_objection_handler",
             "price_objection_handler": "price_objection_handler",
@@ -90,21 +88,18 @@ class SupportGraph:
             "security_objection_handler": "security_objection_handler",
             "timing_objection_handler": "timing_objection_handler",
             "feature_gap_handler": "feature_gap_handler",
-
             # Sales specialist agents - Progression
             "sales_progression": "closer",
             "closer": "closer",
             "trial_optimizer": "trial_optimizer",
             "proposal_generator": "proposal_generator",
             "contract_negotiator": "contract_negotiator",
-
             # Customer Success specialist agents
             "cs_health": "health_score",
             "cs_onboarding": "onboarding_coordinator",
             "cs_adoption": "feature_adoption",
             "cs_retention": "renewal_manager",
             "cs_expansion": "upsell_identifier",
-
             # Escalation
             "escalation": "escalation_decider",
         }
@@ -115,16 +110,10 @@ class SupportGraph:
             agent_class = AgentRegistry.get_agent(new_name)
             if agent_class:
                 self.agents[legacy_name] = agent_class()
-                self.logger.debug(
-                    "agent_loaded",
-                    legacy_name=legacy_name,
-                    new_name=new_name
-                )
+                self.logger.debug("agent_loaded", legacy_name=legacy_name, new_name=new_name)
             else:
                 self.logger.warning(
-                    "agent_not_found_in_registry",
-                    agent_name=new_name,
-                    legacy_name=legacy_name
+                    "agent_not_found_in_registry", agent_name=new_name, legacy_name=legacy_name
                 )
 
     def _build_graph(self) -> StateGraph:
@@ -185,15 +174,11 @@ class SupportGraph:
                 return END
 
         # Build routing map
-        routing_map = {agent_name: agent_name for agent_name in self.agents.keys()}
+        routing_map = {agent_name: agent_name for agent_name in self.agents}
         routing_map[END] = END
 
         # Add conditional routing from meta router to domain routers
-        workflow.add_conditional_edges(
-            "router",
-            route_from_router,
-            routing_map
-        )
+        workflow.add_conditional_edges("router", route_from_router, routing_map)
 
         # Domain routers can route to specialists
         domain_routers = ["support_domain_router", "sales_domain_router", "cs_domain_router"]
@@ -202,11 +187,11 @@ class SupportGraph:
                 workflow.add_conditional_edges(
                     domain_router,
                     route_from_router,  # Reuse same routing logic
-                    routing_map
+                    routing_map,
                 )
 
         # Specialist agents end after responding (not routers)
-        for agent_name in self.agents.keys():
+        for agent_name in self.agents:
             if agent_name not in domain_routers:
                 workflow.add_edge(agent_name, END)
 
@@ -219,8 +204,8 @@ class SupportGraph:
     async def run(
         self,
         message: str,
-        conversation_id: Optional[str] = None,
-        context: Optional[Dict[str, Any]] = None
+        conversation_id: str | None = None,
+        context: dict[str, Any] | None = None,
     ) -> AgentState:
         """
         Run conversation through graph
@@ -241,7 +226,7 @@ class SupportGraph:
         self.logger.info(
             "workflow_execution_starting",
             message_preview=message[:50],
-            conversation_id=conversation_id
+            conversation_id=conversation_id,
         )
 
         # Build context dict
@@ -251,15 +236,13 @@ class SupportGraph:
 
         # Create initial state with context
         initial_state = create_initial_state(
-            message=message,
-            conversation_id=conversation_id,
-            context=ctx
+            message=message, conversation_id=conversation_id, context=ctx
         )
 
         self.logger.debug(
             "initial_state_created",
-            conversation_id=initial_state['conversation_id'],
-            customer_id=initial_state['customer_id']
+            conversation_id=initial_state["conversation_id"],
+            customer_id=initial_state["customer_id"],
         )
 
         # Execute workflow
@@ -268,9 +251,9 @@ class SupportGraph:
 
             self.logger.info(
                 "workflow_execution_completed",
-                intent=final_state.get('primary_intent'),
-                agents=final_state.get('agent_history'),
-                status=final_state.get('status')
+                intent=final_state.get("primary_intent"),
+                agents=final_state.get("agent_history"),
+                status=final_state.get("status"),
             )
 
             return final_state
@@ -280,7 +263,7 @@ class SupportGraph:
                 "workflow_execution_failed",
                 error=str(e),
                 error_type=type(e).__name__,
-                exc_info=True
+                exc_info=True,
             )
             raise
 
@@ -298,6 +281,7 @@ class SupportGraph:
             Agent's response text
         """
         import asyncio
+
         result = asyncio.run(self.run(message))
         return result.get("agent_response", "I'm not sure how to help with that.")
 
@@ -324,40 +308,42 @@ async def main():
     print("=" * 70)
 
     for i, (msg, expected) in enumerate(test_cases, 1):
-        print(f"\n{'#'*70}")
+        print(f"\n{'#' * 70}")
         print(f"TEST {i}/{len(test_cases)}: {msg}")
         print(f"Expected routing to: {expected.upper()}")
-        print(f"{'#'*70}")
+        print(f"{'#' * 70}")
 
         try:
             result = await graph.run(msg)
 
-            agents = result.get('agent_history', [])
-            intent = result.get('primary_intent', 'N/A')
-            status = result.get('status', 'unknown')
+            agents = result.get("agent_history", [])
+            intent = result.get("primary_intent", "N/A")
+            status = result.get("status", "unknown")
 
             print(f"\n✓ Intent: {intent}")
             print(f"✓ Path: {' → '.join([a.upper() for a in agents])}")
             print(f"✓ Status: {status}")
 
             # Show response preview
-            response = result.get('agent_response', 'N/A')
+            response = result.get("agent_response", "N/A")
             preview = response[:150] + "..." if len(response) > 150 else response
             print(f"✓ Response: {preview}")
 
-            print(f"✓ TEST PASSED")
+            print("✓ TEST PASSED")
 
         except Exception as e:
             print(f"✗ ERROR: {e}")
             import traceback
+
             traceback.print_exc()
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("REFACTORED GRAPH TESTING COMPLETE")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
     print("New tier-based agents successfully integrated!")
 
 
 if __name__ == "__main__":
     import asyncio
+
     asyncio.run(main())
