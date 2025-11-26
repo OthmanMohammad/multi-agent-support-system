@@ -17,14 +17,16 @@ Part of: EPIC-006 Advanced Workflow Patterns
 """
 
 import asyncio
-from typing import List, Dict, Any, Optional, Callable, Literal
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from enum import Enum
+from typing import Any
+
 import structlog
 
-from src.workflow.state import AgentState
 from src.workflow.exceptions import WorkflowException
+from src.workflow.state import AgentState
 
 # Alias for backward compatibility
 WorkflowExecutionError = WorkflowException
@@ -34,6 +36,7 @@ logger = structlog.get_logger(__name__)
 
 class ExpertRole(str, Enum):
     """Role of an expert in the panel."""
+
     PRIMARY = "primary"  # Primary expert - highest weight
     SPECIALIST = "specialist"  # Specialized expert in subdomain
     ADVISOR = "advisor"  # Advisory role - provides context
@@ -42,6 +45,7 @@ class ExpertRole(str, Enum):
 
 class SynthesisStrategy(str, Enum):
     """Strategy for synthesizing expert contributions."""
+
     COORDINATOR = "coordinator"  # Coordinator agent synthesizes
     CONSENSUS = "consensus"  # Require consensus among experts
     WEIGHTED_MERGE = "weighted_merge"  # Merge with expert weights
@@ -63,13 +67,14 @@ class Expert:
         execution_order: Order for sequential strategies (optional)
         metadata: Additional expert metadata
     """
+
     agent_name: str
     role: ExpertRole = ExpertRole.SPECIALIST
     expertise_area: str = ""
     weight: float = 1.0
     required: bool = True
-    execution_order: Optional[int] = None
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    execution_order: int | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -86,12 +91,13 @@ class ExpertContribution:
         recommendations: Specific recommendations
         timestamp: When contribution was made
     """
+
     expert_name: str
     expertise_area: str
     contribution: str
     confidence: float
-    key_insights: List[str] = field(default_factory=list)
-    recommendations: List[str] = field(default_factory=list)
+    key_insights: list[str] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
 
@@ -111,15 +117,16 @@ class ExpertPanelResult:
         execution_time: Total workflow time in seconds
         error: Error message if workflow failed
     """
+
     success: bool
-    final_solution: Optional[str]
-    expert_contributions: List[ExpertContribution]
+    final_solution: str | None
+    expert_contributions: list[ExpertContribution]
     synthesis_method: SynthesisStrategy
     confidence: float
     consensus_level: float
-    primary_expert: Optional[str]
+    primary_expert: str | None
     execution_time: float
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class ExpertPanelWorkflow:
@@ -150,12 +157,12 @@ class ExpertPanelWorkflow:
     def __init__(
         self,
         name: str,
-        experts: List[Expert],
-        coordinator_agent: Optional[str] = None,
+        experts: list[Expert],
+        coordinator_agent: str | None = None,
         synthesis_strategy: SynthesisStrategy = SynthesisStrategy.COORDINATOR,
         parallel_execution: bool = True,
         consensus_threshold: float = 0.7,
-        overall_timeout: Optional[int] = None
+        overall_timeout: int | None = None,
     ):
         """
         Initialize expert panel workflow.
@@ -190,7 +197,7 @@ class ExpertPanelWorkflow:
             self.logger.warning(
                 "many_experts",
                 count=len(self.experts),
-                message="Large expert panel may be difficult to coordinate"
+                message="Large expert panel may be difficult to coordinate",
             )
 
         if not 0.0 <= self.consensus_threshold <= 1.0:
@@ -206,9 +213,7 @@ class ExpertPanelWorkflow:
             raise ValueError("COORDINATOR synthesis strategy requires coordinator_agent")
 
     async def execute(
-        self,
-        initial_state: AgentState,
-        agent_executor: Callable[[str, AgentState], Any]
+        self, initial_state: AgentState, agent_executor: Callable[[str, AgentState], Any]
     ) -> ExpertPanelResult:
         """
         Execute the expert panel workflow.
@@ -221,39 +226,37 @@ class ExpertPanelWorkflow:
             ExpertPanelResult with synthesized solution
         """
         start_time = datetime.now(UTC)
-        contributions: List[ExpertContribution] = []
+        contributions: list[ExpertContribution] = []
 
         self.logger.info(
             "expert_panel_started",
             experts=len(self.experts),
             parallel=self.parallel_execution,
-            synthesis=self.synthesis_strategy.value
+            synthesis=self.synthesis_strategy.value,
         )
 
         try:
             # Step 1: Gather expert contributions
             if self.parallel_execution:
                 contributions = await self._gather_parallel_contributions(
-                    initial_state,
-                    agent_executor
+                    initial_state, agent_executor
                 )
             else:
                 contributions = await self._gather_sequential_contributions(
-                    initial_state,
-                    agent_executor
+                    initial_state, agent_executor
                 )
 
             self.logger.info(
                 "contributions_gathered",
                 count=len(contributions),
-                average_confidence=sum(c.confidence for c in contributions) / len(contributions) if contributions else 0
+                average_confidence=sum(c.confidence for c in contributions) / len(contributions)
+                if contributions
+                else 0,
             )
 
             # Step 2: Synthesize contributions
             final_solution, confidence, consensus_level = await self._synthesize_contributions(
-                contributions,
-                initial_state,
-                agent_executor
+                contributions, initial_state, agent_executor
             )
 
             # Step 3: Identify primary expert (if any)
@@ -265,7 +268,7 @@ class ExpertPanelWorkflow:
                 "expert_panel_completed",
                 confidence=confidence,
                 consensus=consensus_level,
-                execution_time=execution_time
+                execution_time=execution_time,
             )
 
             return ExpertPanelResult(
@@ -276,10 +279,10 @@ class ExpertPanelWorkflow:
                 confidence=confidence,
                 consensus_level=consensus_level,
                 primary_expert=primary_expert,
-                execution_time=execution_time
+                execution_time=execution_time,
             )
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             error = f"Expert panel exceeded timeout of {self.overall_timeout}s"
             self.logger.error("expert_panel_timeout", error=error)
 
@@ -292,7 +295,7 @@ class ExpertPanelWorkflow:
                 consensus_level=0.0,
                 primary_expert=None,
                 execution_time=(datetime.now(UTC) - start_time).total_seconds(),
-                error=error
+                error=error,
             )
 
         except Exception as e:
@@ -307,16 +310,14 @@ class ExpertPanelWorkflow:
                 consensus_level=0.0,
                 primary_expert=None,
                 execution_time=(datetime.now(UTC) - start_time).total_seconds(),
-                error=f"Expert panel error: {str(e)}"
+                error=f"Expert panel error: {e!s}",
             )
 
     async def _gather_parallel_contributions(
-        self,
-        state: AgentState,
-        agent_executor: Callable
-    ) -> List[ExpertContribution]:
+        self, state: AgentState, agent_executor: Callable
+    ) -> list[ExpertContribution]:
         """Gather expert contributions in parallel."""
-        contributions: List[ExpertContribution] = []
+        contributions: list[ExpertContribution] = []
 
         # Create tasks for all experts
         tasks = {}
@@ -333,9 +334,8 @@ class ExpertPanelWorkflow:
         timeout_task = None
         if self.overall_timeout:
             timeout_task = asyncio.create_task(asyncio.sleep(self.overall_timeout))
-            done, pending = await asyncio.wait(
-                [*tasks.values(), timeout_task],
-                return_when=asyncio.ALL_COMPLETED
+            done, _pending = await asyncio.wait(
+                [*tasks.values(), timeout_task], return_when=asyncio.ALL_COMPLETED
             )
 
             if timeout_task in done and not all(t.done() for t in tasks.values()):
@@ -343,7 +343,7 @@ class ExpertPanelWorkflow:
                 for task in tasks.values():
                     if not task.done():
                         task.cancel()
-                raise asyncio.TimeoutError()
+                raise TimeoutError()
         else:
             await asyncio.wait(tasks.values())
 
@@ -355,26 +355,20 @@ class ExpertPanelWorkflow:
                     if contribution:
                         contributions.append(contribution)
                 except Exception as e:
-                    self.logger.warning(
-                        "expert_failed",
-                        expert=expert_name,
-                        error=str(e)
-                    )
+                    self.logger.warning("expert_failed", expert=expert_name, error=str(e))
 
         return contributions
 
     async def _gather_sequential_contributions(
-        self,
-        state: AgentState,
-        agent_executor: Callable
-    ) -> List[ExpertContribution]:
+        self, state: AgentState, agent_executor: Callable
+    ) -> list[ExpertContribution]:
         """Gather expert contributions sequentially."""
-        contributions: List[ExpertContribution] = []
+        contributions: list[ExpertContribution] = []
 
         # Sort by execution order if specified
         sorted_experts = sorted(
             self.experts,
-            key=lambda e: e.execution_order if e.execution_order is not None else float('inf')
+            key=lambda e: e.execution_order if e.execution_order is not None else float("inf"),
         )
 
         for expert in sorted_experts:
@@ -384,19 +378,11 @@ class ExpertPanelWorkflow:
 
             # Provide previous contributions as context
             expert_state["previous_contributions"] = [
-                {
-                    "expert": c.expert_name,
-                    "area": c.expertise_area,
-                    "contribution": c.contribution
-                }
+                {"expert": c.expert_name, "area": c.expertise_area, "contribution": c.contribution}
                 for c in contributions
             ]
 
-            contribution = await self._get_expert_contribution(
-                expert,
-                expert_state,
-                agent_executor
-            )
+            contribution = await self._get_expert_contribution(expert, expert_state, agent_executor)
 
             if contribution:
                 contributions.append(contribution)
@@ -404,23 +390,15 @@ class ExpertPanelWorkflow:
         return contributions
 
     async def _get_expert_contribution(
-        self,
-        expert: Expert,
-        state: AgentState,
-        agent_executor: Callable
-    ) -> Optional[ExpertContribution]:
+        self, expert: Expert, state: AgentState, agent_executor: Callable
+    ) -> ExpertContribution | None:
         """Get contribution from a single expert."""
         try:
             self.logger.debug(
-                "expert_executing",
-                expert=expert.agent_name,
-                area=expert.expertise_area
+                "expert_executing", expert=expert.agent_name, area=expert.expertise_area
             )
 
-            result = await asyncio.wait_for(
-                agent_executor(expert.agent_name, state),
-                timeout=60
-            )
+            result = await asyncio.wait_for(agent_executor(expert.agent_name, state), timeout=60)
 
             contribution_text = result.get("agent_response", "")
             confidence = result.get("response_confidence", 0.5)
@@ -437,42 +415,32 @@ class ExpertPanelWorkflow:
                 confidence=confidence,
                 key_insights=key_insights,
                 recommendations=recommendations,
-                timestamp=datetime.now(UTC)
+                timestamp=datetime.now(UTC),
             )
 
             self.logger.info(
                 "expert_contributed",
                 expert=expert.agent_name,
                 confidence=confidence,
-                length=len(contribution_text)
+                length=len(contribution_text),
             )
 
             return contribution
 
-        except asyncio.TimeoutError:
-            self.logger.warning(
-                "expert_timeout",
-                expert=expert.agent_name
-            )
+        except TimeoutError:
+            self.logger.warning("expert_timeout", expert=expert.agent_name)
             if expert.required:
                 raise
             return None
 
         except Exception as e:
-            self.logger.warning(
-                "expert_error",
-                expert=expert.agent_name,
-                error=str(e)
-            )
+            self.logger.warning("expert_error", expert=expert.agent_name, error=str(e))
             if expert.required:
                 raise
             return None
 
     async def _synthesize_contributions(
-        self,
-        contributions: List[ExpertContribution],
-        state: AgentState,
-        agent_executor: Callable
+        self, contributions: list[ExpertContribution], state: AgentState, agent_executor: Callable
     ) -> tuple[str, float, float]:
         """
         Synthesize expert contributions into final solution.
@@ -500,10 +468,7 @@ class ExpertPanelWorkflow:
             return self._weighted_merge_synthesis(contributions)
 
     async def _coordinator_synthesis(
-        self,
-        contributions: List[ExpertContribution],
-        state: AgentState,
-        agent_executor: Callable
+        self, contributions: list[ExpertContribution], state: AgentState, agent_executor: Callable
     ) -> tuple[str, float, float]:
         """Let coordinator agent synthesize contributions."""
         coordinator_state = state.copy()
@@ -512,7 +477,7 @@ class ExpertPanelWorkflow:
                 "expert": c.expert_name,
                 "area": c.expertise_area,
                 "contribution": c.contribution,
-                "confidence": c.confidence
+                "confidence": c.confidence,
             }
             for c in contributions
         ]
@@ -520,8 +485,7 @@ class ExpertPanelWorkflow:
 
         try:
             result = await asyncio.wait_for(
-                agent_executor(self.coordinator_agent, coordinator_state),
-                timeout=60
+                agent_executor(self.coordinator_agent, coordinator_state), timeout=60
             )
 
             solution = result.get("agent_response", "")
@@ -536,8 +500,7 @@ class ExpertPanelWorkflow:
             return self._weighted_merge_synthesis(contributions)
 
     def _consensus_synthesis(
-        self,
-        contributions: List[ExpertContribution]
+        self, contributions: list[ExpertContribution]
     ) -> tuple[str, float, float]:
         """Synthesize based on consensus."""
         # Calculate consensus level
@@ -545,10 +508,12 @@ class ExpertPanelWorkflow:
 
         if consensus >= self.consensus_threshold:
             # Strong consensus - merge contributions
-            merged = "\n\n".join([
-                f"**{c.expert_name} ({c.expertise_area})**:\n{c.contribution}"
-                for c in contributions
-            ])
+            merged = "\n\n".join(
+                [
+                    f"**{c.expert_name} ({c.expertise_area})**:\n{c.contribution}"
+                    for c in contributions
+                ]
+            )
             avg_confidence = sum(c.confidence for c in contributions) / len(contributions)
             return merged, avg_confidence, consensus
         else:
@@ -561,8 +526,7 @@ class ExpertPanelWorkflow:
             return solution, 0.5, consensus
 
     def _weighted_merge_synthesis(
-        self,
-        contributions: List[ExpertContribution]
+        self, contributions: list[ExpertContribution]
     ) -> tuple[str, float, float]:
         """Merge contributions with expert weights."""
         # Get expert weights
@@ -570,9 +534,7 @@ class ExpertPanelWorkflow:
 
         # Sort by weight (highest first)
         sorted_contributions = sorted(
-            contributions,
-            key=lambda c: expert_weights.get(c.expert_name, 1.0),
-            reverse=True
+            contributions, key=lambda c: expert_weights.get(c.expert_name, 1.0), reverse=True
         )
 
         # Merge with weighted emphasis
@@ -593,8 +555,7 @@ class ExpertPanelWorkflow:
         return merged, final_confidence, consensus
 
     def _sequential_build_synthesis(
-        self,
-        contributions: List[ExpertContribution]
+        self, contributions: list[ExpertContribution]
     ) -> tuple[str, float, float]:
         """Each expert builds on previous (for sequential execution)."""
         if not contributions:
@@ -617,8 +578,7 @@ class ExpertPanelWorkflow:
         return solution, final_contribution.confidence, consensus
 
     def _best_solution_synthesis(
-        self,
-        contributions: List[ExpertContribution]
+        self, contributions: list[ExpertContribution]
     ) -> tuple[str, float, float]:
         """Select single best contribution."""
         if not contributions:
@@ -629,8 +589,7 @@ class ExpertPanelWorkflow:
 
         # Calculate score = confidence * weight
         best_contribution = max(
-            contributions,
-            key=lambda c: c.confidence * expert_weights.get(c.expert_name, 1.0)
+            contributions, key=lambda c: c.confidence * expert_weights.get(c.expert_name, 1.0)
         )
 
         solution = f"**Best Solution** (by {best_contribution.expert_name}, {best_contribution.expertise_area}):\n\n"
@@ -640,7 +599,7 @@ class ExpertPanelWorkflow:
 
         return solution, best_contribution.confidence, consensus
 
-    def _calculate_consensus(self, contributions: List[ExpertContribution]) -> float:
+    def _calculate_consensus(self, contributions: list[ExpertContribution]) -> float:
         """Calculate consensus level among experts (simplified)."""
         if len(contributions) < 2:
             return 1.0
@@ -657,7 +616,7 @@ class ExpertPanelWorkflow:
 
         return consensus
 
-    def _identify_primary_expert(self) -> Optional[str]:
+    def _identify_primary_expert(self) -> str | None:
         """Identify the primary expert (if any)."""
         primary_experts = [e for e in self.experts if e.role == ExpertRole.PRIMARY]
         if primary_experts:
@@ -669,11 +628,11 @@ class ExpertPanelWorkflow:
 # Convenience function for quick expert panel execution
 async def execute_expert_panel(
     workflow_name: str,
-    expert_names: List[str],
-    coordinator: Optional[str],
+    expert_names: list[str],
+    coordinator: str | None,
     initial_state: AgentState,
     agent_executor: Callable,
-    **kwargs
+    **kwargs,
 ) -> ExpertPanelResult:
     """
     Quick helper to execute expert panel workflow.
@@ -701,9 +660,6 @@ async def execute_expert_panel(
     """
     experts = [Expert(agent_name=name) for name in expert_names]
     workflow = ExpertPanelWorkflow(
-        name=workflow_name,
-        experts=experts,
-        coordinator_agent=coordinator,
-        **kwargs
+        name=workflow_name, experts=experts, coordinator_agent=coordinator, **kwargs
     )
     return await workflow.execute(initial_state, agent_executor)
