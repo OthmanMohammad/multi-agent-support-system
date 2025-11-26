@@ -37,61 +37,58 @@ Agents:
 """
 
 # Task Automation (5 agents)
-from src.agents.operational.automation.task_automation import (
-    TicketCreatorAgent,
-    CalendarSchedulerAgent,
-    EmailSenderAgent,
-    ReminderSenderAgent,
-    NotificationSenderAgent,
-)
-
 # Data Automation (5 agents)
 from src.agents.operational.automation.data_automation import (
-    CRMUpdaterAgent,
     ContactEnricherAgent,
-    DeduplicatorAgent,
+    CRMUpdaterAgent,
     DataValidatorAgent,
+    DeduplicatorAgent,
     ReportAutomatorAgent,
 )
 
 # Process Automation (10 agents)
 from src.agents.operational.automation.process_automation import (
-    WorkflowExecutorAgent,
     ApprovalRouterAgent,
-    SLAEnforcerAgent,
-    HandoffAutomatorAgent,
-    OnboardingAutomatorAgent,
-    RenewalProcessorAgent,
-    InvoiceSenderAgent,
-    PaymentRetryAgent,
-    DataBackupAgent,
     CleanupSchedulerAgent,
+    DataBackupAgent,
+    HandoffAutomatorAgent,
+    InvoiceSenderAgent,
+    OnboardingAutomatorAgent,
+    PaymentRetryAgent,
+    RenewalProcessorAgent,
+    SLAEnforcerAgent,
+    WorkflowExecutorAgent,
+)
+from src.agents.operational.automation.task_automation import (
+    CalendarSchedulerAgent,
+    EmailSenderAgent,
+    NotificationSenderAgent,
+    ReminderSenderAgent,
+    TicketCreatorAgent,
 )
 
 __all__ = [
-    # Task Automation (5)
-    "TicketCreatorAgent",
-    "CalendarSchedulerAgent",
-    "EmailSenderAgent",
-    "ReminderSenderAgent",
-    "NotificationSenderAgent",
-
+    "ApprovalRouterAgent",
     # Data Automation (5)
     "CRMUpdaterAgent",
+    "CalendarSchedulerAgent",
+    "CleanupSchedulerAgent",
     "ContactEnricherAgent",
-    "DeduplicatorAgent",
+    "DataBackupAgent",
     "DataValidatorAgent",
+    "DeduplicatorAgent",
+    "EmailSenderAgent",
+    "HandoffAutomatorAgent",
+    "InvoiceSenderAgent",
+    "NotificationSenderAgent",
+    "OnboardingAutomatorAgent",
+    "PaymentRetryAgent",
+    "ReminderSenderAgent",
+    "RenewalProcessorAgent",
     "ReportAutomatorAgent",
-
+    "SLAEnforcerAgent",
+    # Task Automation (5)
+    "TicketCreatorAgent",
     # Process Automation (10)
     "WorkflowExecutorAgent",
-    "ApprovalRouterAgent",
-    "SLAEnforcerAgent",
-    "HandoffAutomatorAgent",
-    "OnboardingAutomatorAgent",
-    "RenewalProcessorAgent",
-    "InvoiceSenderAgent",
-    "PaymentRetryAgent",
-    "DataBackupAgent",
-    "CleanupSchedulerAgent",
 ]
