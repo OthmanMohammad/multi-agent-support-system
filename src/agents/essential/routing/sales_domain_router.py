@@ -40,6 +40,23 @@ class SalesDomainRouter(RoutingAgent):
         "progression"     # Trial conversion, closing deals
     ]
 
+    # Valid agent names for each category
+    VALID_AGENTS = {
+        "qualification": ["inbound_qualifier", "bant_qualifier"],
+        "education": ["feature_explainer", "demo_scheduler", "value_proposition", "use_case_matcher", "roi_calculator"],
+        "objection": ["price_objection_handler", "competitor_comparison_handler", "integration_objection_handler",
+                      "security_objection_handler", "timing_objection_handler", "feature_gap_handler"],
+        "progression": ["closer", "trial_optimizer", "proposal_generator", "contract_negotiator"]
+    }
+
+    # Default agent for each category (fallback)
+    DEFAULT_AGENTS = {
+        "qualification": "inbound_qualifier",
+        "education": "feature_explainer",
+        "objection": "price_objection_handler",
+        "progression": "closer"
+    }
+
     def __init__(self, **kwargs):
         """Initialize Sales Domain Router."""
         config = AgentConfig(
@@ -62,70 +79,56 @@ class SalesDomainRouter(RoutingAgent):
         Get the system prompt for sales domain routing.
 
         Returns:
-            System prompt with routing taxonomy
+            System prompt with routing taxonomy and specific agent selection
         """
-        return """You are a sales domain routing system. Classify sales queries into one of 4 categories.
+        return """You are a sales domain routing system. Route sales queries to the SPECIFIC specialist agent.
 
-**Sales Categories:**
+**Available Sales Agents (choose exactly ONE):**
 
-1. **qualification**
-   - Needs assessment: understanding requirements, pain points
-   - Budget evaluation: pricing inquiry, budget discussions
-   - Timeline: when they need solution, urgency
-   - Decision-making: stakeholders, buying process
-   - Fit evaluation: is product right for their needs
-   - Company info: team size, industry, use case
-   - Initial inquiry: "tell me about your product"
+## QUALIFICATION Agents:
+- **inbound_qualifier**: Initial inquiries, "tell me about your product", company info gathering
+- **bant_qualifier**: Budget/Authority/Need/Timeline questions, serious buyer qualification
 
-2. **education**
-   - Product demos: schedule demo, see product in action
-   - Feature education: explain specific features, capabilities
-   - Use cases: industry examples, success stories
-   - Value proposition: ROI, benefits, outcomes
-   - Comparison sheets: feature matrices, what's included
-   - Documentation: guides, videos, tutorials
-   - Free trial: how to start, trial features
+## EDUCATION Agents:
+- **feature_explainer**: Feature questions, "what integrations do you have?", "how does X work?", capabilities
+- **demo_scheduler**: Schedule demos, "can I see a demo?", demo requests
+- **value_proposition**: ROI discussions, business value, benefits, outcomes
+- **use_case_matcher**: Industry examples, success stories, "how do companies like us use this?"
+- **roi_calculator**: Specific ROI calculations, cost savings, payback period
 
-3. **objection**
-   - Pricing concerns: too expensive, need discount
-   - Competitor comparison: vs Asana, vs Monday.com
-   - Feature gaps: missing features, limitations
-   - Risk concerns: security, reliability, uptime
-   - Implementation concerns: migration, setup difficulty
-   - Contract terms: length, cancellation, flexibility
-   - Trust issues: company stability, customer support
+## OBJECTION Agents:
+- **price_objection_handler**: "Too expensive", pricing concerns, need discounts, budget constraints
+- **competitor_comparison_handler**: Competitor mentions (Trello, Asana, Monday, Jira), "vs X", switching from another tool
+- **integration_objection_handler**: Integration concerns, "does it work with X?", API questions, connectivity
+- **security_objection_handler**: Security concerns, compliance, data protection, SOC2, GDPR
+- **timing_objection_handler**: "Not ready", "maybe later", timing concerns
+- **feature_gap_handler**: Missing features, "do you have X?", feature limitations
 
-4. **progression**
-   - Trial conversion: ready to buy after trial
-   - Plan selection: which plan to choose
-   - Contract negotiation: custom pricing, terms
-   - Deal closing: ready to purchase, final questions
-   - Expansion: add seats, upgrade plan
-   - Procurement: purchase order, legal review
-   - Commitment signals: "let's move forward", "send contract"
+## PROGRESSION Agents:
+- **closer**: Ready to buy, "let's proceed", final purchase decision
+- **trial_optimizer**: Trial conversion, extending trial, trial-related questions
+- **proposal_generator**: Custom proposals, enterprise quotes, formal pricing
+- **contract_negotiator**: Contract terms, legal review, custom agreements
 
 **Routing Rules:**
-- Initial exploratory questions → qualification
-- "Show me", "demo", "how does X work" → education
-- "Too expensive", "vs [competitor]", "concerned about" → objection
-- "Ready to buy", "let's proceed", plan selection → progression
-- Consider customer plan (free → qualification, paid → progression)
-- Consider extracted entities (competitor → objection, amount → qualification/objection)
-
-**Context Considerations:**
-- Plan tier: free/trial → qualification/education, paid → progression
-- Team size: large teams suggest serious buyers → progression
-- Extracted entities provide strong signals
-- Emotion: excited → progression, concerned → objection
+1. Feature/capability questions → feature_explainer
+2. Demo scheduling → demo_scheduler
+3. Competitor mentions (Trello, Asana, Monday, Jira, etc.) → competitor_comparison_handler
+4. Integration/API questions → integration_objection_handler (or feature_explainer if just exploring)
+5. Pricing concerns → price_objection_handler
+6. Security/compliance questions → security_objection_handler
+7. Initial exploratory → inbound_qualifier
+8. Ready to buy signals → closer
 
 **Output Format (JSON only, no extra text):**
 {{
-    "category": "qualification",
+    "agent": "feature_explainer",
+    "category": "education",
     "confidence": 0.92,
-    "reasoning": "Customer asking about product fit and team size, classic qualification questions"
+    "reasoning": "Customer asking about integrations - this is a feature capabilities question"
 }}
 
-Output ONLY valid JSON. Choose exactly ONE category."""
+Output ONLY valid JSON. Choose exactly ONE agent."""
 
     async def process(self, state: AgentState) -> AgentState:
         """
@@ -207,8 +210,13 @@ Consider any previous conversation context when making your routing decision."""
             # Parse response
             routing = self._parse_response(response)
 
-            # Validate category
+            # Get agent and category from response
+            agent = routing.get("agent", "").lower()
             category = routing.get("category", "qualification").lower()
+            confidence = routing.get("confidence", 0.8)
+            reasoning = routing.get("reasoning", "")
+
+            # Validate category
             if category not in self.SALES_CATEGORIES:
                 self.logger.warning(
                     "invalid_sales_category",
@@ -217,22 +225,28 @@ Consider any previous conversation context when making your routing decision."""
                 )
                 category = "qualification"
 
-            confidence = routing.get("confidence", 0.8)
-            reasoning = routing.get("reasoning", "")
+            # Validate agent - must be in the valid agents list
+            all_valid_agents = []
+            for agents in self.VALID_AGENTS.values():
+                all_valid_agents.extend(agents)
+
+            if agent not in all_valid_agents:
+                self.logger.warning(
+                    "invalid_sales_agent",
+                    agent=agent,
+                    category=category,
+                    defaulting_to=self.DEFAULT_AGENTS.get(category)
+                )
+                agent = self.DEFAULT_AGENTS.get(category, "inbound_qualifier")
 
             # Update state
             state["sales_category"] = category
             state["sales_category_confidence"] = confidence
             state["sales_category_reasoning"] = reasoning
+            state["selected_agent"] = agent
 
-            # Map category to actual agent for routing
-            category_to_agent = {
-                "qualification": "sales_qualification",  # inbound_qualifier
-                "education": "sales_education",           # demo_scheduler
-                "objection": "sales_objection",           # price_objection_handler
-                "progression": "sales_progression"        # closer
-            }
-            state["next_agent"] = category_to_agent.get(category, "escalation")
+            # Route directly to the specific agent
+            state["next_agent"] = agent
 
             # Calculate latency
             latency_ms = int((datetime.now() - start_time).total_seconds() * 1000)

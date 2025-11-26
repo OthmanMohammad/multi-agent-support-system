@@ -69,11 +69,34 @@ class SupportGraph:
             "api": "api_agent",
             "account": "account_deletion_specialist",
 
-            # Sales specialist agents
+            # Sales specialist agents - Qualification
             "sales_qualification": "inbound_qualifier",
+            "inbound_qualifier": "inbound_qualifier",
+            "bant_qualifier": "bant_qualifier",
+
+            # Sales specialist agents - Education
             "sales_education": "demo_scheduler",
+            "feature_explainer": "feature_explainer",
+            "demo_scheduler": "demo_scheduler",
+            "value_proposition": "value_proposition",
+            "use_case_matcher": "use_case_matcher",
+            "roi_calculator": "roi_calculator",
+
+            # Sales specialist agents - Objection Handling
             "sales_objection": "price_objection_handler",
+            "price_objection_handler": "price_objection_handler",
+            "competitor_comparison_handler": "competitor_comparison_handler",
+            "integration_objection_handler": "integration_objection_handler",
+            "security_objection_handler": "security_objection_handler",
+            "timing_objection_handler": "timing_objection_handler",
+            "feature_gap_handler": "feature_gap_handler",
+
+            # Sales specialist agents - Progression
             "sales_progression": "closer",
+            "closer": "closer",
+            "trial_optimizer": "trial_optimizer",
+            "proposal_generator": "proposal_generator",
+            "contract_negotiator": "contract_negotiator",
 
             # Customer Success specialist agents
             "cs_health": "health_score",
