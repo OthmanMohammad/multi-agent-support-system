@@ -1,9 +1,9 @@
 "use client";
 
 import type { JSX } from "react";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChangeEvent, KeyboardEvent } from "react";
-import { File, Paperclip, Send, X, StopCircle } from "lucide-react";
+import { File, Paperclip, Send, StopCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useConversation } from "@/lib/hooks/useConversations";
 import { useStreamResponse } from "@/lib/api/hooks/useStreamResponse";
@@ -48,6 +48,7 @@ const ALLOWED_FILE_TYPES = [
  * - Keyboard shortcuts (Enter to send, Shift+Enter for newline)
  * - Cancel streaming capability
  */
+// eslint-disable-next-line complexity -- Complex component handling multiple concerns
 export function MessageInput({
   conversationId,
   disabled = false,
@@ -329,6 +330,7 @@ export function MessageInput({
               >
                 {attachment.type === "image" && attachment.preview ? (
                   <div className="relative h-12 w-12 overflow-hidden rounded">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- Dynamic base64 preview */}
                     <img
                       src={attachment.preview}
                       alt={attachment.file.name}
@@ -379,6 +381,7 @@ export function MessageInput({
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={
+              // eslint-disable-next-line no-nested-ternary -- Placeholder state conditional
               disabled
                 ? "Reopen conversation to send messages"
                 : isStreamingResponse
