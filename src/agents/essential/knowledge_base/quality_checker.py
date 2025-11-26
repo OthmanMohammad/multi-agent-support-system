@@ -311,7 +311,8 @@ Evaluate this article's quality."""
             response = await self.call_llm(
                 system_prompt=system_prompt,
                 user_message=user_prompt,
-                max_tokens=1024
+                max_tokens=1024,
+                conversation_history=[]  # Quality checks are standalone, no conversation context
             )
 
             # Parse JSON response
