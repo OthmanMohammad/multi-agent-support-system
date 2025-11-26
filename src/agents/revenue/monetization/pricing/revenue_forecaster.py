@@ -612,5 +612,9 @@ Opportunities: {len(risks_opps['opportunities'])}
 
 Generate a comprehensive revenue forecast."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # Revenue forecast uses historical data
+        )
         return response
