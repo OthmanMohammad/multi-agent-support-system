@@ -5,14 +5,15 @@ This module defines the data structures used throughout the context enrichment s
 including customer intelligence, engagement metrics, support history, and enriched context.
 """
 
-from dataclasses import dataclass, field, asdict
-from typing import Dict, Any, Optional, List
-from datetime import datetime, UTC
+from dataclasses import asdict, dataclass, field
+from datetime import UTC, datetime
 from enum import Enum
+from typing import Any
 
 
 class ChurnRiskLevel(Enum):
     """Churn risk classification"""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -21,6 +22,7 @@ class ChurnRiskLevel(Enum):
 
 class HealthScoreLevel(Enum):
     """Health score classification"""
+
     POOR = "poor"
     FAIR = "fair"
     GOOD = "good"
@@ -35,16 +37,17 @@ class CustomerIntelligence:
     This represents the core customer data including plan, revenue,
     health indicators, and tenure information.
     """
+
     company_name: str
-    industry: Optional[str] = None
-    company_size: Optional[int] = None
+    industry: str | None = None
+    company_size: int | None = None
     plan: str = "free"
     mrr: float = 0.0
     ltv: float = 0.0
     health_score: int = 50
     churn_risk: float = 0.5
-    nps_score: Optional[int] = None
-    customer_since: Optional[datetime] = None
+    nps_score: int | None = None
+    customer_since: datetime | None = None
 
     def get_churn_risk_level(self) -> ChurnRiskLevel:
         """Get churn risk classification"""
@@ -77,13 +80,14 @@ class EngagementMetrics:
     Tracks how actively the customer is using the product,
     which features they use, and their engagement patterns.
     """
-    last_login: Optional[datetime] = None
+
+    last_login: datetime | None = None
     login_count_30d: int = 0
     avg_session_duration_minutes: float = 0.0
     feature_adoption_score: float = 0.0
-    most_used_features: List[str] = field(default_factory=list)
-    unused_features: List[str] = field(default_factory=list)
-    days_since_last_login: Optional[int] = None
+    most_used_features: list[str] = field(default_factory=list)
+    unused_features: list[str] = field(default_factory=list)
+    days_since_last_login: int | None = None
 
 
 @dataclass
@@ -94,12 +98,13 @@ class SupportHistory:
     Provides context on past support interactions, resolution times,
     and customer satisfaction.
     """
+
     total_conversations: int = 0
     avg_resolution_time_minutes: float = 0.0
-    most_common_issues: List[str] = field(default_factory=list)
-    last_conversation: Optional[datetime] = None
-    last_csat: Optional[int] = None
-    avg_csat: Optional[float] = None
+    most_common_issues: list[str] = field(default_factory=list)
+    last_conversation: datetime | None = None
+    last_csat: int | None = None
+    avg_csat: float | None = None
     escalation_count: int = 0
     open_tickets: int = 0
 
@@ -112,13 +117,14 @@ class SubscriptionDetails:
     Details about the customer's subscription status, seats,
     billing cycle, and upcoming renewals.
     """
+
     seats_total: int = 1
     seats_used: int = 1
     billing_cycle: str = "monthly"
-    current_period_end: Optional[datetime] = None
-    days_to_renewal: Optional[int] = None
+    current_period_end: datetime | None = None
+    days_to_renewal: int | None = None
     cancel_at_period_end: bool = False
-    trial_status: Optional[str] = None
+    trial_status: str | None = None
     payment_method_valid: bool = True
 
 
@@ -130,10 +136,11 @@ class AccountHealth:
     Identifies positive opportunities (green flags) and
     potential issues (red/yellow flags) for the account.
     """
-    red_flags: List[str] = field(default_factory=list)
-    yellow_flags: List[str] = field(default_factory=list)
-    green_flags: List[str] = field(default_factory=list)
-    recent_health_changes: List[Dict[str, Any]] = field(default_factory=list)
+
+    red_flags: list[str] = field(default_factory=list)
+    yellow_flags: list[str] = field(default_factory=list)
+    green_flags: list[str] = field(default_factory=list)
+    recent_health_changes: list[dict[str, Any]] = field(default_factory=list)
 
     def has_critical_issues(self) -> bool:
         """Check if account has critical issues"""
@@ -152,12 +159,13 @@ class CompanyEnrichment:
     Optional enrichment from services like Clearbit, Crunchbase, etc.
     This is only populated if external API integrations are enabled.
     """
-    company_size: Optional[int] = None
-    industry: Optional[str] = None
-    estimated_revenue: Optional[float] = None
-    tech_stack: List[str] = field(default_factory=list)
-    funding_stage: Optional[str] = None
-    total_funding: Optional[float] = None
+
+    company_size: int | None = None
+    industry: str | None = None
+    estimated_revenue: float | None = None
+    tech_stack: list[str] = field(default_factory=list)
+    funding_stage: str | None = None
+    total_funding: float | None = None
 
 
 @dataclass
@@ -168,9 +176,10 @@ class ProductStatus:
     Current system status, incidents, and recent deployments
     that might affect customer experience.
     """
+
     status: str = "operational"
-    active_incidents: List[Dict[str, Any]] = field(default_factory=list)
-    recent_deployments: List[Dict[str, Any]] = field(default_factory=list)
+    active_incidents: list[dict[str, Any]] = field(default_factory=list)
+    recent_deployments: list[dict[str, Any]] = field(default_factory=list)
 
     def has_incidents(self) -> bool:
         """Check if there are active incidents"""
@@ -186,6 +195,7 @@ class EnrichedContext:
     It combines internal customer data, engagement metrics, support history,
     and optional external enrichment.
     """
+
     # Internal context (always populated)
     customer_intelligence: CustomerIntelligence
     engagement_metrics: EngagementMetrics
@@ -194,7 +204,7 @@ class EnrichedContext:
     account_health: AccountHealth
 
     # External context (optional)
-    company_enrichment: Optional[CompanyEnrichment] = None
+    company_enrichment: CompanyEnrichment | None = None
 
     # Real-time context
     product_status: ProductStatus = field(default_factory=ProductStatus)
@@ -203,9 +213,9 @@ class EnrichedContext:
     enriched_at: datetime = field(default_factory=datetime.utcnow)
     cache_hit: bool = False
     enrichment_latency_ms: float = 0.0
-    providers_used: List[str] = field(default_factory=list)
+    providers_used: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization"""
         return asdict(self)
 
@@ -234,7 +244,7 @@ class EnrichedContext:
         context = f"""
 <customer_context>
 Company: {ci.company_name}
-Industry: {ci.industry or 'Unknown'}
+Industry: {ci.industry or "Unknown"}
 Plan: {ci.plan.upper()}
 MRR: ${ci.mrr:,.2f}
 Health Score: {ci.health_score}/100 ({health_label})
@@ -249,7 +259,7 @@ Churn Risk: {churn_label} ({ci.churn_risk:.0%})
         # Engagement section
         context += f"""
 Recent Activity:
-- Last login: {em.last_login.strftime('%Y-%m-%d %H:%M') if em.last_login else 'Never'}
+- Last login: {em.last_login.strftime("%Y-%m-%d %H:%M") if em.last_login else "Never"}
 - Login frequency: {em.login_count_30d} times (last 30 days)
 """
         if em.most_used_features:
@@ -280,38 +290,38 @@ Subscription:
         if sd.days_to_renewal is not None:
             context += f"- Renewal: {sd.days_to_renewal} days\n"
         if sd.cancel_at_period_end:
-            context += f"- ⚠️ Scheduled for cancellation at period end\n"
+            context += "- ⚠️ Scheduled for cancellation at period end\n"
         if not sd.payment_method_valid:
-            context += f"- ⚠️ Payment method invalid\n"
+            context += "- ⚠️ Payment method invalid\n"
 
         # Add red flags if any
         if ah.red_flags:
-            context += f"\n🚨 RED FLAGS:\n"
+            context += "\n🚨 RED FLAGS:\n"
             for flag in ah.red_flags:
                 context += f"- {flag}\n"
 
         # Add yellow flags if any
         if ah.yellow_flags:
-            context += f"\n⚠️ YELLOW FLAGS:\n"
+            context += "\n⚠️ YELLOW FLAGS:\n"
             for flag in ah.yellow_flags:
                 context += f"- {flag}\n"
 
         # Add green flags (opportunities) if any
         if ah.green_flags:
-            context += f"\n✅ OPPORTUNITIES:\n"
+            context += "\n✅ OPPORTUNITIES:\n"
             for flag in ah.green_flags:
                 context += f"- {flag}\n"
 
         # Add product status if there are incidents
         if self.product_status.has_incidents():
-            context += f"\n⚠️ ACTIVE INCIDENTS:\n"
+            context += "\n⚠️ ACTIVE INCIDENTS:\n"
             for incident in self.product_status.active_incidents:
                 context += f"- {incident.get('title', 'Unknown incident')}\n"
 
         context += "</customer_context>"
         return context
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """Get a summary of key metrics"""
         return {
             "company_name": self.customer_intelligence.company_name,
@@ -325,5 +335,5 @@ Subscription:
             "has_critical_issues": self.account_health.has_critical_issues(),
             "has_opportunities": self.account_health.has_opportunities(),
             "enrichment_latency_ms": self.enrichment_latency_ms,
-            "cache_hit": self.cache_hit
+            "cache_hit": self.cache_hit,
         }
