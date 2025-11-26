@@ -3,19 +3,24 @@ Database connection management with async connection pooling
 Production-grade configuration with health checks
 Uses centralized configuration management
 """
+
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING
+
+from sqlalchemy import event, text
 from sqlalchemy.ext.asyncio import (
-    create_async_engine,
+    AsyncEngine,
     AsyncSession,
     async_sessionmaker,
-    AsyncEngine
+    create_async_engine,
 )
-from contextlib import asynccontextmanager
-from typing import AsyncGenerator, Optional
-from sqlalchemy import text, event
-from sqlalchemy.pool import Pool
 
 from src.core.config import get_settings
 from src.utils.logging.setup import get_logger
+
+if TYPE_CHECKING:
+    from sqlalchemy.pool import Pool
 
 # Initialize logger
 logger = get_logger(__name__)
@@ -24,13 +29,13 @@ logger = get_logger(__name__)
 settings = get_settings()
 
 # Global engine instance
-_engine: Optional[AsyncEngine] = None
+_engine: AsyncEngine | None = None
 
 
 def create_engine() -> AsyncEngine:
     """
     Create async SQLAlchemy engine with production settings
-    
+
     Returns:
         Configured async engine
     """
@@ -48,25 +53,25 @@ def create_engine() -> AsyncEngine:
                 "application_name": "multi_agent_support",
                 "jit": "off",  # Disable JIT for faster simple queries
             }
-        }
+        },
     )
-    
+
     # Log connection pool events (useful for debugging)
     @event.listens_for(engine.sync_engine, "connect")
     def receive_connect(dbapi_conn, connection_record):
         logger.debug("database_connection_established")
-    
+
     @event.listens_for(engine.sync_engine, "checkout")
     def receive_checkout(dbapi_conn, connection_record, connection_proxy):
         logger.debug("connection_checked_out_from_pool")
-    
+
     return engine
 
 
 def get_engine() -> AsyncEngine:
     """
     Get or create global engine instance
-    
+
     Returns:
         Async engine
     """
@@ -78,7 +83,7 @@ def get_engine() -> AsyncEngine:
             environment=settings.environment,
             pool_size=settings.database.pool_size,
             max_overflow=settings.database.max_overflow,
-            pool_timeout=settings.database.pool_timeout
+            pool_timeout=settings.database.pool_timeout,
         )
     return _engine
 
@@ -87,7 +92,7 @@ def get_engine() -> AsyncEngine:
 def create_session_factory() -> async_sessionmaker:
     """
     Create session factory with engine
-    
+
     Returns:
         Session factory
     """
@@ -109,12 +114,12 @@ AsyncSessionLocal = create_session_factory()
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
     """
     Get database session with automatic commit/rollback
-    
+
     Usage:
         async with get_db_session() as session:
             result = await session.execute(query)
             # Session automatically committed/rolled back
-    
+
     Yields:
         Async database session
     """
@@ -125,10 +130,7 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
         except Exception as e:
             await session.rollback()
             logger.error(
-                "database_session_error",
-                error=str(e),
-                error_type=type(e).__name__,
-                exc_info=True
+                "database_session_error", error=str(e), error_type=type(e).__name__, exc_info=True
             )
             raise
         finally:
@@ -144,13 +146,11 @@ async def init_db():
     or using Alembic migrations (alembic upgrade head).
     This function just verifies the database is accessible and reports status.
     """
-    from src.database.models import Base
     from sqlalchemy import inspect
 
-    logger.info(
-        "database_initialization_started",
-        environment=settings.environment
-    )
+    from src.database.models import Base
+
+    logger.info("database_initialization_started", environment=settings.environment)
     engine = get_engine()
 
     # Just verify connection and report table status
@@ -174,20 +174,16 @@ async def init_db():
                     "missing_database_tables",
                     missing_count=len(missing_tables),
                     total_expected=len(model_tables),
-                    missing_tables=sorted(list(missing_tables))[:20]  # Log first 20
+                    missing_tables=sorted(missing_tables)[:20],  # Log first 20
                 )
                 logger.error(
                     "database_not_initialized",
-                    message="Run 'alembic upgrade head' to create all tables using migrations"
+                    message="Run 'alembic upgrade head' to create all tables using migrations",
                 )
             else:
                 logger.info("database_tables_verified", table_count=len(model_tables))
     except Exception as e:
-        logger.error(
-            "database_connection_failed",
-            error=str(e),
-            error_type=type(e).__name__
-        )
+        logger.error("database_connection_failed", error=str(e), error_type=type(e).__name__)
         raise
 
 
@@ -198,10 +194,7 @@ async def close_db():
     """
     global _engine
     if _engine is not None:
-        logger.info(
-            "database_connections_closing",
-            environment=settings.environment
-        )
+        logger.info("database_connections_closing", environment=settings.environment)
         await _engine.dispose()
         logger.info("database_connections_closed")
         _engine = None
@@ -210,18 +203,18 @@ async def close_db():
 async def check_db_health() -> dict:
     """
     Check database connection health
-    
+
     Returns:
         Dict with health status
     """
     try:
         engine = get_engine()
-        
+
         async with engine.connect() as conn:
             # Test query
             result = await conn.execute(text("SELECT 1"))
             result.scalar()
-            
+
             # Get pool status
             pool: Pool = engine.pool
             pool_status = {
@@ -229,38 +222,32 @@ async def check_db_health() -> dict:
                 "checked_in": pool.checkedin(),
                 "checked_out": pool.checkedout(),
                 "overflow": pool.overflow(),
-                "total": pool.size() + pool.overflow()
+                "total": pool.size() + pool.overflow(),
             }
-            
+
             logger.debug(
                 "database_health_check_passed",
                 pool_size=pool_status["size"],
-                checked_out=pool_status["checked_out"]
+                checked_out=pool_status["checked_out"],
             )
-            
+
             return {
                 "status": "healthy",
                 "database": "postgresql",
                 "environment": settings.environment,
-                "pool": pool_status
+                "pool": pool_status,
             }
     except Exception as e:
         logger.error(
-            "database_health_check_failed",
-            error=str(e),
-            error_type=type(e).__name__,
-            exc_info=True
+            "database_health_check_failed", error=str(e), error_type=type(e).__name__, exc_info=True
         )
-        return {
-            "status": "unhealthy",
-            "error": str(e)
-        }
+        return {"status": "unhealthy", "error": str(e)}
 
 
 async def get_db_version() -> str:
     """
     Get PostgreSQL version
-    
+
     Returns:
         Version string
     """
@@ -271,47 +258,43 @@ async def get_db_version() -> str:
             logger.debug("database_version_retrieved", version_info=version[:50])
             return version
     except Exception as e:
-        logger.error(
-            "database_version_retrieval_failed",
-            error=str(e),
-            error_type=type(e).__name__
-        )
+        logger.error("database_version_retrieval_failed", error=str(e), error_type=type(e).__name__)
         return "unknown"
 
 
 if __name__ == "__main__":
     import asyncio
-    
+
     async def test():
         """Test database connection"""
         print("=" * 60)
         print("Testing Database Connection")
         print("=" * 60)
-        
+
         # Test connection
         print("\n1. Testing connection...")
         health = await check_db_health()
         print(f"   Status: {health['status']}")
-        if health['status'] == 'healthy':
+        if health["status"] == "healthy":
             print(f"   Environment: {health['environment']}")
             print(f"   Pool size: {health['pool']['size']}")
             print(f"   Checked out: {health['pool']['checked_out']}")
-        
+
         # Get version
         print("\n2. Getting PostgreSQL version...")
         version = await get_db_version()
         print(f"   {version}")
-        
+
         # Test session
         print("\n3. Testing session creation...")
         async with get_db_session() as session:
             result = await session.execute(text("SELECT current_database()"))
             db_name = result.scalar()
             print(f"   Connected to database: {db_name}")
-        
+
         print("\n✓ All tests passed!")
-        
+
         # Cleanup
         await close_db()
-    
+
     asyncio.run(test())
