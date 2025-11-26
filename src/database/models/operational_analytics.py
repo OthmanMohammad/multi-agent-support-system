@@ -2,11 +2,11 @@
 Operational analytics models for Tier 3
 Analytics & Insights Swarm database tables
 """
-from sqlalchemy import Column, String, Integer, Float, Boolean, ForeignKey, DateTime, Date, Text, Index
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.orm import relationship
-from decimal import Decimal
+
 import uuid
+
+from sqlalchemy import Boolean, Column, Date, DateTime, Float, Index, Integer, String, Text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 
 from src.database.models.base import BaseModel
 
@@ -71,7 +71,9 @@ class CohortAnalysis(BaseModel):
 
     # Cohort definition
     cohort_name = Column(String(255), nullable=False, index=True)
-    cohort_type = Column(String(100), nullable=False, index=True)  # 'signup_month', 'plan_tier', etc.
+    cohort_type = Column(
+        String(100), nullable=False, index=True
+    )  # 'signup_month', 'plan_tier', etc.
     cohort_value = Column(String(255), nullable=False)
     cohort_start_date = Column(Date, nullable=True)
 
@@ -176,9 +178,7 @@ class FunnelStep(BaseModel):
     entry_criteria = Column(JSONB, default=dict, nullable=False)
     exit_criteria = Column(JSONB, default=dict, nullable=False)
 
-    __table_args__ = (
-        Index('idx_funnel_step', 'funnel_name', 'step_order', unique=True),
-    )
+    __table_args__ = (Index("idx_funnel_step", "funnel_name", "step_order", unique=True),)
 
     def __repr__(self) -> str:
         return f"<FunnelStep(funnel={self.funnel_name}, step={self.step_order}:{self.step_name})>"
@@ -224,7 +224,7 @@ class FunnelAnalysis(BaseModel):
     calculated_at = Column(DateTime(timezone=True), nullable=False)
 
     __table_args__ = (
-        Index('idx_funnel_period', 'funnel_name', 'analysis_date', 'time_period', unique=True),
+        Index("idx_funnel_period", "funnel_name", "analysis_date", "time_period", unique=True),
     )
 
     def __repr__(self) -> str:
@@ -267,9 +267,7 @@ class CorrelationAnalysis(BaseModel):
     # Tracking
     analyzed_at = Column(DateTime(timezone=True), nullable=False, index=True)
 
-    __table_args__ = (
-        Index('idx_variables', 'variable_1', 'variable_2'),
-    )
+    __table_args__ = (Index("idx_variables", "variable_1", "variable_2"),)
 
     def __repr__(self) -> str:
         return f"<CorrelationAnalysis(v1={self.variable_1}, v2={self.variable_2}, r={self.correlation_coefficient})>"
@@ -332,7 +330,9 @@ class ExecutiveReport(BaseModel):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
     # Report details
-    report_type = Column(String(100), nullable=False, index=True)  # 'weekly', 'monthly', 'quarterly'
+    report_type = Column(
+        String(100), nullable=False, index=True
+    )  # 'weekly', 'monthly', 'quarterly'
     report_period_start = Column(Date, nullable=False)
     report_period_end = Column(Date, nullable=False)
 
@@ -360,9 +360,7 @@ class ExecutiveReport(BaseModel):
     generated_at = Column(DateTime(timezone=True), nullable=False, index=True)
     generated_by = Column(String(100), nullable=True)
 
-    __table_args__ = (
-        Index('idx_report_period', 'report_period_start', 'report_period_end'),
-    )
+    __table_args__ = (Index("idx_report_period", "report_period_start", "report_period_end"),)
 
     def __repr__(self) -> str:
         return f"<ExecutiveReport(type={self.report_type}, period={self.report_period_start} to {self.report_period_end})>"
@@ -447,9 +445,7 @@ class PredictionExplanation(BaseModel):
     # Tracking
     explained_at = Column(DateTime(timezone=True), nullable=False, index=True)
 
-    __table_args__ = (
-        Index('idx_entity', 'entity_type', 'entity_id'),
-    )
+    __table_args__ = (Index("idx_entity", "entity_type", "entity_id"),)
 
     def __repr__(self) -> str:
         return f"<PredictionExplanation(model={self.model_name}, entity={self.entity_type}:{self.entity_id})>"
