@@ -313,7 +313,8 @@ class TimingObjectionHandler(BaseAgent):
             low_effort_options,
             budget_resources,
             kb_results,
-            customer_metadata
+            customer_metadata,
+            state
         )
 
         # Calculate resolution confidence
@@ -540,9 +541,13 @@ class TimingObjectionHandler(BaseAgent):
         low_effort_options: List[Dict],
         budget_resources: List[Dict],
         kb_results: List[Dict],
-        customer_metadata: Dict
+        customer_metadata: Dict,
+        state: AgentState
     ) -> str:
         """Generate personalized timing objection response"""
+
+        # Get conversation history for context continuity
+        conversation_history = self.get_conversation_context(state)
 
         # Build KB context
         kb_context = ""
@@ -643,7 +648,11 @@ Important: Be understanding and flexible. Focus on removing barriers, not pressu
 
 Generate a helpful, flexible response that addresses their timing concerns."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt,
+            user_prompt,
+            conversation_history=conversation_history
+        )
         return response
 
 
