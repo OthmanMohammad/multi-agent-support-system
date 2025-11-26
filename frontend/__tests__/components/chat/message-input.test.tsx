@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MessageInput } from "@/components/chat/message-input";
 import { useSendMessage } from "@/lib/api/hooks/useMessages";
@@ -36,7 +36,7 @@ describe("MessageInput Component", () => {
         content: "Test message",
       }),
       isPending: false,
-    } as any);
+    } as unknown as ReturnType<typeof useSendMessage>);
 
     mockUseChatStore.mockReturnValue({
       isStreaming: false,
@@ -77,14 +77,15 @@ describe("MessageInput Component", () => {
     mockSendMessage.mockReturnValue({
       mutateAsync,
       isPending: false,
-    } as any);
+    } as unknown as ReturnType<typeof useSendMessage>);
 
     render(<MessageInput conversationId={conversationId} />);
 
     const textarea = screen.getByPlaceholderText(/Type a message/i);
     await user.type(textarea, "Test message");
 
-    const sendButton = screen.getAllByRole("button").pop()!;
+    const buttons = screen.getAllByRole("button");
+    const sendButton = buttons[buttons.length - 1];
     await user.click(sendButton);
 
     await waitFor(() => {
@@ -103,7 +104,7 @@ describe("MessageInput Component", () => {
     mockSendMessage.mockReturnValue({
       mutateAsync,
       isPending: false,
-    } as any);
+    } as unknown as ReturnType<typeof useSendMessage>);
 
     render(<MessageInput conversationId={conversationId} />);
 
@@ -133,7 +134,7 @@ describe("MessageInput Component", () => {
     mockSendMessage.mockReturnValue({
       mutateAsync,
       isPending: false,
-    } as any);
+    } as unknown as ReturnType<typeof useSendMessage>);
 
     render(<MessageInput conversationId={conversationId} />);
 
@@ -142,7 +143,8 @@ describe("MessageInput Component", () => {
     ) as HTMLTextAreaElement;
     await user.type(textarea, "Test message");
 
-    const sendButton = screen.getAllByRole("button").pop()!;
+    const buttons = screen.getAllByRole("button");
+    const sendButton = buttons[buttons.length - 1];
     await user.click(sendButton);
 
     await waitFor(() => {
@@ -187,11 +189,12 @@ describe("MessageInput Component", () => {
     mockSendMessage.mockReturnValue({
       mutateAsync,
       isPending: false,
-    } as any);
+    } as unknown as ReturnType<typeof useSendMessage>);
 
     render(<MessageInput conversationId={conversationId} />);
 
-    const sendButton = screen.getAllByRole("button").pop()!;
+    const buttons = screen.getAllByRole("button");
+    const sendButton = buttons[buttons.length - 1];
     await user.click(sendButton);
 
     expect(mutateAsync).not.toHaveBeenCalled();

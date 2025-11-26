@@ -124,8 +124,8 @@ const buildProviders = (): Provider[] => {
   if (isGoogleConfigured) {
     providers.push(
       Google({
-        clientId: GOOGLE_CLIENT_ID!,
-        clientSecret: GOOGLE_CLIENT_SECRET!,
+        clientId: GOOGLE_CLIENT_ID as string,
+        clientSecret: GOOGLE_CLIENT_SECRET as string,
         authorization: {
           params: {
             prompt: "consent",
@@ -143,8 +143,8 @@ const buildProviders = (): Provider[] => {
   if (isGitHubConfigured) {
     providers.push(
       GitHub({
-        clientId: GITHUB_CLIENT_ID!,
-        clientSecret: GITHUB_CLIENT_SECRET!,
+        clientId: GITHUB_CLIENT_ID as string,
+        clientSecret: GITHUB_CLIENT_SECRET as string,
       })
     );
   }

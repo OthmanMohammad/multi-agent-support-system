@@ -29,7 +29,7 @@ export function CodeBlock({ children, className, language }: CodeBlockProps): JS
       setIsCopied(true);
       toast.success("Code copied to clipboard");
       setTimeout(() => setIsCopied(false), 2000);
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to copy code");
     }
   };

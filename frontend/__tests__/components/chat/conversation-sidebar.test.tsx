@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ConversationSidebar } from "@/components/chat/conversation-sidebar";
 import { useConversations, useCreateConversation } from "@/lib/api/hooks/useConversations";
@@ -49,7 +49,7 @@ describe("ConversationSidebar Component", () => {
       data: mockConversations,
       isLoading: false,
       error: null,
-    } as any);
+    } as unknown as ReturnType<typeof useConversations>);
 
     mockUseCreateConversation.mockReturnValue({
       mutateAsync: jest.fn().mockResolvedValue({
@@ -57,7 +57,7 @@ describe("ConversationSidebar Component", () => {
         title: "New Conversation",
       }),
       isPending: false,
-    } as any);
+    } as unknown as ReturnType<typeof useCreateConversation>);
 
     mockUseChatStore.mockReturnValue({
       currentConversationId: null,
@@ -95,7 +95,7 @@ describe("ConversationSidebar Component", () => {
     mockUseCreateConversation.mockReturnValue({
       mutateAsync,
       isPending: false,
-    } as any);
+    } as unknown as ReturnType<typeof useCreateConversation>);
 
     render(<ConversationSidebar />);
 
@@ -157,7 +157,7 @@ describe("ConversationSidebar Component", () => {
       data: undefined,
       isLoading: true,
       error: null,
-    } as any);
+    } as unknown as ReturnType<typeof useConversations>);
 
     render(<ConversationSidebar />);
 
@@ -169,7 +169,7 @@ describe("ConversationSidebar Component", () => {
       data: [],
       isLoading: false,
       error: null,
-    } as any);
+    } as unknown as ReturnType<typeof useConversations>);
 
     render(<ConversationSidebar />);
 
@@ -181,7 +181,7 @@ describe("ConversationSidebar Component", () => {
       data: undefined,
       isLoading: false,
       error: new Error("Failed to fetch"),
-    } as any);
+    } as unknown as ReturnType<typeof useConversations>);
 
     render(<ConversationSidebar />);
 
