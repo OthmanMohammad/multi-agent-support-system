@@ -149,15 +149,17 @@ jobs:
         env:
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test_db
           REDIS_URL: redis://localhost:6379/0
+          REDIS_ENABLED: "true"
           ENVIRONMENT: test
           JWT_SECRET_KEY: test-secret-key-for-ci-minimum-32-characters
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY || 'sk-ant-test-key' }}
+          QDRANT_URL: http://localhost:6333
         run: |
           pytest tests/unit/ tests/integration/ \
             -v \
             --tb=short \
             -x \
-            --timeout=60 \
-            || true
+            --timeout=60
 
   test-frontend:
     name: Test Frontend

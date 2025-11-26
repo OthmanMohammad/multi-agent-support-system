@@ -217,8 +217,7 @@ jobs:
             -n auto \
             --timeout=60 \
             -v \
-            --tb=short \
-            || true
+            --tb=short
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
@@ -293,7 +292,7 @@ jobs:
         env:
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test_db
         run: |
-          alembic upgrade head || true
+          alembic upgrade head
 
       - name: Run integration tests
         env:
@@ -312,8 +311,7 @@ jobs:
             --cov-append \
             -v \
             --timeout=120 \
-            --tb=short \
-            || true
+            --tb=short
 
       - name: Upload integration coverage
         uses: actions/upload-artifact@v4
@@ -377,7 +375,7 @@ jobs:
         env:
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test_db
         run: |
-          alembic upgrade head || true
+          alembic upgrade head
 
       - name: Run E2E tests
         env:
@@ -393,8 +391,7 @@ jobs:
           pytest tests/e2e/ \
             -v \
             --timeout=180 \
-            --tb=long \
-            || true
+            --tb=long
 
   # ===========================================================================
   # Job 6: Build Docker Image
@@ -602,8 +599,7 @@ jobs:
           pytest tests/performance/ \
             -v \
             --benchmark-only \
-            --benchmark-json=benchmark-results.json \
-            || true
+            --benchmark-json=benchmark-results.json
 
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4

@@ -14,7 +14,7 @@ services:
   # Frontend - Next.js Application
   # ===========================================================================
   frontend:
-    image: ${FRONTEND_IMAGE:-ghcr.io/owner/repo/frontend:latest}
+    image: ${FRONTEND_IMAGE:-ghcr.io/othmanmohammad/multi-agent-support-system/frontend:latest}
     container_name: frontend
     restart: unless-stopped
     environment:
@@ -47,7 +47,7 @@ services:
   # Backend - FastAPI Application
   # ===========================================================================
   fastapi:
-    image: ${BACKEND_IMAGE:-ghcr.io/owner/repo/backend:latest}
+    image: ${BACKEND_IMAGE:-ghcr.io/othmanmohammad/multi-agent-support-system/backend:latest}
     container_name: fastapi
     restart: unless-stopped
     environment:
