@@ -7,25 +7,24 @@ low KB match scores and clustering similar unanswered questions.
 Part of: STORY-002 Knowledge Base Swarm (TASK-207)
 """
 
-from typing import List, Dict
-from collections import Counter
-from datetime import datetime, timedelta, UTC
 import json
-import numpy as np
+from datetime import UTC, datetime, timedelta
+
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
-from src.agents.base.base_agent import BaseAgent
-from src.agents.base.agent_types import AgentType
 from src.agents.base import AgentConfig
-from src.workflow.state import AgentState
+from src.agents.base.agent_types import AgentType
+from src.agents.base.base_agent import BaseAgent
 from src.database.connection import get_db_session
 from src.database.models import Conversation, Message
 from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 try:
     from sentence_transformers import SentenceTransformer
     from sklearn.cluster import DBSCAN
+
     CLUSTERING_AVAILABLE = True
 except ImportError:
     CLUSTERING_AVAILABLE = False
@@ -52,17 +51,19 @@ class KBGapDetector(BaseAgent):
             type=AgentType.SPECIALIST,
             temperature=0.2,
             max_tokens=512,
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
 
         # Initialize embedding model for clustering
         if CLUSTERING_AVAILABLE:
-            self.embedding_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+            self.embedding_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
         else:
             self.embedding_model = None
-            self.logger.warning("clustering_unavailable", message="sentence-transformers not installed")
+            self.logger.warning(
+                "clustering_unavailable", message="sentence-transformers not installed"
+            )
 
         self.logger.info("kb_gap_detector_initialized")
 
@@ -79,34 +80,19 @@ class KBGapDetector(BaseAgent):
         days = state.get("gap_detection_days", 30)
         min_frequency = state.get("gap_min_frequency", 5)
 
-        self.logger.info(
-            "kb_gap_detection_started",
-            days=days,
-            min_frequency=min_frequency
-        )
+        self.logger.info("kb_gap_detection_started", days=days, min_frequency=min_frequency)
 
         # Detect gaps
         gaps = await self.detect_gaps(days=days, min_frequency=min_frequency)
 
         # Update state
-        state = self.update_state(
-            state,
-            kb_gaps=gaps,
-            gaps_detected=len(gaps)
-        )
+        state = self.update_state(state, kb_gaps=gaps, gaps_detected=len(gaps))
 
-        self.logger.info(
-            "kb_gap_detection_completed",
-            gaps_count=len(gaps)
-        )
+        self.logger.info("kb_gap_detection_completed", gaps_count=len(gaps))
 
         return state
 
-    async def detect_gaps(
-        self,
-        days: int = 30,
-        min_frequency: int = 5
-    ) -> List[Dict]:
+    async def detect_gaps(self, days: int = 30, min_frequency: int = 5) -> list[dict]:
         """
         Detect KB content gaps.
 
@@ -124,7 +110,7 @@ class KBGapDetector(BaseAgent):
             self.logger.info(
                 "kb_gap_detection_insufficient_data",
                 queries_count=len(low_match_queries),
-                min_required=min_frequency
+                min_required=min_frequency,
             )
             return []
 
@@ -133,17 +119,17 @@ class KBGapDetector(BaseAgent):
 
         # Analyze each cluster
         gaps = []
-        for cluster_id, queries in clusters.items():
+        for _cluster_id, queries in clusters.items():
             if len(queries) >= min_frequency:
                 gap = await self._analyze_cluster(queries)
                 gaps.append(gap)
 
         # Sort by priority
-        gaps.sort(key=lambda x: x['priority_score'], reverse=True)
+        gaps.sort(key=lambda x: x["priority_score"], reverse=True)
 
         return gaps
 
-    async def _get_low_match_queries(self, days: int) -> List[str]:
+    async def _get_low_match_queries(self, days: int) -> list[str]:
         """
         Get queries with low KB match scores.
 
@@ -159,9 +145,7 @@ class KBGapDetector(BaseAgent):
             async with get_db_session() as session:
                 # Query conversations with low KB scores
                 result = await session.execute(
-                    select(Conversation).where(
-                        Conversation.created_at >= cutoff_date
-                    )
+                    select(Conversation).where(Conversation.created_at >= cutoff_date)
                 )
                 conversations = result.scalars().all()
 
@@ -169,32 +153,26 @@ class KBGapDetector(BaseAgent):
                 for conv in conversations:
                     # Get first user message
                     msg_result = await session.execute(
-                        select(Message).where(
-                            Message.conversation_id == conv.id,
-                            Message.role == 'user'
-                        ).limit(1)
+                        select(Message)
+                        .where(Message.conversation_id == conv.id, Message.role == "user")
+                        .limit(1)
                     )
                     first_msg = msg_result.scalar_one_or_none()
 
                     if first_msg:
                         queries.append(first_msg.content)
 
-                self.logger.info(
-                    "low_match_queries_retrieved",
-                    queries_count=len(queries)
-                )
+                self.logger.info("low_match_queries_retrieved", queries_count=len(queries))
 
                 return queries
 
         except SQLAlchemyError as e:
             self.logger.error(
-                "low_match_queries_retrieval_failed",
-                error=str(e),
-                error_type=type(e).__name__
+                "low_match_queries_retrieval_failed", error=str(e), error_type=type(e).__name__
             )
             return []
 
-    async def _cluster_queries(self, queries: List[str]) -> Dict[int, List[str]]:
+    async def _cluster_queries(self, queries: list[str]) -> dict[int, list[str]]:
         """
         Cluster similar queries using embeddings.
 
@@ -212,11 +190,9 @@ class KBGapDetector(BaseAgent):
             embeddings = self.embedding_model.encode(queries)
 
             # Cluster using DBSCAN
-            clustering = DBSCAN(
-                eps=0.3,
-                min_samples=self.MIN_CLUSTER_SIZE,
-                metric='cosine'
-            ).fit(embeddings)
+            clustering = DBSCAN(eps=0.3, min_samples=self.MIN_CLUSTER_SIZE, metric="cosine").fit(
+                embeddings
+            )
 
             # Group queries by cluster
             clusters = {}
@@ -232,20 +208,16 @@ class KBGapDetector(BaseAgent):
             self.logger.info(
                 "queries_clustered",
                 clusters_count=len(clusters),
-                noise_count=list(clustering.labels_).count(-1)
+                noise_count=list(clustering.labels_).count(-1),
             )
 
             return clusters
 
         except Exception as e:
-            self.logger.error(
-                "query_clustering_failed",
-                error=str(e),
-                error_type=type(e).__name__
-            )
+            self.logger.error("query_clustering_failed", error=str(e), error_type=type(e).__name__)
             return {}
 
-    async def _analyze_cluster(self, queries: List[str]) -> Dict:
+    async def _analyze_cluster(self, queries: list[str]) -> dict:
         """
         Analyze cluster and generate gap report.
 
@@ -266,14 +238,14 @@ Return ONLY valid JSON with this structure:
   "category": "billing|technical|usage|api|integrations|account"
 }"""
 
-        user_prompt = f"""Queries:\n""" + "\n".join(f"- {q}" for q in queries[:10])
+        user_prompt = """Queries:\n""" + "\n".join(f"- {q}" for q in queries[:10])
 
         try:
             response = await self.call_llm(
                 system_prompt=system_prompt,
                 user_message=user_prompt,
                 max_tokens=512,
-                conversation_history=[]  # Gap detection is standalone, no conversation context
+                conversation_history=[],  # Gap detection is standalone, no conversation context
             )
 
             # Parse JSON response
@@ -281,16 +253,14 @@ Return ONLY valid JSON with this structure:
 
         except (json.JSONDecodeError, Exception) as e:
             self.logger.warning(
-                "cluster_analysis_failed",
-                error=str(e),
-                error_type=type(e).__name__
+                "cluster_analysis_failed", error=str(e), error_type=type(e).__name__
             )
             # Fallback
             analysis = {
                 "topic": "Unknown topic",
                 "suggested_article_title": "New Article Needed",
                 "key_questions": queries[:3],
-                "category": "general"
+                "category": "general",
             }
 
         # Calculate priority score
@@ -303,10 +273,10 @@ Return ONLY valid JSON with this structure:
             "category": analysis.get("category", "general"),
             "frequency": len(queries),
             "priority_score": priority_score,
-            "example_queries": queries[:5]
+            "example_queries": queries[:5],
         }
 
-    def _calculate_priority(self, queries: List[str], analysis: Dict) -> float:
+    def _calculate_priority(self, queries: list[str], analysis: dict) -> float:
         """
         Calculate gap priority score (0-100).
 
@@ -328,12 +298,9 @@ Return ONLY valid JSON with this structure:
             "usage": 20,
             "integrations": 20,
             "account": 15,
-            "general": 10
+            "general": 10,
         }
-        category_score = category_weights.get(
-            analysis.get("category", "general"),
-            10
-        )
+        category_score = category_weights.get(analysis.get("category", "general"), 10)
 
         # Recency (20%) - assuming recent queries
         recency_score = 20
@@ -346,6 +313,7 @@ Return ONLY valid JSON with this structure:
 if __name__ == "__main__":
     # Test KB Gap Detector
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -368,10 +336,7 @@ if __name__ == "__main__":
             print(f"  Priority Score: {gap['priority_score']}")
 
         print("\nTest 2: Process with state")
-        state = create_initial_state(
-            message="test",
-            context={"gap_detection_days": 30}
-        )
+        state = create_initial_state(message="test", context={"gap_detection_days": 30})
         state = await detector.process(state)
         print(f"Gaps detected: {state.get('gaps_detected', 0)}")
 
