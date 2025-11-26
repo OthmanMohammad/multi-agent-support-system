@@ -7,15 +7,16 @@ health, onboarding, adoption, retention, expansion.
 Part of: STORY-01 Routing & Orchestration Swarm (TASK-105)
 """
 
-from typing import Dict, Any, Optional, List
 import json
 from datetime import datetime
+from typing import Any
+
 import structlog
 
-from src.agents.base.base_agent import RoutingAgent, AgentConfig
-from src.agents.base.agent_types import AgentType, AgentCapability
-from src.workflow.state import AgentState
+from src.agents.base.agent_types import AgentCapability, AgentType
+from src.agents.base.base_agent import AgentConfig, RoutingAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.workflow.state import AgentState
 
 logger = structlog.get_logger(__name__)
 
@@ -35,11 +36,11 @@ class CSDomainRouter(RoutingAgent):
 
     # Valid CS categories
     CS_CATEGORIES = [
-        "health",       # Account health, churn risk
-        "onboarding",   # Initial setup, training
-        "adoption",     # Feature usage, optimization
-        "retention",    # Renewals, satisfaction
-        "expansion"     # Upsell, growth opportunities
+        "health",  # Account health, churn risk
+        "onboarding",  # Initial setup, training
+        "adoption",  # Feature usage, optimization
+        "retention",  # Renewals, satisfaction
+        "expansion",  # Upsell, growth opportunities
     ]
 
     def __init__(self, **kwargs):
@@ -49,12 +50,10 @@ class CSDomainRouter(RoutingAgent):
             type=AgentType.ROUTER,
             temperature=0.1,  # Consistent routing
             max_tokens=200,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE],
             system_prompt_template=self._get_system_prompt(),
             tier="essential",
-            role="cs_domain_router"
+            role="cs_domain_router",
         )
         super().__init__(config=config, **kwargs)
         self.logger = logger.bind(agent="cs_domain_router", agent_type="router")
@@ -205,8 +204,7 @@ Output ONLY valid JSON. Choose exactly ONE category."""
             conversation_history = self.get_conversation_context(state)
 
             self.logger.debug(
-                "cs_router_conversation_context",
-                history_length=len(conversation_history)
+                "cs_router_conversation_context", history_length=len(conversation_history)
             )
 
             # Call LLM for routing
@@ -222,7 +220,7 @@ Consider any previous conversation context when making your routing decision."""
             response = await self.call_llm(
                 system_prompt=self._get_system_prompt(),
                 user_message=prompt,
-                conversation_history=conversation_history
+                conversation_history=conversation_history,
             )
 
             # Parse response
@@ -232,9 +230,7 @@ Consider any previous conversation context when making your routing decision."""
             category = routing.get("category", "adoption").lower()
             if category not in self.CS_CATEGORIES:
                 self.logger.warning(
-                    "invalid_cs_category",
-                    category=category,
-                    defaulting_to="adoption"
+                    "invalid_cs_category", category=category, defaulting_to="adoption"
                 )
                 category = "adoption"
 
@@ -251,11 +247,11 @@ Consider any previous conversation context when making your routing decision."""
 
             # Map category to actual agent for routing
             category_to_agent = {
-                "health": "cs_health",           # health_score
-                "onboarding": "cs_onboarding",   # onboarding_coordinator
-                "adoption": "cs_adoption",       # feature_adoption
-                "retention": "cs_retention",     # renewal_manager
-                "expansion": "cs_expansion"      # upsell_identifier
+                "health": "cs_health",  # health_score
+                "onboarding": "cs_onboarding",  # onboarding_coordinator
+                "adoption": "cs_adoption",  # feature_adoption
+                "retention": "cs_retention",  # renewal_manager
+                "expansion": "cs_expansion",  # upsell_identifier
             }
             state["next_agent"] = category_to_agent.get(category, "escalation")
 
@@ -265,7 +261,7 @@ Consider any previous conversation context when making your routing decision."""
             state["cs_routing_metadata"] = {
                 "latency_ms": latency_ms,
                 "timestamp": datetime.now().isoformat(),
-                "model": self.config.model
+                "model": self.config.model,
             }
 
             self.logger.info(
@@ -273,17 +269,13 @@ Consider any previous conversation context when making your routing decision."""
                 category=category,
                 next_agent=state["next_agent"],
                 confidence=confidence,
-                latency_ms=latency_ms
+                latency_ms=latency_ms,
             )
 
             return state
 
         except Exception as e:
-            self.logger.error(
-                "cs_routing_failed",
-                error=str(e),
-                error_type=type(e).__name__
-            )
+            self.logger.error("cs_routing_failed", error=str(e), error_type=type(e).__name__)
 
             # Fallback to adoption category
             state["cs_category"] = "adoption"
@@ -293,10 +285,7 @@ Consider any previous conversation context when making your routing decision."""
             return state
 
     def _apply_context_overrides(
-        self,
-        category: str,
-        customer_metadata: Dict[str, Any],
-        state: AgentState
+        self, category: str, customer_metadata: dict[str, Any], state: AgentState
     ) -> str:
         """
         Apply context-based overrides to routing decision.
@@ -319,7 +308,7 @@ Consider any previous conversation context when making your routing decision."""
                 "cs_router_health_override",
                 original_category=category,
                 health_score=health_score,
-                churn_risk=churn_risk
+                churn_risk=churn_risk,
             )
             return "health"
 
@@ -330,7 +319,7 @@ Consider any previous conversation context when making your routing decision."""
 
         return category
 
-    def _parse_response(self, response: str) -> Dict[str, Any]:
+    def _parse_response(self, response: str) -> dict[str, Any]:
         """
         Parse LLM response into routing decision.
 
@@ -346,8 +335,7 @@ Consider any previous conversation context when making your routing decision."""
             if cleaned_response.startswith("```"):
                 lines = cleaned_response.split("\n")
                 cleaned_response = "\n".join(
-                    line for line in lines
-                    if not line.strip().startswith("```")
+                    line for line in lines if not line.strip().startswith("```")
                 )
 
             # Parse JSON
@@ -355,19 +343,14 @@ Consider any previous conversation context when making your routing decision."""
 
             # Ensure it's a dict
             if not isinstance(routing, dict):
-                self.logger.warning(
-                    "cs_router_invalid_type",
-                    type=type(routing).__name__
-                )
+                self.logger.warning("cs_router_invalid_type", type=type(routing).__name__)
                 return {"category": "adoption", "confidence": 0.5}
 
             return routing
 
         except json.JSONDecodeError as e:
             self.logger.warning(
-                "cs_router_invalid_json",
-                response_preview=response[:100],
-                error=str(e)
+                "cs_router_invalid_json", response_preview=response[:100], error=str(e)
             )
             return {"category": "adoption", "confidence": 0.5}
 
@@ -389,6 +372,7 @@ def create_cs_domain_router(**kwargs) -> CSDomainRouter:
 # Example usage (for development/testing)
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test_cs_domain_router():
@@ -404,43 +388,42 @@ if __name__ == "__main__":
             {
                 "message": "Our team isn't really using the product anymore",
                 "context": {"plan": "enterprise", "health_score": 25, "churn_risk": 0.85},
-                "expected_category": "health"
+                "expected_category": "health",
             },
             {
                 "message": "We just signed up, how do we get started?",
                 "context": {"plan": "premium", "account_age_days": 5},
-                "expected_category": "onboarding"
+                "expected_category": "onboarding",
             },
             {
                 "message": "How can we use automation features more effectively?",
                 "context": {"plan": "premium", "health_score": 65},
-                "expected_category": "adoption"
+                "expected_category": "adoption",
             },
             {
                 "message": "Our contract is up for renewal next month",
                 "context": {"plan": "enterprise", "health_score": 75},
-                "expected_category": "retention"
+                "expected_category": "retention",
             },
             {
                 "message": "We want to add 50 more seats and explore Enterprise features",
                 "context": {"plan": "premium", "team_size": 100, "health_score": 85},
-                "expected_category": "expansion"
+                "expected_category": "expansion",
             },
         ]
 
         for i, test in enumerate(test_cases, 1):
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"TEST CASE {i}: {test['message']}")
-            print(f"{'='*60}")
+            print(f"{'=' * 60}")
 
             state = create_initial_state(
-                message=test["message"],
-                context={"customer_metadata": test.get("context", {})}
+                message=test["message"], context={"customer_metadata": test.get("context", {})}
             )
 
             result = await router.process(state)
 
-            print(f"\n✓ Routing Decision:")
+            print("\n✓ Routing Decision:")
             print(f"  Category: {result['cs_category']}")
             print(f"  Confidence: {result['cs_category_confidence']:.2%}")
             print(f"  Expected: {test['expected_category']}")
