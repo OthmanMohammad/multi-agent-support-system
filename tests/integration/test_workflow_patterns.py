@@ -1,17 +1,8 @@
 """Test workflow patterns - Standalone test without circular dependencies"""
 import asyncio
-import sys
-from pathlib import Path
 
-# Add specific directories to avoid importing through package __init__ files
-project_root = Path(__file__).parent
-sys.path.insert(0, str(project_root / "src" / "workflow" / "patterns"))
-sys.path.insert(0, str(project_root / "src" / "workflow"))
-sys.path.insert(0, str(project_root))
-
-# Import directly from files
-from sequential import SequentialWorkflow, SequentialStep
-from parallel import ParallelWorkflow, ParallelAgent
+from src.workflow.patterns.sequential import SequentialWorkflow, SequentialStep
+from src.workflow.patterns.parallel import ParallelWorkflow, ParallelAgent
 from src.workflow.state import create_initial_state
 
 # Mock agent executor for testing
