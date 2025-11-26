@@ -6,13 +6,13 @@ Achieves >80% accuracy using Logistic Regression with 20 features.
 Creates sales opportunities automatically in CRM for high-probability upsells.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("upsell_predictor", tier="advanced", category="predictive")
@@ -31,26 +31,22 @@ class UpsellPredictorAgent(BaseAgent):
     """
 
     # Upsell likelihood thresholds
-    LIKELIHOOD_THRESHOLDS = {
-        "low": 0.4,
-        "medium": 0.7,
-        "high": 1.0
-    }
+    LIKELIHOOD_THRESHOLDS = {"low": 0.4, "medium": 0.7, "high": 1.0}
 
     # Plan progression paths
     PLAN_PROGRESSION = {
         "free": "basic",
         "basic": "premium",
         "premium": "enterprise",
-        "enterprise": "enterprise"  # Already at top
+        "enterprise": "enterprise",  # Already at top
     }
 
     # Pricing (for ARR calculation)
     PLAN_PRICING = {
         "free": 0,
-        "basic": 10,     # per user/month
-        "premium": 25,   # per user/month
-        "enterprise": 50 # per user/month
+        "basic": 10,  # per user/month
+        "premium": 25,  # per user/month
+        "enterprise": 50,  # per user/month
     }
 
     def __init__(self):
@@ -62,9 +58,9 @@ class UpsellPredictorAgent(BaseAgent):
             capabilities=[
                 AgentCapability.DATABASE_READ,
                 AgentCapability.DATABASE_WRITE,
-                AgentCapability.CONTEXT_AWARE
+                AgentCapability.CONTEXT_AWARE,
             ],
-            tier="advanced"
+            tier="advanced",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -84,7 +80,9 @@ class UpsellPredictorAgent(BaseAgent):
         state = self.update_state(state)
 
         # Extract customer ID
-        customer_id = state.get("entities", {}).get("customer_id") or state.get("customer_context", {}).get("customer_id")
+        customer_id = state.get("entities", {}).get("customer_id") or state.get(
+            "customer_context", {}
+        ).get("customer_id")
 
         if not customer_id:
             return self.update_state(
@@ -92,7 +90,7 @@ class UpsellPredictorAgent(BaseAgent):
                 agent_response="Error: No customer ID provided for upsell prediction",
                 status="failed",
                 response_confidence=0.0,
-                next_agent=None
+                next_agent=None,
             )
 
         self.logger.debug("predicting_upsell", customer_id=customer_id)
@@ -125,7 +123,7 @@ class UpsellPredictorAgent(BaseAgent):
                 "triggers": triggers,
                 "recommended_timing": timing,
                 "recommended_approach": self._recommend_approach(upsell_type),
-                "prediction_date": datetime.now(UTC).isoformat()
+                "prediction_date": datetime.now(UTC).isoformat(),
             }
 
             response = self._format_prediction_report(prediction)
@@ -141,31 +139,27 @@ class UpsellPredictorAgent(BaseAgent):
                 upsell_probability=upsell_probability,
                 status="resolved",
                 response_confidence=0.85,
-                next_agent=None
+                next_agent=None,
             )
 
         except Exception as e:
-            self.logger.error(
-                "upsell_prediction_failed",
-                error=str(e),
-                customer_id=customer_id
-            )
+            self.logger.error("upsell_prediction_failed", error=str(e), customer_id=customer_id)
 
             return self.update_state(
                 state,
-                agent_response=f"Error predicting upsell: {str(e)}",
+                agent_response=f"Error predicting upsell: {e!s}",
                 status="failed",
                 response_confidence=0.0,
-                next_agent=None
+                next_agent=None,
             )
 
-    async def _extract_features(self, customer_id: str) -> Dict[str, Any]:
+    async def _extract_features(self, customer_id: str) -> dict[str, Any]:
         """Extract upsell prediction features."""
         context = await self.get_enriched_context(customer_id)
 
-        if context and hasattr(context, 'customer'):
+        if context and hasattr(context, "customer"):
             customer = context.customer
-            usage = context.usage_stats if hasattr(context, 'usage_stats') else {}
+            usage = context.usage_stats if hasattr(context, "usage_stats") else {}
 
             features = {
                 # Usage signals
@@ -177,23 +171,20 @@ class UpsellPredictorAgent(BaseAgent):
                 "integration_count": usage.get("integrations", 0),
                 "api_calls_30d": usage.get("api_calls_30d", 0),
                 "export_count_30d": usage.get("exports_30d", 0),
-
                 # Engagement signals
                 "login_frequency": usage.get("logins_per_week", 0),
                 "team_size_growth": usage.get("team_growth_rate", 0.0),
                 "active_users_ratio": usage.get("active_users_ratio", 0.0),
                 "session_duration_avg": usage.get("avg_session_duration", 0),
                 "feature_adoption_score": usage.get("feature_adoption_score", 0.0),
-
                 # Account health
                 "health_score": customer.get("health_score", 50),
                 "nps_score": customer.get("nps_score", 0),
                 "csat_avg": customer.get("csat_avg", 3.0),
-
                 # Account characteristics
                 "plan": customer.get("plan", "free"),
                 "seats_total": customer.get("seats_total", 1),
-                "customer_age_days": customer.get("customer_age_days", 0)
+                "customer_age_days": customer.get("customer_age_days", 0),
             }
         else:
             # Defaults
@@ -216,12 +207,12 @@ class UpsellPredictorAgent(BaseAgent):
                 "csat_avg": 4.0,
                 "plan": "basic",
                 "seats_total": 5,
-                "customer_age_days": 90
+                "customer_age_days": 90,
             }
 
         return features
 
-    def _calculate_upsell_probability(self, features: Dict[str, Any]) -> float:
+    def _calculate_upsell_probability(self, features: dict[str, Any]) -> float:
         """Calculate upsell probability."""
         probability = 0.0
 
@@ -268,7 +259,7 @@ class UpsellPredictorAgent(BaseAgent):
         else:
             return "high"
 
-    def _determine_upsell_type(self, features: Dict[str, Any]) -> Dict[str, Any]:
+    def _determine_upsell_type(self, features: dict[str, Any]) -> dict[str, Any]:
         """Determine best upsell type."""
         current_plan = features["plan"]
 
@@ -285,7 +276,7 @@ class UpsellPredictorAgent(BaseAgent):
                 "from_plan": current_plan,
                 "to_plan": next_plan,
                 "estimated_arr_increase": arr_increase,
-                "confidence": 0.85
+                "confidence": 0.85,
             }
 
         # Seat expansion if team growing
@@ -299,7 +290,7 @@ class UpsellPredictorAgent(BaseAgent):
                 "current_seats": features["seats_total"],
                 "recommended_seats": features["seats_total"] + additional_seats,
                 "estimated_arr_increase": arr_increase,
-                "confidence": 0.80
+                "confidence": 0.80,
             }
 
         # Add-on if using integrations heavily
@@ -308,7 +299,7 @@ class UpsellPredictorAgent(BaseAgent):
                 "type": "add_on",
                 "recommended_add_on": "Premium Integrations Pack",
                 "estimated_arr_increase": 1200,  # $100/month
-                "confidence": 0.75
+                "confidence": 0.75,
             }
 
         # Default: tier upgrade
@@ -318,24 +309,28 @@ class UpsellPredictorAgent(BaseAgent):
             "from_plan": current_plan,
             "to_plan": next_plan,
             "estimated_arr_increase": 2400,
-            "confidence": 0.70
+            "confidence": 0.70,
         }
 
-    def _extract_triggers(self, features: Dict[str, Any]) -> List[str]:
+    def _extract_triggers(self, features: dict[str, Any]) -> list[str]:
         """Extract human-readable triggers."""
         triggers = []
 
         if features["limit_hit_count_30d"] > 0:
-            triggers.append(f"Hit plan limit {features['limit_hit_count_30d']} times in last 30 days")
+            triggers.append(
+                f"Hit plan limit {features['limit_hit_count_30d']} times in last 30 days"
+            )
 
         if features["feature_requests_30d"] > 0:
             triggers.append(f"Requested {features['feature_requests_30d']} premium features")
 
         if features["team_size_growth"] > 0.2:
-            triggers.append(f"Team size grew {features['team_size_growth']*100:.0f}% this month")
+            triggers.append(f"Team size grew {features['team_size_growth'] * 100:.0f}% this month")
 
         if features["usage_growth_rate"] > 0.3:
-            triggers.append(f"Usage increased {features['usage_growth_rate']*100:.0f}% this month")
+            triggers.append(
+                f"Usage increased {features['usage_growth_rate'] * 100:.0f}% this month"
+            )
 
         if features["power_user_count"] > 3:
             triggers.append(f"{features['power_user_count']} power users on the team")
@@ -345,7 +340,7 @@ class UpsellPredictorAgent(BaseAgent):
 
         return triggers
 
-    def _recommend_timing(self, probability: float, triggers: List[str]) -> str:
+    def _recommend_timing(self, probability: float, triggers: list[str]) -> str:
         """Recommend when to reach out."""
         if probability > 0.8 and len(triggers) > 2:
             return "immediate"
@@ -356,7 +351,7 @@ class UpsellPredictorAgent(BaseAgent):
         else:
             return "monitor"
 
-    def _recommend_approach(self, upsell_type: Dict[str, Any]) -> str:
+    def _recommend_approach(self, upsell_type: dict[str, Any]) -> str:
         """Recommend sales approach."""
         if upsell_type["type"] == "tier_upgrade":
             return "Email highlighting premium features that solve their current limitations"
@@ -367,13 +362,13 @@ class UpsellPredictorAgent(BaseAgent):
         else:
             return "General upsell conversation"
 
-    async def _create_sales_opportunity(self, customer_id: str, prediction: Dict[str, Any]):
+    async def _create_sales_opportunity(self, customer_id: str, prediction: dict[str, Any]):
         """Create sales opportunity in CRM."""
         self.logger.info(
             "creating_upsell_opportunity",
             customer_id=customer_id,
             probability=prediction["upsell_probability"],
-            upsell_type=prediction["recommended_upsell"]["type"]
+            upsell_type=prediction["recommended_upsell"]["type"],
         )
 
         # In production: Create opportunity in CRM
@@ -382,16 +377,12 @@ class UpsellPredictorAgent(BaseAgent):
             "upsell_opportunity_identified",
             customer_id=customer_id,
             estimated_arr=prediction["recommended_upsell"]["estimated_arr_increase"],
-            triggers=prediction["triggers"]
+            triggers=prediction["triggers"],
         )
 
-    def _format_prediction_report(self, prediction: Dict[str, Any]) -> str:
+    def _format_prediction_report(self, prediction: dict[str, Any]) -> str:
         """Format upsell prediction report."""
-        likelihood_icons = {
-            "low": "📊",
-            "medium": "📈",
-            "high": "💰"
-        }
+        likelihood_icons = {"low": "📊", "medium": "📈", "high": "💰"}
 
         icon = likelihood_icons.get(prediction["upsell_likelihood"], "❓")
         upsell = prediction["recommended_upsell"]
@@ -399,12 +390,12 @@ class UpsellPredictorAgent(BaseAgent):
         report = f"""**Upsell Opportunity Prediction**
 
 {icon} **Likelihood:** {prediction["upsell_likelihood"].upper()}
-**Upsell Probability:** {prediction["upsell_probability"]*100:.1f}%
+**Upsell Probability:** {prediction["upsell_probability"] * 100:.1f}%
 
 **Recommended Upsell:**
-- Type: {upsell['type'].replace('_', ' ').title()}
-- Estimated ARR Increase: ${upsell['estimated_arr_increase']:,.0f}
-- Confidence: {upsell['confidence']*100:.0f}%
+- Type: {upsell["type"].replace("_", " ").title()}
+- Estimated ARR Increase: ${upsell["estimated_arr_increase"]:,.0f}
+- Confidence: {upsell["confidence"] * 100:.0f}%
 
 """
 
