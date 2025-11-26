@@ -282,7 +282,8 @@ class ContractNegotiator(BaseAgent):
             strategy,
             concession_tracking,
             kb_results,
-            customer_metadata
+            customer_metadata,
+            state
         )
 
         # Update state
@@ -621,9 +622,13 @@ class ContractNegotiator(BaseAgent):
         strategy: Dict,
         concession_tracking: Dict,
         kb_results: List[Dict],
-        customer_metadata: Dict
+        customer_metadata: Dict,
+        state: AgentState
     ) -> str:
         """Generate negotiation response"""
+
+        # Get conversation history for context continuity
+        conversation_history = self.get_conversation_context(state)
 
         # Build counter-offers context
         counter_offers_text = ""
@@ -675,7 +680,11 @@ Negotiation Sequence:
 
 Generate a professional negotiation response."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt,
+            user_prompt,
+            conversation_history=conversation_history
+        )
         return response
 
 
