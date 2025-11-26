@@ -7,15 +7,15 @@ health, support history, and activity data for agent prompts.
 Part of: STORY-01 Routing & Orchestration Swarm (TASK-110)
 """
 
-from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
 from dataclasses import dataclass
+from datetime import datetime
+
 import structlog
 
-from src.agents.base.base_agent import BaseAgent, AgentConfig
-from src.agents.base.agent_types import AgentType, AgentCapability
-from src.workflow.state import AgentState
+from src.agents.base.agent_types import AgentCapability, AgentType
+from src.agents.base.base_agent import AgentConfig, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.workflow.state import AgentState
 
 logger = structlog.get_logger(__name__)
 
@@ -23,6 +23,7 @@ logger = structlog.get_logger(__name__)
 @dataclass
 class EnrichedContext:
     """Enriched customer context data."""
+
     customer_id: str
     company_name: str
     plan: str
@@ -33,11 +34,11 @@ class EnrichedContext:
     mrr: float
     team_size: int
     account_age_days: int
-    last_login: Optional[str]
-    last_activity: Optional[str]
+    last_login: str | None
+    last_activity: str | None
     recent_activity_summary: str
     support_history_summary: str
-    avg_csat: Optional[float]
+    avg_csat: float | None
     open_tickets: int
     red_flags: list
     green_flags: list
@@ -76,12 +77,10 @@ class ContextInjector(BaseAgent):
             type=AgentType.UTILITY,
             temperature=0.1,
             max_tokens=100,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE],
             system_prompt_template="",  # Context injector doesn't use LLM
             tier="essential",
-            role="context_injector"
+            role="context_injector",
         )
         super().__init__(config=config, **kwargs)
         self.logger = logger.bind(agent="context_injector", agent_type="utility")
@@ -111,8 +110,7 @@ class ContextInjector(BaseAgent):
 
             # Enrich context
             enriched = await self.enrich_context(
-                customer_id=customer_id,
-                conversation_id=conversation_id
+                customer_id=customer_id, conversation_id=conversation_id
             )
 
             # Store enriched context in state
@@ -124,30 +122,21 @@ class ContextInjector(BaseAgent):
             state["context_injection_metadata"] = {
                 "overhead_ms": overhead_ms,
                 "timestamp": datetime.now().isoformat(),
-                "customer_id": customer_id
+                "customer_id": customer_id,
             }
 
-            self.logger.info(
-                "context_enriched",
-                customer_id=customer_id,
-                overhead_ms=overhead_ms
-            )
+            self.logger.info("context_enriched", customer_id=customer_id, overhead_ms=overhead_ms)
 
             return state
 
         except Exception as e:
             self.logger.error(
-                "context_enrichment_failed",
-                error=str(e),
-                error_type=type(e).__name__
+                "context_enrichment_failed", error=str(e), error_type=type(e).__name__
             )
             return state
 
     async def inject_context(
-        self,
-        system_prompt: str,
-        customer_id: str,
-        conversation_id: Optional[str] = None
+        self, system_prompt: str, customer_id: str, conversation_id: str | None = None
     ) -> str:
         """
         Inject enriched context into system prompt.
@@ -171,8 +160,7 @@ class ContextInjector(BaseAgent):
 
             # Get enriched context
             context = await self.enrich_context(
-                customer_id=customer_id,
-                conversation_id=conversation_id
+                customer_id=customer_id, conversation_id=conversation_id
             )
 
             # Format context section
@@ -184,27 +172,17 @@ class ContextInjector(BaseAgent):
             # Log overhead
             overhead_ms = int((datetime.now() - start_time).total_seconds() * 1000)
 
-            self.logger.info(
-                "context_injected",
-                customer_id=customer_id,
-                overhead_ms=overhead_ms
-            )
+            self.logger.info("context_injected", customer_id=customer_id, overhead_ms=overhead_ms)
 
             return enriched_prompt
 
         except Exception as e:
-            self.logger.error(
-                "context_injection_failed",
-                error=str(e),
-                customer_id=customer_id
-            )
+            self.logger.error("context_injection_failed", error=str(e), customer_id=customer_id)
             # Return original prompt on error
             return system_prompt
 
     async def enrich_context(
-        self,
-        customer_id: str,
-        conversation_id: Optional[str] = None
+        self, customer_id: str, conversation_id: str | None = None
     ) -> EnrichedContext:
         """
         Fetch and enrich customer context from multiple sources.
@@ -244,7 +222,7 @@ class ContextInjector(BaseAgent):
             avg_csat=4.5,
             open_tickets=1,
             red_flags=[],
-            green_flags=["high_engagement", "paying_customer", "positive_csat"]
+            green_flags=["high_engagement", "paying_customer", "positive_csat"],
         )
 
         return mock_context
@@ -286,29 +264,35 @@ class ContextInjector(BaseAgent):
 
         # Add support history
         if context.support_history_summary:
-            lines.extend([
-                "",
-                "🎫 Support History:",
-                f"  {context.support_history_summary}",
-                f"  Avg CSAT: {context.avg_csat if context.avg_csat else 'N/A'}/5.0",
-                f"  Open Tickets: {context.open_tickets}"
-            ])
+            lines.extend(
+                [
+                    "",
+                    "🎫 Support History:",
+                    f"  {context.support_history_summary}",
+                    f"  Avg CSAT: {context.avg_csat if context.avg_csat else 'N/A'}/5.0",
+                    f"  Open Tickets: {context.open_tickets}",
+                ]
+            )
 
         # Add red flags (warnings)
         if context.red_flags:
-            lines.extend([
-                "",
-                "🚩 Red Flags:",
-            ])
+            lines.extend(
+                [
+                    "",
+                    "🚩 Red Flags:",
+                ]
+            )
             for flag in context.red_flags:
                 lines.append(f"  - {flag}")
 
         # Add green flags (positive signals)
         if context.green_flags:
-            lines.extend([
-                "",
-                "✅ Positive Signals:",
-            ])
+            lines.extend(
+                [
+                    "",
+                    "✅ Positive Signals:",
+                ]
+            )
             for flag in context.green_flags:
                 lines.append(f"  - {flag}")
 
@@ -355,11 +339,11 @@ Health: {context.health_score}/100 ({health_label})
 Churn Risk: {int(context.churn_risk * 100)}% ({churn_label})
 MRR: ${context.mrr:,.0f} | LTV: ${context.ltv:,.0f}
 Team: {context.team_size} users | Account Age: {context.account_age_days} days
-Open Tickets: {context.open_tickets} | Avg CSAT: {context.avg_csat if context.avg_csat else 'N/A'}
+Open Tickets: {context.open_tickets} | Avg CSAT: {context.avg_csat if context.avg_csat else "N/A"}
 """
         return summary.strip()
 
-    def extract_context_from_state(self, state: AgentState) -> Optional[EnrichedContext]:
+    def extract_context_from_state(self, state: AgentState) -> EnrichedContext | None:
         """
         Extract enriched context from state if available.
 
@@ -399,29 +383,27 @@ if __name__ == "__main__":
         injector = ContextInjector()
 
         # Test 1: Enrich context
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("TEST 1: Enrich Context")
-        print("="*60)
+        print("=" * 60)
 
         context = await injector.enrich_context(
-            customer_id="cust_abc123",
-            conversation_id="conv_xyz789"
+            customer_id="cust_abc123", conversation_id="conv_xyz789"
         )
 
         print("\n✓ Context enriched:")
         print(injector.get_context_summary(context))
 
         # Test 2: Inject context into prompt
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("TEST 2: Inject Context into Prompt")
-        print("="*60)
+        print("=" * 60)
 
         base_prompt = """You are a billing specialist. Help the customer with billing inquiries.
 Be professional, empathetic, and solution-oriented."""
 
         enriched_prompt = await injector.inject_context(
-            system_prompt=base_prompt,
-            customer_id="cust_abc123"
+            system_prompt=base_prompt, customer_id="cust_abc123"
         )
 
         print("\n✓ Prompt with injected context:")
@@ -430,9 +412,9 @@ Be professional, empathetic, and solution-oriented."""
         print("-" * 60)
 
         # Test 3: Context formatting
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("TEST 3: Context Formatting")
-        print("="*60)
+        print("=" * 60)
 
         formatted = injector._format_context_section(context)
         print("\n✓ Formatted context section:")
