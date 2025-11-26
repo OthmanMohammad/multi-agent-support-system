@@ -59,15 +59,6 @@ export function MessageInput({
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const isMountedRef = useRef(true);
-
-  // Track mounted state for async operations
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
 
   // Hooks
   const { refresh, isSending } = useConversation(conversationId);
@@ -268,10 +259,6 @@ export function MessageInput({
       if (isImage) {
         const reader = new FileReader();
         reader.onload = (e) => {
-          // Check if component is still mounted before updating state
-          if (!isMountedRef.current) {
-            return;
-          }
           attachment.preview = e.target?.result as string;
           setAttachments((prev) => [...prev, attachment]);
         };
@@ -427,7 +414,6 @@ export function MessageInput({
               onClick={() => fileInputRef.current?.click()}
               disabled={isStreamingResponse || disabled}
               title="Attach file"
-              aria-label="Attach file"
             >
               <Paperclip className="h-4 w-4" />
             </Button>
@@ -439,7 +425,6 @@ export function MessageInput({
                 className="h-8 w-8"
                 onClick={handleCancel}
                 title="Cancel response"
-                aria-label="Cancel response"
               >
                 <StopCircle className="h-4 w-4" />
               </Button>
@@ -450,7 +435,6 @@ export function MessageInput({
                 onClick={handleSend}
                 disabled={!canSend}
                 title="Send message (Enter or Cmd+Enter)"
-                aria-label="Send message"
               >
                 <Send className="h-4 w-4" />
               </Button>
