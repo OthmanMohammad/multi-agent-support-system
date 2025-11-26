@@ -1,0 +1,939 @@
+{
+  "table": "quotes",
+  "records": [
+    {
+      "id": "752c6164-80fc-4706-87b7-28fc795c6c51",
+      "deal_id": "673ff554-411f-4374-a91c-1b0bd65c3bc2",
+      "customer_id": null,
+      "quote_number": "QT-2025-00001",
+      "total_amount": 5941.46,
+      "currency": "USD",
+      "status": "declined",
+      "valid_until": "2025-10-28T04:54:42.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Enterprise Plan - 14 seats",
+          "quantity": 14,
+          "unit_price": 431,
+          "total": 6034
+        },
+        {
+          "description": "Discount (1%)",
+          "quantity": 1,
+          "unit_price": -92.54,
+          "total": -92.54
+        }
+      ]
+    },
+    {
+      "id": "4df069d0-1bd6-4824-8c80-82aca0984907",
+      "deal_id": "e3604d17-e9f4-423f-8520-0fa2793dddf9",
+      "customer_id": null,
+      "quote_number": "QT-2025-00002",
+      "total_amount": 11815.96,
+      "currency": "USD",
+      "status": "sent",
+      "valid_until": "2025-07-13T23:35:10.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Basic Plan - 33 seats",
+          "quantity": 33,
+          "unit_price": 451,
+          "total": 14883
+        },
+        {
+          "description": "Discount (20%)",
+          "quantity": 1,
+          "unit_price": -3067.04,
+          "total": -3067.04
+        }
+      ]
+    },
+    {
+      "id": "f19276ee-b272-49fd-a248-316d2b7d9b59",
+      "deal_id": "2dcbbdb5-38fb-4329-91ba-6295dbbab345",
+      "customer_id": null,
+      "quote_number": "QT-2025-00003",
+      "total_amount": 18918.82,
+      "currency": "USD",
+      "status": "draft",
+      "valid_until": "2025-12-07T11:03:35.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Premium Plan - 91 seats",
+          "quantity": 91,
+          "unit_price": 267,
+          "total": 24297
+        },
+        {
+          "description": "Discount (22%)",
+          "quantity": 1,
+          "unit_price": -5378.18,
+          "total": -5378.18
+        }
+      ]
+    },
+    {
+      "id": "388bb5be-239f-46ed-92d6-b1177c6ec6cf",
+      "deal_id": "1b98d3c6-9bdb-40ae-9446-01da557bfc25",
+      "customer_id": null,
+      "quote_number": "QT-2025-00004",
+      "total_amount": 26988.91,
+      "currency": "USD",
+      "status": "declined",
+      "valid_until": "2025-12-14T04:09:03.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Premium Plan - 98 seats",
+          "quantity": 98,
+          "unit_price": 357,
+          "total": 34986
+        },
+        {
+          "description": "Discount (22%)",
+          "quantity": 1,
+          "unit_price": -7997.09,
+          "total": -7997.09
+        }
+      ]
+    },
+    {
+      "id": "8ac5ebce-ca87-4d15-bead-e8fe2afa239a",
+      "deal_id": "d1c5ce80-aaa7-4011-b1e9-42cbf500dad0",
+      "customer_id": null,
+      "quote_number": "QT-2025-00005",
+      "total_amount": 7548,
+      "currency": "USD",
+      "status": "draft",
+      "valid_until": "2025-07-15T03:08:46.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Enterprise Plan - 37 seats",
+          "quantity": 37,
+          "unit_price": 204,
+          "total": 7548
+        }
+      ]
+    },
+    {
+      "id": "92c17d6a-9cf6-4b57-8799-c54b38dfcf00",
+      "deal_id": "368d0e0b-eef5-491e-9b96-a70de00849ae",
+      "customer_id": null,
+      "quote_number": "QT-2025-00006",
+      "total_amount": 8860,
+      "currency": "USD",
+      "status": "sent",
+      "valid_until": "2025-08-29T19:50:21.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Enterprise Plan - 20 seats",
+          "quantity": 20,
+          "unit_price": 443,
+          "total": 8860
+        }
+      ]
+    },
+    {
+      "id": "4a6d59f4-2144-4adf-ad65-1954a3378c53",
+      "deal_id": "90d0e231-9dfb-40ff-8663-e09891645c79",
+      "customer_id": null,
+      "quote_number": "QT-2025-00007",
+      "total_amount": 15712.93,
+      "currency": "USD",
+      "status": "accepted",
+      "valid_until": "2025-07-24T01:45:33.171991",
+      "accepted_at": "2025-06-25T07:36:22.171991",
+      "line_items": [
+        {
+          "description": "Premium Plan - 44 seats",
+          "quantity": 44,
+          "unit_price": 376,
+          "total": 16544
+        },
+        {
+          "description": "Discount (5%)",
+          "quantity": 1,
+          "unit_price": -831.07,
+          "total": -831.07
+        }
+      ]
+    },
+    {
+      "id": "6209daf3-3ba0-43b0-a1b4-08ef33888da0",
+      "deal_id": "0ee27997-3337-4feb-9836-b01b3dda485b",
+      "customer_id": null,
+      "quote_number": "QT-2025-00008",
+      "total_amount": 19980,
+      "currency": "USD",
+      "status": "draft",
+      "valid_until": "2025-07-12T17:16:45.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Basic Plan - 74 seats",
+          "quantity": 74,
+          "unit_price": 270,
+          "total": 19980
+        }
+      ]
+    },
+    {
+      "id": "28b36166-e980-41b8-81f3-e330e86f114e",
+      "deal_id": "8c9220f3-9064-43e6-b114-272848023044",
+      "customer_id": null,
+      "quote_number": "QT-2025-00009",
+      "total_amount": 45318,
+      "currency": "USD",
+      "status": "sent",
+      "valid_until": "2025-12-24T21:04:59.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Enterprise Plan - 91 seats",
+          "quantity": 91,
+          "unit_price": 498,
+          "total": 45318
+        }
+      ]
+    },
+    {
+      "id": "e9a77fd8-187b-44f3-8bf4-616051909922",
+      "deal_id": "02f8a938-660b-46ed-abb0-2ebf76728369",
+      "customer_id": null,
+      "quote_number": "QT-2025-00010",
+      "total_amount": 1946.94,
+      "currency": "USD",
+      "status": "declined",
+      "valid_until": "2025-11-29T06:01:56.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Enterprise Plan - 8 seats",
+          "quantity": 8,
+          "unit_price": 301,
+          "total": 2408
+        },
+        {
+          "description": "Discount (19%)",
+          "quantity": 1,
+          "unit_price": -461.06,
+          "total": -461.06
+        }
+      ]
+    },
+    {
+      "id": "3ba2dffc-41cc-4235-ac84-955b0fa023ab",
+      "deal_id": "e1b82655-20a4-4b4f-9cc7-7a0be33063b4",
+      "customer_id": null,
+      "quote_number": "QT-2025-00011",
+      "total_amount": 9004.51,
+      "currency": "USD",
+      "status": "declined",
+      "valid_until": "2025-06-30T12:00:30.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Premium Plan - 19 seats",
+          "quantity": 19,
+          "unit_price": 474,
+          "total": 9006
+        },
+        {
+          "description": "Discount (0%)",
+          "quantity": 1,
+          "unit_price": -1.49,
+          "total": -1.49
+        }
+      ]
+    },
+    {
+      "id": "1bee6695-53bb-413a-b395-9c13d4560889",
+      "deal_id": "4f3f6d4d-fea6-4231-90b6-5605d8633bd0",
+      "customer_id": null,
+      "quote_number": "QT-2025-00012",
+      "total_amount": 6557.78,
+      "currency": "USD",
+      "status": "sent",
+      "valid_until": "2025-11-09T09:42:24.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Basic Plan - 23 seats",
+          "quantity": 23,
+          "unit_price": 372,
+          "total": 8556
+        },
+        {
+          "description": "Discount (23%)",
+          "quantity": 1,
+          "unit_price": -1998.22,
+          "total": -1998.22
+        }
+      ]
+    },
+    {
+      "id": "fb027ff1-f7ba-4923-b25f-015637b89baf",
+      "deal_id": "3bdff530-c198-43d0-8bdd-eb76e37e8f68",
+      "customer_id": null,
+      "quote_number": "QT-2025-00013",
+      "total_amount": 20476.55,
+      "currency": "USD",
+      "status": "draft",
+      "valid_until": "2025-09-27T03:33:35.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Premium Plan - 75 seats",
+          "quantity": 75,
+          "unit_price": 287,
+          "total": 21525
+        },
+        {
+          "description": "Discount (4%)",
+          "quantity": 1,
+          "unit_price": -1048.45,
+          "total": -1048.45
+        }
+      ]
+    },
+    {
+      "id": "01961ab2-4ddf-4252-83e2-be4aa2fc4f59",
+      "deal_id": "767dd313-0ca5-46d6-80bc-5aa8e0fe443b",
+      "customer_id": null,
+      "quote_number": "QT-2025-00014",
+      "total_amount": 8605.77,
+      "currency": "USD",
+      "status": "accepted",
+      "valid_until": "2025-08-31T12:06:23.171991",
+      "accepted_at": "2025-08-03T00:03:32.171991",
+      "line_items": [
+        {
+          "description": "Enterprise Plan - 43 seats",
+          "quantity": 43,
+          "unit_price": 278,
+          "total": 11954
+        },
+        {
+          "description": "Discount (28%)",
+          "quantity": 1,
+          "unit_price": -3348.23,
+          "total": -3348.23
+        }
+      ]
+    },
+    {
+      "id": "2ab302c3-4f0f-416f-9d9e-6b75c0b66987",
+      "deal_id": "65871523-eac4-46a7-ba69-663764f7f962",
+      "customer_id": null,
+      "quote_number": "QT-2025-00015",
+      "total_amount": 4902,
+      "currency": "USD",
+      "status": "accepted",
+      "valid_until": "2025-10-16T06:34:52.171991",
+      "accepted_at": "2025-09-18T14:33:01.171991",
+      "line_items": [
+        {
+          "description": "Premium Plan - 43 seats",
+          "quantity": 43,
+          "unit_price": 114,
+          "total": 4902
+        }
+      ]
+    },
+    {
+      "id": "0d98654b-2c0f-4cb4-9f40-86fa418b6958",
+      "deal_id": "03178c04-205a-4bbf-8437-94003bf3d24d",
+      "customer_id": null,
+      "quote_number": "QT-2025-00016",
+      "total_amount": 813.41,
+      "currency": "USD",
+      "status": "draft",
+      "valid_until": "2025-07-25T16:00:30.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Enterprise Plan - 6 seats",
+          "quantity": 6,
+          "unit_price": 160,
+          "total": 960
+        },
+        {
+          "description": "Discount (15%)",
+          "quantity": 1,
+          "unit_price": -146.59,
+          "total": -146.59
+        }
+      ]
+    },
+    {
+      "id": "f12c09dd-7c9b-42f0-8dde-65914809dbef",
+      "deal_id": "064acf36-2d2a-4c4a-b2f1-077a9fb5cec8",
+      "customer_id": null,
+      "quote_number": "QT-2025-00017",
+      "total_amount": 4908.21,
+      "currency": "USD",
+      "status": "draft",
+      "valid_until": "2025-12-05T15:17:02.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Premium Plan - 14 seats",
+          "quantity": 14,
+          "unit_price": 459,
+          "total": 6426
+        },
+        {
+          "description": "Discount (23%)",
+          "quantity": 1,
+          "unit_price": -1517.79,
+          "total": -1517.79
+        }
+      ]
+    },
+    {
+      "id": "3151f067-8937-4300-ba79-1a9dd5bf1a79",
+      "deal_id": "c8b6ffc8-1688-46e7-a4e8-5177e03025f2",
+      "customer_id": null,
+      "quote_number": "QT-2025-00018",
+      "total_amount": 24220,
+      "currency": "USD",
+      "status": "sent",
+      "valid_until": "2025-10-19T19:45:39.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Premium Plan - 70 seats",
+          "quantity": 70,
+          "unit_price": 346,
+          "total": 24220
+        }
+      ]
+    },
+    {
+      "id": "a54204c5-d1f5-475a-9868-754885eb3213",
+      "deal_id": "b03a9b2d-f587-41cb-ac27-9439e82cf5c3",
+      "customer_id": null,
+      "quote_number": "QT-2025-00019",
+      "total_amount": 30538.64,
+      "currency": "USD",
+      "status": "accepted",
+      "valid_until": "2025-10-28T20:01:31.171991",
+      "accepted_at": "2025-09-30T09:11:47.171991",
+      "line_items": [
+        {
+          "description": "Basic Plan - 87 seats",
+          "quantity": 87,
+          "unit_price": 406,
+          "total": 35322
+        },
+        {
+          "description": "Discount (13%)",
+          "quantity": 1,
+          "unit_price": -4783.36,
+          "total": -4783.36
+        }
+      ]
+    },
+    {
+      "id": "589b588f-6b27-4042-942a-866dc968d52d",
+      "deal_id": "07294d68-791a-4592-9bd0-1237a74e90a7",
+      "customer_id": null,
+      "quote_number": "QT-2025-00020",
+      "total_amount": 9311.23,
+      "currency": "USD",
+      "status": "accepted",
+      "valid_until": "2025-08-25T18:51:28.171991",
+      "accepted_at": "2025-07-31T20:07:12.171991",
+      "line_items": [
+        {
+          "description": "Basic Plan - 49 seats",
+          "quantity": 49,
+          "unit_price": 217,
+          "total": 10633
+        },
+        {
+          "description": "Discount (12%)",
+          "quantity": 1,
+          "unit_price": -1321.77,
+          "total": -1321.77
+        }
+      ]
+    },
+    {
+      "id": "15149d9d-0b03-47fb-ba15-194229764dc8",
+      "deal_id": "43c4bd06-5824-4a4f-a52f-9a4fd8683214",
+      "customer_id": null,
+      "quote_number": "QT-2025-00021",
+      "total_amount": 6264,
+      "currency": "USD",
+      "status": "declined",
+      "valid_until": "2025-10-26T03:50:47.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Enterprise Plan - 29 seats",
+          "quantity": 29,
+          "unit_price": 216,
+          "total": 6264
+        }
+      ]
+    },
+    {
+      "id": "9e5d6f21-918e-4ac1-a1f9-c54b5e54a0aa",
+      "deal_id": "23490254-7275-4e86-a289-377f517201d6",
+      "customer_id": null,
+      "quote_number": "QT-2025-00022",
+      "total_amount": 9690.29,
+      "currency": "USD",
+      "status": "draft",
+      "valid_until": "2025-10-07T14:10:36.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Premium Plan - 77 seats",
+          "quantity": 77,
+          "unit_price": 147,
+          "total": 11319
+        },
+        {
+          "description": "Discount (14%)",
+          "quantity": 1,
+          "unit_price": -1628.71,
+          "total": -1628.71
+        }
+      ]
+    },
+    {
+      "id": "2d5e9c25-d02e-40cb-80c9-ccfc0b7a4d89",
+      "deal_id": "fc5803aa-bb6d-4949-a583-06b300b17906",
+      "customer_id": null,
+      "quote_number": "QT-2025-00023",
+      "total_amount": 5593,
+      "currency": "USD",
+      "status": "accepted",
+      "valid_until": "2025-12-13T12:16:57.171991",
+      "accepted_at": "2025-12-03T04:57:01.171991",
+      "line_items": [
+        {
+          "description": "Premium Plan - 17 seats",
+          "quantity": 17,
+          "unit_price": 329,
+          "total": 5593
+        }
+      ]
+    },
+    {
+      "id": "005da3e9-1f97-4b0a-92b4-224b1bcd1939",
+      "deal_id": "48d77470-2604-4a80-a5d0-6e0f364ec2b1",
+      "customer_id": null,
+      "quote_number": "QT-2025-00024",
+      "total_amount": 18654.3,
+      "currency": "USD",
+      "status": "draft",
+      "valid_until": "2025-07-15T03:31:27.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Enterprise Plan - 79 seats",
+          "quantity": 79,
+          "unit_price": 256,
+          "total": 20224
+        },
+        {
+          "description": "Discount (7%)",
+          "quantity": 1,
+          "unit_price": -1569.7,
+          "total": -1569.7
+        }
+      ]
+    },
+    {
+      "id": "f1007748-487a-43de-bf92-e96d187d4d67",
+      "deal_id": "d545edbc-cbd2-4de2-bc62-e242b5f1c300",
+      "customer_id": null,
+      "quote_number": "QT-2025-00025",
+      "total_amount": 3421.07,
+      "currency": "USD",
+      "status": "sent",
+      "valid_until": "2025-08-29T06:58:20.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Enterprise Plan - 9 seats",
+          "quantity": 9,
+          "unit_price": 489,
+          "total": 4401
+        },
+        {
+          "description": "Discount (22%)",
+          "quantity": 1,
+          "unit_price": -979.93,
+          "total": -979.93
+        }
+      ]
+    },
+    {
+      "id": "bb52cc69-bc64-4ca2-b212-fd677f423d1d",
+      "deal_id": "b8db5d1b-8076-4fc0-bbf1-cbd8bfc8a57a",
+      "customer_id": null,
+      "quote_number": "QT-2025-00026",
+      "total_amount": 12602.18,
+      "currency": "USD",
+      "status": "sent",
+      "valid_until": "2025-07-11T19:12:08.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Enterprise Plan - 87 seats",
+          "quantity": 87,
+          "unit_price": 159,
+          "total": 13833
+        },
+        {
+          "description": "Discount (8%)",
+          "quantity": 1,
+          "unit_price": -1230.82,
+          "total": -1230.82
+        }
+      ]
+    },
+    {
+      "id": "6b401db4-78d8-47b9-a211-e8428f11dee4",
+      "deal_id": "0b8e4eb3-e717-4fb6-be1a-d0b6456dc848",
+      "customer_id": null,
+      "quote_number": "QT-2025-00027",
+      "total_amount": 17367.43,
+      "currency": "USD",
+      "status": "accepted",
+      "valid_until": "2025-11-01T23:21:22.171991",
+      "accepted_at": "2025-10-15T07:01:39.171991",
+      "line_items": [
+        {
+          "description": "Enterprise Plan - 83 seats",
+          "quantity": 83,
+          "unit_price": 259,
+          "total": 21497
+        },
+        {
+          "description": "Discount (19%)",
+          "quantity": 1,
+          "unit_price": -4129.57,
+          "total": -4129.57
+        }
+      ]
+    },
+    {
+      "id": "e12e8d98-8446-4aa5-8880-9ed5f554eae9",
+      "deal_id": "449b64bf-05d0-42f7-b653-88c5af95fc44",
+      "customer_id": null,
+      "quote_number": "QT-2025-00028",
+      "total_amount": 26810.78,
+      "currency": "USD",
+      "status": "accepted",
+      "valid_until": "2025-10-01T20:24:15.171991",
+      "accepted_at": "2025-09-21T05:04:39.171991",
+      "line_items": [
+        {
+          "description": "Premium Plan - 68 seats",
+          "quantity": 68,
+          "unit_price": 487,
+          "total": 33116
+        },
+        {
+          "description": "Discount (19%)",
+          "quantity": 1,
+          "unit_price": -6305.22,
+          "total": -6305.22
+        }
+      ]
+    },
+    {
+      "id": "a6b1078b-3a1a-4c8a-a2e0-c9e3a4d77a67",
+      "deal_id": "de15acdc-abdf-4159-8c47-a059134b5b68",
+      "customer_id": null,
+      "quote_number": "QT-2025-00029",
+      "total_amount": 8370.63,
+      "currency": "USD",
+      "status": "draft",
+      "valid_until": "2025-09-15T09:30:15.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Basic Plan - 34 seats",
+          "quantity": 34,
+          "unit_price": 249,
+          "total": 8466
+        },
+        {
+          "description": "Discount (1%)",
+          "quantity": 1,
+          "unit_price": -95.37,
+          "total": -95.37
+        }
+      ]
+    },
+    {
+      "id": "e577470e-2004-4c11-be94-d2c96c0c205b",
+      "deal_id": "23c362c0-231f-4812-8e66-61f3cc1771a7",
+      "customer_id": null,
+      "quote_number": "QT-2025-00030",
+      "total_amount": 1235.52,
+      "currency": "USD",
+      "status": "expired",
+      "valid_until": "2025-11-27T03:53:25.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Basic Plan - 8 seats",
+          "quantity": 8,
+          "unit_price": 160,
+          "total": 1280
+        },
+        {
+          "description": "Discount (3%)",
+          "quantity": 1,
+          "unit_price": -44.48,
+          "total": -44.48
+        }
+      ]
+    },
+    {
+      "id": "bc7d6e35-94dd-4bda-a9ca-4bd70e0c6905",
+      "deal_id": "fd2c4fe5-e1bd-4869-9ba3-a81f165fdb6a",
+      "customer_id": null,
+      "quote_number": "QT-2025-00031",
+      "total_amount": 16254,
+      "currency": "USD",
+      "status": "accepted",
+      "valid_until": "2025-10-17T05:52:14.171991",
+      "accepted_at": "2025-10-12T16:18:16.171991",
+      "line_items": [
+        {
+          "description": "Premium Plan - 43 seats",
+          "quantity": 43,
+          "unit_price": 378,
+          "total": 16254
+        }
+      ]
+    },
+    {
+      "id": "372eabcb-c5f2-48df-90e1-f7eb9485a513",
+      "deal_id": "341d5710-84e1-4407-984b-50f4f7e214e2",
+      "customer_id": null,
+      "quote_number": "QT-2025-00032",
+      "total_amount": 17387.72,
+      "currency": "USD",
+      "status": "draft",
+      "valid_until": "2025-07-12T14:41:01.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Premium Plan - 52 seats",
+          "quantity": 52,
+          "unit_price": 447,
+          "total": 23244
+        },
+        {
+          "description": "Discount (25%)",
+          "quantity": 1,
+          "unit_price": -5856.28,
+          "total": -5856.28
+        }
+      ]
+    },
+    {
+      "id": "915a1a16-c5f3-46b0-afc1-ed6d9e614fff",
+      "deal_id": "dad0514c-0dca-4894-9c15-356f437cce6f",
+      "customer_id": null,
+      "quote_number": "QT-2025-00033",
+      "total_amount": 4144.84,
+      "currency": "USD",
+      "status": "expired",
+      "valid_until": "2025-12-20T06:35:49.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Premium Plan - 12 seats",
+          "quantity": 12,
+          "unit_price": 398,
+          "total": 4776
+        },
+        {
+          "description": "Discount (13%)",
+          "quantity": 1,
+          "unit_price": -631.16,
+          "total": -631.16
+        }
+      ]
+    },
+    {
+      "id": "bfac855e-df8f-419f-b0a4-6da878c4e235",
+      "deal_id": "181320f1-5937-4640-849d-4311fbf63c2f",
+      "customer_id": null,
+      "quote_number": "QT-2025-00034",
+      "total_amount": 12909,
+      "currency": "USD",
+      "status": "sent",
+      "valid_until": "2025-10-17T22:35:44.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Enterprise Plan - 39 seats",
+          "quantity": 39,
+          "unit_price": 331,
+          "total": 12909
+        }
+      ]
+    },
+    {
+      "id": "cd0cf87c-55d9-43ed-ac52-998b94178ff3",
+      "deal_id": "c9752f52-be55-47bc-b736-9e52058edb8c",
+      "customer_id": null,
+      "quote_number": "QT-2025-00035",
+      "total_amount": 21006,
+      "currency": "USD",
+      "status": "accepted",
+      "valid_until": "2025-10-03T17:08:20.171991",
+      "accepted_at": "2025-09-17T13:51:34.171991",
+      "line_items": [
+        {
+          "description": "Basic Plan - 54 seats",
+          "quantity": 54,
+          "unit_price": 389,
+          "total": 21006
+        }
+      ]
+    },
+    {
+      "id": "4dab0437-22c9-42de-8d34-3b1aed856154",
+      "deal_id": "be874efc-8e39-4c9d-9a71-2906a3d0fe77",
+      "customer_id": null,
+      "quote_number": "QT-2025-00036",
+      "total_amount": 2730.0299999999997,
+      "currency": "USD",
+      "status": "declined",
+      "valid_until": "2025-09-27T08:46:59.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Basic Plan - 7 seats",
+          "quantity": 7,
+          "unit_price": 456,
+          "total": 3192
+        },
+        {
+          "description": "Discount (14%)",
+          "quantity": 1,
+          "unit_price": -461.97,
+          "total": -461.97
+        }
+      ]
+    },
+    {
+      "id": "746cbfd0-9253-4d66-8aa8-baf94f06efb2",
+      "deal_id": "ebd6a668-fa21-4be0-897c-4b2bce2fb231",
+      "customer_id": null,
+      "quote_number": "QT-2025-00037",
+      "total_amount": 9954.32,
+      "currency": "USD",
+      "status": "draft",
+      "valid_until": "2025-10-03T20:15:04.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Enterprise Plan - 92 seats",
+          "quantity": 92,
+          "unit_price": 111,
+          "total": 10212
+        },
+        {
+          "description": "Discount (2%)",
+          "quantity": 1,
+          "unit_price": -257.68,
+          "total": -257.68
+        }
+      ]
+    },
+    {
+      "id": "411f9c56-7cf1-40bb-8ac8-4c21b1c7aa8b",
+      "deal_id": "06a3aeec-9161-4d3b-a51d-739a0a39ba0c",
+      "customer_id": null,
+      "quote_number": "QT-2025-00038",
+      "total_amount": 8443.05,
+      "currency": "USD",
+      "status": "sent",
+      "valid_until": "2025-07-09T12:31:08.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Premium Plan - 49 seats",
+          "quantity": 49,
+          "unit_price": 208,
+          "total": 10192
+        },
+        {
+          "description": "Discount (17%)",
+          "quantity": 1,
+          "unit_price": -1748.95,
+          "total": -1748.95
+        }
+      ]
+    },
+    {
+      "id": "25166155-b60d-49c2-82bc-1112c32c7cde",
+      "deal_id": "76493298-6aa8-4fa1-ba2c-8149787c6145",
+      "customer_id": null,
+      "quote_number": "QT-2025-00039",
+      "total_amount": 34381.42,
+      "currency": "USD",
+      "status": "declined",
+      "valid_until": "2025-10-30T12:07:15.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Enterprise Plan - 89 seats",
+          "quantity": 89,
+          "unit_price": 431,
+          "total": 38359
+        },
+        {
+          "description": "Discount (10%)",
+          "quantity": 1,
+          "unit_price": -3977.58,
+          "total": -3977.58
+        }
+      ]
+    },
+    {
+      "id": "f9476fee-e96a-422c-8b0c-ed68d0535912",
+      "deal_id": "df6919b4-6529-4a0f-8332-fa9d22588b0a",
+      "customer_id": null,
+      "quote_number": "QT-2025-00040",
+      "total_amount": 10973.52,
+      "currency": "USD",
+      "status": "draft",
+      "valid_until": "2025-07-31T21:16:35.171991",
+      "accepted_at": null,
+      "line_items": [
+        {
+          "description": "Enterprise Plan - 58 seats",
+          "quantity": 58,
+          "unit_price": 193,
+          "total": 11194
+        },
+        {
+          "description": "Discount (1%)",
+          "quantity": 1,
+          "unit_price": -220.48,
+          "total": -220.48
+        }
+      ]
+    }
+  ]
+}
