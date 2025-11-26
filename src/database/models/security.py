@@ -2,10 +2,23 @@
 Security & Compliance models for Tier 3
 Security Swarm database tables
 """
-from sqlalchemy import Column, String, Integer, Float, Boolean, ForeignKey, DateTime, Date, Text, Index
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.orm import relationship
+
 import uuid
+
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+)
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import relationship
 
 from src.database.models.base import BaseModel
 
@@ -83,9 +96,7 @@ class AccessControlLog(BaseModel):
     # Tracking
     timestamp = Column(DateTime(timezone=True), nullable=False, index=True)
 
-    __table_args__ = (
-        Index('idx_resource', 'resource_type', 'resource_id'),
-    )
+    __table_args__ = (Index("idx_resource", "resource_type", "resource_id"),)
 
     def __repr__(self) -> str:
         return f"<AccessControlLog(user={self.user_email}, resource={self.resource_type}, granted={self.access_granted})>"
@@ -278,7 +289,7 @@ class ConsentRecord(BaseModel):
         UUID(as_uuid=True),
         ForeignKey("customers.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
 
     # Consent details
@@ -358,7 +369,9 @@ class PenetrationTest(BaseModel):
 
     # Test details
     test_name = Column(String(255), nullable=False, index=True)
-    test_type = Column(String(100), nullable=False)  # 'external', 'internal', 'application', 'social'
+    test_type = Column(
+        String(100), nullable=False
+    )  # 'external', 'internal', 'application', 'social'
     test_scope = Column(Text, nullable=True)
 
     # Tester information
