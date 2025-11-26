@@ -563,5 +563,9 @@ Success Metrics:
 
 Generate a comprehensive white space analysis."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # White space analysis uses account data
+        )
         return response
