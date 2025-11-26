@@ -4,12 +4,12 @@ Import Specialist Agent - Helps import data from other tools.
 Specialist for importing data from competitors (Asana, Trello, Monday) or CSV files.
 """
 
-from typing import Dict, Any, Optional
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("import_specialist", tier="essential", category="usage")
@@ -33,7 +33,7 @@ class ImportSpecialist(BaseAgent):
             "export_instructions": "In Asana: Menu → Export → JSON or CSV",
             "migration_time": "15-45 minutes",
             "preserves": ["Task hierarchy", "Assignees", "Due dates", "Custom fields"],
-            "limitations": ["Comments (as notes)", "Attachments (links only)"]
+            "limitations": ["Comments (as notes)", "Attachments (links only)"],
         },
         "trello": {
             "name": "Trello",
@@ -41,7 +41,7 @@ class ImportSpecialist(BaseAgent):
             "export_instructions": "In Trello: Board Menu → More → Print and Export → Export JSON",
             "migration_time": "10-30 minutes",
             "preserves": ["Board structure", "Card descriptions", "Members", "Labels"],
-            "limitations": ["Power-Ups not transferred", "Attachments (links only)"]
+            "limitations": ["Power-Ups not transferred", "Attachments (links only)"],
         },
         "monday": {
             "name": "Monday.com",
@@ -49,7 +49,7 @@ class ImportSpecialist(BaseAgent):
             "export_instructions": "In Monday: Board Menu → Export to Excel",
             "migration_time": "20-60 minutes",
             "preserves": ["Board structure", "Column data", "Status", "People assignments"],
-            "limitations": ["Automations need recreation", "Integrations not transferred"]
+            "limitations": ["Automations need recreation", "Integrations not transferred"],
         },
         "jira": {
             "name": "Jira",
@@ -57,7 +57,7 @@ class ImportSpecialist(BaseAgent):
             "export_instructions": "In Jira: Issues → Export → CSV (all fields)",
             "migration_time": "30-90 minutes",
             "preserves": ["Issue hierarchy", "Custom fields", "Assignees", "Sprint data"],
-            "limitations": ["Workflows need recreation", "Attachments (links only)"]
+            "limitations": ["Workflows need recreation", "Attachments (links only)"],
         },
         "csv": {
             "name": "CSV File",
@@ -65,7 +65,7 @@ class ImportSpecialist(BaseAgent):
             "export_instructions": "Prepare CSV with headers: name, description, assignee, due_date, status",
             "migration_time": "5-20 minutes",
             "preserves": ["All data in columns"],
-            "limitations": ["No hierarchy", "Plain text only"]
+            "limitations": ["No hierarchy", "Plain text only"],
         },
         "excel": {
             "name": "Microsoft Excel",
@@ -73,8 +73,8 @@ class ImportSpecialist(BaseAgent):
             "export_instructions": "Save as .xlsx or .csv format",
             "migration_time": "5-20 minutes",
             "preserves": ["Data and basic formatting"],
-            "limitations": ["Formulas not executed", "Macros not transferred"]
-        }
+            "limitations": ["Formulas not executed", "Macros not transferred"],
+        },
     }
 
     def __init__(self):
@@ -85,10 +85,10 @@ class ImportSpecialist(BaseAgent):
             capabilities=[
                 AgentCapability.KB_SEARCH,
                 AgentCapability.CONTEXT_AWARE,
-                AgentCapability.MULTI_TURN
+                AgentCapability.MULTI_TURN,
             ],
             kb_category="usage",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -104,16 +104,13 @@ class ImportSpecialist(BaseAgent):
         self.logger.debug(
             "import_processing_started",
             message_preview=message[:100],
-            turn_count=state["turn_count"]
+            turn_count=state["turn_count"],
         )
 
         # Detect import source
         import_source = self._detect_import_source(message)
 
-        self.logger.info(
-            "import_source_detected",
-            source=import_source
-        )
+        self.logger.info("import_source_detected", source=import_source)
 
         # Generate guidance
         if import_source and import_source in self.SUPPORTED_IMPORTS:
@@ -125,15 +122,12 @@ class ImportSpecialist(BaseAgent):
         kb_results = await self.search_knowledge_base(
             f"{import_source} import migration guide" if import_source else "data import guide",
             category="usage",
-            limit=2
+            limit=2,
         )
         state["kb_results"] = kb_results
 
         if kb_results:
-            self.logger.info(
-                "import_kb_articles_found",
-                count=len(kb_results)
-            )
+            self.logger.info("import_kb_articles_found", count=len(kb_results))
             guide += "\n\n**📚 Import guides:**\n"
             for i, article in enumerate(kb_results, 1):
                 guide += f"{i}. {article['title']}\n"
@@ -144,15 +138,11 @@ class ImportSpecialist(BaseAgent):
         state["next_agent"] = None
         state["status"] = "resolved"
 
-        self.logger.info(
-            "import_guidance_completed",
-            source=import_source,
-            status="resolved"
-        )
+        self.logger.info("import_guidance_completed", source=import_source, status="resolved")
 
         return state
 
-    def _detect_import_source(self, message: str) -> Optional[str]:
+    def _detect_import_source(self, message: str) -> str | None:
         """Detect which tool user is importing from"""
         message_lower = message.lower()
 
@@ -177,11 +167,11 @@ class ImportSpecialist(BaseAgent):
         else:
             return self._create_tool_migration_guide(source, source_info)
 
-    def _create_csv_guide(self, source: str, source_info: Dict[str, Any]) -> str:
+    def _create_csv_guide(self, source: str, source_info: dict[str, Any]) -> str:
         """Create guide for CSV/Excel import"""
-        return f"""**📥 Importing from {source_info['name']}**
+        return f"""**📥 Importing from {source_info["name"]}**
 
-**Time estimate:** {source_info['migration_time']}
+**Time estimate:** {source_info["migration_time"]}
 
 **Step 1: Prepare your file**
 
@@ -253,36 +243,36 @@ name,description,assignee,due_date,status,priority,tags
 **Need help?** I can review your CSV structure - just paste the first few rows!
 """
 
-    def _create_tool_migration_guide(self, source: str, source_info: Dict[str, Any]) -> str:
+    def _create_tool_migration_guide(self, source: str, source_info: dict[str, Any]) -> str:
         """Create guide for migrating from another tool"""
-        return f"""**📥 Migrating from {source_info['name']} to Our Platform**
+        return f"""**📥 Migrating from {source_info["name"]} to Our Platform**
 
 **Migration overview:**
-• Time estimate: {source_info['migration_time']}
+• Time estimate: {source_info["migration_time"]}
 • Difficulty: Medium
-• Data preserved: {', '.join(source_info['preserves'][:3])}
+• Data preserved: {", ".join(source_info["preserves"][:3])}
 
 ---
 
-**Phase 1: Export from {source_info['name']}**
+**Phase 1: Export from {source_info["name"]}**
 
-**{source_info['export_instructions']}**
+**{source_info["export_instructions"]}**
 
 Detailed steps:
-1. Log into your {source_info['name']} account
+1. Log into your {source_info["name"]} account
 2. Navigate to the board/project you want to export
 3. Follow the export instructions above
 4. Save the exported file to your computer
 5. **Important:** Don't modify the exported file
 
 **What gets exported:**
-{chr(10).join(['✓ ' + field.title() for field in source_info['fields']])}
+{chr(10).join(["✓ " + field.title() for field in source_info["fields"]])}
 
 ---
 
 **Phase 2: Upload to Our Platform**
 
-1. Go to **Settings → Import → {source_info['name']}**
+1. Go to **Settings → Import → {source_info["name"]}**
 2. Click **"Choose File"** and select your exported file
 3. Click **"Upload"**
 4. Wait for file validation (usually <1 minute)
@@ -292,7 +282,7 @@ Detailed steps:
 **Phase 3: Field Mapping**
 
 We'll automatically map these fields:
-{chr(10).join(['✓ ' + field.title() for field in source_info['fields'][:4]])}
+{chr(10).join(["✓ " + field.title() for field in source_info["fields"][:4]])}
 
 **Manual mapping may be needed for:**
 • Custom fields
@@ -321,17 +311,17 @@ We'll automatically map these fields:
 
 3. **Start import:**
    - Click **"Start Import"**
-   - Processing time: {source_info['migration_time']}
+   - Processing time: {source_info["migration_time"]}
    - You'll receive email when done
    - Don't close the browser (optional - can monitor progress)
 
 ---
 
 **What gets preserved:**
-{chr(10).join(['✓ ' + item for item in source_info['preserves']])}
+{chr(10).join(["✓ " + item for item in source_info["preserves"]])}
 
 **Limitations to know:**
-{chr(10).join(['⚠️  ' + item for item in source_info['limitations']])}
+{chr(10).join(["⚠️  " + item for item in source_info["limitations"]])}
 
 ---
 
@@ -340,10 +330,10 @@ We'll automatically map these fields:
 □ Verify all items imported correctly
 □ Check team member assignments
 □ Review due dates and priorities
-□ Set up automations (if you had any in {source_info['name']})
+□ Set up automations (if you had any in {source_info["name"]})
 □ Configure notifications
 □ Invite team members
-□ Archive {source_info['name']} workspace (when ready)
+□ Archive {source_info["name"]} workspace (when ready)
 
 ---
 
@@ -356,7 +346,7 @@ Solution: Invite team members first, or map to existing users
 Solution: Rename project in import settings or merge with existing
 
 **❌ "Date format invalid"**
-Solution: This shouldn't happen with {source_info['name']} exports - contact support
+Solution: This shouldn't happen with {source_info["name"]} exports - contact support
 
 **❌ "File too large"**
 Solution: Export smaller boards separately, or contact support for large migrations
@@ -376,11 +366,11 @@ Solution: Export smaller boards separately, or contact support for large migrati
    • Provide training if needed
 
 **3. Run parallel for 1 week**
-   • Keep {source_info['name']} active temporarily
+   • Keep {source_info["name"]} active temporarily
    • Sync critical updates manually
    • Switch fully when confident
 
-**4. Don't delete {source_info['name']} data immediately**
+**4. Don't delete {source_info["name"]} data immediately**
    • Keep for 30 days as backup
    • Export final backup
    • Cancel subscription after verification period
@@ -450,6 +440,7 @@ Let me know how I can help!
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
