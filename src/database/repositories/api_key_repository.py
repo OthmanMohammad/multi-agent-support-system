@@ -4,10 +4,10 @@ API Key repository - Business logic for API key data access
 Provides methods for API key management and validation.
 """
 
-from typing import Optional, List
-from sqlalchemy import select, func
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
-from datetime import datetime, timedelta, UTC
+
+from sqlalchemy import func, select
 
 from src.database.base import BaseRepository
 from src.database.models import APIKey
@@ -19,7 +19,7 @@ class APIKeyRepository(BaseRepository[APIKey]):
     def __init__(self, session):
         super().__init__(APIKey, session)
 
-    async def get_by_prefix(self, key_prefix: str) -> Optional[APIKey]:
+    async def get_by_prefix(self, key_prefix: str) -> APIKey | None:
         """
         Get API key by prefix (for quick lookup).
 
@@ -29,16 +29,10 @@ class APIKeyRepository(BaseRepository[APIKey]):
         Returns:
             APIKey instance or None
         """
-        result = await self.session.execute(
-            select(APIKey).where(APIKey.key_prefix == key_prefix)
-        )
+        result = await self.session.execute(select(APIKey).where(APIKey.key_prefix == key_prefix))
         return result.scalar_one_or_none()
 
-    async def get_user_keys(
-        self,
-        user_id: UUID,
-        include_inactive: bool = False
-    ) -> List[APIKey]:
+    async def get_user_keys(self, user_id: UUID, include_inactive: bool = False) -> list[APIKey]:
         """
         Get all API keys for a user.
 
@@ -49,23 +43,15 @@ class APIKeyRepository(BaseRepository[APIKey]):
         Returns:
             List of API keys
         """
-        query = select(APIKey).where(
-            APIKey.user_id == user_id,
-            APIKey.deleted_at.is_(None)
-        )
+        query = select(APIKey).where(APIKey.user_id == user_id, APIKey.deleted_at.is_(None))
 
         if not include_inactive:
-            query = query.where(APIKey.is_active == True)
+            query = query.where(APIKey.is_active)
 
-        result = await self.session.execute(
-            query.order_by(APIKey.created_at.desc())
-        )
+        result = await self.session.execute(query.order_by(APIKey.created_at.desc()))
         return list(result.scalars().all())
 
-    async def get_active_keys(
-        self,
-        user_id: UUID
-    ) -> List[APIKey]:
+    async def get_active_keys(self, user_id: UUID) -> list[APIKey]:
         """
         Get all active, non-expired API keys for a user.
 
@@ -78,18 +64,19 @@ class APIKeyRepository(BaseRepository[APIKey]):
         now = datetime.now(UTC)
 
         result = await self.session.execute(
-            select(APIKey).where(
+            select(APIKey)
+            .where(
                 APIKey.user_id == user_id,
-                APIKey.is_active == True,
+                APIKey.is_active,
                 APIKey.deleted_at.is_(None),
                 # Either no expiration or not yet expired
-                (APIKey.expires_at.is_(None)) | (APIKey.expires_at > now)
+                (APIKey.expires_at.is_(None)) | (APIKey.expires_at > now),
             )
             .order_by(APIKey.created_at.desc())
         )
         return list(result.scalars().all())
 
-    async def revoke_key(self, key_id: UUID) -> Optional[APIKey]:
+    async def revoke_key(self, key_id: UUID) -> APIKey | None:
         """
         Revoke an API key (soft delete).
 
@@ -101,7 +88,7 @@ class APIKeyRepository(BaseRepository[APIKey]):
         """
         return await self.delete(key_id)
 
-    async def deactivate_key(self, key_id: UUID) -> Optional[APIKey]:
+    async def deactivate_key(self, key_id: UUID) -> APIKey | None:
         """
         Deactivate an API key (without deleting).
 
@@ -113,7 +100,7 @@ class APIKeyRepository(BaseRepository[APIKey]):
         """
         return await self.update(key_id, is_active=False)
 
-    async def activate_key(self, key_id: UUID) -> Optional[APIKey]:
+    async def activate_key(self, key_id: UUID) -> APIKey | None:
         """
         Activate an API key.
 
@@ -125,11 +112,7 @@ class APIKeyRepository(BaseRepository[APIKey]):
         """
         return await self.update(key_id, is_active=True)
 
-    async def record_usage(
-        self,
-        key_id: UUID,
-        ip_address: Optional[str] = None
-    ) -> Optional[APIKey]:
+    async def record_usage(self, key_id: UUID, ip_address: str | None = None) -> APIKey | None:
         """
         Record API key usage (increment counter, update timestamp).
 
@@ -148,13 +131,10 @@ class APIKeyRepository(BaseRepository[APIKey]):
         usage_count = (key.usage_count or 0) + 1
 
         return await self.update(
-            key_id,
-            usage_count=usage_count,
-            last_used_at=datetime.now(UTC),
-            last_used_ip=ip_address
+            key_id, usage_count=usage_count, last_used_at=datetime.now(UTC), last_used_ip=ip_address
         )
 
-    async def get_expired_keys(self, limit: int = 100) -> List[APIKey]:
+    async def get_expired_keys(self, limit: int = 100) -> list[APIKey]:
         """
         Get all expired API keys.
 
@@ -167,10 +147,9 @@ class APIKeyRepository(BaseRepository[APIKey]):
         now = datetime.now(UTC)
 
         result = await self.session.execute(
-            select(APIKey).where(
-                APIKey.expires_at.isnot(None),
-                APIKey.expires_at < now,
-                APIKey.deleted_at.is_(None)
+            select(APIKey)
+            .where(
+                APIKey.expires_at.isnot(None), APIKey.expires_at < now, APIKey.deleted_at.is_(None)
             )
             .order_by(APIKey.expires_at.desc())
             .limit(limit)
@@ -193,7 +172,7 @@ class APIKeyRepository(BaseRepository[APIKey]):
 
         return count
 
-    async def get_key_stats(self, user_id: Optional[UUID] = None) -> dict:
+    async def get_key_stats(self, user_id: UUID | None = None) -> dict:
         """
         Get API key statistics.
 
@@ -208,22 +187,15 @@ class APIKeyRepository(BaseRepository[APIKey]):
         if user_id:
             base_filter.append(APIKey.user_id == user_id)
 
-        total_keys = await self.session.execute(
-            select(func.count(APIKey.id)).where(*base_filter)
-        )
+        total_keys = await self.session.execute(select(func.count(APIKey.id)).where(*base_filter))
 
         active_keys = await self.session.execute(
-            select(func.count(APIKey.id)).where(
-                *base_filter,
-                APIKey.is_active == True
-            )
+            select(func.count(APIKey.id)).where(*base_filter, APIKey.is_active)
         )
 
         expired_keys = await self.session.execute(
             select(func.count(APIKey.id)).where(
-                *base_filter,
-                APIKey.expires_at.isnot(None),
-                APIKey.expires_at < datetime.now(UTC)
+                *base_filter, APIKey.expires_at.isnot(None), APIKey.expires_at < datetime.now(UTC)
             )
         )
 
@@ -233,11 +205,7 @@ class APIKeyRepository(BaseRepository[APIKey]):
             "expired": expired_keys.scalar(),
         }
 
-    async def get_unused_keys(
-        self,
-        days_unused: int = 90,
-        limit: int = 100
-    ) -> List[APIKey]:
+    async def get_unused_keys(self, days_unused: int = 90, limit: int = 100) -> list[APIKey]:
         """
         Get API keys that haven't been used in N days.
 
@@ -251,10 +219,11 @@ class APIKeyRepository(BaseRepository[APIKey]):
         cutoff_date = datetime.now(UTC) - timedelta(days=days_unused)
 
         result = await self.session.execute(
-            select(APIKey).where(
+            select(APIKey)
+            .where(
                 APIKey.deleted_at.is_(None),
                 # Either never used or last used before cutoff
-                (APIKey.last_used_at.is_(None)) | (APIKey.last_used_at < cutoff_date)
+                (APIKey.last_used_at.is_(None)) | (APIKey.last_used_at < cutoff_date),
             )
             .order_by(APIKey.created_at.desc())
             .limit(limit)
