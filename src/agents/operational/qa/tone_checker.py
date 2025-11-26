@@ -5,13 +5,13 @@ Ensures appropriate, empathetic, and professional tone in customer responses.
 Uses Claude Sonnet for nuanced tone analysis and emotion detection.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("tone_checker", tier="operational", category="qa")
@@ -39,7 +39,7 @@ class ToneCheckerAgent(BaseAgent):
         "clarity": "Clear and easy to understand communication",
         "positivity": "Positive framing and constructive language",
         "respect": "Respectful and courteous treatment",
-        "appropriateness": "Appropriate formality and cultural sensitivity"
+        "appropriateness": "Appropriate formality and cultural sensitivity",
     }
 
     # Tone issues to detect
@@ -49,7 +49,7 @@ class ToneCheckerAgent(BaseAgent):
         "impatient": ["you should have", "obviously", "just do this"],
         "condescending": ["you don't understand", "let me explain", "simple as that"],
         "defensive": ["not our fault", "we didn't", "it's your"],
-        "robotic": ["please be informed", "kindly note", "we regret to inform"]
+        "robotic": ["please be informed", "kindly note", "we regret to inform"],
     }
 
     # Positive tone indicators
@@ -59,7 +59,7 @@ class ToneCheckerAgent(BaseAgent):
         "thank you for",
         "happy to help",
         "let me assist",
-        "I'd be glad to"
+        "I'd be glad to",
     ]
 
     def __init__(self):
@@ -70,7 +70,7 @@ class ToneCheckerAgent(BaseAgent):
             temperature=0.2,
             max_tokens=2000,
             capabilities=[],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -90,14 +90,14 @@ class ToneCheckerAgent(BaseAgent):
         state = self.update_state(state)
 
         # Extract parameters
-        response_text = state.get("entities", {}).get("response_text", state.get("agent_response", ""))
+        response_text = state.get("entities", {}).get(
+            "response_text", state.get("agent_response", "")
+        )
         customer_context = state.get("entities", {}).get("customer_context", {})
         expected_tone = state.get("entities", {}).get("expected_tone", "professional_friendly")
 
         self.logger.debug(
-            "tone_checking_details",
-            response_length=len(response_text),
-            expected_tone=expected_tone
+            "tone_checking_details", response_length=len(response_text), expected_tone=expected_tone
         )
 
         # Analyze tone dimensions
@@ -113,18 +113,10 @@ class ToneCheckerAgent(BaseAgent):
         appropriateness = self._check_appropriateness(response_text, customer_context)
 
         # Aggregate issues
-        all_issues = self._aggregate_tone_issues(
-            tone_issues,
-            empathy_analysis,
-            appropriateness
-        )
+        all_issues = self._aggregate_tone_issues(tone_issues, empathy_analysis, appropriateness)
 
         # Generate recommendations
-        recommendations = self._generate_recommendations(
-            tone_scores,
-            all_issues,
-            expected_tone
-        )
+        recommendations = self._generate_recommendations(tone_scores, all_issues, expected_tone)
 
         # Calculate overall tone score
         tone_score = self._calculate_tone_score(tone_scores, all_issues)
@@ -134,11 +126,7 @@ class ToneCheckerAgent(BaseAgent):
 
         # Format response
         response = self._format_tone_report(
-            tone_scores,
-            all_issues,
-            recommendations,
-            tone_score,
-            passed
+            tone_scores, all_issues, recommendations, tone_score, passed
         )
 
         state["agent_response"] = response
@@ -155,12 +143,12 @@ class ToneCheckerAgent(BaseAgent):
             "tone_checking_completed",
             tone_score=tone_score,
             issues_found=len(all_issues),
-            passed=passed
+            passed=passed,
         )
 
         return state
 
-    def _analyze_tone_dimensions(self, response_text: str) -> Dict[str, float]:
+    def _analyze_tone_dimensions(self, response_text: str) -> dict[str, float]:
         """
         Analyze response across tone dimensions.
 
@@ -174,8 +162,9 @@ class ToneCheckerAgent(BaseAgent):
         text_lower = response_text.lower()
 
         # Professionalism score
-        unprofessional_count = sum(1 for word in ["stupid", "dumb", "idiot", "crap", "sucks"]
-                                   if word in text_lower)
+        unprofessional_count = sum(
+            1 for word in ["stupid", "dumb", "idiot", "crap", "sucks"] if word in text_lower
+        )
         scores["professionalism"] = max(0, 100 - (unprofessional_count * 40))
 
         # Empathy score
@@ -189,7 +178,9 @@ class ToneCheckerAgent(BaseAgent):
         scores["helpfulness"] = min(100, 60 + (helpful_count * 10))
 
         # Clarity score (inverse of complexity)
-        avg_word_length = sum(len(word) for word in response_text.split()) / max(len(response_text.split()), 1)
+        avg_word_length = sum(len(word) for word in response_text.split()) / max(
+            len(response_text.split()), 1
+        )
         scores["clarity"] = max(0, min(100, 100 - (avg_word_length - 5) * 5))
 
         # Positivity score
@@ -200,8 +191,9 @@ class ToneCheckerAgent(BaseAgent):
         scores["positivity"] = max(0, min(100, 70 + (positive_count * 10) - (negative_count * 5)))
 
         # Respect score
-        disrespectful_count = sum(1 for phrase in ["you should have", "you need to", "you must"]
-                                 if phrase in text_lower)
+        disrespectful_count = sum(
+            1 for phrase in ["you should have", "you need to", "you must"] if phrase in text_lower
+        )
         scores["respect"] = max(0, 100 - (disrespectful_count * 20))
 
         # Appropriateness score (baseline)
@@ -209,7 +201,7 @@ class ToneCheckerAgent(BaseAgent):
 
         return scores
 
-    def _detect_tone_issues(self, response_text: str) -> List[Dict[str, Any]]:
+    def _detect_tone_issues(self, response_text: str) -> list[dict[str, Any]]:
         """
         Detect specific tone issues.
 
@@ -225,21 +217,23 @@ class ToneCheckerAgent(BaseAgent):
         for issue_type, patterns in self.TONE_ISSUES.items():
             for pattern in patterns:
                 if pattern in text_lower:
-                    issues.append({
-                        "type": issue_type,
-                        "severity": "high" if issue_type in ["passive_aggressive", "condescending"] else "medium",
-                        "pattern": pattern,
-                        "message": f"{issue_type.replace('_', ' ').title()} tone detected",
-                        "snippet": self._extract_snippet(response_text, pattern)
-                    })
+                    issues.append(
+                        {
+                            "type": issue_type,
+                            "severity": "high"
+                            if issue_type in ["passive_aggressive", "condescending"]
+                            else "medium",
+                            "pattern": pattern,
+                            "message": f"{issue_type.replace('_', ' ').title()} tone detected",
+                            "snippet": self._extract_snippet(response_text, pattern),
+                        }
+                    )
 
         return issues
 
     def _analyze_empathy(
-        self,
-        response_text: str,
-        customer_context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, response_text: str, customer_context: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Analyze empathy and emotional appropriateness.
 
@@ -258,16 +252,24 @@ class ToneCheckerAgent(BaseAgent):
 
         if customer_sentiment in ["frustrated", "angry", "upset"]:
             # Should have empathy/acknowledgment
-            empathy_phrases = ["understand", "sorry", "apologize", "frustrating", "appreciate your patience"]
+            empathy_phrases = [
+                "understand",
+                "sorry",
+                "apologize",
+                "frustrating",
+                "appreciate your patience",
+            ]
             has_empathy = any(phrase in text_lower for phrase in empathy_phrases)
 
             if not has_empathy:
-                issues.append({
-                    "type": "missing_empathy",
-                    "severity": "high",
-                    "message": "Customer is frustrated but response lacks empathy/acknowledgment",
-                    "suggestion": "Add acknowledgment of customer frustration"
-                })
+                issues.append(
+                    {
+                        "type": "missing_empathy",
+                        "severity": "high",
+                        "message": "Customer is frustrated but response lacks empathy/acknowledgment",
+                        "suggestion": "Add acknowledgment of customer frustration",
+                    }
+                )
 
         # Check for appropriate apology
         if "sorry" in text_lower or "apologize" in text_lower:
@@ -279,14 +281,12 @@ class ToneCheckerAgent(BaseAgent):
         return {
             "empathy_present": empathy_present,
             "issues": issues,
-            "customer_sentiment": customer_sentiment
+            "customer_sentiment": customer_sentiment,
         }
 
     def _check_appropriateness(
-        self,
-        response_text: str,
-        customer_context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, response_text: str, customer_context: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Check tone appropriateness for context.
 
@@ -308,12 +308,14 @@ class ToneCheckerAgent(BaseAgent):
             casual_phrases = ["hey", "yeah", "nope", "gonna", "wanna"]
             for phrase in casual_phrases:
                 if phrase in text_lower:
-                    issues.append({
-                        "type": "inappropriate_informality",
-                        "severity": "medium",
-                        "message": f"Too casual for enterprise customer: '{phrase}'",
-                        "snippet": self._extract_snippet(response_text, phrase)
-                    })
+                    issues.append(
+                        {
+                            "type": "inappropriate_informality",
+                            "severity": "medium",
+                            "message": f"Too casual for enterprise customer: '{phrase}'",
+                            "snippet": self._extract_snippet(response_text, phrase),
+                        }
+                    )
 
         # Check for overly technical language for non-technical customers
         customer_technical_level = customer_context.get("technical_level", "medium")
@@ -323,24 +325,23 @@ class ToneCheckerAgent(BaseAgent):
             technical_count = sum(1 for term in technical_terms if term in text_lower)
 
             if technical_count > 2:
-                issues.append({
-                    "type": "overly_technical",
-                    "severity": "medium",
-                    "message": "Response may be too technical for non-technical customer",
-                    "suggestion": "Simplify technical explanations"
-                })
+                issues.append(
+                    {
+                        "type": "overly_technical",
+                        "severity": "medium",
+                        "message": "Response may be too technical for non-technical customer",
+                        "suggestion": "Simplify technical explanations",
+                    }
+                )
 
-        return {
-            "issues": issues,
-            "appropriate_for_context": len(issues) == 0
-        }
+        return {"issues": issues, "appropriate_for_context": len(issues) == 0}
 
     def _aggregate_tone_issues(
         self,
-        tone_issues: List[Dict[str, Any]],
-        empathy_analysis: Dict[str, Any],
-        appropriateness: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        tone_issues: list[dict[str, Any]],
+        empathy_analysis: dict[str, Any],
+        appropriateness: dict[str, Any],
+    ) -> list[dict[str, Any]]:
         """Aggregate all tone issues."""
         all_issues = tone_issues.copy()
         all_issues.extend(empathy_analysis.get("issues", []))
@@ -353,11 +354,8 @@ class ToneCheckerAgent(BaseAgent):
         return all_issues
 
     def _generate_recommendations(
-        self,
-        tone_scores: Dict[str, float],
-        issues: List[Dict[str, Any]],
-        expected_tone: str
-    ) -> List[str]:
+        self, tone_scores: dict[str, float], issues: list[dict[str, Any]], expected_tone: str
+    ) -> list[str]:
         """Generate tone improvement recommendations."""
         recommendations = []
 
@@ -384,7 +382,7 @@ class ToneCheckerAgent(BaseAgent):
             )
 
         # Specific recommendations
-        issue_types = set(i["type"] for i in issues)
+        issue_types = {i["type"] for i in issues}
 
         if "passive_aggressive" in issue_types:
             recommendations.append(
@@ -397,16 +395,12 @@ class ToneCheckerAgent(BaseAgent):
             )
 
         if "overly_technical" in issue_types:
-            recommendations.append(
-                "Simplify technical language for better customer understanding."
-            )
+            recommendations.append("Simplify technical language for better customer understanding.")
 
         return recommendations
 
     def _calculate_tone_score(
-        self,
-        tone_scores: Dict[str, float],
-        issues: List[Dict[str, Any]]
+        self, tone_scores: dict[str, float], issues: list[dict[str, Any]]
     ) -> float:
         """Calculate overall tone score (0-100)."""
         # Average of dimension scores
@@ -420,7 +414,7 @@ class ToneCheckerAgent(BaseAgent):
 
         return max(0.0, round(avg_score, 1))
 
-    def _determine_pass_fail(self, issues: List[Dict[str, Any]], tone_score: float) -> bool:
+    def _determine_pass_fail(self, issues: list[dict[str, Any]], tone_score: float) -> bool:
         """Determine if tone check passes."""
         critical_issues = [i for i in issues if i.get("severity") == "critical"]
         high_issues = [i for i in issues if i.get("severity") == "high"]
@@ -430,10 +424,7 @@ class ToneCheckerAgent(BaseAgent):
             return False
 
         # Warning if high severity issues
-        if high_issues and tone_score < 70:
-            return False
-
-        return True
+        return not (high_issues and tone_score < 70)
 
     def _extract_snippet(self, text: str, pattern: str) -> str:
         """Extract text snippet containing pattern."""
@@ -452,11 +443,11 @@ class ToneCheckerAgent(BaseAgent):
 
     def _format_tone_report(
         self,
-        tone_scores: Dict[str, float],
-        issues: List[Dict[str, Any]],
-        recommendations: List[str],
+        tone_scores: dict[str, float],
+        issues: list[dict[str, Any]],
+        recommendations: list[str],
         tone_score: float,
-        passed: bool
+        passed: bool,
     ) -> str:
         """Format tone analysis report."""
         status_icon = "✅" if passed else "❌"
@@ -476,19 +467,25 @@ class ToneCheckerAgent(BaseAgent):
 
         # Issues
         if issues:
-            report += f"\n**Tone Issues Detected:**\n"
+            report += "\n**Tone Issues Detected:**\n"
             for issue in issues[:5]:
-                icon = "🔴" if issue["severity"] == "critical" else "⚠️" if issue["severity"] == "high" else "ℹ️"
+                icon = (
+                    "🔴"
+                    if issue["severity"] == "critical"
+                    else "⚠️"
+                    if issue["severity"] == "high"
+                    else "ℹ️"
+                )
                 report += f"{icon} [{issue['severity'].upper()}] {issue['message']}\n"
                 if "snippet" in issue:
-                    report += f"   \"{issue['snippet']}\"\n"
+                    report += f'   "{issue["snippet"]}"\n'
 
             if len(issues) > 5:
                 report += f"... and {len(issues) - 5} more issues\n"
 
         # Recommendations
         if recommendations:
-            report += f"\n**Recommendations:**\n"
+            report += "\n**Recommendations:**\n"
             for rec in recommendations:
                 report += f"- {rec}\n"
 
