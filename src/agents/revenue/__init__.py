@@ -8,99 +8,89 @@ This tier contains revenue-focused agents:
 """
 
 from src.agents.revenue.customer_success import (
-    # Health Monitoring (5 agents)
-    HealthScoreAgent,
+    AdvocacyBuilderAgent,
+    AutomationCoachAgent,
+    BestPracticesAgent,
+    ChampionCultivatorAgent,
     ChurnPredictorAgent,
-    UsageMonitorAgent,
-    NPSTrackerAgent,
-    RiskAlertAgent,
-
-    # Onboarding (6 agents)
-    OnboardingCoordinatorAgent,
-    KickoffFacilitatorAgent,
-    TrainingSchedulerAgent,
+    CommunityManagerAgent,
+    CrossSellAgent,
+    CustomerInsightsAgent,
     DataMigrationAgent,
-    ProgressTrackerAgent,
-    SuccessValidatorAgent,
-
+    DepartmentExpansionAgent,
+    ExecutiveSponsorAgent,
+    ExpansionROIAgent,
     # Adoption Driving (6 agents)
     FeatureAdoptionAgent,
-    UserActivationAgent,
-    BestPracticesAgent,
-    AutomationCoachAgent,
+    FeedbackLoopAgent,
+    # Health Monitoring (5 agents)
+    HealthScoreAgent,
     IntegrationAdvocateAgent,
+    KickoffFacilitatorAgent,
+    LoyaltyProgramAgent,
+    NPSTrackerAgent,
+    # Onboarding (6 agents)
+    OnboardingCoordinatorAgent,
     PowerUserEnablementAgent,
-
+    ProgressTrackerAgent,
+    # Relationship Management (8 agents)
+    QBRSchedulerAgent,
+    RelationshipHealthAgent,
     # Retention (5 agents)
     RenewalManagerAgent,
-    WinBackAgent,
+    RiskAlertAgent,
     SaveTeamCoordinatorAgent,
-    FeedbackLoopAgent,
-    LoyaltyProgramAgent,
-
+    SuccessPlanAgent,
+    SuccessValidatorAgent,
+    TrainingSchedulerAgent,
     # Expansion (5 agents)
     UpsellIdentifierAgent,
     UsageBasedExpansionAgent,
-    CrossSellAgent,
-    DepartmentExpansionAgent,
-    ExpansionROIAgent,
-
-    # Relationship Management (8 agents)
-    QBRSchedulerAgent,
-    ExecutiveSponsorAgent,
-    ChampionCultivatorAgent,
-    RelationshipHealthAgent,
-    SuccessPlanAgent,
-    AdvocacyBuilderAgent,
-    CommunityManagerAgent,
-    CustomerInsightsAgent,
+    UsageMonitorAgent,
+    UserActivationAgent,
+    WinBackAgent,
 )
 
 __all__ = [
-    # Health Monitoring
-    "HealthScoreAgent",
+    "AdvocacyBuilderAgent",
+    "AutomationCoachAgent",
+    "BestPracticesAgent",
+    "ChampionCultivatorAgent",
     "ChurnPredictorAgent",
-    "UsageMonitorAgent",
-    "NPSTrackerAgent",
-    "RiskAlertAgent",
-
-    # Onboarding
-    "OnboardingCoordinatorAgent",
-    "KickoffFacilitatorAgent",
-    "TrainingSchedulerAgent",
+    "CommunityManagerAgent",
+    "CrossSellAgent",
+    "CustomerInsightsAgent",
     "DataMigrationAgent",
-    "ProgressTrackerAgent",
-    "SuccessValidatorAgent",
-
+    "DepartmentExpansionAgent",
+    "ExecutiveSponsorAgent",
+    "ExpansionROIAgent",
     # Adoption Driving
     "FeatureAdoptionAgent",
-    "UserActivationAgent",
-    "BestPracticesAgent",
-    "AutomationCoachAgent",
+    "FeedbackLoopAgent",
+    # Health Monitoring
+    "HealthScoreAgent",
     "IntegrationAdvocateAgent",
+    "KickoffFacilitatorAgent",
+    "LoyaltyProgramAgent",
+    "NPSTrackerAgent",
+    # Onboarding
+    "OnboardingCoordinatorAgent",
     "PowerUserEnablementAgent",
-
+    "ProgressTrackerAgent",
+    # Relationship Management
+    "QBRSchedulerAgent",
+    "RelationshipHealthAgent",
     # Retention
     "RenewalManagerAgent",
-    "WinBackAgent",
+    "RiskAlertAgent",
     "SaveTeamCoordinatorAgent",
-    "FeedbackLoopAgent",
-    "LoyaltyProgramAgent",
-
+    "SuccessPlanAgent",
+    "SuccessValidatorAgent",
+    "TrainingSchedulerAgent",
     # Expansion
     "UpsellIdentifierAgent",
     "UsageBasedExpansionAgent",
-    "CrossSellAgent",
-    "DepartmentExpansionAgent",
-    "ExpansionROIAgent",
-
-    # Relationship Management
-    "QBRSchedulerAgent",
-    "ExecutiveSponsorAgent",
-    "ChampionCultivatorAgent",
-    "RelationshipHealthAgent",
-    "SuccessPlanAgent",
-    "AdvocacyBuilderAgent",
-    "CommunityManagerAgent",
-    "CustomerInsightsAgent",
+    "UsageMonitorAgent",
+    "UserActivationAgent",
+    "WinBackAgent",
 ]
