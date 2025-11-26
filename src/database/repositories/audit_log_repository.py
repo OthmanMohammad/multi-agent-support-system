@@ -1,10 +1,11 @@
 """
 Audit log repository - Business logic for audit and compliance data access
 """
-from typing import Optional, List
-from sqlalchemy import select, and_
+
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
-from datetime import datetime, timedelta, UTC
+
+from sqlalchemy import and_, select
 
 from src.database.base import BaseRepository
 from src.database.models import AuditLog
@@ -22,46 +23,30 @@ class AuditLogRepository(BaseRepository[AuditLog]):
         super().__init__(AuditLog, session)
 
     async def get_by_entity(
-        self,
-        entity_type: str,
-        entity_id: UUID,
-        limit: int = 100
-    ) -> List[AuditLog]:
+        self, entity_type: str, entity_id: UUID, limit: int = 100
+    ) -> list[AuditLog]:
         """Get all audit logs for a specific entity"""
         result = await self.session.execute(
             select(AuditLog)
-            .where(and_(
-                AuditLog.entity_type == entity_type,
-                AuditLog.entity_id == entity_id
-            ))
+            .where(and_(AuditLog.entity_type == entity_type, AuditLog.entity_id == entity_id))
             .order_by(AuditLog.timestamp.desc())
             .limit(limit)
         )
         return list(result.scalars().all())
 
     async def get_by_actor(
-        self,
-        actor_type: str,
-        actor_id: UUID,
-        limit: int = 100
-    ) -> List[AuditLog]:
+        self, actor_type: str, actor_id: UUID, limit: int = 100
+    ) -> list[AuditLog]:
         """Get all audit logs for a specific actor"""
         result = await self.session.execute(
             select(AuditLog)
-            .where(and_(
-                AuditLog.actor_type == actor_type,
-                AuditLog.actor_id == actor_id
-            ))
+            .where(and_(AuditLog.actor_type == actor_type, AuditLog.actor_id == actor_id))
             .order_by(AuditLog.timestamp.desc())
             .limit(limit)
         )
         return list(result.scalars().all())
 
-    async def get_by_action(
-        self,
-        action: str,
-        limit: int = 100
-    ) -> List[AuditLog]:
+    async def get_by_action(self, action: str, limit: int = 100) -> list[AuditLog]:
         """Get audit logs by action type"""
         result = await self.session.execute(
             select(AuditLog)
@@ -75,15 +60,12 @@ class AuditLogRepository(BaseRepository[AuditLog]):
         self,
         start_date: datetime,
         end_date: datetime,
-        entity_type: Optional[str] = None,
-        action: Optional[str] = None,
-        limit: int = 1000
-    ) -> List[AuditLog]:
+        entity_type: str | None = None,
+        action: str | None = None,
+        limit: int = 1000,
+    ) -> list[AuditLog]:
         """Get audit logs in a date range with optional filters"""
-        conditions = [
-            AuditLog.timestamp >= start_date,
-            AuditLog.timestamp <= end_date
-        ]
+        conditions = [AuditLog.timestamp >= start_date, AuditLog.timestamp <= end_date]
 
         if entity_type:
             conditions.append(AuditLog.entity_type == entity_type)
@@ -99,11 +81,7 @@ class AuditLogRepository(BaseRepository[AuditLog]):
         )
         return list(result.scalars().all())
 
-    async def get_by_ip_address(
-        self,
-        ip_address: str,
-        limit: int = 100
-    ) -> List[AuditLog]:
+    async def get_by_ip_address(self, ip_address: str, limit: int = 100) -> list[AuditLog]:
         """Get audit logs from a specific IP address"""
         result = await self.session.execute(
             select(AuditLog)
@@ -113,11 +91,7 @@ class AuditLogRepository(BaseRepository[AuditLog]):
         )
         return list(result.scalars().all())
 
-    async def get_recent_activity(
-        self,
-        hours: int = 24,
-        limit: int = 100
-    ) -> List[AuditLog]:
+    async def get_recent_activity(self, hours: int = 24, limit: int = 100) -> list[AuditLog]:
         """Get recent audit activity"""
         cutoff = datetime.now(UTC) - timedelta(hours=hours)
         result = await self.session.execute(
@@ -128,38 +102,34 @@ class AuditLogRepository(BaseRepository[AuditLog]):
         )
         return list(result.scalars().all())
 
-    async def get_security_events(
-        self,
-        days: int = 7,
-        limit: int = 100
-    ) -> List[AuditLog]:
+    async def get_security_events(self, days: int = 7, limit: int = 100) -> list[AuditLog]:
         """Get security-related events (logins, logouts, exports)"""
         cutoff = datetime.now(UTC) - timedelta(days=days)
         result = await self.session.execute(
             select(AuditLog)
-            .where(and_(
-                AuditLog.action.in_(['login', 'logout', 'export']),
-                AuditLog.timestamp >= cutoff
-            ))
+            .where(
+                and_(
+                    AuditLog.action.in_(["login", "logout", "export"]), AuditLog.timestamp >= cutoff
+                )
+            )
             .order_by(AuditLog.timestamp.desc())
             .limit(limit)
         )
         return list(result.scalars().all())
 
     async def search_changes(
-        self,
-        entity_type: str,
-        field_name: str,
-        limit: int = 100
-    ) -> List[AuditLog]:
+        self, entity_type: str, field_name: str, limit: int = 100
+    ) -> list[AuditLog]:
         """Search for changes to a specific field"""
         result = await self.session.execute(
             select(AuditLog)
-            .where(and_(
-                AuditLog.entity_type == entity_type,
-                AuditLog.action == 'update',
-                AuditLog.changes.has_key(field_name)  # JSONB has_key operation
-            ))
+            .where(
+                and_(
+                    AuditLog.entity_type == entity_type,
+                    AuditLog.action == "update",
+                    AuditLog.changes.has_key(field_name),  # JSONB has_key operation
+                )
+            )
             .order_by(AuditLog.timestamp.desc())
             .limit(limit)
         )
@@ -175,7 +145,7 @@ class AuditLogRepository(BaseRepository[AuditLog]):
             "Audit logs cannot be deleted. They are immutable for compliance and audit trail purposes."
         )
 
-    async def soft_delete_by_id(self, id: UUID, deleted_by: Optional[UUID] = None):
+    async def soft_delete_by_id(self, id: UUID, deleted_by: UUID | None = None):
         """
         Audit logs do not support soft delete.
         This method is disabled.
