@@ -5,13 +5,10 @@ This agent specializes in helping customers understand API rate limits,
 optimize their usage, and avoid hitting limits through best practices.
 """
 
-from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
-
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("rate_limit_advisor", tier="essential", category="integration")
@@ -29,36 +26,42 @@ class RateLimitAdvisor(BaseAgent):
 
     # Rate limits by plan
     RATE_LIMITS = {
-        "free": {
-            "requests_per_hour": 100,
-            "requests_per_minute": 10,
-            "burst": 5,
-            "concurrent": 1
-        },
+        "free": {"requests_per_hour": 100, "requests_per_minute": 10, "burst": 5, "concurrent": 1},
         "basic": {
             "requests_per_hour": 1000,
             "requests_per_minute": 50,
             "burst": 20,
-            "concurrent": 5
+            "concurrent": 5,
         },
         "premium": {
             "requests_per_hour": 10000,
             "requests_per_minute": 200,
             "burst": 50,
-            "concurrent": 20
+            "concurrent": 20,
         },
         "enterprise": {
             "requests_per_hour": 100000,
             "requests_per_minute": 1000,
             "burst": 200,
-            "concurrent": 100
-        }
+            "concurrent": 100,
+        },
     }
 
     # Rate limit keywords for detection
     RATE_LIMIT_TOPICS = {
-        "hitting_limit": ["429", "rate limit", "too many requests", "hitting limit", "limit exceeded"],
-        "understand_limits": ["what are the limits", "rate limits", "how many requests", "api limits"],
+        "hitting_limit": [
+            "429",
+            "rate limit",
+            "too many requests",
+            "hitting limit",
+            "limit exceeded",
+        ],
+        "understand_limits": [
+            "what are the limits",
+            "rate limits",
+            "how many requests",
+            "api limits",
+        ],
         "optimize": ["optimize", "reduce requests", "fewer calls", "best practices", "efficiency"],
         "upgrade": ["need more", "increase limit", "upgrade", "higher limit", "more requests"],
         "headers": ["rate limit headers", "x-ratelimit", "check remaining", "how many left"],
@@ -69,12 +72,9 @@ class RateLimitAdvisor(BaseAgent):
             name="rate_limit_advisor",
             type=AgentType.SPECIALIST,
             temperature=0.3,
-            capabilities=[
-                AgentCapability.KB_SEARCH,
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="integration",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -101,31 +101,20 @@ class RateLimitAdvisor(BaseAgent):
             "rate_limit_processing_details",
             message_preview=message[:100],
             customer_plan=customer_plan,
-            turn_count=state["turn_count"]
+            turn_count=state["turn_count"],
         )
 
         # Detect rate limit topic
         topic = self._detect_rate_limit_topic(message)
 
-        self.logger.info(
-            "rate_limit_topic_detected",
-            topic=topic,
-            customer_plan=customer_plan
-        )
+        self.logger.info("rate_limit_topic_detected", topic=topic, customer_plan=customer_plan)
 
         # Search knowledge base for rate limit documentation
-        kb_results = await self.search_knowledge_base(
-            message,
-            category="integration",
-            limit=2
-        )
+        kb_results = await self.search_knowledge_base(message, category="integration", limit=2)
         state["kb_results"] = kb_results
 
         if kb_results:
-            self.logger.info(
-                "kb_articles_found",
-                count=len(kb_results)
-            )
+            self.logger.info("kb_articles_found", count=len(kb_results))
 
         # Generate rate limit guidance
         response = self._generate_rate_limit_guide(topic, customer_plan, kb_results)
@@ -137,11 +126,7 @@ class RateLimitAdvisor(BaseAgent):
         state["next_agent"] = None
         state["status"] = "resolved"
 
-        self.logger.info(
-            "rate_limit_processing_completed",
-            status="resolved",
-            topic=topic
-        )
+        self.logger.info("rate_limit_processing_completed", status="resolved", topic=topic)
 
         return state
 
@@ -165,12 +150,7 @@ class RateLimitAdvisor(BaseAgent):
         # Default to explaining limits
         return "understand_limits"
 
-    def _generate_rate_limit_guide(
-        self,
-        topic: str,
-        customer_plan: str,
-        kb_results: list
-    ) -> str:
+    def _generate_rate_limit_guide(self, topic: str, customer_plan: str, kb_results: list) -> str:
         """
         Generate rate limit guidance based on topic and customer plan.
 
@@ -208,10 +188,10 @@ class RateLimitAdvisor(BaseAgent):
         return f"""**⚡ Your API Rate Limits ({plan.title()} Plan)**
 
 **Current limits:**
-- **{limits['requests_per_hour']:,} requests/hour**
-- **{limits['requests_per_minute']:,} requests/minute**
-- **{limits['burst']} burst requests** (short spikes)
-- **{limits['concurrent']} concurrent connections**
+- **{limits["requests_per_hour"]:,} requests/hour**
+- **{limits["requests_per_minute"]:,} requests/minute**
+- **{limits["burst"]} burst requests** (short spikes)
+- **{limits["concurrent"]} concurrent connections**
 
 **How rate limits work:**
 
@@ -226,7 +206,7 @@ Exceeding = HTTP 429 error
 
 ```http
 HTTP/1.1 200 OK
-X-RateLimit-Limit: {limits['requests_per_hour']}
+X-RateLimit-Limit: {limits["requests_per_hour"]}
 X-RateLimit-Remaining: 850
 X-RateLimit-Reset: 1700000000
 
@@ -238,7 +218,7 @@ The reset timestamp is when your quota fully refreshes
 ```http
 HTTP/1.1 429 Too Many Requests
 Retry-After: 3600
-X-RateLimit-Limit: {limits['requests_per_hour']}
+X-RateLimit-Limit: {limits["requests_per_hour"]}
 X-RateLimit-Remaining: 0
 X-RateLimit-Reset: 1700003600
 
@@ -299,7 +279,7 @@ if usage_percent > 80:
 
         return f"""**🛑 Handling Rate Limit Errors (HTTP 429)**
 
-You're hitting your rate limit of **{limits['requests_per_hour']:,} requests/hour**.
+You're hitting your rate limit of **{limits["requests_per_hour"]:,} requests/hour**.
 
 **Immediate fix: Implement retry with exponential backoff**
 
@@ -374,7 +354,7 @@ class RateLimiter:
         self.requests.append(now)
 
 # Usage
-limiter = RateLimiter({limits['requests_per_hour']})
+limiter = RateLimiter({limits["requests_per_hour"]})
 
 for customer_id in customer_ids:
     limiter.wait_if_needed()
@@ -694,7 +674,7 @@ Share your API usage pattern and I'll suggest targeted improvements."""
         # Get plans above current
         try:
             current_index = all_plans.index(current_plan)
-            upgrade_plans = all_plans[current_index + 1:]
+            upgrade_plans = all_plans[current_index + 1 :]
         except ValueError:
             upgrade_plans = all_plans[1:]  # Default to all paid plans
 
@@ -713,14 +693,14 @@ Contact our sales team for:
 **Or optimize your usage:**
 Ask me about optimization strategies to reduce API calls by 10-100x."""
 
-        upgrade_options = "\n\n".join([
-            self._format_plan_option(plan, current_plan) for plan in upgrade_plans
-        ])
+        upgrade_options = "\n\n".join(
+            [self._format_plan_option(plan, current_plan) for plan in upgrade_plans]
+        )
 
         return f"""**📈 Upgrade for Higher Rate Limits**
 
 **Your current plan:** {current_plan.title()}
-**Current limit:** {self.RATE_LIMITS[current_plan]['requests_per_hour']:,} requests/hour
+**Current limit:** {self.RATE_LIMITS[current_plan]["requests_per_hour"]:,} requests/hour
 
 {upgrade_options}
 
@@ -747,13 +727,13 @@ Ask me: "How can I optimize my API usage?" """
         limits = self.RATE_LIMITS[plan]
         current_limits = self.RATE_LIMITS[current_plan]
 
-        multiplier = limits['requests_per_hour'] / current_limits['requests_per_hour']
+        multiplier = limits["requests_per_hour"] / current_limits["requests_per_hour"]
 
         return f"""**{plan.title()} Plan** - {multiplier:.0f}x more requests
 
-- ⚡ **{limits['requests_per_hour']:,} requests/hour** ({limits['requests_per_minute']:,}/min)
-- 📊 **{limits['burst']} burst limit** (up from {current_limits['burst']})
-- 🔗 **{limits['concurrent']} concurrent connections** (up from {current_limits['concurrent']})
+- ⚡ **{limits["requests_per_hour"]:,} requests/hour** ({limits["requests_per_minute"]:,}/min)
+- 📊 **{limits["burst"]} burst limit** (up from {current_limits["burst"]})
+- 🔗 **{limits["concurrent"]} concurrent connections** (up from {current_limits["concurrent"]})
 - {"🎯 Custom rate limits available" if plan == "enterprise" else ""}"""
 
     def _guide_rate_limit_headers(self, plan: str) -> str:
@@ -768,7 +748,7 @@ Every API response includes rate limit headers. Monitor them to avoid hitting li
 
 ```http
 HTTP/1.1 200 OK
-X-RateLimit-Limit: {limits['requests_per_hour']}      ← Total hourly limit
+X-RateLimit-Limit: {limits["requests_per_hour"]}      ← Total hourly limit
 X-RateLimit-Remaining: 850         ← Requests left this hour
 X-RateLimit-Reset: 1700000000      ← Unix timestamp when quota resets
 X-RateLimit-Used: 150              ← Requests used this hour
@@ -925,7 +905,7 @@ View real-time rate limit usage:
 ```http
 HTTP/1.1 429 Too Many Requests
 Retry-After: 3600                  ← Wait this many seconds
-X-RateLimit-Limit: {limits['requests_per_hour']}
+X-RateLimit-Limit: {limits["requests_per_hour"]}
 X-RateLimit-Remaining: 0           ← Quota exhausted
 X-RateLimit-Reset: 1700003600      ← When quota refreshes
 
@@ -967,6 +947,7 @@ if response.status_code == 429:
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
