@@ -5,8 +5,9 @@ Detects and masks personally identifiable information (PII) to ensure
 privacy and compliance with data protection regulations.
 """
 
-from typing import Dict, Any, Optional, Pattern
 import re
+from typing import Any
+
 import structlog
 
 from src.services.infrastructure.context_enrichment.types import PIIFilterLevel
@@ -36,21 +37,11 @@ class PIIFilter:
 
     # Regex patterns for PII detection
     PATTERNS = {
-        "email": re.compile(
-            r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
-        ),
-        "phone": re.compile(
-            r'\b(?:\+?1[-.]?)?\(?([0-9]{3})\)?[-.]?([0-9]{3})[-.]?([0-9]{4})\b'
-        ),
-        "ssn": re.compile(
-            r'\b\d{3}-\d{2}-\d{4}\b'
-        ),
-        "credit_card": re.compile(
-            r'\b(?:\d{4}[-\s]?){3}\d{4}\b'
-        ),
-        "ip_address": re.compile(
-            r'\b(?:\d{1,3}\.){3}\d{1,3}\b'
-        ),
+        "email": re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"),
+        "phone": re.compile(r"\b(?:\+?1[-.]?)?\(?([0-9]{3})\)?[-.]?([0-9]{3})[-.]?([0-9]{4})\b"),
+        "ssn": re.compile(r"\b\d{3}-\d{2}-\d{4}\b"),
+        "credit_card": re.compile(r"\b(?:\d{4}[-\s]?){3}\d{4}\b"),
+        "ip_address": re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b"),
     }
 
     # Fields that commonly contain PII
@@ -75,10 +66,8 @@ class PIIFilter:
         self.logger = logger.bind(component="pii_filter")
 
     def filter(
-        self,
-        data: Dict[str, Any],
-        level: PIIFilterLevel = PIIFilterLevel.PARTIAL
-    ) -> Dict[str, Any]:
+        self, data: dict[str, Any], level: PIIFilterLevel = PIIFilterLevel.PARTIAL
+    ) -> dict[str, Any]:
         """
         Filter PII from data.
 
@@ -110,8 +99,7 @@ class PIIFilter:
             # Handle lists
             elif isinstance(value, list):
                 filtered[key] = [
-                    self.filter(item, level) if isinstance(item, dict) else item
-                    for item in value
+                    self.filter(item, level) if isinstance(item, dict) else item for item in value
                 ]
 
             # Handle strings
@@ -129,20 +117,11 @@ class PIIFilter:
                 filtered[key] = value
 
         if pii_found:
-            self.logger.debug(
-                "pii_filtered",
-                fields=pii_found,
-                level=level.value
-            )
+            self.logger.debug("pii_filtered", fields=pii_found, level=level.value)
 
         return filtered
 
-    def _mask_by_field(
-        self,
-        field_name: str,
-        value: str,
-        level: PIIFilterLevel
-    ) -> str:
+    def _mask_by_field(self, field_name: str, value: str, level: PIIFilterLevel) -> str:
         """
         Mask value based on field name.
 
@@ -168,11 +147,7 @@ class PIIFilter:
             # Full redaction for unknown PII fields
             return self._redact(value, level)
 
-    def _mask_patterns(
-        self,
-        text: str,
-        level: PIIFilterLevel
-    ) -> str:
+    def _mask_patterns(self, text: str, level: PIIFilterLevel) -> str:
         """
         Scan text for PII patterns and mask them.
 
@@ -189,25 +164,13 @@ class PIIFilter:
         for pii_type, pattern in self.PATTERNS.items():
             if pattern.search(result):
                 if pii_type == "email":
-                    result = pattern.sub(
-                        lambda m: self.mask_email(m.group(0), level),
-                        result
-                    )
+                    result = pattern.sub(lambda m: self.mask_email(m.group(0), level), result)
                 elif pii_type == "phone":
-                    result = pattern.sub(
-                        lambda m: self.mask_phone(m.group(0), level),
-                        result
-                    )
+                    result = pattern.sub(lambda m: self.mask_phone(m.group(0), level), result)
                 elif pii_type == "ssn":
-                    result = pattern.sub(
-                        lambda m: self.mask_ssn(m.group(0), level),
-                        result
-                    )
+                    result = pattern.sub(lambda m: self.mask_ssn(m.group(0), level), result)
                 elif pii_type == "credit_card":
-                    result = pattern.sub(
-                        lambda m: self.mask_credit_card(m.group(0), level),
-                        result
-                    )
+                    result = pattern.sub(lambda m: self.mask_credit_card(m.group(0), level), result)
                 elif pii_type == "ip_address":
                     result = pattern.sub("[IP_REDACTED]", result)
 
@@ -224,10 +187,7 @@ class PIIFilter:
         return value
 
     def mask_value(
-        self,
-        value: str,
-        value_type: str,
-        level: PIIFilterLevel = PIIFilterLevel.PARTIAL
+        self, value: str, value_type: str, level: PIIFilterLevel = PIIFilterLevel.PARTIAL
     ) -> str:
         """
         Mask individual PII value.
@@ -290,10 +250,7 @@ class PIIFilter:
 
         local, domain = email.split("@", 1)
 
-        if len(local) <= 1:
-            masked_local = "*"
-        else:
-            masked_local = local[0] + "*" * (len(local) - 1)
+        masked_local = "*" if len(local) <= 1 else local[0] + "*" * (len(local) - 1)
 
         return f"{masked_local}@{domain}"
 
@@ -320,7 +277,7 @@ class PIIFilter:
             return "[PHONE_REDACTED]"
 
         # Extract digits
-        digits = re.sub(r'\D', '', phone)
+        digits = re.sub(r"\D", "", phone)
 
         if len(digits) < 4:
             return "*" * len(digits)
@@ -363,7 +320,7 @@ class PIIFilter:
             return "[SSN_REDACTED]"
 
         # Show last 4 digits
-        digits = re.sub(r'\D', '', ssn)
+        digits = re.sub(r"\D", "", ssn)
 
         if len(digits) == 9:
             return f"***-**-{digits[-4:]}"
@@ -371,10 +328,7 @@ class PIIFilter:
         return "*" * len(ssn)
 
     @staticmethod
-    def mask_credit_card(
-        card: str,
-        level: PIIFilterLevel = PIIFilterLevel.PARTIAL
-    ) -> str:
+    def mask_credit_card(card: str, level: PIIFilterLevel = PIIFilterLevel.PARTIAL) -> str:
         """
         Mask credit card number.
 
@@ -396,7 +350,7 @@ class PIIFilter:
             return "[CARD_REDACTED]"
 
         # Extract digits
-        digits = re.sub(r'\D', '', card)
+        digits = re.sub(r"\D", "", card)
 
         if len(digits) < 4:
             return "*" * len(digits)
@@ -408,14 +362,14 @@ class PIIFilter:
         if "-" in card or " " in card:
             separator = "-" if "-" in card else " "
             # Format: ****-****-****-9010
-            parts = [masked_digits[i:i+4] for i in range(0, len(masked_digits), 4)]
+            parts = [masked_digits[i : i + 4] for i in range(0, len(masked_digits), 4)]
             return separator.join(parts)
 
         return masked_digits
 
 
 # Convenience functions
-_filter_instance: Optional[PIIFilter] = None
+_filter_instance: PIIFilter | None = None
 
 
 def _get_filter() -> PIIFilter:
@@ -427,9 +381,8 @@ def _get_filter() -> PIIFilter:
 
 
 def filter_pii(
-    data: Dict[str, Any],
-    level: PIIFilterLevel = PIIFilterLevel.PARTIAL
-) -> Dict[str, Any]:
+    data: dict[str, Any], level: PIIFilterLevel = PIIFilterLevel.PARTIAL
+) -> dict[str, Any]:
     """
     Convenience function to filter PII.
 
