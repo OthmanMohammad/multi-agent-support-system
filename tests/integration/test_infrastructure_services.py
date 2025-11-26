@@ -5,8 +5,8 @@ Tests with real database (test DB) but mocked external services
 import pytest
 from uuid import uuid4
 
-from database.unit_of_work import get_unit_of_work
-from services.infrastructure.customer_service import CustomerInfrastructureService
+from src.database.unit_of_work import get_unit_of_work
+from src.services.infrastructure.customer_service import CustomerInfrastructureService
 
 
 @pytest.mark.asyncio
