@@ -7,15 +7,16 @@ billing, technical, usage, integration, account.
 Part of: STORY-01 Routing & Orchestration Swarm (TASK-105)
 """
 
-from typing import Dict, Any, Optional, List
 import json
 from datetime import datetime
+from typing import Any
+
 import structlog
 
-from src.agents.base.base_agent import RoutingAgent, AgentConfig
-from src.agents.base.agent_types import AgentType, AgentCapability
-from src.workflow.state import AgentState
+from src.agents.base.agent_types import AgentCapability, AgentType
+from src.agents.base.base_agent import AgentConfig, RoutingAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.workflow.state import AgentState
 
 logger = structlog.get_logger(__name__)
 
@@ -35,11 +36,11 @@ class SupportDomainRouter(RoutingAgent):
 
     # Valid support categories
     SUPPORT_CATEGORIES = [
-        "billing",      # Subscription, payment, invoice issues
-        "technical",    # Bugs, errors, performance problems
-        "usage",        # How-to, feature questions
+        "billing",  # Subscription, payment, invoice issues
+        "technical",  # Bugs, errors, performance problems
+        "usage",  # How-to, feature questions
         "integration",  # Third-party integrations, API
-        "account"       # Login, permissions, security
+        "account",  # Login, permissions, security
     ]
 
     def __init__(self, **kwargs):
@@ -49,12 +50,10 @@ class SupportDomainRouter(RoutingAgent):
             type=AgentType.ROUTER,
             temperature=0.1,  # Consistent routing
             max_tokens=200,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE],
             system_prompt_template=self._get_system_prompt(),
             tier="essential",
-            role="support_domain_router"
+            role="support_domain_router",
         )
         super().__init__(config=config, **kwargs)
         self.logger = logger.bind(agent="support_domain_router", agent_type="router")
@@ -178,8 +177,7 @@ Output ONLY valid JSON. Choose exactly ONE category."""
             conversation_history = self.get_conversation_context(state)
 
             self.logger.debug(
-                "support_router_conversation_context",
-                history_length=len(conversation_history)
+                "support_router_conversation_context", history_length=len(conversation_history)
             )
 
             # Call LLM for routing
@@ -195,7 +193,7 @@ Consider any previous conversation context when making your routing decision."""
             response = await self.call_llm(
                 system_prompt=self._get_system_prompt(),
                 user_message=prompt,
-                conversation_history=conversation_history
+                conversation_history=conversation_history,
             )
 
             # Parse response
@@ -205,9 +203,7 @@ Consider any previous conversation context when making your routing decision."""
             category = routing.get("category", "usage").lower()
             if category not in self.SUPPORT_CATEGORIES:
                 self.logger.warning(
-                    "invalid_support_category",
-                    category=category,
-                    defaulting_to="usage"
+                    "invalid_support_category", category=category, defaulting_to="usage"
                 )
                 category = "usage"
 
@@ -225,7 +221,7 @@ Consider any previous conversation context when making your routing decision."""
                 "technical": "technical",
                 "usage": "usage",
                 "integration": "api",
-                "account": "technical"  # Account issues go to technical
+                "account": "technical",  # Account issues go to technical
             }
             state["next_agent"] = category_to_agent.get(category, "escalation")
 
@@ -235,7 +231,7 @@ Consider any previous conversation context when making your routing decision."""
             state["support_routing_metadata"] = {
                 "latency_ms": latency_ms,
                 "timestamp": datetime.now().isoformat(),
-                "model": self.config.model
+                "model": self.config.model,
             }
 
             self.logger.info(
@@ -243,17 +239,13 @@ Consider any previous conversation context when making your routing decision."""
                 category=category,
                 next_agent=state["next_agent"],
                 confidence=confidence,
-                latency_ms=latency_ms
+                latency_ms=latency_ms,
             )
 
             return state
 
         except Exception as e:
-            self.logger.error(
-                "support_routing_failed",
-                error=str(e),
-                error_type=type(e).__name__
-            )
+            self.logger.error("support_routing_failed", error=str(e), error_type=type(e).__name__)
 
             # Fallback to usage category
             state["support_category"] = "usage"
@@ -262,7 +254,7 @@ Consider any previous conversation context when making your routing decision."""
             state["next_agent"] = "usage"  # Route to usage agent as fallback
             return state
 
-    def _parse_response(self, response: str) -> Dict[str, Any]:
+    def _parse_response(self, response: str) -> dict[str, Any]:
         """
         Parse LLM response into routing decision.
 
@@ -278,8 +270,7 @@ Consider any previous conversation context when making your routing decision."""
             if cleaned_response.startswith("```"):
                 lines = cleaned_response.split("\n")
                 cleaned_response = "\n".join(
-                    line for line in lines
-                    if not line.strip().startswith("```")
+                    line for line in lines if not line.strip().startswith("```")
                 )
 
             # Parse JSON
@@ -287,19 +278,14 @@ Consider any previous conversation context when making your routing decision."""
 
             # Ensure it's a dict
             if not isinstance(routing, dict):
-                self.logger.warning(
-                    "support_router_invalid_type",
-                    type=type(routing).__name__
-                )
+                self.logger.warning("support_router_invalid_type", type=type(routing).__name__)
                 return {"category": "usage", "confidence": 0.5}
 
             return routing
 
         except json.JSONDecodeError as e:
             self.logger.warning(
-                "support_router_invalid_json",
-                response_preview=response[:100],
-                error=str(e)
+                "support_router_invalid_json", response_preview=response[:100], error=str(e)
             )
             return {"category": "usage", "confidence": 0.5}
 
@@ -321,6 +307,7 @@ def create_support_domain_router(**kwargs) -> SupportDomainRouter:
 # Example usage (for development/testing)
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test_support_domain_router():
@@ -333,42 +320,32 @@ if __name__ == "__main__":
 
         # Test cases covering all categories
         test_cases = [
-            {
-                "message": "I want to upgrade my plan to Premium",
-                "expected_category": "billing"
-            },
+            {"message": "I want to upgrade my plan to Premium", "expected_category": "billing"},
             {
                 "message": "The app crashes when I try to export data",
-                "expected_category": "technical"
+                "expected_category": "technical",
             },
-            {
-                "message": "How do I create a new project?",
-                "expected_category": "usage"
-            },
-            {
-                "message": "The Slack integration isn't working",
-                "expected_category": "integration"
-            },
-            {
-                "message": "I can't login to my account",
-                "expected_category": "account"
-            },
+            {"message": "How do I create a new project?", "expected_category": "usage"},
+            {"message": "The Slack integration isn't working", "expected_category": "integration"},
+            {"message": "I can't login to my account", "expected_category": "account"},
         ]
 
         for i, test in enumerate(test_cases, 1):
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"TEST CASE {i}: {test['message']}")
-            print(f"{'='*60}")
+            print(f"{'=' * 60}")
 
             state = create_initial_state(message=test["message"])
 
             result = await router.process(state)
 
-            print(f"\n✓ Routing Decision:")
+            print("\n✓ Routing Decision:")
             print(f"  Category: {result['support_category']}")
             print(f"  Confidence: {result['support_category_confidence']:.2%}")
             print(f"  Expected: {test['expected_category']}")
-            print(f"  Match: {'✓' if result['support_category'] == test['expected_category'] else '✗'}")
+            print(
+                f"  Match: {'✓' if result['support_category'] == test['expected_category'] else '✗'}"
+            )
 
     # Run tests
     asyncio.run(test_support_domain_router())
