@@ -4,7 +4,8 @@
  * Extends NextAuth types to include backend JWT tokens and user role.
  */
 
-import { DefaultSession } from "next-auth";
+import type { DefaultSession } from "next-auth";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- JWT import required for module augmentation
 import { JWT } from "next-auth/jwt";
 
 declare module "next-auth" {
