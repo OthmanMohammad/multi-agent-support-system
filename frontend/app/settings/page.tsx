@@ -2,7 +2,16 @@
 
 import type { JSX } from "react";
 import { useState } from "react";
-import { User, Bell, Palette, Shield, Keyboard, Database, Download, Upload } from "lucide-react";
+import {
+  Bell,
+  Database,
+  Download,
+  Keyboard,
+  Palette,
+  Shield,
+  Upload,
+  User,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileSettings } from "@/components/settings/profile-settings";
 import { AppearanceSettings } from "@/components/settings/appearance-settings";
@@ -131,9 +140,19 @@ export default function SettingsPage(): JSX.Element {
                         : "hover:bg-surface-hover"
                     )}
                   >
-                    <Icon className={cn("mt-0.5 h-5 w-5 shrink-0", isActive && "text-accent-foreground")} />
+                    <Icon
+                      className={cn(
+                        "mt-0.5 h-5 w-5 shrink-0",
+                        isActive && "text-accent-foreground"
+                      )}
+                    />
                     <div className="flex-1 min-w-0">
-                      <div className={cn("font-medium", isActive && "text-accent-foreground")}>
+                      <div
+                        className={cn(
+                          "font-medium",
+                          isActive && "text-accent-foreground"
+                        )}
+                      >
                         {tab.label}
                       </div>
                       <div className="mt-0.5 text-xs text-foreground-secondary line-clamp-2">
@@ -164,9 +183,7 @@ export default function SettingsPage(): JSX.Element {
 
       {/* Settings Content */}
       <main className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-4xl p-8">
-          {renderContent()}
-        </div>
+        <div className="mx-auto max-w-4xl p-8">{renderContent()}</div>
       </main>
     </div>
   );
