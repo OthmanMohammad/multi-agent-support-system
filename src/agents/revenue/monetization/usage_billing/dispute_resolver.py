@@ -5,13 +5,13 @@ Handles billing disputes and questions with usage data, explanations, and resolu
 Applies credits and refunds when appropriate to maintain customer satisfaction.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("dispute_resolver", tier="revenue", category="monetization")
@@ -38,10 +38,15 @@ class DisputeResolver(BaseAgent):
                 "Pull raw usage logs",
                 "Compare with customer's records",
                 "Check for API/tracking issues",
-                "Verify meter accuracy"
+                "Verify meter accuracy",
             ],
-            "resolution_options": ["full_refund", "partial_refund", "no_refund", "usage_correction"],
-            "avg_resolution_time_hours": 4
+            "resolution_options": [
+                "full_refund",
+                "partial_refund",
+                "no_refund",
+                "usage_correction",
+            ],
+            "avg_resolution_time_hours": 4,
         },
         "pricing_error": {
             "description": "Incorrect pricing or rate applied",
@@ -49,10 +54,10 @@ class DisputeResolver(BaseAgent):
                 "Review pricing tier applied",
                 "Check for promotional rates",
                 "Verify plan configuration",
-                "Confirm rate changes timeline"
+                "Confirm rate changes timeline",
             ],
             "resolution_options": ["full_refund", "credit", "rebill"],
-            "avg_resolution_time_hours": 2
+            "avg_resolution_time_hours": 2,
         },
         "double_charge": {
             "description": "Customer charged twice",
@@ -60,10 +65,10 @@ class DisputeResolver(BaseAgent):
                 "Check payment records",
                 "Verify invoice duplication",
                 "Review billing cycle overlap",
-                "Check payment processor logs"
+                "Check payment processor logs",
             ],
             "resolution_options": ["full_refund", "immediate"],
-            "avg_resolution_time_hours": 1
+            "avg_resolution_time_hours": 1,
         },
         "cancellation_charge": {
             "description": "Charged after cancellation",
@@ -71,10 +76,10 @@ class DisputeResolver(BaseAgent):
                 "Check cancellation date",
                 "Verify billing period",
                 "Review cancellation policy",
-                "Check if proration applied"
+                "Check if proration applied",
             ],
             "resolution_options": ["full_refund", "partial_refund", "no_refund"],
-            "avg_resolution_time_hours": 3
+            "avg_resolution_time_hours": 3,
         },
         "unexpected_overage": {
             "description": "Surprise overage charges",
@@ -82,10 +87,10 @@ class DisputeResolver(BaseAgent):
                 "Check overage alert history",
                 "Verify usage spike",
                 "Review notification delivery",
-                "Check customer acknowledgment"
+                "Check customer acknowledgment",
             ],
             "resolution_options": ["partial_refund", "credit", "waive_first_time"],
-            "avg_resolution_time_hours": 4
+            "avg_resolution_time_hours": 4,
         },
         "unclear_charges": {
             "description": "Customer doesn't understand bill",
@@ -93,11 +98,11 @@ class DisputeResolver(BaseAgent):
                 "Review invoice line items",
                 "Explain each charge",
                 "Provide usage breakdown",
-                "Clarify pricing model"
+                "Clarify pricing model",
             ],
             "resolution_options": ["explanation_only", "goodwill_credit"],
-            "avg_resolution_time_hours": 1
-        }
+            "avg_resolution_time_hours": 1,
+        },
     }
 
     # Resolution policies
@@ -105,24 +110,24 @@ class DisputeResolver(BaseAgent):
         "full_refund": {
             "conditions": ["clear_billing_error", "double_charge", "system_issue"],
             "requires_approval": False,
-            "max_amount": 10000
+            "max_amount": 10000,
         },
         "partial_refund": {
             "conditions": ["shared_responsibility", "first_time_issue", "goodwill"],
             "requires_approval": True,
             "max_amount": 5000,
-            "typical_percentage": 0.50
+            "typical_percentage": 0.50,
         },
         "credit": {
             "conditions": ["customer_satisfaction", "minor_issue", "explanation_insufficient"],
             "requires_approval": False,
-            "max_amount": 1000
+            "max_amount": 1000,
         },
         "waive_first_time": {
             "conditions": ["first_overage", "no_alert_received", "small_amount"],
             "requires_approval": False,
-            "max_amount": 500
-        }
+            "max_amount": 500,
+        },
     }
 
     # Escalation criteria
@@ -137,15 +142,12 @@ class DisputeResolver(BaseAgent):
         config = AgentConfig(
             name="dispute_resolver",
             type=AgentType.SPECIALIST,
-             # Sonnet for nuanced resolution
+            # Sonnet for nuanced resolution
             temperature=0.3,
             max_tokens=600,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.KB_SEARCH
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.KB_SEARCH],
             kb_category="monetization",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -171,17 +173,11 @@ class DisputeResolver(BaseAgent):
         dispute_type = self._classify_dispute(message, customer_metadata)
 
         # Extract dispute details
-        dispute_details = self._extract_dispute_details(
-            message,
-            customer_metadata,
-            dispute_type
-        )
+        dispute_details = self._extract_dispute_details(message, customer_metadata, dispute_type)
 
         # Investigate dispute
         investigation = await self._investigate_dispute(
-            dispute_type,
-            dispute_details,
-            customer_metadata
+            dispute_type, dispute_details, customer_metadata
         )
 
         # Determine if valid dispute
@@ -189,31 +185,20 @@ class DisputeResolver(BaseAgent):
 
         # Calculate resolution
         resolution = self._calculate_resolution(
-            dispute_type,
-            investigation,
-            is_valid_dispute,
-            dispute_details,
-            customer_metadata
+            dispute_type, investigation, is_valid_dispute, dispute_details, customer_metadata
         )
 
         # Check if escalation needed
         should_escalate = self._check_escalation_needed(
-            resolution,
-            dispute_details,
-            customer_metadata
+            resolution, dispute_details, customer_metadata
         )
 
         # Generate prevention recommendations
-        prevention_steps = self._generate_prevention_steps(
-            dispute_type,
-            investigation
-        )
+        prevention_steps = self._generate_prevention_steps(dispute_type, investigation)
 
         # Search KB for dispute resolution guides
         kb_results = await self.search_knowledge_base(
-            f"billing dispute resolution {dispute_type}",
-            category="monetization",
-            limit=2
+            f"billing dispute resolution {dispute_type}", category="monetization", limit=2
         )
         state["kb_results"] = kb_results
 
@@ -226,7 +211,7 @@ class DisputeResolver(BaseAgent):
             resolution,
             prevention_steps,
             kb_results,
-            customer_metadata
+            customer_metadata,
         )
 
         # Update state
@@ -243,7 +228,9 @@ class DisputeResolver(BaseAgent):
         # Handle escalation
         if should_escalate:
             state["should_escalate"] = True
-            state["escalation_reason"] = f"Billing dispute requires manager approval: {resolution.get('reason', 'Complex case')}"
+            state["escalation_reason"] = (
+                f"Billing dispute requires manager approval: {resolution.get('reason', 'Complex case')}"
+            )
 
         self.logger.info(
             "dispute_resolver_completed",
@@ -251,12 +238,12 @@ class DisputeResolver(BaseAgent):
             is_valid=is_valid_dispute,
             resolution_type=resolution.get("type"),
             amount=resolution.get("amount", 0),
-            escalated=should_escalate
+            escalated=should_escalate,
         )
 
         return state
 
-    def _classify_dispute(self, message: str, customer_metadata: Dict) -> str:
+    def _classify_dispute(self, message: str, customer_metadata: dict) -> str:
         """Classify the type of billing dispute"""
         message_lower = message.lower()
 
@@ -271,17 +258,16 @@ class DisputeResolver(BaseAgent):
             return "pricing_error"
         elif any(word in message_lower for word in ["overage", "surprise", "unexpected charge"]):
             return "unexpected_overage"
-        elif any(word in message_lower for word in ["don't understand", "unclear", "explain", "what is"]):
+        elif any(
+            word in message_lower for word in ["don't understand", "unclear", "explain", "what is"]
+        ):
             return "unclear_charges"
         else:
             return "unclear_charges"  # Default
 
     def _extract_dispute_details(
-        self,
-        message: str,
-        customer_metadata: Dict,
-        dispute_type: str
-    ) -> Dict[str, Any]:
+        self, message: str, customer_metadata: dict, dispute_type: str
+    ) -> dict[str, Any]:
         """Extract details about the dispute"""
         return {
             "disputed_amount": customer_metadata.get("disputed_amount", 0),
@@ -289,21 +275,18 @@ class DisputeResolver(BaseAgent):
             "dispute_date": datetime.now().isoformat(),
             "customer_claim": message,
             "dispute_type": dispute_type,
-            "customer_history": customer_metadata.get("dispute_history", [])
+            "customer_history": customer_metadata.get("dispute_history", []),
         }
 
     async def _investigate_dispute(
-        self,
-        dispute_type: str,
-        dispute_details: Dict,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, dispute_type: str, dispute_details: dict, customer_metadata: dict
+    ) -> dict[str, Any]:
         """Investigate the dispute following type-specific steps"""
         investigation = {
             "steps_completed": [],
             "findings": [],
             "supporting_data": {},
-            "conclusion": ""
+            "conclusion": "",
         }
 
         dispute_config = self.DISPUTE_TYPES.get(dispute_type, {})
@@ -318,7 +301,7 @@ class DisputeResolver(BaseAgent):
                 investigation["supporting_data"]["usage_logs"] = {
                     "source": "system_metrics",
                     "period": "last_30_days",
-                    "verified": True
+                    "verified": True,
                 }
                 investigation["findings"].append("Usage logs verified against system metrics")
 
@@ -326,35 +309,34 @@ class DisputeResolver(BaseAgent):
                 investigation["supporting_data"]["pricing"] = {
                     "plan_rate": customer_metadata.get("plan_rate"),
                     "applied_rate": customer_metadata.get("applied_rate"),
-                    "matches": customer_metadata.get("plan_rate") == customer_metadata.get("applied_rate")
+                    "matches": customer_metadata.get("plan_rate")
+                    == customer_metadata.get("applied_rate"),
                 }
 
             elif "payment" in step.lower():
                 investigation["supporting_data"]["payments"] = {
                     "transaction_count": customer_metadata.get("payment_count", 1),
-                    "duplicate_found": customer_metadata.get("payment_count", 1) > 1
+                    "duplicate_found": customer_metadata.get("payment_count", 1) > 1,
                 }
 
             elif "cancellation" in step.lower():
                 investigation["supporting_data"]["cancellation"] = {
                     "cancellation_date": customer_metadata.get("cancellation_date"),
                     "billing_period_end": customer_metadata.get("period_end"),
-                    "within_period": True
+                    "within_period": True,
                 }
 
         # Draw conclusion
         investigation["conclusion"] = "Investigation completed - findings documented"
-        investigation["estimated_resolution_time_hours"] = dispute_config.get("avg_resolution_time_hours", 2)
+        investigation["estimated_resolution_time_hours"] = dispute_config.get(
+            "avg_resolution_time_hours", 2
+        )
 
         return investigation
 
-    def _validate_dispute(
-        self,
-        investigation: Dict,
-        dispute_details: Dict
-    ) -> bool:
+    def _validate_dispute(self, investigation: dict, dispute_details: dict) -> bool:
         """Determine if dispute is valid based on investigation"""
-        findings = investigation.get("findings", [])
+        investigation.get("findings", [])
         supporting_data = investigation.get("supporting_data", {})
 
         # Check for clear errors
@@ -379,18 +361,18 @@ class DisputeResolver(BaseAgent):
     def _calculate_resolution(
         self,
         dispute_type: str,
-        investigation: Dict,
+        investigation: dict,
         is_valid: bool,
-        dispute_details: Dict,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        dispute_details: dict,
+        customer_metadata: dict,
+    ) -> dict[str, Any]:
         """Calculate appropriate resolution"""
         resolution = {
             "type": "no_action",
             "amount": 0.0,
             "description": "",
             "requires_approval": False,
-            "reasoning": []
+            "reasoning": [],
         }
 
         disputed_amount = dispute_details.get("disputed_amount", 0)
@@ -404,7 +386,9 @@ class DisputeResolver(BaseAgent):
             # Goodwill credit for long-time customers
             if customer_metadata.get("account_age_days", 0) > 365:
                 resolution["type"] = "credit"
-                resolution["amount"] = min(100, disputed_amount * 0.10)  # 10% goodwill credit, max $100
+                resolution["amount"] = min(
+                    100, disputed_amount * 0.10
+                )  # 10% goodwill credit, max $100
                 resolution["description"] = "Goodwill credit for valued customer"
                 resolution["reasoning"].append("Goodwill gesture for customer retention")
 
@@ -438,7 +422,9 @@ class DisputeResolver(BaseAgent):
                 resolution["type"] = "credit"
                 resolution["amount"] = disputed_amount * 0.25  # 25% credit
                 resolution["description"] = "Partial credit for overage dispute"
-                resolution["reasoning"].append("Overage alerts were sent - partial credit as goodwill")
+                resolution["reasoning"].append(
+                    "Overage alerts were sent - partial credit as goodwill"
+                )
 
         elif dispute_type == "cancellation_charge":
             # Check if charge was within billing period
@@ -472,10 +458,7 @@ class DisputeResolver(BaseAgent):
         return resolution
 
     def _check_escalation_needed(
-        self,
-        resolution: Dict,
-        dispute_details: Dict,
-        customer_metadata: Dict
+        self, resolution: dict, dispute_details: dict, customer_metadata: dict
     ) -> bool:
         """Check if dispute should be escalated"""
 
@@ -488,21 +471,17 @@ class DisputeResolver(BaseAgent):
             return True
 
         # Repeat disputes
-        if len(dispute_details.get("customer_history", [])) >= self.ESCALATION_CRITERIA["repeat_disputes"]:
+        if (
+            len(dispute_details.get("customer_history", []))
+            >= self.ESCALATION_CRITERIA["repeat_disputes"]
+        ):
             return True
 
         # Legal threats (would need sentiment analysis in real implementation)
         message = dispute_details.get("customer_claim", "").lower()
-        if any(word in message for word in ["lawyer", "attorney", "legal action", "sue"]):
-            return True
+        return bool(any(word in message for word in ["lawyer", "attorney", "legal action", "sue"]))
 
-        return False
-
-    def _generate_prevention_steps(
-        self,
-        dispute_type: str,
-        investigation: Dict
-    ) -> List[str]:
+    def _generate_prevention_steps(self, dispute_type: str, investigation: dict) -> list[str]:
         """Generate steps to prevent future similar disputes"""
         prevention = []
 
@@ -532,29 +511,29 @@ class DisputeResolver(BaseAgent):
         self,
         message: str,
         dispute_type: str,
-        investigation: Dict,
+        investigation: dict,
         is_valid: bool,
-        resolution: Dict,
-        prevention_steps: List[str],
-        kb_results: List[Dict],
-        customer_metadata: Dict
+        resolution: dict,
+        prevention_steps: list[str],
+        kb_results: list[dict],
+        customer_metadata: dict,
     ) -> str:
         """Generate empathetic dispute resolution response"""
 
         # Build investigation summary
         investigation_summary = f"""
-Dispute Type: {dispute_type.replace('_', ' ').title()}
-Investigation Steps: {len(investigation['steps_completed'])}
-Findings: {len(investigation['findings'])}
-Valid Dispute: {'Yes' if is_valid else 'No'}
+Dispute Type: {dispute_type.replace("_", " ").title()}
+Investigation Steps: {len(investigation["steps_completed"])}
+Findings: {len(investigation["findings"])}
+Valid Dispute: {"Yes" if is_valid else "No"}
 """
 
         # Build resolution summary
         resolution_summary = f"""
-Resolution Type: {resolution['type'].replace('_', ' ').title()}
-Amount: ${resolution['amount']:.2f}
-Description: {resolution['description']}
-Requires Approval: {'Yes' if resolution.get('requires_approval') else 'No'}
+Resolution Type: {resolution["type"].replace("_", " ").title()}
+Amount: ${resolution["amount"]:.2f}
+Description: {resolution["description"]}
+Requires Approval: {"Yes" if resolution.get("requires_approval") else "No"}
 """
 
         # Build prevention context
@@ -572,7 +551,7 @@ Requires Approval: {'Yes' if resolution.get('requires_approval') else 'No'}
 
         system_prompt = f"""You are a Dispute Resolver specialist handling billing disputes with empathy and fairness.
 
-Customer: {customer_metadata.get('company', 'Customer')}
+Customer: {customer_metadata.get("company", "Customer")}
 {investigation_summary}
 {resolution_summary}
 
@@ -593,7 +572,7 @@ Tone: Empathetic, professional, solution-oriented"""
         user_prompt = f"""Customer dispute: {message}
 
 Investigation Reasoning:
-{chr(10).join(f'- {reason}' for reason in resolution.get('reasoning', []))}
+{chr(10).join(f"- {reason}" for reason in resolution.get("reasoning", []))}
 
 {prevention_context}
 
@@ -604,6 +583,6 @@ Generate an empathetic dispute resolution response."""
         response = await self.call_llm(
             system_prompt=system_prompt,
             user_message=user_prompt,
-            conversation_history=[]  # Dispute analysis uses request context only
+            conversation_history=[],  # Dispute analysis uses request context only
         )
         return response
