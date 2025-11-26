@@ -168,10 +168,14 @@ Output ONLY valid JSON with the extracted entities. If no entities found, return
                 state["extracted_entities"] = {}
                 return state
 
+            # Get conversation history for context
+            conversation_history = self.get_conversation_context(state)
+
             # Call LLM for extraction
             response = await self.call_llm(
                 system_prompt=self._get_system_prompt(),
-                user_message=f"Extract entities from this message:\n\n{message}"
+                user_message=f"Extract entities from this message:\n\n{message}",
+                conversation_history=conversation_history
             )
 
             # Parse response
