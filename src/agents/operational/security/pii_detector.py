@@ -6,14 +6,14 @@ passwords, API keys, email addresses, and phone numbers.
 Uses pattern matching and Claude Sonnet for contextual PII detection.
 """
 
-from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime, UTC
 import re
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("pii_detector", tier="operational", category="security")
@@ -38,15 +38,17 @@ class PIIDetectorAgent(BaseAgent):
 
     # PII patterns (regex)
     PII_PATTERNS = {
-        "ssn": re.compile(r'\b\d{3}-\d{2}-\d{4}\b|\b\d{9}\b'),
-        "credit_card": re.compile(r'\b(?:\d{4}[-\s]?){3}\d{4}\b'),
-        "email": re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'),
-        "phone": re.compile(r'\b(?:\+?1[-.]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b'),
-        "ip_address": re.compile(r'\b(?:\d{1,3}\.){3}\d{1,3}\b'),
-        "api_key": re.compile(r'\b[A-Za-z0-9]{32,}\b'),
-        "password": re.compile(r'(?:password|pwd|pass)\s*[:=]\s*[^\s]+', re.IGNORECASE),
-        "address": re.compile(r'\b\d+\s+[A-Za-z\s]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd)\b', re.IGNORECASE),
-        "zipcode": re.compile(r'\b\d{5}(?:-\d{4})?\b'),
+        "ssn": re.compile(r"\b\d{3}-\d{2}-\d{4}\b|\b\d{9}\b"),
+        "credit_card": re.compile(r"\b(?:\d{4}[-\s]?){3}\d{4}\b"),
+        "email": re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"),
+        "phone": re.compile(r"\b(?:\+?1[-.]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b"),
+        "ip_address": re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b"),
+        "api_key": re.compile(r"\b[A-Za-z0-9]{32,}\b"),
+        "password": re.compile(r"(?:password|pwd|pass)\s*[:=]\s*[^\s]+", re.IGNORECASE),
+        "address": re.compile(
+            r"\b\d+\s+[A-Za-z\s]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd)\b", re.IGNORECASE
+        ),
+        "zipcode": re.compile(r"\b\d{5}(?:-\d{4})?\b"),
     }
 
     # PII sensitivity levels
@@ -59,7 +61,7 @@ class PIIDetectorAgent(BaseAgent):
         "phone": "high",
         "address": "medium",
         "ip_address": "medium",
-        "zipcode": "low"
+        "zipcode": "low",
     }
 
     def __init__(self):
@@ -70,7 +72,7 @@ class PIIDetectorAgent(BaseAgent):
             temperature=0.1,
             max_tokens=2500,
             capabilities=[AgentCapability.DATABASE_WRITE],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -102,7 +104,7 @@ class PIIDetectorAgent(BaseAgent):
             "pii_detection_details",
             content_length=len(content),
             redaction_mode=redaction_mode,
-            sensitivity_threshold=sensitivity_threshold
+            sensitivity_threshold=sensitivity_threshold,
         )
 
         # Detect PII
@@ -128,11 +130,7 @@ class PIIDetectorAgent(BaseAgent):
 
         # Format response
         response = self._format_pii_report(
-            detections,
-            risk_score,
-            risk_level,
-            recommendations,
-            critical_violations
+            detections, risk_score, risk_level, recommendations, critical_violations
         )
 
         state["agent_response"] = response
@@ -158,12 +156,12 @@ class PIIDetectorAgent(BaseAgent):
             pii_count=len(detections),
             risk_score=risk_score,
             risk_level=risk_level,
-            critical_violations=len(critical_violations)
+            critical_violations=len(critical_violations),
         )
 
         return state
 
-    def _detect_pii(self, content: str, sensitivity_threshold: str) -> List[Dict[str, Any]]:
+    def _detect_pii(self, content: str, sensitivity_threshold: str) -> list[dict[str, Any]]:
         """
         Detect PII in content using pattern matching.
 
@@ -195,7 +193,7 @@ class PIIDetectorAgent(BaseAgent):
                     "end_position": match.end(),
                     "sensitivity": sensitivity,
                     "detected_at": datetime.now(UTC).isoformat(),
-                    "redaction_token": f"[REDACTED:{pii_type.upper()}]"
+                    "redaction_token": f"[REDACTED:{pii_type.upper()}]",
                 }
 
                 # Add validation for specific types
@@ -225,7 +223,7 @@ class PIIDetectorAgent(BaseAgent):
             True if valid, False otherwise
         """
         # Remove spaces and hyphens
-        digits = re.sub(r'[\s-]', '', card_number)
+        digits = re.sub(r"[\s-]", "", card_number)
 
         if not digits.isdigit() or len(digits) < 13 or len(digits) > 19:
             return False
@@ -255,23 +253,30 @@ class PIIDetectorAgent(BaseAgent):
             True if valid format, False otherwise
         """
         # Remove hyphens
-        digits = re.sub(r'-', '', ssn)
+        digits = re.sub(r"-", "", ssn)
 
         if len(digits) != 9:
             return False
 
         # Check for invalid SSNs
-        invalid_ssns = ['000000000', '111111111', '222222222', '333333333',
-                        '444444444', '555555555', '666666666', '777777777',
-                        '888888888', '999999999', '123456789']
+        invalid_ssns = [
+            "000000000",
+            "111111111",
+            "222222222",
+            "333333333",
+            "444444444",
+            "555555555",
+            "666666666",
+            "777777777",
+            "888888888",
+            "999999999",
+            "123456789",
+        ]
 
         return digits not in invalid_ssns
 
     def _redact_pii(
-        self,
-        content: str,
-        detections: List[Dict[str, Any]],
-        redaction_mode: str
+        self, content: str, detections: list[dict[str, Any]], redaction_mode: str
     ) -> str:
         """
         Redact PII from content.
@@ -311,7 +316,7 @@ class PIIDetectorAgent(BaseAgent):
 
         return redacted
 
-    def _generate_audit_log(self, detections: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _generate_audit_log(self, detections: list[dict[str, Any]]) -> dict[str, Any]:
         """
         Generate tamper-proof audit log of PII detections.
 
@@ -324,22 +329,22 @@ class PIIDetectorAgent(BaseAgent):
         return {
             "timestamp": datetime.now(UTC).isoformat(),
             "detection_count": len(detections),
-            "detection_types": list(set(d["type"] for d in detections)),
-            "sensitivity_levels": list(set(d["sensitivity"] for d in detections)),
+            "detection_types": list({d["type"] for d in detections}),
+            "sensitivity_levels": list({d["sensitivity"] for d in detections}),
             "detections": [
                 {
                     "type": d["type"],
                     "sensitivity": d["sensitivity"],
                     "position": d["start_position"],
-                    "validated": d.get("validated", False)
+                    "validated": d.get("validated", False),
                 }
                 for d in detections
             ],
             "audit_id": f"PII-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}",
-            "compliance_flags": ["GDPR", "CCPA", "HIPAA"]
+            "compliance_flags": ["GDPR", "CCPA", "HIPAA"],
         }
 
-    def _calculate_risk_score(self, detections: List[Dict[str, Any]]) -> float:
+    def _calculate_risk_score(self, detections: list[dict[str, Any]]) -> float:
         """
         Calculate PII risk score (0-100).
 
@@ -353,17 +358,9 @@ class PIIDetectorAgent(BaseAgent):
             return 0.0
 
         # Weight by sensitivity
-        sensitivity_weights = {
-            "critical": 10.0,
-            "high": 5.0,
-            "medium": 2.0,
-            "low": 1.0
-        }
+        sensitivity_weights = {"critical": 10.0, "high": 5.0, "medium": 2.0, "low": 1.0}
 
-        total_score = sum(
-            sensitivity_weights.get(d["sensitivity"], 1.0)
-            for d in detections
-        )
+        total_score = sum(sensitivity_weights.get(d["sensitivity"], 1.0) for d in detections)
 
         # Normalize to 0-100
         max_score = len(detections) * 10.0
@@ -371,11 +368,7 @@ class PIIDetectorAgent(BaseAgent):
 
         return round(normalized_score, 1)
 
-    def _classify_risk_level(
-        self,
-        risk_score: float,
-        detections: List[Dict[str, Any]]
-    ) -> str:
+    def _classify_risk_level(self, risk_score: float, detections: list[dict[str, Any]]) -> str:
         """
         Classify overall risk level.
 
@@ -399,10 +392,8 @@ class PIIDetectorAgent(BaseAgent):
             return "low"
 
     def _generate_recommendations(
-        self,
-        detections: List[Dict[str, Any]],
-        risk_level: str
-    ) -> List[str]:
+        self, detections: list[dict[str, Any]], risk_level: str
+    ) -> list[str]:
         """
         Generate security recommendations.
 
@@ -423,12 +414,10 @@ class PIIDetectorAgent(BaseAgent):
             recommendations.append(
                 "CRITICAL: Sensitive PII detected. Immediate redaction required before storage."
             )
-            recommendations.append(
-                "Do not transmit this content over unencrypted channels."
-            )
+            recommendations.append("Do not transmit this content over unencrypted channels.")
 
         # Type-specific recommendations
-        detection_types = set(d["type"] for d in detections)
+        detection_types = {d["type"] for d in detections}
 
         if "ssn" in detection_types:
             recommendations.append(
@@ -456,10 +445,7 @@ class PIIDetectorAgent(BaseAgent):
 
         return recommendations
 
-    def _check_critical_violations(
-        self,
-        detections: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+    def _check_critical_violations(self, detections: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
         Check for critical PII violations requiring immediate action.
 
@@ -473,24 +459,30 @@ class PIIDetectorAgent(BaseAgent):
 
         for detection in detections:
             if detection["sensitivity"] == "critical":
-                violations.append({
-                    "type": detection["type"],
-                    "severity": "critical",
-                    "message": f"Critical PII detected: {detection['type']}",
-                    "action_required": "Immediate redaction and incident response",
-                    "compliance_impact": ["GDPR Article 32", "CCPA Section 1798.150", "HIPAA 164.308"],
-                    "detected_at": detection["detected_at"]
-                })
+                violations.append(
+                    {
+                        "type": detection["type"],
+                        "severity": "critical",
+                        "message": f"Critical PII detected: {detection['type']}",
+                        "action_required": "Immediate redaction and incident response",
+                        "compliance_impact": [
+                            "GDPR Article 32",
+                            "CCPA Section 1798.150",
+                            "HIPAA 164.308",
+                        ],
+                        "detected_at": detection["detected_at"],
+                    }
+                )
 
         return violations
 
     def _format_pii_report(
         self,
-        detections: List[Dict[str, Any]],
+        detections: list[dict[str, Any]],
         risk_score: float,
         risk_level: str,
-        recommendations: List[str],
-        critical_violations: List[Dict[str, Any]]
+        recommendations: list[str],
+        critical_violations: list[dict[str, Any]],
     ) -> str:
         """Format PII detection report."""
         status_icon = "🔴" if risk_level == "critical" else "⚠️" if risk_level == "high" else "✅"
@@ -518,18 +510,18 @@ class PIIDetectorAgent(BaseAgent):
 
         # Critical violations
         if critical_violations:
-            report += f"\n**CRITICAL VIOLATIONS:**\n"
+            report += "\n**CRITICAL VIOLATIONS:**\n"
             for violation in critical_violations:
                 report += f"🔴 {violation['message']}\n"
                 report += f"   Action: {violation['action_required']}\n"
 
         # Recommendations
         if recommendations:
-            report += f"\n**Security Recommendations:**\n"
+            report += "\n**Security Recommendations:**\n"
             for rec in recommendations:
                 report += f"- {rec}\n"
 
         report += f"\n*PII scan completed at {datetime.now(UTC).isoformat()}*"
-        report += f"\n*Compliance: GDPR, CCPA, HIPAA, PCI-DSS*"
+        report += "\n*Compliance: GDPR, CCPA, HIPAA, PCI-DSS*"
 
         return report
