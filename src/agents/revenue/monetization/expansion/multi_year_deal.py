@@ -5,13 +5,12 @@ Identifies and closes multi-year contracts for predictable revenue and customer 
 Converts annual customers into multi-year commitments with appropriate incentives.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("multi_year_deal", tier="revenue", category="monetization")
@@ -37,22 +36,22 @@ class MultiYearDeal(BaseAgent):
             "discount": 0.15,  # 15% discount
             "payment_options": ["annual", "upfront"],
             "min_arr": 10000,
-            "ideal_customer_profile": ["stable", "satisfied", "growing"]
+            "ideal_customer_profile": ["stable", "satisfied", "growing"],
         },
         "three_year": {
             "term_months": 36,
             "discount": 0.20,  # 20% discount
             "payment_options": ["annual", "upfront"],
             "min_arr": 25000,
-            "ideal_customer_profile": ["enterprise", "strategic", "committed"]
+            "ideal_customer_profile": ["enterprise", "strategic", "committed"],
         },
         "five_year": {
             "term_months": 60,
             "discount": 0.25,  # 25% discount
             "payment_options": ["annual", "upfront", "quarterly"],
             "min_arr": 100000,
-            "ideal_customer_profile": ["enterprise", "mission_critical", "partner"]
-        }
+            "ideal_customer_profile": ["enterprise", "mission_critical", "partner"],
+        },
     }
 
     # Qualification criteria for multi-year deals
@@ -61,16 +60,16 @@ class MultiYearDeal(BaseAgent):
             "metrics": [
                 {"metric": "nps_score", "threshold": 8, "weight": 0.25},
                 {"metric": "feature_adoption_rate", "threshold": 0.70, "weight": 0.20},
-                {"metric": "support_satisfaction", "threshold": 4.0, "weight": 0.15}
+                {"metric": "support_satisfaction", "threshold": 4.0, "weight": 0.15},
             ]
         },
         "financial_stability": {
             "metrics": [
                 {"metric": "account_age_days", "threshold": 180, "weight": 0.20},
                 {"metric": "payment_history_score", "threshold": 95, "weight": 0.10},
-                {"metric": "current_arr", "threshold": 10000, "weight": 0.10}
+                {"metric": "current_arr", "threshold": 10000, "weight": 0.10},
             ]
-        }
+        },
     }
 
     # Value drivers for multi-year commitment
@@ -80,22 +79,19 @@ class MultiYearDeal(BaseAgent):
         "predictability": "Budget certainty for multi-year planning",
         "priority_roadmap": "Influence on product roadmap",
         "dedicated_csm": "Dedicated customer success manager",
-        "priority_support": "Priority support and SLAs"
+        "priority_support": "Priority support and SLAs",
     }
 
     def __init__(self):
         config = AgentConfig(
             name="multi_year_deal",
             type=AgentType.SPECIALIST,
-             # Sonnet for complex deal structuring
+            # Sonnet for complex deal structuring
             temperature=0.4,
             max_tokens=700,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.KB_SEARCH
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.KB_SEARCH],
             kb_category="monetization",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -121,47 +117,30 @@ class MultiYearDeal(BaseAgent):
         qualification = self._qualify_for_multi_year(customer_metadata)
 
         # Determine optimal deal structure
-        recommended_structure = self._recommend_deal_structure(
-            qualification,
-            customer_metadata
-        )
+        recommended_structure = self._recommend_deal_structure(qualification, customer_metadata)
 
         # Calculate multi-year pricing
         pricing_proposal = self._calculate_multi_year_pricing(
-            recommended_structure,
-            customer_metadata
+            recommended_structure, customer_metadata
         )
 
         # Build value proposition
         value_proposition = self._build_value_proposition(
-            recommended_structure,
-            pricing_proposal,
-            customer_metadata
+            recommended_structure, pricing_proposal, customer_metadata
         )
 
         # Structure payment terms
-        payment_options = self._structure_payment_terms(
-            pricing_proposal,
-            recommended_structure
-        )
+        payment_options = self._structure_payment_terms(pricing_proposal, recommended_structure)
 
         # Calculate metrics (TCV, ACV, etc.)
-        deal_metrics = self._calculate_deal_metrics(
-            pricing_proposal,
-            recommended_structure
-        )
+        deal_metrics = self._calculate_deal_metrics(pricing_proposal, recommended_structure)
 
         # Generate negotiation framework
-        negotiation_framework = self._generate_negotiation_framework(
-            pricing_proposal,
-            customer_metadata
-        )
+        self._generate_negotiation_framework(pricing_proposal, customer_metadata)
 
         # Search KB for multi-year deal resources
         kb_results = await self.search_knowledge_base(
-            "multi-year contract enterprise commitment",
-            category="monetization",
-            limit=2
+            "multi-year contract enterprise commitment", category="monetization", limit=2
         )
         state["kb_results"] = kb_results
 
@@ -175,7 +154,7 @@ class MultiYearDeal(BaseAgent):
             payment_options,
             deal_metrics,
             kb_results,
-            customer_metadata
+            customer_metadata,
         )
 
         # Update state
@@ -198,18 +177,18 @@ class MultiYearDeal(BaseAgent):
             "multi_year_deal_completed",
             qualified=qualification["is_qualified"],
             recommended_term=recommended_structure,
-            tcv=deal_metrics.get("tcv", 0)
+            tcv=deal_metrics.get("tcv", 0),
         )
 
         return state
 
-    def _qualify_for_multi_year(self, customer_metadata: Dict) -> Dict[str, Any]:
+    def _qualify_for_multi_year(self, customer_metadata: dict) -> dict[str, Any]:
         """Qualify customer for multi-year commitment"""
         qualification = {
             "is_qualified": False,
             "qualification_score": 0.0,
             "strengths": [],
-            "concerns": []
+            "concerns": [],
         }
 
         total_weight = 0
@@ -246,18 +225,13 @@ class MultiYearDeal(BaseAgent):
                 qualification["concerns"].append(f"Concern: {metric}")
 
         qualification["qualification_score"] = round(
-            (weighted_score / total_weight) * 100 if total_weight > 0 else 0,
-            2
+            (weighted_score / total_weight) * 100 if total_weight > 0 else 0, 2
         )
         qualification["is_qualified"] = qualification["qualification_score"] >= 70
 
         return qualification
 
-    def _recommend_deal_structure(
-        self,
-        qualification: Dict,
-        customer_metadata: Dict
-    ) -> str:
+    def _recommend_deal_structure(self, qualification: dict, customer_metadata: dict) -> str:
         """Recommend optimal multi-year deal structure"""
         current_arr = customer_metadata.get("current_arr", 0)
         company_size = customer_metadata.get("company_size", 0)
@@ -276,10 +250,8 @@ class MultiYearDeal(BaseAgent):
             return "two_year"  # Default
 
     def _calculate_multi_year_pricing(
-        self,
-        structure: str,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, structure: str, customer_metadata: dict
+    ) -> dict[str, Any]:
         """Calculate multi-year deal pricing"""
         deal_config = self.DEAL_STRUCTURES[structure]
         current_arr = customer_metadata.get("current_arr", 0)
@@ -307,22 +279,21 @@ class MultiYearDeal(BaseAgent):
             "discount_amount": round(discount_amount, 2),
             "total_contract_value": round(discounted_total, 2),
             "annual_savings": round(current_arr - discounted_arr, 2),
-            "total_savings": round(discount_amount, 2)
+            "total_savings": round(discount_amount, 2),
         }
 
     def _build_value_proposition(
-        self,
-        structure: str,
-        pricing: Dict,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, structure: str, pricing: dict, customer_metadata: dict
+    ) -> dict[str, Any]:
         """Build multi-year value proposition"""
-        deal_config = self.DEAL_STRUCTURES[structure]
+        self.DEAL_STRUCTURES[structure]
 
         benefits = []
         for key, description in self.VALUE_DRIVERS.items():
             if key == "discount":
-                benefits.append(f"Save ${pricing['total_savings']:,.0f} over {pricing['term_years']:.0f} years")
+                benefits.append(
+                    f"Save ${pricing['total_savings']:,.0f} over {pricing['term_years']:.0f} years"
+                )
             elif key == "price_lock":
                 benefits.append("Lock in pricing - avoid future rate increases")
             elif key == "dedicated_csm" and structure in ["three_year", "five_year"]:
@@ -336,14 +307,10 @@ class MultiYearDeal(BaseAgent):
             "headline": f"{pricing['term_years']:.0f}-Year Partnership - Save ${pricing['total_savings']:,.0f}",
             "key_benefits": benefits[:5],
             "risk_mitigation": "Flexible terms and performance guarantees",
-            "strategic_value": "Long-term partnership with dedicated support"
+            "strategic_value": "Long-term partnership with dedicated support",
         }
 
-    def _structure_payment_terms(
-        self,
-        pricing: Dict,
-        structure: str
-    ) -> List[Dict[str, Any]]:
+    def _structure_payment_terms(self, pricing: dict, structure: str) -> list[dict[str, Any]]:
         """Structure payment term options"""
         deal_config = self.DEAL_STRUCTURES[structure]
         tcv = pricing["total_contract_value"]
@@ -353,51 +320,53 @@ class MultiYearDeal(BaseAgent):
 
         # Annual payments
         if "annual" in deal_config["payment_options"]:
-            options.append({
-                "option": "Annual Payments",
-                "frequency": "Annual",
-                "amount_per_payment": round(arr, 2),
-                "total_payments": int(pricing["term_years"]),
-                "total_cost": round(tcv, 2),
-                "discount": f"{pricing['discount_percentage']:.0f}%",
-                "recommended": True
-            })
+            options.append(
+                {
+                    "option": "Annual Payments",
+                    "frequency": "Annual",
+                    "amount_per_payment": round(arr, 2),
+                    "total_payments": int(pricing["term_years"]),
+                    "total_cost": round(tcv, 2),
+                    "discount": f"{pricing['discount_percentage']:.0f}%",
+                    "recommended": True,
+                }
+            )
 
         # Upfront payment (additional discount)
         if "upfront" in deal_config["payment_options"]:
             upfront_discount = 0.05  # Additional 5% for upfront
             upfront_total = tcv * (1 - upfront_discount)
-            options.append({
-                "option": "Upfront Payment",
-                "frequency": "One-time",
-                "amount_per_payment": round(upfront_total, 2),
-                "total_payments": 1,
-                "total_cost": round(upfront_total, 2),
-                "discount": f"{(pricing['discount_percentage'] + upfront_discount * 100):.0f}%",
-                "additional_savings": round(tcv - upfront_total, 2),
-                "recommended": False
-            })
+            options.append(
+                {
+                    "option": "Upfront Payment",
+                    "frequency": "One-time",
+                    "amount_per_payment": round(upfront_total, 2),
+                    "total_payments": 1,
+                    "total_cost": round(upfront_total, 2),
+                    "discount": f"{(pricing['discount_percentage'] + upfront_discount * 100):.0f}%",
+                    "additional_savings": round(tcv - upfront_total, 2),
+                    "recommended": False,
+                }
+            )
 
         # Quarterly payments (if available)
         if "quarterly" in deal_config["payment_options"]:
             quarterly_amount = arr / 4
-            options.append({
-                "option": "Quarterly Payments",
-                "frequency": "Quarterly",
-                "amount_per_payment": round(quarterly_amount, 2),
-                "total_payments": int(pricing["term_years"] * 4),
-                "total_cost": round(tcv, 2),
-                "discount": f"{pricing['discount_percentage']:.0f}%",
-                "recommended": False
-            })
+            options.append(
+                {
+                    "option": "Quarterly Payments",
+                    "frequency": "Quarterly",
+                    "amount_per_payment": round(quarterly_amount, 2),
+                    "total_payments": int(pricing["term_years"] * 4),
+                    "total_cost": round(tcv, 2),
+                    "discount": f"{pricing['discount_percentage']:.0f}%",
+                    "recommended": False,
+                }
+            )
 
         return options
 
-    def _calculate_deal_metrics(
-        self,
-        pricing: Dict,
-        structure: str
-    ) -> Dict[str, Any]:
+    def _calculate_deal_metrics(self, pricing: dict, structure: str) -> dict[str, Any]:
         """Calculate key deal metrics"""
         return {
             "tcv": pricing["total_contract_value"],  # Total Contract Value
@@ -407,7 +376,7 @@ class MultiYearDeal(BaseAgent):
             "discount_percentage": pricing["discount_percentage"],
             "total_savings": pricing["total_savings"],
             "bookings": pricing["total_contract_value"],  # Full TCV booked
-            "deal_size_category": self._categorize_deal_size(pricing["total_contract_value"])
+            "deal_size_category": self._categorize_deal_size(pricing["total_contract_value"]),
         }
 
     def _categorize_deal_size(self, tcv: float) -> str:
@@ -422,10 +391,8 @@ class MultiYearDeal(BaseAgent):
             return "standard"
 
     def _generate_negotiation_framework(
-        self,
-        pricing: Dict,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, pricing: dict, customer_metadata: dict
+    ) -> dict[str, Any]:
         """Generate framework for deal negotiation"""
         return {
             "anchor_price": pricing["total_contract_value"],
@@ -434,45 +401,42 @@ class MultiYearDeal(BaseAgent):
                 "Additional training sessions",
                 "Extended support hours",
                 "Quarterly business reviews",
-                "Priority feature requests"
+                "Priority feature requests",
             ],
-            "non_negotiables": [
-                "Minimum term length",
-                "Payment terms"
-            ],
-            "escalation_threshold": pricing["total_contract_value"] * 0.90
+            "non_negotiables": ["Minimum term length", "Payment terms"],
+            "escalation_threshold": pricing["total_contract_value"] * 0.90,
         }
 
     async def _generate_deal_response(
         self,
         message: str,
-        qualification: Dict,
+        qualification: dict,
         structure: str,
-        pricing: Dict,
-        value_proposition: Dict,
-        payment_options: List[Dict],
-        deal_metrics: Dict,
-        kb_results: List[Dict],
-        customer_metadata: Dict
+        pricing: dict,
+        value_proposition: dict,
+        payment_options: list[dict],
+        deal_metrics: dict,
+        kb_results: list[dict],
+        customer_metadata: dict,
     ) -> str:
         """Generate multi-year deal response"""
 
         # Build qualification context
         qual_context = f"""
-Qualification Score: {qualification['qualification_score']}/100
-Strengths: {', '.join(qualification['strengths'][:3])}
-Recommended Term: {pricing['term_years']:.0f} years
+Qualification Score: {qualification["qualification_score"]}/100
+Strengths: {", ".join(qualification["strengths"][:3])}
+Recommended Term: {pricing["term_years"]:.0f} years
 """
 
         # Build deal context
         deal_context = f"""
 Multi-Year Deal Proposal:
-- Term: {pricing['term_years']:.0f} years ({pricing['term_months']} months)
-- Total Contract Value: ${deal_metrics['tcv']:,.0f}
-- Annual Value: ${deal_metrics['acv']:,.0f}/year
-- Discount: {pricing['discount_percentage']:.0f}%
-- Total Savings: ${pricing['total_savings']:,.0f}
-- Deal Category: {deal_metrics['deal_size_category']}
+- Term: {pricing["term_years"]:.0f} years ({pricing["term_months"]} months)
+- Total Contract Value: ${deal_metrics["tcv"]:,.0f}
+- Annual Value: ${deal_metrics["acv"]:,.0f}/year
+- Discount: {pricing["discount_percentage"]:.0f}%
+- Total Savings: ${pricing["total_savings"]:,.0f}
+- Deal Category: {deal_metrics["deal_size_category"]}
 """
 
         # Build payment options context
@@ -489,8 +453,8 @@ Multi-Year Deal Proposal:
 
         system_prompt = f"""You are a Multi-Year Deal specialist structuring long-term partnerships.
 
-Customer: {customer_metadata.get('company', 'Customer')}
-Current ARR: ${customer_metadata.get('current_arr', 0):,.0f}
+Customer: {customer_metadata.get("company", "Customer")}
+Current ARR: ${customer_metadata.get("current_arr", 0):,.0f}
 {qual_context}
 {deal_context}
 
@@ -511,10 +475,10 @@ Tone: Strategic, partnership-focused, value-driven"""
         user_prompt = f"""Customer message: {message}
 
 Value Proposition:
-{value_proposition['headline']}
+{value_proposition["headline"]}
 
 Key Benefits:
-{chr(10).join(f'- {benefit}' for benefit in value_proposition['key_benefits'])}
+{chr(10).join(f"- {benefit}" for benefit in value_proposition["key_benefits"])}
 
 {payment_context}
 
@@ -525,6 +489,6 @@ Generate a compelling multi-year deal proposal."""
         response = await self.call_llm(
             system_prompt=system_prompt,
             user_message=user_prompt,
-            conversation_history=[]  # Deal proposals use qualification data
+            conversation_history=[],  # Deal proposals use qualification data
         )
         return response
