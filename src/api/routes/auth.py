@@ -18,45 +18,44 @@ Endpoints:
 - DELETE /auth/api-keys/{id} - Revoke API key
 """
 
-from typing import List
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
-from datetime import datetime, timedelta, UTC
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from src.database.models.user import User, UserRole, UserStatus, OAuthProvider
-from src.database.models.api_key import APIKey
-from src.database.unit_of_work import get_unit_of_work
-from src.api.models.auth_models import (
-    UserRegisterRequest,
-    UserRegisterResponse,
-    LoginRequest,
-    LoginResponse,
-    OAuthLoginRequest,
-    RefreshTokenRequest,
-    RefreshTokenResponse,
-    LogoutResponse,
-    PasswordResetRequest,
-    PasswordResetResponse,
-    PasswordResetConfirm,
-    EmailVerificationRequest,
-    EmailVerificationResponse,
-    ResendVerificationRequest,
-    UserProfile,
-    UpdateUserProfile,
-    ChangePasswordRequest,
-    APIKeyCreateRequest,
-    APIKeyResponse,
-    APIKeyListResponse,
-)
-from src.api.dependencies import get_current_user, get_current_active_user
 from src.api.auth import (
+    APIKeyManager,
     JWTManager,
     PasswordManager,
-    APIKeyManager,
     TokenBlacklist,
     get_role_scopes,
 )
+from src.api.dependencies import get_current_user
+from src.api.models.auth_models import (
+    APIKeyCreateRequest,
+    APIKeyListResponse,
+    APIKeyResponse,
+    ChangePasswordRequest,
+    EmailVerificationRequest,
+    EmailVerificationResponse,
+    LoginRequest,
+    LoginResponse,
+    LogoutResponse,
+    OAuthLoginRequest,
+    PasswordResetConfirm,
+    PasswordResetRequest,
+    PasswordResetResponse,
+    RefreshTokenRequest,
+    RefreshTokenResponse,
+    ResendVerificationRequest,
+    UpdateUserProfile,
+    UserProfile,
+    UserRegisterRequest,
+    UserRegisterResponse,
+)
 from src.core.config import get_settings
+from src.database.models.user import OAuthProvider, User, UserRole, UserStatus
+from src.database.unit_of_work import get_unit_of_work
 from src.utils.logging.setup import get_logger
 
 logger = get_logger(__name__)
@@ -69,10 +68,9 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 # USER REGISTRATION
 # =============================================================================
 
+
 @router.post("/register", response_model=UserRegisterResponse, status_code=status.HTTP_201_CREATED)
-async def register_user(
-    request: UserRegisterRequest
-):
+async def register_user(request: UserRegisterRequest):
     """
     Register a new user account.
 
@@ -87,21 +85,19 @@ async def register_user(
     logger.info("user_registration_started", email=request.email)
 
     # Validate password strength
-    is_valid, error = PasswordManager.validate_password_strength(request.password.get_secret_value())
+    is_valid, error = PasswordManager.validate_password_strength(
+        request.password.get_secret_value()
+    )
     if not is_valid:
         logger.warning("registration_weak_password", email=request.email, error=error)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=error
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
 
     async with get_unit_of_work() as uow:
         # Check if email already exists
         if await uow.users.email_exists(request.email):
             logger.warning("registration_email_exists", email=request.email)
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Email already registered"
+                status_code=status.HTTP_409_CONFLICT, detail="Email already registered"
             )
 
         # Hash password
@@ -129,19 +125,11 @@ async def register_user(
 
         await uow.commit()
 
-        logger.info(
-            "user_registered",
-            user_id=str(user.id),
-            email=user.email,
-            role=user.role.value
-        )
+        logger.info("user_registered", user_id=str(user.id), email=user.email, role=user.role.value)
 
         # Generate JWT tokens
         access_token = JWTManager.create_access_token(
-            user_id=user.id,
-            email=user.email,
-            role=user.role.value,
-            scopes=scopes
+            user_id=user.id, email=user.email, role=user.role.value, scopes=scopes
         )
 
         refresh_token = JWTManager.create_refresh_token(user_id=user.id)
@@ -158,7 +146,7 @@ async def register_user(
             access_token=access_token,
             refresh_token=refresh_token,
             token_type="Bearer",
-            expires_in=settings.jwt.access_token_expire_minutes * 60
+            expires_in=settings.jwt.access_token_expire_minutes * 60,
         )
 
 
@@ -166,10 +154,9 @@ async def register_user(
 # USER LOGIN
 # =============================================================================
 
+
 @router.post("/login", response_model=LoginResponse)
-async def login(
-    request: LoginRequest
-):
+async def login(request: LoginRequest):
     """
     Authenticate user and return JWT tokens.
 
@@ -188,27 +175,25 @@ async def login(
             logger.warning("login_failed_user_not_found", email=request.email)
             # Don't reveal if user exists
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect email or password"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password"
             )
 
         # Verify password
         if not user.password_hash or not PasswordManager.verify_password(
-            request.password.get_secret_value(),
-            user.password_hash
+            request.password.get_secret_value(), user.password_hash
         ):
             logger.warning("login_failed_invalid_password", email=request.email)
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect email or password"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password"
             )
 
         # Check if user is active
         if not user.is_active:
-            logger.warning("login_failed_inactive_user", email=request.email, status=user.status.value)
+            logger.warning(
+                "login_failed_inactive_user", email=request.email, status=user.status.value
+            )
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Account is not active"
+                status_code=status.HTTP_403_FORBIDDEN, detail="Account is not active"
             )
 
         # Update last login
@@ -220,10 +205,7 @@ async def login(
         # Generate JWT tokens
         scopes = user.get_scopes()
         access_token = JWTManager.create_access_token(
-            user_id=user.id,
-            email=user.email,
-            role=user.role.value,
-            scopes=scopes
+            user_id=user.id, email=user.email, role=user.role.value, scopes=scopes
         )
 
         refresh_token = JWTManager.create_refresh_token(user_id=user.id)
@@ -240,7 +222,7 @@ async def login(
             is_verified=user.is_verified,
             scopes=scopes,
             created_at=user.created_at,
-            last_login_at=user.last_login_at
+            last_login_at=user.last_login_at,
         )
 
         return LoginResponse(
@@ -248,7 +230,7 @@ async def login(
             refresh_token=refresh_token,
             token_type="Bearer",
             expires_in=settings.jwt.access_token_expire_minutes * 60,
-            user=user_profile
+            user=user_profile,
         )
 
 
@@ -256,10 +238,9 @@ async def login(
 # OAUTH LOGIN (NextAuth Integration)
 # =============================================================================
 
+
 @router.post("/oauth-login", response_model=LoginResponse)
-async def oauth_login(
-    request: OAuthLoginRequest
-):
+async def oauth_login(request: OAuthLoginRequest):
     """
     Login or register user via OAuth provider (NextAuth integration).
 
@@ -277,7 +258,7 @@ async def oauth_login(
         "oauth_login_attempt",
         email=request.email,
         provider=request.provider,
-        provider_user_id=request.provider_user_id
+        provider_user_id=request.provider_user_id,
     )
 
     # Convert provider string to OAuthProvider enum
@@ -286,8 +267,8 @@ async def oauth_login(
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported OAuth provider: {request.provider}"
-        )
+            detail=f"Unsupported OAuth provider: {request.provider}",
+        ) from None
 
     # Track if this is a new user registration
     is_new_user = False
@@ -312,9 +293,7 @@ async def oauth_login(
                 await uow.users.update_last_login(user.id)
                 await uow.commit()
                 logger.info(
-                    "oauth_linked_to_existing_user",
-                    user_id=str(user.id),
-                    provider=request.provider
+                    "oauth_linked_to_existing_user", user_id=str(user.id), provider=request.provider
                 )
             else:
                 # Create new user - this is a new registration!
@@ -342,16 +321,13 @@ async def oauth_login(
                     "oauth_user_created",
                     user_id=str(user.id),
                     email=user.email,
-                    provider=request.provider
+                    provider=request.provider,
                 )
 
         # Generate JWT tokens
         scopes = user.get_scopes()
         access_token = JWTManager.create_access_token(
-            user_id=user.id,
-            email=user.email,
-            role=user.role.value,
-            scopes=scopes
+            user_id=user.id, email=user.email, role=user.role.value, scopes=scopes
         )
 
         refresh_token = JWTManager.create_refresh_token(user_id=user.id)
@@ -368,7 +344,7 @@ async def oauth_login(
             is_verified=user.is_verified,
             scopes=scopes,
             created_at=user.created_at,
-            last_login_at=user.last_login_at
+            last_login_at=user.last_login_at,
         )
 
         return LoginResponse(
@@ -377,7 +353,7 @@ async def oauth_login(
             token_type="Bearer",
             expires_in=settings.jwt.access_token_expire_minutes * 60,
             user=user_profile,
-            is_new_user=is_new_user
+            is_new_user=is_new_user,
         )
 
 
@@ -385,10 +361,9 @@ async def oauth_login(
 # TOKEN REFRESH
 # =============================================================================
 
+
 @router.post("/refresh", response_model=RefreshTokenResponse)
-async def refresh_token(
-    request: RefreshTokenRequest
-):
+async def refresh_token(request: RefreshTokenRequest):
     """
     Refresh access token using refresh token.
 
@@ -409,24 +384,21 @@ async def refresh_token(
     jti = payload.get("jti")
     if not jti:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid refresh token"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
         )
 
     # Check if token is blacklisted
     if await TokenBlacklist.is_blacklisted(jti):
         logger.warning("token_refresh_failed_blacklisted", jti=jti)
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Refresh token has been revoked"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token has been revoked"
         )
 
     # Get user ID
     user_id = payload.get("sub")
     if not user_id:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid refresh token"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
         )
 
     async with get_unit_of_work() as uow:
@@ -436,8 +408,7 @@ async def refresh_token(
         if not user or not user.is_active:
             logger.warning("token_refresh_failed_user_inactive", user_id=user_id)
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User account is not active"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="User account is not active"
             )
 
         logger.info("token_refreshed", user_id=str(user.id))
@@ -445,10 +416,7 @@ async def refresh_token(
         # Generate new tokens
         scopes = user.get_scopes()
         new_access_token = JWTManager.create_access_token(
-            user_id=user.id,
-            email=user.email,
-            role=user.role.value,
-            scopes=scopes
+            user_id=user.id, email=user.email, role=user.role.value, scopes=scopes
         )
 
         new_refresh_token = JWTManager.create_refresh_token(user_id=user.id)
@@ -461,13 +429,14 @@ async def refresh_token(
             access_token=new_access_token,
             refresh_token=new_refresh_token,
             token_type="Bearer",
-            expires_in=settings.jwt.access_token_expire_minutes * 60
+            expires_in=settings.jwt.access_token_expire_minutes * 60,
         )
 
 
 # =============================================================================
 # LOGOUT
 # =============================================================================
+
 
 @router.post("/logout", response_model=LogoutResponse)
 async def logout(current_user: User = Depends(get_current_user)):
@@ -490,10 +459,9 @@ async def logout(current_user: User = Depends(get_current_user)):
 # PASSWORD RESET
 # =============================================================================
 
+
 @router.post("/request-password-reset", response_model=PasswordResetResponse)
-async def request_password_reset_alias(
-    request: PasswordResetRequest
-):
+async def request_password_reset_alias(request: PasswordResetRequest):
     """
     Alias for request_password_reset (frontend compatibility).
     """
@@ -501,9 +469,7 @@ async def request_password_reset_alias(
 
 
 @router.post("/reset-password", response_model=PasswordResetResponse)
-async def request_password_reset(
-    request: PasswordResetRequest
-):
+async def request_password_reset(request: PasswordResetRequest):
     """
     Request password reset email.
 
@@ -523,30 +489,22 @@ async def request_password_reset(
             expires_at = datetime.now(UTC) + timedelta(hours=24)
 
             # Save reset token
-            await uow.users.set_password_reset_token(
-                user.id,
-                reset_token,
-                expires_at
-            )
+            await uow.users.set_password_reset_token(user.id, reset_token, expires_at)
             await uow.commit()
 
             # TODO: Send password reset email
-            logger.info(
-                "password_reset_email_queued",
-                user_id=str(user.id),
-                token=reset_token
-            )
+            logger.info("password_reset_email_queued", user_id=str(user.id), token=reset_token)
         else:
             logger.debug("password_reset_email_not_found", email=request.email)
 
     # Always return success (security: don't reveal if email exists)
-    return PasswordResetResponse(message="If that email exists, a password reset link has been sent")
+    return PasswordResetResponse(
+        message="If that email exists, a password reset link has been sent"
+    )
 
 
 @router.post("/reset-password/confirm")
-async def confirm_password_reset(
-    request: PasswordResetConfirm
-):
+async def confirm_password_reset(request: PasswordResetConfirm):
     """
     Complete password reset with token.
 
@@ -560,10 +518,7 @@ async def confirm_password_reset(
         request.new_password.get_secret_value()
     )
     if not is_valid:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=error
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
 
     async with get_unit_of_work() as uow:
         # Find user with this reset token
@@ -579,15 +534,14 @@ async def confirm_password_reset(
             logger.warning("password_reset_invalid_token")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid or expired password reset token"
+                detail="Invalid or expired password reset token",
             )
 
         # Check token expiration
         if not user.password_reset_expires_at or user.password_reset_expires_at < datetime.now(UTC):
             logger.warning("password_reset_token_expired", user_id=str(user.id))
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Password reset token has expired"
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Password reset token has expired"
             )
 
         # Hash new password
@@ -607,10 +561,9 @@ async def confirm_password_reset(
 # EMAIL VERIFICATION
 # =============================================================================
 
+
 @router.post("/verify-email", response_model=EmailVerificationResponse)
-async def verify_email(
-    request: EmailVerificationRequest
-):
+async def verify_email(request: EmailVerificationRequest):
     """
     Verify email address with token.
 
@@ -630,8 +583,7 @@ async def verify_email(
         if not user:
             logger.warning("email_verification_invalid_token")
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid email verification token"
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid email verification token"
             )
 
         # Verify email
@@ -652,19 +604,14 @@ async def verify_email(
             is_verified=True,
             scopes=user.get_scopes(),
             created_at=user.created_at,
-            last_login_at=user.last_login_at
+            last_login_at=user.last_login_at,
         )
 
-        return EmailVerificationResponse(
-            message="Email verified successfully",
-            user=user_profile
-        )
+        return EmailVerificationResponse(message="Email verified successfully", user=user_profile)
 
 
 @router.post("/resend-verification")
-async def resend_verification_email(
-    request: ResendVerificationRequest
-):
+async def resend_verification_email(request: ResendVerificationRequest):
     """
     Resend email verification link.
 
@@ -683,18 +630,17 @@ async def resend_verification_email(
             await uow.commit()
 
             # TODO: Send verification email
-            logger.info(
-                "verification_email_resent",
-                user_id=str(user.id),
-                token=verification_token
-            )
+            logger.info("verification_email_resent", user_id=str(user.id), token=verification_token)
 
-    return {"message": "If that email exists and is unverified, a new verification link has been sent"}
+    return {
+        "message": "If that email exists and is unverified, a new verification link has been sent"
+    }
 
 
 # =============================================================================
 # USER PROFILE
 # =============================================================================
+
 
 @router.get("/me", response_model=UserProfile)
 async def get_current_user_profile(current_user: User = Depends(get_current_user)):
@@ -716,14 +662,13 @@ async def get_current_user_profile(current_user: User = Depends(get_current_user
         is_verified=current_user.is_verified,
         scopes=current_user.get_scopes(),
         created_at=current_user.created_at,
-        last_login_at=current_user.last_login_at
+        last_login_at=current_user.last_login_at,
     )
 
 
 @router.put("/me", response_model=UserProfile)
 async def update_current_user_profile(
-    request: UpdateUserProfile,
-    current_user: User = Depends(get_current_user)
+    request: UpdateUserProfile, current_user: User = Depends(get_current_user)
 ):
     """
     Update current user profile.
@@ -748,7 +693,11 @@ async def update_current_user_profile(
             # Refresh user
             updated_user = await uow.users.get_by_id(current_user.id)
 
-            logger.info("user_profile_updated", user_id=str(current_user.id), fields=list(update_data.keys()))
+            logger.info(
+                "user_profile_updated",
+                user_id=str(current_user.id),
+                fields=list(update_data.keys()),
+            )
 
             return UserProfile(
                 id=updated_user.id,
@@ -761,7 +710,7 @@ async def update_current_user_profile(
                 is_verified=updated_user.is_verified,
                 scopes=updated_user.get_scopes(),
                 created_at=updated_user.created_at,
-                last_login_at=updated_user.last_login_at
+                last_login_at=updated_user.last_login_at,
             )
 
         # No changes
@@ -770,8 +719,7 @@ async def update_current_user_profile(
 
 @router.post("/me/change-password")
 async def change_password(
-    request: ChangePasswordRequest,
-    current_user: User = Depends(get_current_user)
+    request: ChangePasswordRequest, current_user: User = Depends(get_current_user)
 ):
     """
     Change current user password.
@@ -783,13 +731,11 @@ async def change_password(
 
     # Verify current password
     if not current_user.password_hash or not PasswordManager.verify_password(
-        request.current_password.get_secret_value(),
-        current_user.password_hash
+        request.current_password.get_secret_value(), current_user.password_hash
     ):
         logger.warning("change_password_invalid_current", user_id=str(current_user.id))
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Current password is incorrect"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect"
         )
 
     # Validate new password strength
@@ -797,10 +743,7 @@ async def change_password(
         request.new_password.get_secret_value()
     )
     if not is_valid:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=error
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
 
     # Hash new password
     password_hash = PasswordManager.hash_password(request.new_password.get_secret_value())
@@ -818,10 +761,9 @@ async def change_password(
 # API KEY MANAGEMENT
 # =============================================================================
 
+
 @router.get("/api-keys", response_model=APIKeyListResponse)
-async def list_api_keys(
-    current_user: User = Depends(get_current_user)
-):
+async def list_api_keys(current_user: User = Depends(get_current_user)):
     """
     List all API keys for current user.
 
@@ -843,21 +785,17 @@ async def list_api_keys(
                 expires_at=key.expires_at,
                 created_at=key.created_at,
                 last_used_at=key.last_used_at,
-                usage_count=key.usage_count
+                usage_count=key.usage_count,
             )
             for key in api_keys
         ]
 
-        return APIKeyListResponse(
-            keys=key_responses,
-            total=len(key_responses)
-        )
+        return APIKeyListResponse(keys=key_responses, total=len(key_responses))
 
 
 @router.post("/api-keys", response_model=APIKeyResponse, status_code=status.HTTP_201_CREATED)
 async def create_api_key(
-    request: APIKeyCreateRequest,
-    current_user: User = Depends(get_current_user)
+    request: APIKeyCreateRequest, current_user: User = Depends(get_current_user)
 ):
     """
     Create a new API key.
@@ -886,7 +824,7 @@ async def create_api_key(
             expires_at=request.expires_at,
             is_active=True,
             description=request.description,
-            usage_count=0
+            usage_count=0,
         )
 
         await uow.commit()
@@ -895,7 +833,7 @@ async def create_api_key(
             "api_key_created",
             user_id=str(current_user.id),
             key_id=str(api_key.id),
-            key_prefix=key_prefix
+            key_prefix=key_prefix,
         )
 
         # Return full key (only time it's shown!)
@@ -909,15 +847,12 @@ async def create_api_key(
             expires_at=api_key.expires_at,
             created_at=api_key.created_at,
             last_used_at=api_key.last_used_at,
-            usage_count=api_key.usage_count
+            usage_count=api_key.usage_count,
         )
 
 
 @router.delete("/api-keys/{key_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def revoke_api_key(
-    key_id: UUID,
-    current_user: User = Depends(get_current_user)
-):
+async def revoke_api_key(key_id: UUID, current_user: User = Depends(get_current_user)):
     """
     Revoke an API key.
 
@@ -932,10 +867,7 @@ async def revoke_api_key(
         api_key = await uow.api_keys.get_by_id(key_id)
 
         if not api_key:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="API key not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="API key not found")
 
         # Check ownership
         if api_key.user_id != current_user.id:
@@ -943,11 +875,11 @@ async def revoke_api_key(
                 "revoke_api_key_unauthorized",
                 user_id=str(current_user.id),
                 key_id=str(key_id),
-                key_owner=str(api_key.user_id)
+                key_owner=str(api_key.user_id),
             )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="You don't have permission to revoke this API key"
+                detail="You don't have permission to revoke this API key",
             )
 
         # Revoke (soft delete)
@@ -957,4 +889,3 @@ async def revoke_api_key(
         logger.info("api_key_revoked", user_id=str(current_user.id), key_id=str(key_id))
 
         return None  # 204 No Content
-    
