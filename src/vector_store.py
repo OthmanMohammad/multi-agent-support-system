@@ -121,12 +121,14 @@ class VectorStore:
         """
         try:
             points = []
-            for i, doc in enumerate(documents):
+            for doc in documents:
+                # Use the document's UUID as the point ID
+                doc_id = doc.get("doc_id", str(doc["id"]))
                 point = PointStruct(
-                    id=i,  # Use index as integer ID
+                    id=doc_id,  # Use document UUID as ID (Qdrant supports string IDs)
                     vector=doc["embedding"],
                     payload={
-                        "doc_id": doc.get("doc_id", str(doc["id"])),
+                        "doc_id": doc_id,
                         "title": doc["title"],
                         "content": doc["content"],
                         "category": doc["category"],
