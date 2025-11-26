@@ -4,12 +4,12 @@
  * Dashboard analytics and reporting endpoints.
  */
 
-import { apiClient } from '../api-client';
+import { apiClient } from "../api-client";
 import {
-  type AnalyticsOverview,
   type AgentPerformance,
+  type AnalyticsOverview,
   type Result,
-} from '../types/api';
+} from "../types/api";
 
 // =============================================================================
 // ANALYTICS
@@ -21,20 +21,27 @@ export const analyticsAPI = {
    */
   async getOverview(days = 7): Promise<Result<AnalyticsOverview>> {
     // Backend expects period in format "7d", "30d", "90d"
-    return apiClient.get<AnalyticsOverview>(`/api/analytics/overview?period=${days}d`);
+    return apiClient.get<AnalyticsOverview>(
+      `/api/analytics/overview?period=${days}d`
+    );
   },
 
   /**
    * Get agent performance metrics
    */
   async getAgentPerformance(days = 7): Promise<Result<AgentPerformance[]>> {
-    return apiClient.get<AgentPerformance[]>(`/api/analytics/agents?days=${days}`);
+    return apiClient.get<AgentPerformance[]>(
+      `/api/analytics/agents?days=${days}`
+    );
   },
 
   /**
    * Get specific agent performance
    */
-  async getAgentDetails(agentName: string, days = 7): Promise<Result<AgentPerformance>> {
+  async getAgentDetails(
+    agentName: string,
+    days = 7
+  ): Promise<Result<AgentPerformance>> {
     return apiClient.get<AgentPerformance>(
       `/api/analytics/agents/${agentName}?days=${days}`
     );
@@ -43,55 +50,75 @@ export const analyticsAPI = {
   /**
    * Get customer satisfaction scores
    */
-  async getCSAT(days = 30): Promise<Result<{
-    avg_sentiment: number;
-    total_responses: number;
-    sentiment_distribution: { positive: number; neutral: number; negative: number };
-  }>> {
+  async getCSAT(days = 30): Promise<
+    Result<{
+      avg_sentiment: number;
+      total_responses: number;
+      sentiment_distribution: {
+        positive: number;
+        neutral: number;
+        negative: number;
+      };
+    }>
+  > {
     return apiClient.get(`/api/analytics/csat?days=${days}`);
   },
 
   /**
    * Get intent distribution
    */
-  async getIntentDistribution(days = 7): Promise<Result<Array<{
-    intent: string;
-    count: number;
-    percentage: number;
-  }>>> {
+  async getIntentDistribution(days = 7): Promise<
+    Result<
+      Array<{
+        intent: string;
+        count: number;
+        percentage: number;
+      }>
+    >
+  > {
     return apiClient.get(`/api/analytics/intents?days=${days}`);
   },
 
   /**
    * Get resolution time trends
    */
-  async getResolutionTimeTrends(days = 7): Promise<Result<{
-    avg_resolution_seconds: number;
-    trend_data: Array<{ date: string; avg_seconds: number }>;
-  }>> {
+  async getResolutionTimeTrends(days = 7): Promise<
+    Result<{
+      avg_resolution_seconds: number;
+      trend_data: Array<{ date: string; avg_seconds: number }>;
+    }>
+  > {
     return apiClient.get(`/api/analytics/resolution-time?days=${days}`);
   },
 
   /**
    * Get escalation rate
    */
-  async getEscalationRate(days = 7): Promise<Result<{
-    escalation_rate: number;
-    total_conversations: number;
-    escalated_count: number;
-  }>> {
+  async getEscalationRate(days = 7): Promise<
+    Result<{
+      escalation_rate: number;
+      total_conversations: number;
+      escalated_count: number;
+    }>
+  > {
     return apiClient.get(`/api/analytics/escalation-rate?days=${days}`);
   },
 
   /**
    * Get knowledge base effectiveness
    */
-  async getKBEffectiveness(days = 7): Promise<Result<{
-    kb_usage_rate: number;
-    total_queries: number;
-    kb_assisted: number;
-    top_articles: Array<{ article_id: string; title: string; usage_count: number }>;
-  }>> {
+  async getKBEffectiveness(days = 7): Promise<
+    Result<{
+      kb_usage_rate: number;
+      total_queries: number;
+      kb_assisted: number;
+      top_articles: Array<{
+        article_id: string;
+        title: string;
+        usage_count: number;
+      }>;
+    }>
+  > {
     return apiClient.get(`/api/analytics/kb-effectiveness?days=${days}`);
   },
 };
