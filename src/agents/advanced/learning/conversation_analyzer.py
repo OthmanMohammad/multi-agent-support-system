@@ -16,17 +16,17 @@ Key Capabilities:
 Part of: EPIC-004 Learning & Improvement Swarm (TASK-4050)
 """
 
-from typing import Dict, Any, List, Optional, Tuple
-import structlog
-from datetime import datetime, timedelta, UTC
-from collections import defaultdict, Counter
+from collections import Counter, defaultdict
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.services.infrastructure.agent_registry import AgentRegistry
+import structlog
+
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.database.connection import get_db_session
 from src.database.models.conversation import Conversation
-from src.database.models.message import Message
+from src.services.infrastructure.agent_registry import AgentRegistry
+from src.workflow.state import AgentState
 
 logger = structlog.get_logger(__name__)
 
@@ -51,12 +51,9 @@ class ConversationAnalyzerAgent(BaseAgent):
             type=AgentType.ANALYZER,
             temperature=0.3,
             max_tokens=4000,
-            capabilities=[
-                AgentCapability.DATABASE_READ,
-                AgentCapability.ANALYTICS
-            ],
+            capabilities=[AgentCapability.DATABASE_READ, AgentCapability.ANALYTICS],
             tier="advanced",
-            system_prompt_template=self._get_system_prompt()
+            system_prompt_template=self._get_system_prompt(),
         )
         super().__init__(config)
         self.logger = logger.bind(agent="conversation_analyzer")
@@ -129,12 +126,13 @@ Identify 5-7 most significant conversation patterns and provide actionable recom
             # Get analysis parameters
             lookback_days = state.get("lookback_days", 7)
             min_conversations = state.get("min_conversations", 100)
-            analysis_type = state.get("analysis_type", "comprehensive")  # comprehensive, sentiment, flow
+            analysis_type = state.get(
+                "analysis_type", "comprehensive"
+            )  # comprehensive, sentiment, flow
 
             # Gather conversation data
             analysis_data = await self._analyze_conversations(
-                lookback_days=lookback_days,
-                min_conversations=min_conversations
+                lookback_days=lookback_days, min_conversations=min_conversations
             )
 
             if not analysis_data or analysis_data["total_conversations"] < min_conversations:
@@ -143,7 +141,7 @@ Identify 5-7 most significant conversation patterns and provide actionable recom
                     agent_response=f"**Insufficient conversation data for analysis.** Need at least {min_conversations} conversations.",
                     status="completed",
                     response_confidence=0.5,
-                    next_agent=None
+                    next_agent=None,
                 )
 
             # Build analysis prompt
@@ -158,16 +156,12 @@ Identify 5-7 most significant conversation patterns and provide actionable recom
             llm_response = await self.call_llm(analysis_state)
 
             # Build final response
-            final_response = self._build_final_response(
-                llm_response,
-                analysis_data,
-                analysis_type
-            )
+            final_response = self._build_final_response(llm_response, analysis_data, analysis_type)
 
             self.logger.info(
                 "conversation_analyzer_completed",
                 conversations_analyzed=analysis_data["total_conversations"],
-                patterns_identified=analysis_data.get("pattern_count", 0)
+                patterns_identified=analysis_data.get("pattern_count", 0),
             )
 
             return self.update_state(
@@ -176,27 +170,22 @@ Identify 5-7 most significant conversation patterns and provide actionable recom
                 status="completed",
                 response_confidence=0.85,
                 next_agent=None,
-                metadata={
-                    "analysis_data": analysis_data,
-                    "analysis_period_days": lookback_days
-                }
+                metadata={"analysis_data": analysis_data, "analysis_period_days": lookback_days},
             )
 
         except Exception as e:
             self.logger.error("conversation_analyzer_error", error=str(e), exc_info=True)
             return self.update_state(
                 state,
-                agent_response=f"**Error during conversation analysis:** {str(e)}",
+                agent_response=f"**Error during conversation analysis:** {e!s}",
                 status="error",
                 response_confidence=0.0,
-                next_agent=None
+                next_agent=None,
             )
 
     async def _analyze_conversations(
-        self,
-        lookback_days: int,
-        min_conversations: int
-    ) -> Dict[str, Any]:
+        self, lookback_days: int, min_conversations: int
+    ) -> dict[str, Any]:
         """Analyze conversation patterns from database."""
         async with get_db_session() as db:
             try:
@@ -204,15 +193,12 @@ Identify 5-7 most significant conversation patterns and provide actionable recom
                 start_date = end_date - timedelta(days=lookback_days)
 
                 # Query conversations
-                conversations = db.query(Conversation).filter(
-                    Conversation.started_at >= start_date
-                ).all()
+                conversations = (
+                    db.query(Conversation).filter(Conversation.started_at >= start_date).all()
+                )
 
                 if len(conversations) < min_conversations:
-                    return {
-                        "total_conversations": len(conversations),
-                        "insufficient_data": True
-                    }
+                    return {"total_conversations": len(conversations), "insufficient_data": True}
 
                 # Analyze patterns
                 flow_patterns = self._analyze_flow_patterns(conversations)
@@ -222,26 +208,23 @@ Identify 5-7 most significant conversation patterns and provide actionable recom
 
                 return {
                     "total_conversations": len(conversations),
-                    "date_range": {
-                        "start": start_date.isoformat(),
-                        "end": end_date.isoformat()
-                    },
+                    "date_range": {"start": start_date.isoformat(), "end": end_date.isoformat()},
                     "flow_patterns": flow_patterns,
                     "sentiment_patterns": sentiment_patterns,
                     "resolution_patterns": resolution_patterns,
                     "agent_patterns": agent_patterns,
                     "pattern_count": (
-                        len(flow_patterns) +
-                        len(sentiment_patterns) +
-                        len(resolution_patterns) +
-                        len(agent_patterns)
-                    )
+                        len(flow_patterns)
+                        + len(sentiment_patterns)
+                        + len(resolution_patterns)
+                        + len(agent_patterns)
+                    ),
                 }
             except Exception as e:
                 logger.error("conversation_analysis_failed", error=str(e))
                 return {"error": str(e), "total_conversations": 0}
 
-    def _analyze_flow_patterns(self, conversations: List[Conversation]) -> Dict[str, Any]:
+    def _analyze_flow_patterns(self, conversations: list[Conversation]) -> dict[str, Any]:
         """Analyze conversation flow patterns."""
         message_counts = []
         durations = []
@@ -264,15 +247,17 @@ Identify 5-7 most significant conversation patterns and provide actionable recom
         return {
             "avg_message_count": sum(message_counts) / len(message_counts) if message_counts else 0,
             "avg_duration_seconds": sum(durations) / len(durations) if durations else 0,
-            "avg_agent_handoffs": sum(agent_handoffs) / len(agent_handoffs) if agent_handoffs else 0,
+            "avg_agent_handoffs": sum(agent_handoffs) / len(agent_handoffs)
+            if agent_handoffs
+            else 0,
             "message_count_distribution": {
                 "short (1-3)": sum(1 for c in message_counts if c <= 3),
                 "medium (4-10)": sum(1 for c in message_counts if 4 <= c <= 10),
-                "long (11+)": sum(1 for c in message_counts if c > 10)
-            }
+                "long (11+)": sum(1 for c in message_counts if c > 10),
+            },
         }
 
-    def _analyze_sentiment_patterns(self, conversations: List[Conversation]) -> Dict[str, Any]:
+    def _analyze_sentiment_patterns(self, conversations: list[Conversation]) -> dict[str, Any]:
         """Analyze sentiment patterns."""
         sentiment_scores = []
         sentiment_improvements = 0
@@ -292,7 +277,9 @@ Identify 5-7 most significant conversation patterns and provide actionable recom
                         sentiment_degradations += 1
 
         return {
-            "avg_sentiment": sum(sentiment_scores) / len(sentiment_scores) if sentiment_scores else 0,
+            "avg_sentiment": sum(sentiment_scores) / len(sentiment_scores)
+            if sentiment_scores
+            else 0,
             "sentiment_improvement_rate": (
                 sentiment_improvements / len(conversations) if conversations else 0
             ),
@@ -302,17 +289,15 @@ Identify 5-7 most significant conversation patterns and provide actionable recom
             "sentiment_distribution": {
                 "positive (>0.3)": sum(1 for s in sentiment_scores if s > 0.3),
                 "neutral (-0.3 to 0.3)": sum(1 for s in sentiment_scores if -0.3 <= s <= 0.3),
-                "negative (<-0.3)": sum(1 for s in sentiment_scores if s < -0.3)
-            }
+                "negative (<-0.3)": sum(1 for s in sentiment_scores if s < -0.3),
+            },
         }
 
-    def _analyze_resolution_patterns(self, conversations: List[Conversation]) -> Dict[str, Any]:
+    def _analyze_resolution_patterns(self, conversations: list[Conversation]) -> dict[str, Any]:
         """Analyze resolution patterns."""
         resolved_count = sum(1 for c in conversations if c.status in ["resolved", "closed"])
         resolution_times = [
-            c.resolution_time_seconds
-            for c in conversations
-            if c.resolution_time_seconds
+            c.resolution_time_seconds for c in conversations if c.resolution_time_seconds
         ]
 
         # Intent-based resolution rates
@@ -325,17 +310,19 @@ Identify 5-7 most significant conversation patterns and provide actionable recom
 
         return {
             "resolution_rate": resolved_count / len(conversations) if conversations else 0,
-            "avg_resolution_time": sum(resolution_times) / len(resolution_times) if resolution_times else 0,
+            "avg_resolution_time": sum(resolution_times) / len(resolution_times)
+            if resolution_times
+            else 0,
             "by_intent": {
                 intent: {
                     "resolution_rate": data["resolved"] / data["total"] if data["total"] > 0 else 0,
-                    "count": data["total"]
+                    "count": data["total"],
                 }
                 for intent, data in intent_resolutions.items()
-            }
+            },
         }
 
-    def _analyze_agent_patterns(self, conversations: List[Conversation]) -> Dict[str, Any]:
+    def _analyze_agent_patterns(self, conversations: list[Conversation]) -> dict[str, Any]:
         """Analyze agent involvement patterns."""
         agent_involvement = Counter()
         kb_usage_count = 0
@@ -352,76 +339,68 @@ Identify 5-7 most significant conversation patterns and provide actionable recom
 
         return {
             "top_agents": [
-                {"name": agent, "conversation_count": count}
-                for agent, count in top_agents
+                {"name": agent, "conversation_count": count} for agent, count in top_agents
             ],
             "kb_usage_rate": kb_usage_count / len(conversations) if conversations else 0,
             "avg_agents_per_conversation": (
                 sum(len(c.agents_involved) for c in conversations) / len(conversations)
-                if conversations else 0
-            )
+                if conversations
+                else 0
+            ),
         }
 
-    def _build_analysis_prompt(
-        self,
-        analysis_data: Dict[str, Any],
-        analysis_type: str
-    ) -> str:
+    def _build_analysis_prompt(self, analysis_data: dict[str, Any], analysis_type: str) -> str:
         """Build LLM analysis prompt."""
         prompt = f"""Analyze the following conversation pattern data and provide insights:
 
 **Conversation Flow Patterns:**
-- Average messages per conversation: {analysis_data['flow_patterns']['avg_message_count']:.1f}
-- Average duration: {analysis_data['flow_patterns']['avg_duration_seconds']/60:.1f} minutes
-- Average agent handoffs: {analysis_data['flow_patterns']['avg_agent_handoffs']:.2f}
+- Average messages per conversation: {analysis_data["flow_patterns"]["avg_message_count"]:.1f}
+- Average duration: {analysis_data["flow_patterns"]["avg_duration_seconds"] / 60:.1f} minutes
+- Average agent handoffs: {analysis_data["flow_patterns"]["avg_agent_handoffs"]:.2f}
 
 Message Length Distribution:
-{self._format_dict(analysis_data['flow_patterns']['message_count_distribution'])}
+{self._format_dict(analysis_data["flow_patterns"]["message_count_distribution"])}
 
 **Sentiment Patterns:**
-- Average sentiment: {analysis_data['sentiment_patterns']['avg_sentiment']:.2f}
-- Sentiment improvement rate: {analysis_data['sentiment_patterns']['sentiment_improvement_rate']*100:.1f}%
-- Sentiment degradation rate: {analysis_data['sentiment_patterns']['sentiment_degradation_rate']*100:.1f}%
+- Average sentiment: {analysis_data["sentiment_patterns"]["avg_sentiment"]:.2f}
+- Sentiment improvement rate: {analysis_data["sentiment_patterns"]["sentiment_improvement_rate"] * 100:.1f}%
+- Sentiment degradation rate: {analysis_data["sentiment_patterns"]["sentiment_degradation_rate"] * 100:.1f}%
 
 Sentiment Distribution:
-{self._format_dict(analysis_data['sentiment_patterns']['sentiment_distribution'])}
+{self._format_dict(analysis_data["sentiment_patterns"]["sentiment_distribution"])}
 
 **Resolution Patterns:**
-- Overall resolution rate: {analysis_data['resolution_patterns']['resolution_rate']*100:.1f}%
-- Average resolution time: {analysis_data['resolution_patterns']['avg_resolution_time']/60:.1f} minutes
+- Overall resolution rate: {analysis_data["resolution_patterns"]["resolution_rate"] * 100:.1f}%
+- Average resolution time: {analysis_data["resolution_patterns"]["avg_resolution_time"] / 60:.1f} minutes
 
 Top Intents by Resolution Rate:
-{self._format_intent_data(analysis_data['resolution_patterns']['by_intent'])}
+{self._format_intent_data(analysis_data["resolution_patterns"]["by_intent"])}
 
 **Agent Patterns:**
-- KB usage rate: {analysis_data['agent_patterns']['kb_usage_rate']*100:.1f}%
-- Agents per conversation: {analysis_data['agent_patterns']['avg_agents_per_conversation']:.2f}
+- KB usage rate: {analysis_data["agent_patterns"]["kb_usage_rate"] * 100:.1f}%
+- Agents per conversation: {analysis_data["agent_patterns"]["avg_agents_per_conversation"]:.2f}
 
 Top Agents:
-{self._format_agent_list(analysis_data['agent_patterns']['top_agents'])}
+{self._format_agent_list(analysis_data["agent_patterns"]["top_agents"])}
 
 Based on this data, identify key patterns, trends, and actionable recommendations for improving conversation outcomes."""
 
         return prompt
 
-    def _format_dict(self, data: Dict) -> str:
+    def _format_dict(self, data: dict) -> str:
         """Format dictionary for display."""
         return "\n".join(f"  - {k}: {v}" for k, v in data.items())
 
-    def _format_intent_data(self, intent_data: Dict) -> str:
+    def _format_intent_data(self, intent_data: dict) -> str:
         """Format intent resolution data."""
-        sorted_intents = sorted(
-            intent_data.items(),
-            key=lambda x: x[1]["count"],
-            reverse=True
-        )[:5]
+        sorted_intents = sorted(intent_data.items(), key=lambda x: x[1]["count"], reverse=True)[:5]
 
         return "\n".join(
-            f"  - {intent}: {data['resolution_rate']*100:.1f}% ({data['count']} convos)"
+            f"  - {intent}: {data['resolution_rate'] * 100:.1f}% ({data['count']} convos)"
             for intent, data in sorted_intents
         )
 
-    def _format_agent_list(self, agents: List[Dict]) -> str:
+    def _format_agent_list(self, agents: list[dict]) -> str:
         """Format agent list."""
         return "\n".join(
             f"  - {agent['name']}: {agent['conversation_count']} conversations"
@@ -429,10 +408,7 @@ Based on this data, identify key patterns, trends, and actionable recommendation
         )
 
     def _build_final_response(
-        self,
-        llm_response: str,
-        analysis_data: Dict[str, Any],
-        analysis_type: str
+        self, llm_response: str, analysis_data: dict[str, Any], analysis_type: str
     ) -> str:
         """Build final comprehensive response."""
         output = []
@@ -449,9 +425,17 @@ Based on this data, identify key patterns, trends, and actionable recommendation
 
         output.append("## ???? Quick Stats")
         output.append("")
-        output.append(f"- **Avg Messages:** {analysis_data['flow_patterns']['avg_message_count']:.1f}")
-        output.append(f"- **Avg Duration:** {analysis_data['flow_patterns']['avg_duration_seconds']/60:.1f} min")
-        output.append(f"- **Resolution Rate:** {analysis_data['resolution_patterns']['resolution_rate']*100:.1f}%")
-        output.append(f"- **KB Usage:** {analysis_data['agent_patterns']['kb_usage_rate']*100:.1f}%")
+        output.append(
+            f"- **Avg Messages:** {analysis_data['flow_patterns']['avg_message_count']:.1f}"
+        )
+        output.append(
+            f"- **Avg Duration:** {analysis_data['flow_patterns']['avg_duration_seconds'] / 60:.1f} min"
+        )
+        output.append(
+            f"- **Resolution Rate:** {analysis_data['resolution_patterns']['resolution_rate'] * 100:.1f}%"
+        )
+        output.append(
+            f"- **KB Usage:** {analysis_data['agent_patterns']['kb_usage_rate'] * 100:.1f}%"
+        )
 
         return "\n".join(output)
