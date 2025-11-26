@@ -19,7 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { signInSchema, type SignInFormData } from "@/lib/validations/auth";
+import { type SignInFormData, signInSchema } from "@/lib/validations/auth";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { useOAuthProviders } from "@/lib/hooks/use-oauth-providers";
 
@@ -190,7 +190,9 @@ export default function SignInPage(): JSX.Element {
                 </div>
               </div>
 
-              <div className={`grid gap-4 ${oauthProviders.google && oauthProviders.github ? "grid-cols-2" : "grid-cols-1"}`}>
+              <div
+                className={`grid gap-4 ${oauthProviders.google && oauthProviders.github ? "grid-cols-2" : "grid-cols-1"}`}
+              >
                 {oauthProviders.google && (
                   <Button
                     type="button"
