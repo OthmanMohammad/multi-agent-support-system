@@ -5,7 +5,7 @@
  * Fails fast if required variables are missing.
  */
 
-import { z } from 'zod';
+import { z } from "zod";
 
 // =============================================================================
 // ENVIRONMENT SCHEMA
@@ -13,7 +13,7 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   // API Configuration
-  NEXT_PUBLIC_API_URL: z.string().url().default('http://localhost:8000'),
+  NEXT_PUBLIC_API_URL: z.string().url().default("http://localhost:8000"),
 
   // NextAuth Configuration
   NEXTAUTH_URL: z.string().url().optional(),
@@ -26,10 +26,12 @@ const envSchema = z.object({
   GITHUB_CLIENT_SECRET: z.string().optional(),
 
   // Feature Flags
-  NEXT_PUBLIC_ENABLE_MSW: z.string().optional().default('false'),
+  NEXT_PUBLIC_ENABLE_MSW: z.string().optional().default("false"),
 
   // Environment
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  NODE_ENV: z
+    .enum(["development", "production", "test"])
+    .default("development"),
 });
 
 // =============================================================================
@@ -37,10 +39,17 @@ const envSchema = z.object({
 // =============================================================================
 
 function getEnv() {
+  // In test environment, use defaults for all variables
+  const isTest = process.env.NODE_ENV === "test";
+
   const parsed = envSchema.safeParse({
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    NEXT_PUBLIC_API_URL:
+      process.env.NEXT_PUBLIC_API_URL ||
+      (isTest ? "http://localhost:8000" : undefined),
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
-    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+    NEXTAUTH_SECRET:
+      process.env.NEXTAUTH_SECRET ||
+      (isTest ? "test-secret-for-testing-only-minimum-32-chars" : undefined),
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
     GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
@@ -50,8 +59,31 @@ function getEnv() {
   });
 
   if (!parsed.success) {
-    console.error('❌ Invalid environment variables:', parsed.error.flatten().fieldErrors);
-    throw new Error('Invalid environment variables');
+    // In test mode, log warning instead of throwing
+    if (isTest) {
+      console.warn(
+        "⚠️ Environment variable validation issues in test mode:",
+        parsed.error.flatten().fieldErrors
+      );
+      // Return defaults for testing
+      return {
+        NEXT_PUBLIC_API_URL: "http://localhost:8000",
+        NEXTAUTH_URL: undefined,
+        NEXTAUTH_SECRET: "test-secret-for-testing-only-minimum-32-chars",
+        GOOGLE_CLIENT_ID: undefined,
+        GOOGLE_CLIENT_SECRET: undefined,
+        GITHUB_CLIENT_ID: undefined,
+        GITHUB_CLIENT_SECRET: undefined,
+        NEXT_PUBLIC_ENABLE_MSW: "false",
+        NODE_ENV: "test" as const,
+      };
+    }
+
+    console.error(
+      "❌ Invalid environment variables:",
+      parsed.error.flatten().fieldErrors
+    );
+    throw new Error("Invalid environment variables");
   }
 
   return parsed.data;
@@ -74,14 +106,14 @@ export const config = {
 
   // Feature Flags
   features: {
-    enableMSW: env.NEXT_PUBLIC_ENABLE_MSW === 'true',
+    enableMSW: env.NEXT_PUBLIC_ENABLE_MSW === "true",
     enableOAuth: !!(env.GOOGLE_CLIENT_ID || env.GITHUB_CLIENT_ID),
   },
 
   // Environment
-  isDevelopment: env.NODE_ENV === 'development',
-  isProduction: env.NODE_ENV === 'production',
-  isTest: env.NODE_ENV === 'test',
+  isDevelopment: env.NODE_ENV === "development",
+  isProduction: env.NODE_ENV === "production",
+  isTest: env.NODE_ENV === "test",
 } as const;
 
 // Type-safe config
