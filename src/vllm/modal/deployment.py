@@ -18,7 +18,6 @@ Architecture:
 """
 
 import json
-import os
 from typing import Any
 
 import aiohttp
@@ -59,33 +58,26 @@ FAST_BOOT = True  # Disable compilation for faster cold starts
 
 # Container Image: CUDA 12.8 + Python 3.12 + vLLM
 vllm_image = (
-    modal.Image.from_registry(
-        "nvidia/cuda:12.8.0-devel-ubuntu22.04",
-        add_python="3.12"
-    )
+    modal.Image.from_registry("nvidia/cuda:12.8.0-devel-ubuntu22.04", add_python="3.12")
     .entrypoint([])  # Clear default entrypoint
     .uv_pip_install(
         "vllm==0.11.2",
         "huggingface-hub==0.36.0",
         "flashinfer-python==0.5.2",
     )
-    .env({
-        "HF_XET_HIGH_PERFORMANCE": "1",  # Optimize HF downloads
-        "VLLM_LOGGING_LEVEL": "INFO",
-    })
+    .env(
+        {
+            "HF_XET_HIGH_PERFORMANCE": "1",  # Optimize HF downloads
+            "VLLM_LOGGING_LEVEL": "INFO",
+        }
+    )
 )
 
 # Persistent Volumes for Caching
 # These volumes cache model weights and vLLM compilation artifacts
 # to avoid re-downloading on every cold start
-hf_cache_vol = modal.Volume.from_name(
-    "vllm-huggingface-cache",
-    create_if_missing=True
-)
-vllm_cache_vol = modal.Volume.from_name(
-    "vllm-compilation-cache",
-    create_if_missing=True
-)
+hf_cache_vol = modal.Volume.from_name("vllm-huggingface-cache", create_if_missing=True)
+vllm_cache_vol = modal.Volume.from_name("vllm-compilation-cache", create_if_missing=True)
 
 # Modal App
 app = modal.App("multi-agent-vllm-inference")
@@ -93,6 +85,7 @@ app = modal.App("multi-agent-vllm-inference")
 # =============================================================================
 # VLLM SERVER
 # =============================================================================
+
 
 @app.function(
     image=vllm_image,
@@ -126,10 +119,14 @@ def serve():
         "vllm",
         "serve",
         MODEL_NAME,
-        "--revision", MODEL_REVISION,
-        "--served-model-name", MODEL_NAME,
-        "--host", "0.0.0.0",
-        "--port", str(VLLM_PORT),
+        "--revision",
+        MODEL_REVISION,
+        "--served-model-name",
+        MODEL_NAME,
+        "--host",
+        "0.0.0.0",
+        "--port",
+        str(VLLM_PORT),
         "--uvicorn-log-level=info",
     ]
 
@@ -146,14 +143,16 @@ def serve():
     print(f"[Modal vLLM] Starting server with command: {' '.join(cmd)}")
     subprocess.Popen(" ".join(cmd), shell=True)
 
+
 # =============================================================================
 # TESTING & VALIDATION
 # =============================================================================
 
+
 @app.local_entrypoint()
 async def test(
     test_timeout: int = 10 * 60,  # 10 minutes
-    content: str = None,
+    content: str | None = None,
     twice: bool = True,
 ):
     """
@@ -172,9 +171,9 @@ async def test(
 
     # Get Modal web URL
     url = serve.web_url
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"[Modal vLLM Test] Server URL: {url}")
-    print(f"{'='*80}\n")
+    print(f"{'=' * 80}\n")
 
     # Test messages
     system_prompt = {
@@ -192,36 +191,33 @@ async def test(
     async with aiohttp.ClientSession(base_url=url) as session:
         # Health check
         print(f"[Health Check] Running health check for {url}")
-        async with session.get(
-            "/health",
-            timeout=test_timeout - 60
-        ) as resp:
+        async with session.get("/health", timeout=test_timeout - 60) as resp:
             up = resp.status == 200
 
         if not up:
-            print(f"❌ [Health Check] FAILED - Server not healthy")
+            print("❌ [Health Check] FAILED - Server not healthy")
             raise RuntimeError(f"Health check failed for {url}")
 
-        print(f"✅ [Health Check] SUCCESS - Server is healthy\n")
+        print("✅ [Health Check] SUCCESS - Server is healthy\n")
 
         # Test request 1
-        print(f"[Test 1] Sending request:")
+        print("[Test 1] Sending request:")
         print(f"  System: {system_prompt['content']}")
         print(f"  User: {content}")
-        print(f"  Response: ", end="", flush=True)
+        print("  Response: ", end="", flush=True)
         await _send_request(session, MODEL_NAME, messages)
 
         # Test request 2 (optional)
         if twice:
-            print(f"\n[Test 2] Sending second request (tests caching):")
+            print("\n[Test 2] Sending second request (tests caching):")
             messages[1]["content"] = "What is 2 + 2? Answer in one word."
             print(f"  User: {messages[1]['content']}")
-            print(f"  Response: ", end="", flush=True)
+            print("  Response: ", end="", flush=True)
             await _send_request(session, MODEL_NAME, messages)
 
-        print(f"\n{'='*80}")
-        print(f"✅ [Modal vLLM Test] All tests passed!")
-        print(f"{'='*80}\n")
+        print(f"\n{'=' * 80}")
+        print("✅ [Modal vLLM Test] All tests passed!")
+        print(f"{'=' * 80}\n")
 
 
 async def _send_request(
@@ -267,7 +263,7 @@ async def _send_request(
 
             # Parse SSE format
             if line.startswith("data: "):
-                line = line[len("data: "):]
+                line = line[len("data: ") :]
 
             # Parse JSON chunk
             try:
@@ -289,6 +285,7 @@ async def _send_request(
 # DEPLOYMENT INFO
 # =============================================================================
 
+
 @app.function()
 def get_deployment_info() -> dict[str, Any]:
     """
@@ -308,9 +305,9 @@ def get_deployment_info() -> dict[str, Any]:
 
 if __name__ == "__main__":
     print(f"""
-{'='*80}
+{"=" * 80}
 Modal vLLM Deployment Script
-{'='*80}
+{"=" * 80}
 
 Configuration:
   Model: {MODEL_NAME}
@@ -332,5 +329,5 @@ Pricing (Modal Starter Plan):
     - ~24 hours of H100 time
     - Only charged when processing requests (pay-per-second)
 
-{'='*80}
+{"=" * 80}
 """)
