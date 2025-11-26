@@ -7,15 +7,16 @@ This is the entry point for all conversations in the multi-agent system.
 Part of: STORY-01 Routing & Orchestration Swarm (TASK-101)
 """
 
-from typing import Dict, Any, Optional
 import json
 import time
+from typing import Any
+
 import structlog
 
-from src.agents.base.base_agent import BaseAgent, RoutingAgent, AgentConfig
-from src.agents.base.agent_types import AgentType, AgentCapability, Domain
-from src.workflow.state import AgentState
+from src.agents.base.agent_types import AgentCapability, AgentType
+from src.agents.base.base_agent import AgentConfig, RoutingAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.workflow.state import AgentState
 
 logger = structlog.get_logger(__name__)
 
@@ -38,15 +39,13 @@ class MetaRouter(RoutingAgent):
         config = AgentConfig(
             name="meta_router",
             type=AgentType.ROUTER,
-             # Fast and cost-effective
+            # Fast and cost-effective
             temperature=0.1,  # Low temperature for consistent routing
-            max_tokens=200,   # Short responses for quick routing
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE
-            ],
+            max_tokens=200,  # Short responses for quick routing
+            capabilities=[AgentCapability.CONTEXT_AWARE],
             system_prompt_template=self._get_system_prompt(),
             tier="essential",
-            role="meta_router"
+            role="meta_router",
         )
         super().__init__(config=config, **kwargs)
         self.logger = logger.bind(agent="meta_router", agent_type="router")
@@ -143,7 +142,7 @@ Be concise. Output ONLY valid JSON, no markdown or extra text."""
         self.logger.info(
             "meta_router_processing_started",
             conversation_id=state.get("conversation_id"),
-            message_preview=state.get("current_message", "")[:50]
+            message_preview=state.get("current_message", "")[:50],
         )
 
         try:
@@ -157,9 +156,7 @@ Be concise. Output ONLY valid JSON, no markdown or extra text."""
             context_str = self._format_customer_context(customer_context)
 
             # Build system prompt with context
-            system_prompt = self._get_system_prompt().format(
-                customer_context=context_str
-            )
+            system_prompt = self._get_system_prompt().format(customer_context=context_str)
 
             # Get message
             message = state.get("current_message", "")
@@ -172,15 +169,14 @@ Be concise. Output ONLY valid JSON, no markdown or extra text."""
             conversation_history = self.get_conversation_context(state)
 
             self.logger.debug(
-                "meta_router_conversation_context",
-                history_length=len(conversation_history)
+                "meta_router_conversation_context", history_length=len(conversation_history)
             )
 
             # Call LLM for classification with conversation history
             response = await self.call_llm(
                 system_prompt=system_prompt,
                 user_message=f"Classify this message:\n\n{message}",
-                conversation_history=conversation_history
+                conversation_history=conversation_history,
             )
 
             # Parse response
@@ -191,7 +187,7 @@ Be concise. Output ONLY valid JSON, no markdown or extra text."""
             classification["metadata"] = {
                 "model": self.config.model,
                 "latency_ms": latency_ms,
-                "tokens_used": getattr(self, "_last_tokens_used", 0)
+                "tokens_used": getattr(self, "_last_tokens_used", 0),
             }
 
             # Update state with classification results
@@ -202,7 +198,7 @@ Be concise. Output ONLY valid JSON, no markdown or extra text."""
                 domain=classification["domain"],
                 confidence=classification["confidence"],
                 next_agent=classification["next_agent"],
-                latency_ms=latency_ms
+                latency_ms=latency_ms,
             )
 
             return state
@@ -212,13 +208,13 @@ Be concise. Output ONLY valid JSON, no markdown or extra text."""
                 "meta_router_failed",
                 error=str(e),
                 error_type=type(e).__name__,
-                conversation_id=state.get("conversation_id")
+                conversation_id=state.get("conversation_id"),
             )
 
             # Fallback to support domain
             return self._handle_error(state, e)
 
-    def _format_customer_context(self, context: Dict[str, Any]) -> str:
+    def _format_customer_context(self, context: dict[str, Any]) -> str:
         """
         Format customer context for prompt injection.
 
@@ -239,7 +235,7 @@ Be concise. Output ONLY valid JSON, no markdown or extra text."""
 
         # Health score
         if "health_score" in context:
-            score = context['health_score']
+            score = context["health_score"]
             parts.append(f"Health Score: {score}/100")
 
         # MRR (Monthly Recurring Revenue)
@@ -248,13 +244,13 @@ Be concise. Output ONLY valid JSON, no markdown or extra text."""
 
         # Churn risk
         if "churn_risk" in context:
-            risk = context['churn_risk']
+            risk = context["churn_risk"]
             risk_label = "high" if risk > 0.7 else "medium" if risk > 0.4 else "low"
             parts.append(f"Churn Risk: {risk_label} ({risk:.2f})")
 
         # Account age
         if "account_age_days" in context:
-            days = context['account_age_days']
+            days = context["account_age_days"]
             parts.append(f"Account Age: {days} days")
 
         # Last login
@@ -263,7 +259,7 @@ Be concise. Output ONLY valid JSON, no markdown or extra text."""
 
         return "\n".join(parts) if parts else "No relevant context"
 
-    def _parse_response(self, response: str) -> Dict[str, Any]:
+    def _parse_response(self, response: str) -> dict[str, Any]:
         """
         Parse LLM response into structured classification.
 
@@ -285,8 +281,7 @@ Be concise. Output ONLY valid JSON, no markdown or extra text."""
                 # Remove markdown code blocks
                 lines = cleaned_response.split("\n")
                 cleaned_response = "\n".join(
-                    line for line in lines
-                    if not line.strip().startswith("```")
+                    line for line in lines if not line.strip().startswith("```")
                 )
 
             # Try to parse as JSON
@@ -304,7 +299,7 @@ Be concise. Output ONLY valid JSON, no markdown or extra text."""
                 self.logger.warning(
                     "meta_router_invalid_domain",
                     domain=classification["domain"],
-                    valid_domains=valid_domains
+                    valid_domains=valid_domains,
                 )
                 # Default to support
                 classification["domain"] = "support"
@@ -321,15 +316,13 @@ Be concise. Output ONLY valid JSON, no markdown or extra text."""
 
         except json.JSONDecodeError as e:
             self.logger.warning(
-                "meta_router_invalid_json",
-                response_preview=response[:200],
-                error=str(e)
+                "meta_router_invalid_json", response_preview=response[:200], error=str(e)
             )
 
             # Try to extract domain from text (fallback)
             return self._extract_domain_from_text(response)
 
-    def _extract_domain_from_text(self, response: str) -> Dict[str, Any]:
+    def _extract_domain_from_text(self, response: str) -> dict[str, Any]:
         """
         Extract domain from text response when JSON parsing fails.
 
@@ -353,23 +346,17 @@ Be concise. Output ONLY valid JSON, no markdown or extra text."""
         else:
             domain = "support"  # Default to support
 
-        self.logger.info(
-            "meta_router_fallback_extraction",
-            domain=domain,
-            method="text_analysis"
-        )
+        self.logger.info("meta_router_fallback_extraction", domain=domain, method="text_analysis")
 
         return {
             "domain": domain,
             "confidence": 0.6,  # Lower confidence for fallback
             "reasoning": "Fallback classification due to JSON parsing error",
-            "next_agent": f"{domain}_domain_router"
+            "next_agent": f"{domain}_domain_router",
         }
 
     def _update_state_with_classification(
-        self,
-        state: AgentState,
-        classification: Dict[str, Any]
+        self, state: AgentState, classification: dict[str, Any]
     ) -> AgentState:
         """
         Update agent state with classification results.
@@ -381,13 +368,15 @@ Be concise. Output ONLY valid JSON, no markdown or extra text."""
         Returns:
             Updated agent state
         """
-        state.update({
-            "domain": classification["domain"],
-            "domain_confidence": classification["confidence"],
-            "domain_reasoning": classification["reasoning"],
-            "next_agent": classification["next_agent"],
-            "routing_metadata": classification.get("metadata", {})
-        })
+        state.update(
+            {
+                "domain": classification["domain"],
+                "domain_confidence": classification["confidence"],
+                "domain_reasoning": classification["reasoning"],
+                "next_agent": classification["next_agent"],
+                "routing_metadata": classification.get("metadata", {}),
+            }
+        )
 
         return state
 
@@ -401,13 +390,15 @@ Be concise. Output ONLY valid JSON, no markdown or extra text."""
         Returns:
             Updated state with default routing to support
         """
-        state.update({
-            "domain": "support",
-            "domain_confidence": 0.5,
-            "domain_reasoning": "Empty message - defaulting to support",
-            "next_agent": "support_domain_router",
-            "routing_metadata": {"error": "empty_message"}
-        })
+        state.update(
+            {
+                "domain": "support",
+                "domain_confidence": 0.5,
+                "domain_reasoning": "Empty message - defaulting to support",
+                "next_agent": "support_domain_router",
+                "routing_metadata": {"error": "empty_message"},
+            }
+        )
 
         return state
 
@@ -422,16 +413,15 @@ Be concise. Output ONLY valid JSON, no markdown or extra text."""
         Returns:
             Updated state with fallback routing to support
         """
-        state.update({
-            "domain": "support",
-            "domain_confidence": 0.5,
-            "domain_reasoning": f"Error in classification: {str(error)}",
-            "next_agent": "support_domain_router",
-            "routing_metadata": {
-                "error": str(error),
-                "error_type": type(error).__name__
+        state.update(
+            {
+                "domain": "support",
+                "domain_confidence": 0.5,
+                "domain_reasoning": f"Error in classification: {error!s}",
+                "next_agent": "support_domain_router",
+                "routing_metadata": {"error": str(error), "error_type": type(error).__name__},
             }
-        })
+        )
 
         return state
 
@@ -467,6 +457,7 @@ def create_meta_router(**kwargs) -> MetaRouter:
 # Example usage (for development/testing)
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test_meta_router():
@@ -483,57 +474,54 @@ if __name__ == "__main__":
             {
                 "message": "My app is crashing when I try to export data",
                 "context": {"plan": "premium", "health_score": 85},
-                "expected_domain": "support"
+                "expected_domain": "support",
             },
             {
                 "message": "I was charged twice this month",
                 "context": {"plan": "basic", "mrr": 10},
-                "expected_domain": "support"
+                "expected_domain": "support",
             },
             {
                 "message": "How do I reset my password?",
                 "context": {"plan": "free"},
-                "expected_domain": "support"
+                "expected_domain": "support",
             },
-
             # Sales domain
             {
                 "message": "How much does Premium cost for 50 users?",
                 "context": {"plan": "free", "account_age_days": 5},
-                "expected_domain": "sales"
+                "expected_domain": "sales",
             },
             {
                 "message": "I'd like to schedule a demo of your product",
                 "context": {"plan": "free"},
-                "expected_domain": "sales"
+                "expected_domain": "sales",
             },
             {
                 "message": "How does this compare to Asana?",
                 "context": {"plan": "free"},
-                "expected_domain": "sales"
+                "expected_domain": "sales",
             },
-
             # Customer Success domain
             {
                 "message": "We're not getting the value we expected from the product",
                 "context": {"plan": "premium", "health_score": 35, "churn_risk": 0.8},
-                "expected_domain": "customer_success"
+                "expected_domain": "customer_success",
             },
             {
                 "message": "Our team isn't really using the product",
                 "context": {"plan": "basic", "health_score": 40},
-                "expected_domain": "customer_success"
+                "expected_domain": "customer_success",
             },
         ]
 
         for i, test in enumerate(test_cases, 1):
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"TEST CASE {i}: {test['message'][:50]}...")
-            print(f"{'='*60}")
+            print(f"{'=' * 60}")
 
             state = create_initial_state(
-                message=test["message"],
-                context={"customer_metadata": test["context"]}
+                message=test["message"], context={"customer_metadata": test["context"]}
             )
 
             result = await router.process(state)
@@ -545,11 +533,10 @@ if __name__ == "__main__":
             print(f"✓ Latency: {result['routing_metadata'].get('latency_ms', 0)}ms")
 
             # Validate expectation
-            if result['domain'] == test['expected_domain']:
+            if result["domain"] == test["expected_domain"]:
                 print(f"✓ PASS: Correctly classified as {test['expected_domain']}")
             else:
                 print(f"✗ FAIL: Expected {test['expected_domain']}, got {result['domain']}")
 
     # Run tests
     asyncio.run(test_meta_router())
-    
