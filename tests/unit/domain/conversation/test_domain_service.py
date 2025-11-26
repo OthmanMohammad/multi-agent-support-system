@@ -8,7 +8,7 @@ import pytest
 from datetime import datetime, timedelta, UTC
 from uuid import uuid4
 
-from services.domain.conversation.domain_service import ConversationDomainService
+from src.services.domain.conversation.domain_service import ConversationDomainService
 
 
 class TestValidateMessage:
