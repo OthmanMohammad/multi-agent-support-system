@@ -13,7 +13,7 @@ Architecture Layers:
 Usage:
     # Domain services (pure business logic)
     from src.services.domain import ConversationDomainService, CustomerDomainService
-    
+
     # Infrastructure services (data access)
     from src.services.infrastructure import (
         CustomerInfrastructureService,
@@ -22,7 +22,7 @@ Usage:
         NotificationService,
         CachingService
     )
-    
+
     # Base service for custom services
     from src.services.base import BaseService
 """
@@ -35,25 +35,25 @@ from src.services.domain.customer import CustomerDomainService
 
 # Infrastructure services
 from src.services.infrastructure import (
+    AnalyticsService,
+    CachingService,
     CustomerInfrastructureService,
     KnowledgeBaseService,
-    AnalyticsService,
     NotificationService,
-    CachingService,
 )
 
 __version__ = "1.0.0"
 
 __all__ = [
+    "AnalyticsService",
     # Base
     "BaseService",
+    "CachingService",
     # Domain Services
     "ConversationDomainService",
     "CustomerDomainService",
     # Infrastructure Services
     "CustomerInfrastructureService",
     "KnowledgeBaseService",
-    "AnalyticsService",
     "NotificationService",
-    "CachingService",
 ]
