@@ -5,13 +5,13 @@ Attempts to win back churned customers by creating personalized win-back offers,
 addressing previous issues, and demonstrating product improvements.
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("win_back", tier="revenue", category="customer_success")
@@ -30,11 +30,11 @@ class WinBackAgent(BaseAgent):
 
     # Win-back windows (months since churn)
     WINBACK_WINDOWS = {
-        "immediate": (0, 1),      # 0-1 months
-        "short_term": (1, 3),     # 1-3 months
-        "medium_term": (3, 6),    # 3-6 months
-        "long_term": (6, 12),     # 6-12 months
-        "dormant": (12, 24)       # 12-24 months
+        "immediate": (0, 1),  # 0-1 months
+        "short_term": (1, 3),  # 1-3 months
+        "medium_term": (3, 6),  # 3-6 months
+        "long_term": (6, 12),  # 6-12 months
+        "dormant": (12, 24),  # 12-24 months
     }
 
     # Win-back success probability by window
@@ -43,7 +43,7 @@ class WinBackAgent(BaseAgent):
         "short_term": 30,
         "medium_term": 20,
         "long_term": 10,
-        "dormant": 5
+        "dormant": 5,
     }
 
     # Churn reason categories
@@ -53,7 +53,7 @@ class WinBackAgent(BaseAgent):
         "support_issues": {"win_back_strategy": "white_glove_support", "success_rate": 50},
         "competition": {"win_back_strategy": "competitive_advantage", "success_rate": 20},
         "business_change": {"win_back_strategy": "new_use_case", "success_rate": 15},
-        "usage_low": {"win_back_strategy": "adoption_support", "success_rate": 35}
+        "usage_low": {"win_back_strategy": "adoption_support", "success_rate": 35},
     }
 
     def __init__(self):
@@ -62,12 +62,9 @@ class WinBackAgent(BaseAgent):
             type=AgentType.SPECIALIST,
             temperature=0.4,
             max_tokens=800,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.KB_SEARCH
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.KB_SEARCH],
             kb_category="customer_success",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -95,41 +92,26 @@ class WinBackAgent(BaseAgent):
             "win_back_analysis_details",
             customer_id=customer_id,
             churn_date=churn_data.get("churn_date"),
-            churn_reason=churn_data.get("churn_reason")
+            churn_reason=churn_data.get("churn_reason"),
         )
 
         # Analyze win-back potential
         winback_analysis = self._analyze_winback_potential(
-            churn_data,
-            customer_metadata,
-            historical_data
+            churn_data, customer_metadata, historical_data
         )
 
         # Create win-back offer
-        winback_offer = self._create_winback_offer(
-            winback_analysis,
-            churn_data,
-            customer_metadata
-        )
+        winback_offer = self._create_winback_offer(winback_analysis, churn_data, customer_metadata)
 
         # Generate win-back campaign
-        winback_campaign = self._generate_winback_campaign(
-            winback_analysis,
-            winback_offer
-        )
+        winback_campaign = self._generate_winback_campaign(winback_analysis, winback_offer)
 
         # Prepare issue resolution plan
-        resolution_plan = self._create_issue_resolution_plan(
-            churn_data,
-            winback_analysis
-        )
+        resolution_plan = self._create_issue_resolution_plan(churn_data, winback_analysis)
 
         # Format response
         response = self._format_winback_report(
-            winback_analysis,
-            winback_offer,
-            winback_campaign,
-            resolution_plan
+            winback_analysis, winback_offer, winback_campaign, resolution_plan
         )
 
         state["agent_response"] = response
@@ -147,17 +129,17 @@ class WinBackAgent(BaseAgent):
             customer_id=customer_id,
             winback_window=winback_analysis["winback_window"],
             success_probability=winback_analysis["winback_success_probability"],
-            offer_type=winback_offer.get("offer_type")
+            offer_type=winback_offer.get("offer_type"),
         )
 
         return state
 
     def _analyze_winback_potential(
         self,
-        churn_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any],
-        historical_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        churn_data: dict[str, Any],
+        customer_metadata: dict[str, Any],
+        historical_data: dict[str, Any],
+    ) -> dict[str, Any]:
         """
         Analyze potential for winning back this customer.
 
@@ -172,7 +154,7 @@ class WinBackAgent(BaseAgent):
         # Parse churn date
         churn_date_str = churn_data.get("churn_date")
         if churn_date_str:
-            churn_date = datetime.fromisoformat(churn_date_str.replace('Z', '+00:00'))
+            churn_date = datetime.fromisoformat(churn_date_str.replace("Z", "+00:00"))
         else:
             churn_date = datetime.now(UTC) - timedelta(days=30)
 
@@ -187,30 +169,24 @@ class WinBackAgent(BaseAgent):
         # Analyze churn reason
         churn_reason = churn_data.get("churn_reason", "unknown")
         churn_category = self._categorize_churn_reason(churn_reason)
-        churn_config = self.CHURN_REASONS.get(churn_category, {"win_back_strategy": "general_outreach", "success_rate": 20})
+        churn_config = self.CHURN_REASONS.get(
+            churn_category, {"win_back_strategy": "general_outreach", "success_rate": 20}
+        )
 
         # Calculate adjusted success probability
         winback_success_probability = self._calculate_winback_probability(
-            base_probability,
-            churn_config["success_rate"],
-            historical_data,
-            churn_data
+            base_probability, churn_config["success_rate"], historical_data, churn_data
         )
 
         # Assess customer value
         customer_value_tier = self._assess_customer_value(historical_data)
 
         # Identify what's changed since churn
-        improvements_since_churn = self._identify_improvements_since_churn(
-            churn_date,
-            churn_reason
-        )
+        improvements_since_churn = self._identify_improvements_since_churn(churn_date, churn_reason)
 
         # Determine win-back feasibility
         feasibility = self._assess_winback_feasibility(
-            winback_success_probability,
-            customer_value_tier,
-            churn_reason
+            winback_success_probability, customer_value_tier, churn_reason
         )
 
         return {
@@ -224,7 +200,7 @@ class WinBackAgent(BaseAgent):
             "customer_value_tier": customer_value_tier,
             "improvements_since_churn": improvements_since_churn,
             "winback_feasibility": feasibility,
-            "analyzed_at": datetime.now(UTC).isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat(),
         }
 
     def _determine_winback_window(self, months_since_churn: float) -> str:
@@ -240,13 +216,17 @@ class WinBackAgent(BaseAgent):
 
         if any(word in reason_lower for word in ["price", "cost", "expensive", "budget"]):
             return "price"
-        elif any(word in reason_lower for word in ["feature", "functionality", "capability", "product"]):
+        elif any(
+            word in reason_lower for word in ["feature", "functionality", "capability", "product"]
+        ):
             return "product_fit"
         elif any(word in reason_lower for word in ["support", "service", "help", "response"]):
             return "support_issues"
         elif any(word in reason_lower for word in ["competitor", "alternative", "switched"]):
             return "competition"
-        elif any(word in reason_lower for word in ["business", "reorganization", "merger", "acquisition"]):
+        elif any(
+            word in reason_lower for word in ["business", "reorganization", "merger", "acquisition"]
+        ):
             return "business_change"
         elif any(word in reason_lower for word in ["usage", "adoption", "inactive", "engagement"]):
             return "usage_low"
@@ -257,8 +237,8 @@ class WinBackAgent(BaseAgent):
         self,
         base_probability: int,
         churn_reason_probability: int,
-        historical_data: Dict[str, Any],
-        churn_data: Dict[str, Any]
+        historical_data: dict[str, Any],
+        churn_data: dict[str, Any],
     ) -> int:
         """Calculate adjusted win-back success probability."""
         # Average base and churn reason probabilities
@@ -288,7 +268,7 @@ class WinBackAgent(BaseAgent):
 
         return min(max(int(probability), 0), 100)
 
-    def _assess_customer_value(self, historical_data: Dict[str, Any]) -> str:
+    def _assess_customer_value(self, historical_data: dict[str, Any]) -> str:
         """Assess customer value tier."""
         lifetime_value = historical_data.get("lifetime_value", 0)
 
@@ -302,10 +282,8 @@ class WinBackAgent(BaseAgent):
             return "smb"
 
     def _identify_improvements_since_churn(
-        self,
-        churn_date: datetime,
-        churn_reason: str
-    ) -> List[str]:
+        self, churn_date: datetime, churn_reason: str
+    ) -> list[str]:
         """Identify product/service improvements since churn."""
         improvements = []
 
@@ -314,7 +292,9 @@ class WinBackAgent(BaseAgent):
         reason_lower = churn_reason.lower()
 
         if "feature" in reason_lower or "functionality" in reason_lower:
-            improvements.append("Launched 15+ new features including advanced analytics and automation")
+            improvements.append(
+                "Launched 15+ new features including advanced analytics and automation"
+            )
             improvements.append("New integrations with Salesforce, HubSpot, and Slack")
 
         if "support" in reason_lower or "service" in reason_lower:
@@ -338,10 +318,7 @@ class WinBackAgent(BaseAgent):
         return improvements[:4]
 
     def _assess_winback_feasibility(
-        self,
-        probability: int,
-        value_tier: str,
-        churn_reason: str
+        self, probability: int, value_tier: str, churn_reason: str
     ) -> str:
         """Assess overall feasibility of win-back effort."""
         # High-value customers always worth pursuing
@@ -363,99 +340,108 @@ class WinBackAgent(BaseAgent):
                 return "low_priority"
 
         # Lower-value customers
+        elif probability >= 50:
+            return "recommended"
+        elif probability >= 35:
+            return "consider"
         else:
-            if probability >= 50:
-                return "recommended"
-            elif probability >= 35:
-                return "consider"
-            else:
-                return "not_recommended"
+            return "not_recommended"
 
     def _create_winback_offer(
         self,
-        winback_analysis: Dict[str, Any],
-        churn_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        winback_analysis: dict[str, Any],
+        churn_data: dict[str, Any],
+        customer_metadata: dict[str, Any],
+    ) -> dict[str, Any]:
         """Create personalized win-back offer."""
         churn_category = winback_analysis["churn_category"]
         value_tier = winback_analysis["customer_value_tier"]
 
-        offer = {
-            "offer_type": "standard_winback",
-            "offer_value": 0,
-            "offer_components": []
-        }
+        offer = {"offer_type": "standard_winback", "offer_value": 0, "offer_components": []}
 
         # Price-based offers
         if churn_category == "price":
             discount_pct = 25 if value_tier in ["enterprise", "strategic"] else 20
             offer["offer_type"] = "pricing_discount"
-            offer["offer_components"].append({
-                "component": f"{discount_pct}% discount for first 3 months",
-                "value": f"{discount_pct}% savings"
-            })
+            offer["offer_components"].append(
+                {
+                    "component": f"{discount_pct}% discount for first 3 months",
+                    "value": f"{discount_pct}% savings",
+                }
+            )
 
         # Product fit offers
         elif churn_category == "product_fit":
             offer["offer_type"] = "enhanced_onboarding"
-            offer["offer_components"].extend([
-                {"component": "Dedicated onboarding specialist", "value": "$2,000 value"},
-                {"component": "Custom feature demonstration", "value": "Personalized"},
-                {"component": "30-day trial of premium features", "value": "Risk-free"}
-            ])
+            offer["offer_components"].extend(
+                [
+                    {"component": "Dedicated onboarding specialist", "value": "$2,000 value"},
+                    {"component": "Custom feature demonstration", "value": "Personalized"},
+                    {"component": "30-day trial of premium features", "value": "Risk-free"},
+                ]
+            )
 
         # Support issues offers
         elif churn_category == "support_issues":
             offer["offer_type"] = "white_glove_support"
-            offer["offer_components"].extend([
-                {"component": "Dedicated CSM assigned", "value": "VIP treatment"},
-                {"component": "Priority support (4-hour SLA)", "value": "$5,000/year value"},
-                {"component": "Weekly check-in calls for 90 days", "value": "Hands-on"}
-            ])
+            offer["offer_components"].extend(
+                [
+                    {"component": "Dedicated CSM assigned", "value": "VIP treatment"},
+                    {"component": "Priority support (4-hour SLA)", "value": "$5,000/year value"},
+                    {"component": "Weekly check-in calls for 90 days", "value": "Hands-on"},
+                ]
+            )
 
         # Competition offers
         elif churn_category == "competition":
             offer["offer_type"] = "competitive_advantage"
-            offer["offer_components"].extend([
-                {"component": "Feature comparison and gap analysis", "value": "Comprehensive"},
-                {"component": "Price match guarantee", "value": "Best value"},
-                {"component": "Free migration assistance", "value": "$3,000 value"}
-            ])
+            offer["offer_components"].extend(
+                [
+                    {"component": "Feature comparison and gap analysis", "value": "Comprehensive"},
+                    {"component": "Price match guarantee", "value": "Best value"},
+                    {"component": "Free migration assistance", "value": "$3,000 value"},
+                ]
+            )
 
         # Generic offers
         else:
             discount_pct = 15
             offer["offer_type"] = "win_back_special"
-            offer["offer_components"].extend([
-                {"component": f"{discount_pct}% win-back discount", "value": f"{discount_pct}% savings"},
-                {"component": "No setup fees", "value": "$500 value"},
-                {"component": "Flexible contract terms", "value": "Your choice"}
-            ])
+            offer["offer_components"].extend(
+                [
+                    {
+                        "component": f"{discount_pct}% win-back discount",
+                        "value": f"{discount_pct}% savings",
+                    },
+                    {"component": "No setup fees", "value": "$500 value"},
+                    {"component": "Flexible contract terms", "value": "Your choice"},
+                ]
+            )
 
         # Add trial period for higher-risk win-backs
         if winback_analysis["winback_success_probability"] < 30:
-            offer["offer_components"].append({
-                "component": "30-day money-back guarantee",
-                "value": "Risk-free"
-            })
+            offer["offer_components"].append(
+                {"component": "30-day money-back guarantee", "value": "Risk-free"}
+            )
 
         return offer
 
     def _generate_winback_campaign(
-        self,
-        winback_analysis: Dict[str, Any],
-        winback_offer: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, winback_analysis: dict[str, Any], winback_offer: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate win-back campaign plan."""
         window = winback_analysis["winback_window"]
-        feasibility = winback_analysis["winback_feasibility"]
+        winback_analysis["winback_feasibility"]
 
         campaign = {
             "campaign_type": "win_back",
-            "urgency": "high" if window == "immediate" else "medium" if window == "short_term" else "low",
+            "urgency": "high"
+            if window == "immediate"
+            else "medium"
+            if window == "short_term"
+            else "low",
             "touchpoints": [],
-            "timeline": "14 days"
+            "timeline": "14 days",
         }
 
         # Immediate window - aggressive outreach
@@ -465,7 +451,7 @@ class WinBackAgent(BaseAgent):
                 {"day": 3, "channel": "phone", "message": "CSM outreach call"},
                 {"day": 7, "channel": "email", "message": "Win-back offer presentation"},
                 {"day": 10, "channel": "phone", "message": "Follow-up call"},
-                {"day": 14, "channel": "email", "message": "Final offer reminder"}
+                {"day": 14, "channel": "email", "message": "Final offer reminder"},
             ]
 
         # Medium-term window
@@ -475,7 +461,7 @@ class WinBackAgent(BaseAgent):
                 {"day": 1, "channel": "email", "message": "We miss you - what changed?"},
                 {"day": 7, "channel": "email", "message": "Product improvements since you left"},
                 {"day": 14, "channel": "phone", "message": "Personal outreach"},
-                {"day": 21, "channel": "email", "message": "Special win-back offer"}
+                {"day": 21, "channel": "email", "message": "Special win-back offer"},
             ]
 
         # Long-term or dormant
@@ -484,16 +470,14 @@ class WinBackAgent(BaseAgent):
             campaign["touchpoints"] = [
                 {"day": 1, "channel": "email", "message": "Quarterly product update"},
                 {"day": 15, "channel": "email", "message": "Customer success story"},
-                {"day": 30, "channel": "email", "message": "Re-engagement offer"}
+                {"day": 30, "channel": "email", "message": "Re-engagement offer"},
             ]
 
         return campaign
 
     def _create_issue_resolution_plan(
-        self,
-        churn_data: Dict[str, Any],
-        winback_analysis: Dict[str, Any]
-    ) -> List[Dict[str, str]]:
+        self, churn_data: dict[str, Any], winback_analysis: dict[str, Any]
+    ) -> list[dict[str, str]]:
         """Create plan to address previous issues."""
         resolution_steps = []
 
@@ -501,49 +485,59 @@ class WinBackAgent(BaseAgent):
         churn_category = winback_analysis["churn_category"]
 
         if churn_category == "support_issues":
-            resolution_steps.append({
-                "issue": "Previous support experience",
-                "resolution": "Assign dedicated CSM with direct contact",
-                "commitment": "4-hour response SLA guaranteed"
-            })
+            resolution_steps.append(
+                {
+                    "issue": "Previous support experience",
+                    "resolution": "Assign dedicated CSM with direct contact",
+                    "commitment": "4-hour response SLA guaranteed",
+                }
+            )
 
         if churn_category == "product_fit":
-            resolution_steps.append({
-                "issue": "Missing features or capabilities",
-                "resolution": "Demonstrate new features launched since churn",
-                "commitment": "Custom implementation plan for specific needs"
-            })
+            resolution_steps.append(
+                {
+                    "issue": "Missing features or capabilities",
+                    "resolution": "Demonstrate new features launched since churn",
+                    "commitment": "Custom implementation plan for specific needs",
+                }
+            )
 
         if churn_category == "price":
-            resolution_steps.append({
-                "issue": "Pricing concerns",
-                "resolution": "Flexible pricing options introduced",
-                "commitment": "ROI analysis and value demonstration"
-            })
+            resolution_steps.append(
+                {
+                    "issue": "Pricing concerns",
+                    "resolution": "Flexible pricing options introduced",
+                    "commitment": "ROI analysis and value demonstration",
+                }
+            )
 
         if churn_category == "usage_low":
-            resolution_steps.append({
-                "issue": "Low adoption and usage",
-                "resolution": "Enhanced onboarding and training program",
-                "commitment": "Dedicated adoption specialist for 90 days"
-            })
+            resolution_steps.append(
+                {
+                    "issue": "Low adoption and usage",
+                    "resolution": "Enhanced onboarding and training program",
+                    "commitment": "Dedicated adoption specialist for 90 days",
+                }
+            )
 
         # Generic resolution
         if not resolution_steps:
-            resolution_steps.append({
-                "issue": churn_reason,
-                "resolution": "Comprehensive review and action plan",
-                "commitment": "Executive sponsor engagement"
-            })
+            resolution_steps.append(
+                {
+                    "issue": churn_reason,
+                    "resolution": "Comprehensive review and action plan",
+                    "commitment": "Executive sponsor engagement",
+                }
+            )
 
         return resolution_steps
 
     def _format_winback_report(
         self,
-        winback_analysis: Dict[str, Any],
-        winback_offer: Dict[str, Any],
-        winback_campaign: Dict[str, Any],
-        resolution_plan: List[Dict[str, str]]
+        winback_analysis: dict[str, Any],
+        winback_offer: dict[str, Any],
+        winback_campaign: dict[str, Any],
+        resolution_plan: list[dict[str, str]],
     ) -> str:
         """Format win-back report."""
         probability = winback_analysis["winback_success_probability"]
@@ -554,23 +548,23 @@ class WinBackAgent(BaseAgent):
             "recommended": "???",
             "consider": "????",
             "low_priority": "??????",
-            "not_recommended": "???"
+            "not_recommended": "???",
         }
 
         report = f"""**???? Win-Back Analysis Report**
 
-**Win-Back Feasibility:** {feasibility.replace('_', ' ').title()} {feasibility_emoji.get(feasibility, '????')}
+**Win-Back Feasibility:** {feasibility.replace("_", " ").title()} {feasibility_emoji.get(feasibility, "????")}
 **Success Probability:** {probability}%
-**Window:** {winback_analysis['winback_window'].replace('_', ' ').title()} ({winback_analysis['months_since_churn']} months since churn)
-**Customer Value Tier:** {winback_analysis['customer_value_tier'].replace('_', ' ').title()}
+**Window:** {winback_analysis["winback_window"].replace("_", " ").title()} ({winback_analysis["months_since_churn"]} months since churn)
+**Customer Value Tier:** {winback_analysis["customer_value_tier"].replace("_", " ").title()}
 
 **Churn Analysis:**
-- Reason: {winback_analysis['churn_reason']}
-- Category: {winback_analysis['churn_category'].replace('_', ' ').title()}
-- Recommended Strategy: {winback_analysis['winback_strategy'].replace('_', ' ').title()}
+- Reason: {winback_analysis["churn_reason"]}
+- Category: {winback_analysis["churn_category"].replace("_", " ").title()}
+- Recommended Strategy: {winback_analysis["winback_strategy"].replace("_", " ").title()}
 
 **???? Win-Back Offer:**
-**Offer Type:** {winback_offer['offer_type'].replace('_', ' ').title()}
+**Offer Type:** {winback_offer["offer_type"].replace("_", " ").title()}
 
 **Offer Components:**
 """
@@ -593,7 +587,7 @@ class WinBackAgent(BaseAgent):
                 report += f"**Commitment:** {step['commitment']}\n"
 
         # Campaign plan
-        report += f"\n**???? Win-Back Campaign Plan:**\n"
+        report += "\n**???? Win-Back Campaign Plan:**\n"
         report += f"**Timeline:** {winback_campaign['timeline']}\n"
         report += f"**Urgency:** {winback_campaign['urgency'].title()}\n\n"
         report += "**Campaign Touchpoints:**\n"
@@ -606,6 +600,7 @@ class WinBackAgent(BaseAgent):
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -623,21 +618,21 @@ if __name__ == "__main__":
             "Create win-back campaign for churned customer",
             context={
                 "customer_id": "cust_churned_123",
-                "customer_metadata": {"plan": "enterprise", "industry": "finance"}
-            }
+                "customer_metadata": {"plan": "enterprise", "industry": "finance"},
+            },
         )
         state1["entities"] = {
             "churn_data": {
                 "churn_date": (datetime.now(UTC) - timedelta(days=20)).isoformat(),
                 "churn_reason": "Pricing too high for current budget constraints",
-                "churn_sentiment": "neutral"
+                "churn_sentiment": "neutral",
             },
             "historical_data": {
                 "lifetime_value": 120000,
                 "customer_tenure_months": 18,
                 "previous_nps_score": 8,
-                "average_health_score": 75
-            }
+                "average_health_score": 75,
+            },
         }
 
         result1 = await agent.process(state1)
@@ -654,23 +649,20 @@ if __name__ == "__main__":
 
         state2 = create_initial_state(
             "Assess win-back potential",
-            context={
-                "customer_id": "cust_churned_456",
-                "customer_metadata": {"plan": "premium"}
-            }
+            context={"customer_id": "cust_churned_456", "customer_metadata": {"plan": "premium"}},
         )
         state2["entities"] = {
             "churn_data": {
                 "churn_date": (datetime.now(UTC) - timedelta(days=210)).isoformat(),
                 "churn_reason": "Poor support response times and unresolved technical issues",
-                "churn_sentiment": "negative"
+                "churn_sentiment": "negative",
             },
             "historical_data": {
                 "lifetime_value": 35000,
                 "customer_tenure_months": 8,
                 "previous_nps_score": 4,
-                "average_health_score": 42
-            }
+                "average_health_score": 42,
+            },
         }
 
         result2 = await agent.process(state2)
