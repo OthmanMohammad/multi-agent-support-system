@@ -13,6 +13,37 @@ type Conversation = components["schemas"]["Conversation"];
 type Message = components["schemas"]["Message"];
 type Customer = components["schemas"]["Customer"];
 
+// Analytics types for export
+interface AnalyticsOverviewExport {
+  totalConversations: number;
+  totalMessages: number;
+  totalCustomers: number;
+  avgResponseTime: number;
+  satisfactionScore: number;
+  activeAgents: number;
+}
+
+interface ConversationsByDayExport {
+  conversationsByDay: Array<{ date: string; count: number }>;
+}
+
+interface AgentPerformanceExport {
+  agents: Array<{
+    agentName: string;
+    totalConversations: number;
+    totalMessages: number;
+    avgResponseTime: number;
+    satisfactionScore: number;
+    costUsd: number;
+  }>;
+}
+
+interface AnalyticsExportData {
+  overview: AnalyticsOverviewExport;
+  conversations: ConversationsByDayExport;
+  agents: AgentPerformanceExport;
+}
+
 // ========================================
 // PDF Export with Beautiful Formatting
 // ========================================
@@ -30,7 +61,11 @@ export async function exportConversationToPDF(
 
   doc.setFontSize(10);
   doc.setTextColor(127, 140, 141);
-  doc.text(`Created: ${new Date(conversation.createdAt).toLocaleDateString()}`, 20, 28);
+  doc.text(
+    `Created: ${new Date(conversation.createdAt).toLocaleDateString()}`,
+    20,
+    28
+  );
   doc.text(`Conversation ID: ${conversation.id}`, 20, 33);
 
   // Line separator
@@ -72,7 +107,10 @@ export async function exportConversationToPDF(
   }
 
   // Footer on last page
-  const totalPages = (doc as any).internal.getNumberOfPages();
+
+  const totalPages = (
+    doc as unknown as { internal: { getNumberOfPages: () => number } }
+  ).internal.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
     doc.setFontSize(8);
@@ -88,7 +126,9 @@ export async function exportConversationToPDF(
   doc.save(`conversation-${conversation.id}.pdf`);
 }
 
-export async function exportCustomersToPDF(customers: Customer[]): Promise<void> {
+export async function exportCustomersToPDF(
+  customers: Customer[]
+): Promise<void> {
   const doc = new jsPDF();
 
   // Title
@@ -136,7 +176,9 @@ export async function exportCustomersToPDF(customers: Customer[]): Promise<void>
 // Excel Export with Formatting
 // ========================================
 
-export function exportConversationsToExcel(conversations: Conversation[]): void {
+export function exportConversationsToExcel(
+  conversations: Conversation[]
+): void {
   const worksheet = XLSX.utils.json_to_sheet(
     conversations.map((conv) => ({
       ID: conv.id,
@@ -202,11 +244,7 @@ export function exportCustomersToExcel(customers: Customer[]): void {
   );
 }
 
-export function exportAnalyticsToExcel(data: {
-  overview: any;
-  conversations: any;
-  agents: any;
-}): void {
+export function exportAnalyticsToExcel(data: AnalyticsExportData): void {
   const workbook = XLSX.utils.book_new();
 
   // Overview sheet
@@ -240,7 +278,7 @@ export function exportAnalyticsToExcel(data: {
 
   // Conversations by day
   const convsWS = XLSX.utils.json_to_sheet(
-    data.conversations.conversationsByDay.map((d: any) => ({
+    data.conversations.conversationsByDay.map((d) => ({
       Date: d.date,
       Conversations: d.count,
     }))
@@ -249,7 +287,7 @@ export function exportAnalyticsToExcel(data: {
 
   // Agent performance
   const agentsWS = XLSX.utils.json_to_sheet(
-    data.agents.agents.map((a: any) => ({
+    data.agents.agents.map((a) => ({
       Agent: a.agentName,
       Conversations: a.totalConversations,
       Messages: a.totalMessages,
@@ -271,7 +309,7 @@ export function exportAnalyticsToExcel(data: {
 // ========================================
 
 export function exportToCSV(
-  data: Record<string, any>[],
+  data: Record<string, unknown>[],
   filename: string
 ): void {
   const worksheet = XLSX.utils.json_to_sheet(data);
