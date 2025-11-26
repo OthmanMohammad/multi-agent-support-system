@@ -4,16 +4,15 @@ Authentication Dependencies - Dependency injection for FastAPI
 This module provides FastAPI dependencies for authentication and authorization.
 """
 
-from typing import Optional
-from fastapi import Depends, HTTPException, Header, status, Request
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Depends, Header, HTTPException, Request, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from src.database.models.user import User, UserStatus
-from src.database.models.api_key import APIKey
-from src.database.unit_of_work import get_unit_of_work
-from src.api.auth.jwt import JWTManager
 from src.api.auth.api_key_manager import APIKeyManager
+from src.api.auth.jwt import JWTManager
 from src.api.auth.redis_client import TokenBlacklist
+from src.database.models.api_key import APIKey
+from src.database.models.user import User, UserStatus
+from src.database.unit_of_work import get_unit_of_work
 from src.utils.logging.setup import get_logger
 
 logger = get_logger(__name__)
@@ -27,8 +26,9 @@ security = HTTPBearer(auto_error=False)
 # JWT AUTHENTICATION
 # =============================================================================
 
+
 async def get_current_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
 ) -> User:
     """
     Get current user from JWT access token.
@@ -56,7 +56,7 @@ async def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"}
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
     token = credentials.credentials
@@ -67,25 +67,18 @@ async def get_current_user(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(
-            "token_validation_error",
-            error=str(e),
-            error_type=type(e).__name__
-        )
+        logger.error("token_validation_error", error=str(e), error_type=type(e).__name__)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"}
-        )
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from None
 
     # Extract JWT ID for blacklist check
     jti = payload.get("jti")
     if not jti:
         logger.warning("token_missing_jti")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token format"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token format")
 
     # Check if token is blacklisted (revoked)
     if await TokenBlacklist.is_blacklisted(jti):
@@ -93,7 +86,7 @@ async def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has been revoked",
-            headers={"WWW-Authenticate": "Bearer"}
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
     # Extract user ID
@@ -101,8 +94,7 @@ async def get_current_user(
     if not user_id:
         logger.warning("token_missing_user_id")
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload"
         )
 
     # Get user from database
@@ -110,28 +102,20 @@ async def get_current_user(
         user = await uow.users.get_by_id(user_id)
 
         if not user:
-            logger.warning(
-                "user_not_found_from_token",
-                user_id=user_id
-            )
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User not found"
-            )
+            logger.warning("user_not_found_from_token", user_id=user_id)
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
         logger.debug(
             "user_authenticated_jwt",
             user_id=str(user.id),
             user_email=user.email,
-            user_role=user.role.value
+            user_role=user.role.value,
         )
 
         return user
 
 
-async def get_current_active_user(
-    current_user: User = Depends(get_current_user)
-) -> User:
+async def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
     """
     Get current user and verify they are active and verified.
 
@@ -156,40 +140,29 @@ async def get_current_active_user(
         logger.warning(
             "inactive_user_access_denied",
             user_id=str(current_user.id),
-            status=current_user.status.value
+            status=current_user.status.value,
         )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Account is not active"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is not active")
 
     # Check account status
     if current_user.status == UserStatus.SUSPENDED:
-        logger.warning(
-            "suspended_user_access_denied",
-            user_id=str(current_user.id)
-        )
+        logger.warning("suspended_user_access_denied", user_id=str(current_user.id))
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Account has been suspended"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Account has been suspended"
         )
 
     if current_user.status == UserStatus.PENDING_VERIFICATION:
-        logger.warning(
-            "unverified_user_access_denied",
-            user_id=str(current_user.id)
-        )
+        logger.warning("unverified_user_access_denied", user_id=str(current_user.id))
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Please verify your email address"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Please verify your email address"
         )
 
     return current_user
 
 
 async def get_optional_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
-) -> Optional[User]:
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
+) -> User | None:
     """
     Get current user if authenticated, None otherwise.
 
@@ -223,9 +196,9 @@ async def get_optional_user(
 # API KEY AUTHENTICATION
 # =============================================================================
 
+
 async def verify_api_key(
-    x_api_key: str = Header(..., description="API key for authentication"),
-    request: Request = None
+    x_api_key: str = Header(..., description="API key for authentication"), request: Request = None
 ) -> APIKey:
     """
     Verify API key from X-API-Key header.
@@ -252,10 +225,7 @@ async def verify_api_key(
     is_valid, error = APIKeyManager.validate_api_key_format(x_api_key)
     if not is_valid:
         logger.warning("invalid_api_key_format", error=error)
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=error
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=error)
 
     # Extract prefix for database lookup
     prefix = APIKeyManager.extract_prefix(x_api_key)
@@ -266,22 +236,12 @@ async def verify_api_key(
 
         if not api_key:
             logger.warning("api_key_not_found", prefix=prefix)
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid API key"
-            )
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
 
         # Verify API key hash
         if not APIKeyManager.verify_api_key(x_api_key, api_key.key_hash):
-            logger.warning(
-                "api_key_verification_failed",
-                prefix=prefix,
-                key_id=str(api_key.id)
-            )
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid API key"
-            )
+            logger.warning("api_key_verification_failed", prefix=prefix, key_id=str(api_key.id))
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
 
         # Check if API key is valid (active, not expired, not deleted)
         if not api_key.is_valid():
@@ -290,18 +250,16 @@ async def verify_api_key(
                 key_id=str(api_key.id),
                 is_active=api_key.is_active,
                 is_expired=api_key.is_expired(),
-                deleted_at=api_key.deleted_at
+                deleted_at=api_key.deleted_at,
             )
 
             if api_key.is_expired():
                 raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="API key has expired"
+                    status_code=status.HTTP_401_UNAUTHORIZED, detail="API key has expired"
                 )
 
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="API key is not active"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="API key is not active"
             )
 
         # Record API key usage
@@ -317,15 +275,13 @@ async def verify_api_key(
             key_id=str(api_key.id),
             key_name=api_key.name,
             user_id=str(api_key.user_id),
-            client_ip=client_ip
+            client_ip=client_ip,
         )
 
         return api_key
 
 
-async def get_user_from_api_key(
-    api_key: APIKey = Depends(verify_api_key)
-) -> User:
+async def get_user_from_api_key(api_key: APIKey = Depends(verify_api_key)) -> User:
     """
     Get user associated with API key.
 
@@ -351,14 +307,9 @@ async def get_user_from_api_key(
 
         if not user:
             logger.error(
-                "api_key_user_not_found",
-                key_id=str(api_key.id),
-                user_id=str(api_key.user_id)
+                "api_key_user_not_found", key_id=str(api_key.id), user_id=str(api_key.user_id)
             )
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User not found"
-            )
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
         return user
 
@@ -367,10 +318,11 @@ async def get_user_from_api_key(
 # COMBINED AUTHENTICATION (JWT OR API KEY)
 # =============================================================================
 
+
 async def get_current_user_or_api_key(
-    jwt_credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
-    x_api_key: Optional[str] = Header(None, description="API key for authentication"),
-    request: Request = None
+    jwt_credentials: HTTPAuthorizationCredentials | None = Depends(security),
+    x_api_key: str | None = Header(None, description="API key for authentication"),
+    request: Request = None,
 ) -> User:
     """
     Authenticate via JWT token OR API key.
@@ -414,5 +366,5 @@ async def get_current_user_or_api_key(
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Not authenticated. Provide either Bearer token or X-API-Key header",
-        headers={"WWW-Authenticate": "Bearer"}
+        headers={"WWW-Authenticate": "Bearer"},
     )
