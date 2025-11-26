@@ -210,10 +210,14 @@ class IntentClassifier(RoutingAgent):
                 self.logger.warning("intent_classifier_empty_message")
                 return self._handle_empty_message(state)
 
+            # Get conversation history for context
+            conversation_history = self.get_conversation_context(state)
+
             # Call LLM for classification
             response = await self.call_llm(
                 system_prompt=system_prompt,
-                user_message=f"Classify this message into the hierarchical taxonomy:\n\n{message}"
+                user_message=f"Classify this message into the hierarchical taxonomy:\n\n{message}",
+                conversation_history=conversation_history
             )
 
             # Parse response
