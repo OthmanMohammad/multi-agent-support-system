@@ -5,56 +5,51 @@ This module provides the foundation for all agents in the system,
 including base classes, types, capabilities, and utilities.
 """
 
-from src.agents.base.base_agent import (
-    BaseAgent,
-    RoutingAgent,
-    SpecialistAgent,
-    AgentConfig
-)
 from src.agents.base.agent_types import (
-    AgentType,
     AgentCapability,
-    Domain,
-    SupportIntent,
-    SalesIntent,
+    AgentRole,
+    AgentType,
     CSIntent,
-    AgentRole
+    Domain,
+    SalesIntent,
+    SupportIntent,
 )
+from src.agents.base.base_agent import AgentConfig, BaseAgent, RoutingAgent, SpecialistAgent
 from src.agents.base.capabilities import (
-    KBSearchCapability,
     CollaborationCapability,
-    DatabaseWriteCapability
+    DatabaseWriteCapability,
+    KBSearchCapability,
 )
 from src.agents.base.exceptions import (
     AgentError,
+    AgentEscalationError,
     AgentInitializationError,
     AgentProcessingError,
     AgentRoutingError,
-    AgentEscalationError
 )
 
 __all__ = [
-    # Base classes
-    "BaseAgent",
-    "RoutingAgent",
-    "SpecialistAgent",
-    "AgentConfig",
-    # Types and enums
-    "AgentType",
     "AgentCapability",
-    "Domain",
-    "SupportIntent",
-    "SalesIntent",
-    "CSIntent",
-    "AgentRole",
-    # Capabilities
-    "KBSearchCapability",
-    "CollaborationCapability",
-    "DatabaseWriteCapability",
+    "AgentConfig",
     # Exceptions
     "AgentError",
+    "AgentEscalationError",
     "AgentInitializationError",
     "AgentProcessingError",
+    "AgentRole",
     "AgentRoutingError",
-    "AgentEscalationError",
+    # Types and enums
+    "AgentType",
+    # Base classes
+    "BaseAgent",
+    "CSIntent",
+    "CollaborationCapability",
+    "DatabaseWriteCapability",
+    "Domain",
+    # Capabilities
+    "KBSearchCapability",
+    "RoutingAgent",
+    "SalesIntent",
+    "SpecialistAgent",
+    "SupportIntent",
 ]
