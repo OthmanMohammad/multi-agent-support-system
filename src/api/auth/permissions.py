@@ -5,8 +5,8 @@ This module defines permission scopes and provides utilities for
 enforcing role-based access control throughout the API.
 """
 
-from typing import List, Set
 from functools import wraps
+
 from fastapi import HTTPException, status
 
 from src.database.models.user import UserRole
@@ -18,6 +18,7 @@ logger = get_logger(__name__)
 # =============================================================================
 # PERMISSION SCOPES
 # =============================================================================
+
 
 class PermissionScope:
     """
@@ -98,52 +99,43 @@ SCOPE_DESCRIPTIONS = {
     PermissionScope.EXECUTE_AGENTS_TIER3: "Execute Tier 3 (Operational) agents",
     PermissionScope.EXECUTE_AGENTS_TIER4: "Execute Tier 4 (Advanced) agents",
     PermissionScope.ADMIN_AGENTS: "Manage agent registry and configuration",
-
     # Conversations
     PermissionScope.READ_CONVERSATIONS: "View conversations",
     PermissionScope.WRITE_CONVERSATIONS: "Create and update conversations",
     PermissionScope.DELETE_CONVERSATIONS: "Delete conversations",
     PermissionScope.ASSIGN_CONVERSATIONS: "Assign conversations to agents",
     PermissionScope.ESCALATE_CONVERSATIONS: "Escalate conversations to humans",
-
     # Customers
     PermissionScope.READ_CUSTOMERS: "View customer information",
     PermissionScope.WRITE_CUSTOMERS: "Create and update customers",
     PermissionScope.DELETE_CUSTOMERS: "Delete customers",
     PermissionScope.READ_CUSTOMER_PII: "View customer PII (emails, phone numbers)",
-
     # Workflows
     PermissionScope.READ_WORKFLOWS: "View workflow definitions",
     PermissionScope.EXECUTE_WORKFLOWS: "Execute workflows",
     PermissionScope.WRITE_WORKFLOWS: "Create and update workflows",
     PermissionScope.DELETE_WORKFLOWS: "Delete workflows",
-
     # Analytics
     PermissionScope.READ_ANALYTICS: "View basic analytics",
     PermissionScope.READ_ANALYTICS_DETAILED: "View detailed analytics and reports",
     PermissionScope.EXPORT_ANALYTICS: "Export analytics data",
-
     # Webhooks
     PermissionScope.READ_WEBHOOKS: "View webhooks",
     PermissionScope.WRITE_WEBHOOKS: "Create and update webhooks",
     PermissionScope.DELETE_WEBHOOKS: "Delete webhooks",
-
     # API Keys
     PermissionScope.READ_API_KEYS: "View API keys",
     PermissionScope.WRITE_API_KEYS: "Create API keys",
     PermissionScope.DELETE_API_KEYS: "Revoke API keys",
-
     # Users
     PermissionScope.READ_USERS: "View users",
     PermissionScope.WRITE_USERS: "Create and update users",
     PermissionScope.DELETE_USERS: "Delete users",
     PermissionScope.MANAGE_ROLES: "Manage user roles and permissions",
-
     # System
     PermissionScope.ADMIN_CONFIG: "Modify system configuration",
     PermissionScope.ADMIN_SYSTEM: "System administration",
     PermissionScope.ADMIN_SECURITY: "Security administration",
-
     # Wildcard
     PermissionScope.ALL: "All permissions (super admin)",
 }
@@ -153,10 +145,9 @@ SCOPE_DESCRIPTIONS = {
 # ROLE-SCOPE MAPPING
 # =============================================================================
 
-ROLE_SCOPES: dict[UserRole, List[str]] = {
+ROLE_SCOPES: dict[UserRole, list[str]] = {
     # Super admin has all permissions
     UserRole.SUPER_ADMIN: [PermissionScope.ALL],
-
     # Admin has most permissions except system administration
     UserRole.ADMIN: [
         # Agents
@@ -164,66 +155,52 @@ ROLE_SCOPES: dict[UserRole, List[str]] = {
         PermissionScope.EXECUTE_AGENTS_TIER1,
         PermissionScope.EXECUTE_AGENTS_TIER2,
         PermissionScope.EXECUTE_AGENTS_TIER3,
-
         # Conversations
         PermissionScope.READ_CONVERSATIONS,
         PermissionScope.WRITE_CONVERSATIONS,
         PermissionScope.ASSIGN_CONVERSATIONS,
         PermissionScope.ESCALATE_CONVERSATIONS,
-
         # Customers
         PermissionScope.READ_CUSTOMERS,
         PermissionScope.WRITE_CUSTOMERS,
         PermissionScope.READ_CUSTOMER_PII,
-
         # Workflows
         PermissionScope.READ_WORKFLOWS,
         PermissionScope.EXECUTE_WORKFLOWS,
         PermissionScope.WRITE_WORKFLOWS,
-
         # Analytics
         PermissionScope.READ_ANALYTICS,
         PermissionScope.READ_ANALYTICS_DETAILED,
         PermissionScope.EXPORT_ANALYTICS,
-
         # Webhooks
         PermissionScope.READ_WEBHOOKS,
         PermissionScope.WRITE_WEBHOOKS,
-
         # API Keys
         PermissionScope.READ_API_KEYS,
         PermissionScope.WRITE_API_KEYS,
-
         # Users (manage team)
         PermissionScope.READ_USERS,
         PermissionScope.WRITE_USERS,
     ],
-
     # Regular user has standard permissions
     UserRole.USER: [
         # Agents (Tier 1 only)
         PermissionScope.READ_AGENTS,
         PermissionScope.EXECUTE_AGENTS_TIER1,
-
         # Conversations
         PermissionScope.READ_CONVERSATIONS,
         PermissionScope.WRITE_CONVERSATIONS,
-
         # Customers (limited)
         PermissionScope.READ_CUSTOMERS,
-
         # Workflows (execute only)
         PermissionScope.READ_WORKFLOWS,
         PermissionScope.EXECUTE_WORKFLOWS,
-
         # Analytics (basic)
         PermissionScope.READ_ANALYTICS,
-
         # API Keys (own keys only)
         PermissionScope.READ_API_KEYS,
         PermissionScope.WRITE_API_KEYS,
     ],
-
     # Read-only user
     UserRole.READONLY: [
         PermissionScope.READ_AGENTS,
@@ -232,22 +209,18 @@ ROLE_SCOPES: dict[UserRole, List[str]] = {
         PermissionScope.READ_WORKFLOWS,
         PermissionScope.READ_ANALYTICS,
     ],
-
     # API client (programmatic access)
     UserRole.API_CLIENT: [
         # Agents (Tier 1-2)
         PermissionScope.READ_AGENTS,
         PermissionScope.EXECUTE_AGENTS_TIER1,
         PermissionScope.EXECUTE_AGENTS_TIER2,
-
         # Conversations
         PermissionScope.READ_CONVERSATIONS,
         PermissionScope.WRITE_CONVERSATIONS,
-
         # Customers
         PermissionScope.READ_CUSTOMERS,
         PermissionScope.WRITE_CUSTOMERS,
-
         # Workflows
         PermissionScope.READ_WORKFLOWS,
         PermissionScope.EXECUTE_WORKFLOWS,
@@ -259,7 +232,8 @@ ROLE_SCOPES: dict[UserRole, List[str]] = {
 # PERMISSION CHECKING
 # =============================================================================
 
-def has_permission(user_scopes: List[str], required_scope: str) -> bool:
+
+def has_permission(user_scopes: list[str], required_scope: str) -> bool:
     """
     Check if user has a specific permission scope.
 
@@ -284,7 +258,7 @@ def has_permission(user_scopes: List[str], required_scope: str) -> bool:
     return required_scope in user_scopes
 
 
-def has_any_permission(user_scopes: List[str], required_scopes: List[str]) -> bool:
+def has_any_permission(user_scopes: list[str], required_scopes: list[str]) -> bool:
     """
     Check if user has any of the required permissions.
 
@@ -312,7 +286,7 @@ def has_any_permission(user_scopes: List[str], required_scopes: List[str]) -> bo
     return bool(user_scope_set & required_scope_set)
 
 
-def has_all_permissions(user_scopes: List[str], required_scopes: List[str]) -> bool:
+def has_all_permissions(user_scopes: list[str], required_scopes: list[str]) -> bool:
     """
     Check if user has all of the required permissions.
 
@@ -340,7 +314,7 @@ def has_all_permissions(user_scopes: List[str], required_scopes: List[str]) -> b
     return required_scope_set.issubset(user_scope_set)
 
 
-def get_missing_permissions(user_scopes: List[str], required_scopes: List[str]) -> List[str]:
+def get_missing_permissions(user_scopes: list[str], required_scopes: list[str]) -> list[str]:
     """
     Get list of missing permissions.
 
@@ -367,7 +341,7 @@ def get_missing_permissions(user_scopes: List[str], required_scopes: List[str]) 
     return list(required_scope_set - user_scope_set)
 
 
-def get_role_scopes(role: UserRole) -> List[str]:
+def get_role_scopes(role: UserRole) -> list[str]:
     """
     Get all scopes for a role.
 
@@ -389,6 +363,7 @@ def get_role_scopes(role: UserRole) -> List[str]:
 # PERMISSION DECORATOR
 # =============================================================================
 
+
 def require_scopes(*required_scopes: str):
     """
     Decorator to enforce permission scopes on endpoints.
@@ -404,6 +379,7 @@ def require_scopes(*required_scopes: str):
         ... async def get_agents(current_user: User = Depends(get_current_user)):
         ...     return agents
     """
+
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -414,7 +390,7 @@ def require_scopes(*required_scopes: str):
                 logger.error("require_scopes_no_user", endpoint=func.__name__)
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Authentication dependency not configured"
+                    detail="Authentication dependency not configured",
                 )
 
             # Get user scopes
@@ -431,24 +407,25 @@ def require_scopes(*required_scopes: str):
                     user_role=current_user.role.value,
                     required_scopes=list(required_scopes),
                     missing_scopes=missing,
-                    endpoint=func.__name__
+                    endpoint=func.__name__,
                 )
 
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Missing required permissions: {', '.join(missing)}"
+                    detail=f"Missing required permissions: {', '.join(missing)}",
                 )
 
             logger.debug(
                 "permission_granted",
                 user_id=str(current_user.id),
                 scopes=list(required_scopes),
-                endpoint=func.__name__
+                endpoint=func.__name__,
             )
 
             return await func(*args, **kwargs)
 
         return wrapper
+
     return decorator
 
 
@@ -467,6 +444,7 @@ def require_any_scope(*required_scopes: str):
         ... async def get_agents(current_user: User = Depends(get_current_user)):
         ...     return agents
     """
+
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -475,7 +453,7 @@ def require_any_scope(*required_scopes: str):
             if not current_user:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Authentication dependency not configured"
+                    detail="Authentication dependency not configured",
                 )
 
             user_scopes = current_user.get_scopes()
@@ -485,15 +463,16 @@ def require_any_scope(*required_scopes: str):
                     "permission_denied",
                     user_id=str(current_user.id),
                     required_scopes_any=list(required_scopes),
-                    endpoint=func.__name__
+                    endpoint=func.__name__,
                 )
 
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Missing required permissions (need any of): {', '.join(required_scopes)}"
+                    detail=f"Missing required permissions (need any of): {', '.join(required_scopes)}",
                 )
 
             return await func(*args, **kwargs)
 
         return wrapper
+
     return decorator
