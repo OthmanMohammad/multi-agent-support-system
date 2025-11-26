@@ -1,0 +1,2005 @@
+{
+  "table": "agent_handoffs",
+  "records": [
+    {
+      "id": "8c6a1dcf-b7da-4210-a7dc-b232903faf1a",
+      "conversation_id": "a6d6265f-5f5a-49be-a833-03fb35a0b0bd",
+      "from_agent": "integration_helper",
+      "to_agent": "support_domain_router",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.36,
+      "timestamp": "2025-11-06T19:45:02.172626",
+      "latency_ms": 1542
+    },
+    {
+      "id": "baf937c4-e582-44d9-b8ff-6ef5d5967792",
+      "conversation_id": "9f3b65b5-bdbc-4370-9da5-35ebaf9add54",
+      "from_agent": "support_domain_router",
+      "to_agent": "onboarding_guide",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.74,
+      "timestamp": "2025-04-28T20:30:36.172626",
+      "latency_ms": 181
+    },
+    {
+      "id": "063f20e0-261b-484f-a8a4-9cc9ac8edb98",
+      "conversation_id": "e471aab2-169a-404d-9aa0-6b273e433753",
+      "from_agent": "sales_domain_router",
+      "to_agent": "billing_specialist",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.58,
+      "timestamp": "2025-11-06T12:40:31.172626",
+      "latency_ms": 1199
+    },
+    {
+      "id": "6decd3c1-b6c9-4f7f-9092-d53d8cf82a3d",
+      "conversation_id": "da25f951-5e55-4115-984a-07d801499f13",
+      "from_agent": "escalation_decider",
+      "to_agent": "inbound_qualifier",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.47,
+      "timestamp": "2025-04-20T03:01:04.172626",
+      "latency_ms": 1087
+    },
+    {
+      "id": "6c266ada-3dff-4091-ace4-83190e8760fc",
+      "conversation_id": "1bfcdd82-234b-4f82-b6ce-99f4524547ee",
+      "from_agent": "billing_specialist",
+      "to_agent": "inbound_qualifier",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.59,
+      "timestamp": "2025-11-21T05:22:13.172626",
+      "latency_ms": 1244
+    },
+    {
+      "id": "54462bb9-8e9f-401c-a3a2-9db78a4712d6",
+      "conversation_id": "3ed8321a-eafe-48c1-b37f-54cd2c3a8b5c",
+      "from_agent": "sales_domain_router",
+      "to_agent": "onboarding_guide",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.74,
+      "timestamp": "2025-11-08T04:22:08.172626",
+      "latency_ms": 1153
+    },
+    {
+      "id": "2a7db1fc-9501-4e81-afb0-44679d7ec134",
+      "conversation_id": "2d9c77bf-3e23-4299-8cfe-92aeeabc7f65",
+      "from_agent": "escalation_decider",
+      "to_agent": "sales_domain_router",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.48,
+      "timestamp": "2025-06-17T09:29:11.172626",
+      "latency_ms": 1716
+    },
+    {
+      "id": "5d41aa29-9dbb-49f8-9411-28706c5d8f2b",
+      "conversation_id": "4ebba7cc-c321-452d-bffe-f0d4a2ad22f2",
+      "from_agent": "onboarding_guide",
+      "to_agent": "support_domain_router",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.79,
+      "timestamp": "2025-08-16T17:33:02.172626",
+      "latency_ms": 1431
+    },
+    {
+      "id": "415784db-ebd1-4f00-bcad-365eebfd33b2",
+      "conversation_id": "b3882c41-f450-4ac0-9175-d8da6cac0d92",
+      "from_agent": "integration_helper",
+      "to_agent": "closer",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.65,
+      "timestamp": "2025-06-11T19:49:33.172626",
+      "latency_ms": 583
+    },
+    {
+      "id": "caafaa14-e385-4399-b248-e540d355c2cf",
+      "conversation_id": "160baca7-d350-4362-8e19-92911d77cbbf",
+      "from_agent": "meta_router",
+      "to_agent": "onboarding_guide",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.64,
+      "timestamp": "2025-01-25T19:48:06.172626",
+      "latency_ms": 1186
+    },
+    {
+      "id": "574854ce-a6df-4336-bf4b-9936db1dbe7e",
+      "conversation_id": "968a9d30-f903-4287-bb75-8b9e43b88411",
+      "from_agent": "quality_checker",
+      "to_agent": "escalation_decider",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.4,
+      "timestamp": "2025-11-12T16:27:45.172626",
+      "latency_ms": 1794
+    },
+    {
+      "id": "e0e0273d-e03a-43d9-b801-2c77a967b671",
+      "conversation_id": "362c14a8-a2e8-4b1e-84fc-ac790973b253",
+      "from_agent": "human_escalation",
+      "to_agent": "billing_specialist",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.69,
+      "timestamp": "2025-07-03T09:45:33.172626",
+      "latency_ms": 1230
+    },
+    {
+      "id": "845ae5b6-e39b-4ab2-b797-fb62c7f5615d",
+      "conversation_id": "58c31564-ef8f-429e-b163-933257cc3eb7",
+      "from_agent": "inbound_qualifier",
+      "to_agent": "quality_checker",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.77,
+      "timestamp": "2025-10-27T09:06:04.172626",
+      "latency_ms": 1268
+    },
+    {
+      "id": "51fbd68d-25bc-4636-9193-52d1b2fd567c",
+      "conversation_id": "ad7898bf-dc3f-4691-a5d3-6e55408e22e6",
+      "from_agent": "support_domain_router",
+      "to_agent": "meta_router",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.51,
+      "timestamp": "2025-02-02T02:04:00.172626",
+      "latency_ms": 1224
+    },
+    {
+      "id": "9ef77321-b595-4e9f-8db8-efce11f59f64",
+      "conversation_id": "2d973be3-98c0-4e28-86f2-2a313b399783",
+      "from_agent": "escalation_decider",
+      "to_agent": "closer",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.36,
+      "timestamp": "2025-06-03T08:41:22.172626",
+      "latency_ms": 1954
+    },
+    {
+      "id": "84660fc5-184a-4b3e-8a60-72f9447f27bd",
+      "conversation_id": "28ffa5b0-504e-4de6-88e1-309f136e7985",
+      "from_agent": "meta_router",
+      "to_agent": "support_domain_router",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.52,
+      "timestamp": "2024-12-29T02:49:36.172626",
+      "latency_ms": 328
+    },
+    {
+      "id": "555bc26c-50f5-4136-b491-107d5cfbe242",
+      "conversation_id": "1bfcdd82-234b-4f82-b6ce-99f4524547ee",
+      "from_agent": "sales_domain_router",
+      "to_agent": "support_domain_router",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.3,
+      "timestamp": "2025-11-21T05:14:13.172626",
+      "latency_ms": 926
+    },
+    {
+      "id": "011de06d-cf3b-446a-a84e-716f00ea7315",
+      "conversation_id": "02d65209-7787-4f88-934e-c827b263d9b1",
+      "from_agent": "escalation_decider",
+      "to_agent": "billing_specialist",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.5,
+      "timestamp": "2025-05-24T00:06:27.172626",
+      "latency_ms": 348
+    },
+    {
+      "id": "2eadf41c-dfe4-414d-8deb-b833616e8c48",
+      "conversation_id": "a67c1ef8-8e03-4399-b429-dda23a04a160",
+      "from_agent": "integration_helper",
+      "to_agent": "onboarding_guide",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.35,
+      "timestamp": "2025-09-22T03:26:54.172626",
+      "latency_ms": 1925
+    },
+    {
+      "id": "3a0c8c8d-2b6e-4804-8f80-02a6abe7e1c5",
+      "conversation_id": "27e305e8-f471-4624-81b1-e8b6cc117c9c",
+      "from_agent": "support_domain_router",
+      "to_agent": "closer",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.72,
+      "timestamp": "2024-12-13T03:10:24.172626",
+      "latency_ms": 851
+    },
+    {
+      "id": "48a634c4-5f83-4958-ad67-8ed3d5aeb4a1",
+      "conversation_id": "1cc50a12-cdbf-405e-a180-2bd0dfecaac2",
+      "from_agent": "bug_triager",
+      "to_agent": "billing_specialist",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.36,
+      "timestamp": "2025-07-26T03:00:01.172626",
+      "latency_ms": 1836
+    },
+    {
+      "id": "e66094b8-7252-4f2e-ab33-a8b6173b1150",
+      "conversation_id": "8944560c-e2c3-454f-b836-c62ee86add83",
+      "from_agent": "meta_router",
+      "to_agent": "bug_triager",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.44,
+      "timestamp": "2024-12-19T07:05:00.172626",
+      "latency_ms": 1051
+    },
+    {
+      "id": "a0b5616c-a6be-4ea3-a25d-10b47edb11d1",
+      "conversation_id": "f74c2d9d-fca7-4c31-b2b3-7d0bdb994905",
+      "from_agent": "closer",
+      "to_agent": "inbound_qualifier",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.48,
+      "timestamp": "2025-02-14T08:23:48.172626",
+      "latency_ms": 1070
+    },
+    {
+      "id": "f5b4a84d-63fd-4c3f-a508-708205706eb9",
+      "conversation_id": "f893a1eb-5420-47fa-8e2c-6c8e9c407eb9",
+      "from_agent": "support_domain_router",
+      "to_agent": "inbound_qualifier",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.77,
+      "timestamp": "2025-09-04T06:44:18.172626",
+      "latency_ms": 692
+    },
+    {
+      "id": "a9487710-1ed9-490c-9b60-156bc4ed643a",
+      "conversation_id": "f6aee087-40b9-474d-b500-e32600c92cbb",
+      "from_agent": "inbound_qualifier",
+      "to_agent": "sales_domain_router",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.53,
+      "timestamp": "2025-09-08T17:34:34.172626",
+      "latency_ms": 551
+    },
+    {
+      "id": "f9463ea0-3978-4c1e-a2a3-474eab1fe806",
+      "conversation_id": "1cc774fa-0183-4b09-8f39-a9a294f77fa0",
+      "from_agent": "sales_domain_router",
+      "to_agent": "bug_triager",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.45,
+      "timestamp": "2025-05-01T22:14:11.172626",
+      "latency_ms": 1803
+    },
+    {
+      "id": "5f46a2be-6c01-4c2c-805c-78d68a9d8b73",
+      "conversation_id": "d9060533-a3bc-4332-a3cb-3b21e27fa03b",
+      "from_agent": "closer",
+      "to_agent": "integration_helper",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.71,
+      "timestamp": "2025-08-18T22:25:58.172626",
+      "latency_ms": 313
+    },
+    {
+      "id": "f0393b4b-1484-4198-a094-33f5658f575b",
+      "conversation_id": "beacfbce-d59c-4798-8d39-4164316d08c8",
+      "from_agent": "escalation_decider",
+      "to_agent": "sales_domain_router",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.41,
+      "timestamp": "2025-09-10T16:18:37.172626",
+      "latency_ms": 1509
+    },
+    {
+      "id": "b8841417-d159-4af7-8b5a-dd0122efabd6",
+      "conversation_id": "8f887651-7a61-48b7-ade1-46d46d387848",
+      "from_agent": "onboarding_guide",
+      "to_agent": "billing_specialist",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.52,
+      "timestamp": "2025-06-24T07:15:47.172626",
+      "latency_ms": 429
+    },
+    {
+      "id": "8a451df8-8d4e-4b57-a367-ab1728d0711f",
+      "conversation_id": "9979cac8-1ca9-43a7-b728-fd11360418ef",
+      "from_agent": "quality_checker",
+      "to_agent": "bug_triager",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.49,
+      "timestamp": "2025-10-17T07:14:17.172626",
+      "latency_ms": 1292
+    },
+    {
+      "id": "76fbaf9f-1eda-4fec-9f29-09fe7de88236",
+      "conversation_id": "332bbbdd-8e39-46ff-80bf-bdaa3eaa80e1",
+      "from_agent": "closer",
+      "to_agent": "integration_helper",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.32,
+      "timestamp": "2025-05-24T00:11:32.172626",
+      "latency_ms": 86
+    },
+    {
+      "id": "182ae99b-2f8a-41b4-a737-225e07c4a016",
+      "conversation_id": "bb6e7e06-6754-4fee-beba-d10eb38bf999",
+      "from_agent": "meta_router",
+      "to_agent": "onboarding_guide",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.39,
+      "timestamp": "2025-05-06T04:06:13.172626",
+      "latency_ms": 747
+    },
+    {
+      "id": "8f78940b-4216-4e45-8a3f-86d492423295",
+      "conversation_id": "97f4ad7f-cfc2-4e9d-9cce-a5257042362f",
+      "from_agent": "escalation_decider",
+      "to_agent": "sales_domain_router",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.63,
+      "timestamp": "2025-05-06T20:25:08.172626",
+      "latency_ms": 56
+    },
+    {
+      "id": "86bc1046-f1ac-4627-82c7-7c8e99f05235",
+      "conversation_id": "292f00c7-e3cc-45d9-8259-cdf6d9d3f3f8",
+      "from_agent": "inbound_qualifier",
+      "to_agent": "human_escalation",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.68,
+      "timestamp": "2025-01-10T04:16:50.172626",
+      "latency_ms": 1549
+    },
+    {
+      "id": "5289b751-fc79-419b-99e0-029c8d00bb23",
+      "conversation_id": "5bb1571c-4091-4f4c-bfc3-1bfca0f5e0bf",
+      "from_agent": "human_escalation",
+      "to_agent": "sales_domain_router",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.77,
+      "timestamp": "2025-01-27T06:02:09.172626",
+      "latency_ms": 433
+    },
+    {
+      "id": "3456220f-2c71-401f-9eff-0e5e84698fc4",
+      "conversation_id": "0fe6a7db-a202-41f7-9620-4d2119f6efc6",
+      "from_agent": "support_domain_router",
+      "to_agent": "billing_specialist",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.52,
+      "timestamp": "2025-07-08T04:49:53.172626",
+      "latency_ms": 118
+    },
+    {
+      "id": "486907ca-d208-421b-b8f2-6d6e13df517f",
+      "conversation_id": "e1f4731c-b7a2-4328-94a4-75dfbae277ec",
+      "from_agent": "integration_helper",
+      "to_agent": "billing_specialist",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.4,
+      "timestamp": "2024-12-23T22:15:13.172626",
+      "latency_ms": 651
+    },
+    {
+      "id": "4638ae8f-0921-4d5e-9123-577be2df8f46",
+      "conversation_id": "06223ca2-d0b2-4413-88a6-e47883f5dd54",
+      "from_agent": "support_domain_router",
+      "to_agent": "closer",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.36,
+      "timestamp": "2024-11-27T21:20:49.172626",
+      "latency_ms": 1521
+    },
+    {
+      "id": "cf98b367-940b-4491-a69a-479c259b2ed5",
+      "conversation_id": "39c050ed-0afc-42bc-8adf-22aafd725309",
+      "from_agent": "meta_router",
+      "to_agent": "billing_specialist",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.73,
+      "timestamp": "2025-04-24T05:34:07.172626",
+      "latency_ms": 1724
+    },
+    {
+      "id": "424e7baa-2885-49c2-b45f-b724107628ca",
+      "conversation_id": "2de38066-26d2-4ceb-a133-fcc908f62b4f",
+      "from_agent": "support_domain_router",
+      "to_agent": "sales_domain_router",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.38,
+      "timestamp": "2025-03-18T01:40:49.172626",
+      "latency_ms": 627
+    },
+    {
+      "id": "0d473091-ee76-45bf-a9c3-d02a61663a05",
+      "conversation_id": "f0dd590f-11b7-4f34-a7f4-b3f3f34da833",
+      "from_agent": "billing_specialist",
+      "to_agent": "bug_triager",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.76,
+      "timestamp": "2025-04-25T16:18:05.172626",
+      "latency_ms": 1781
+    },
+    {
+      "id": "c8617e80-fb78-49db-bfff-9c692aa74a46",
+      "conversation_id": "1495f02e-ff83-427e-9bbe-0b37435d695d",
+      "from_agent": "human_escalation",
+      "to_agent": "escalation_decider",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.34,
+      "timestamp": "2025-07-11T08:19:59.172626",
+      "latency_ms": 1140
+    },
+    {
+      "id": "46932100-5468-4427-90c7-e0cbad104c2e",
+      "conversation_id": "4492cd21-44ca-447f-a3c4-e1414b13043d",
+      "from_agent": "meta_router",
+      "to_agent": "closer",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.75,
+      "timestamp": "2025-09-13T13:10:57.172626",
+      "latency_ms": 437
+    },
+    {
+      "id": "40b5053d-7f3f-4dae-9e04-6fc4c7e47020",
+      "conversation_id": "da1211fb-898e-4f56-bfb2-248a7393bec4",
+      "from_agent": "bug_triager",
+      "to_agent": "onboarding_guide",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.51,
+      "timestamp": "2025-11-19T02:50:22.172626",
+      "latency_ms": 531
+    },
+    {
+      "id": "410e5d32-e00a-4f22-91d3-0ee2f1e7aa4c",
+      "conversation_id": "0183dd45-0cf1-4b19-90a8-417fb1ad74e4",
+      "from_agent": "closer",
+      "to_agent": "bug_triager",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.53,
+      "timestamp": "2025-01-15T23:29:49.172626",
+      "latency_ms": 172
+    },
+    {
+      "id": "0f831ce6-54a5-445c-aac4-f9e5432795b0",
+      "conversation_id": "c7f7fa73-0ffb-4344-889d-cc7695e0430f",
+      "from_agent": "bug_triager",
+      "to_agent": "human_escalation",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.34,
+      "timestamp": "2025-08-15T23:03:35.172626",
+      "latency_ms": 634
+    },
+    {
+      "id": "16a05120-6b0d-499f-817a-5e31b6ec7f3f",
+      "conversation_id": "bf0ca36f-7c43-48da-80d3-63f26f868010",
+      "from_agent": "support_domain_router",
+      "to_agent": "inbound_qualifier",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.35,
+      "timestamp": "2025-07-24T22:59:08.172626",
+      "latency_ms": 1551
+    },
+    {
+      "id": "cbe7d11e-d0e9-4615-9ea6-985e0142e769",
+      "conversation_id": "d28c5828-030b-4bbb-8259-68d3b0dc50c3",
+      "from_agent": "support_domain_router",
+      "to_agent": "billing_specialist",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.39,
+      "timestamp": "2025-03-10T23:00:44.172626",
+      "latency_ms": 795
+    },
+    {
+      "id": "e346c902-a958-4ac6-aa2f-b07c452a3016",
+      "conversation_id": "13c3d418-b7d4-4a48-a6fb-023e41f73daf",
+      "from_agent": "escalation_decider",
+      "to_agent": "meta_router",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.46,
+      "timestamp": "2025-06-04T08:03:11.172626",
+      "latency_ms": 601
+    },
+    {
+      "id": "701dc1fe-e398-42e8-9db1-413e96442edb",
+      "conversation_id": "1657c5f8-e846-4085-98bf-3de80884a292",
+      "from_agent": "human_escalation",
+      "to_agent": "integration_helper",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.44,
+      "timestamp": "2025-04-10T19:52:45.172626",
+      "latency_ms": 1505
+    },
+    {
+      "id": "d3046b9c-6c2e-4a90-97a5-dea3ed1822d6",
+      "conversation_id": "dfa00a4e-cc3e-40d3-9003-c39a4aac5a95",
+      "from_agent": "quality_checker",
+      "to_agent": "sales_domain_router",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.34,
+      "timestamp": "2025-09-19T17:21:06.172626",
+      "latency_ms": 1180
+    },
+    {
+      "id": "49361981-d1e5-4bc3-92ea-d10671869ce4",
+      "conversation_id": "28ffa5b0-504e-4de6-88e1-309f136e7985",
+      "from_agent": "quality_checker",
+      "to_agent": "escalation_decider",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.55,
+      "timestamp": "2024-12-29T03:14:36.172626",
+      "latency_ms": 772
+    },
+    {
+      "id": "80c91506-2058-451e-9b68-61e3229ed844",
+      "conversation_id": "39c050ed-0afc-42bc-8adf-22aafd725309",
+      "from_agent": "inbound_qualifier",
+      "to_agent": "meta_router",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.54,
+      "timestamp": "2025-04-24T05:24:07.172626",
+      "latency_ms": 1502
+    },
+    {
+      "id": "ad6b1297-e757-4bf6-9e78-900521e15bb3",
+      "conversation_id": "427be374-d0b0-4df4-aa11-b3ecd060c01e",
+      "from_agent": "sales_domain_router",
+      "to_agent": "bug_triager",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.59,
+      "timestamp": "2025-06-25T13:31:59.172626",
+      "latency_ms": 728
+    },
+    {
+      "id": "3606c743-8605-4e3f-ae82-0ad3e1491a50",
+      "conversation_id": "4986f62d-b7c8-4658-adc4-90e536abe6fe",
+      "from_agent": "integration_helper",
+      "to_agent": "meta_router",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.38,
+      "timestamp": "2025-04-25T18:35:35.172626",
+      "latency_ms": 382
+    },
+    {
+      "id": "a224dd68-ba03-4fa4-b2e5-f225c94c4249",
+      "conversation_id": "812636f5-049d-4ca5-87e0-b33533715473",
+      "from_agent": "onboarding_guide",
+      "to_agent": "inbound_qualifier",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.44,
+      "timestamp": "2025-07-09T16:10:33.172626",
+      "latency_ms": 1522
+    },
+    {
+      "id": "cc9dc02a-a9f1-4804-a446-f6e91c122d68",
+      "conversation_id": "943f289f-7f4c-4f2f-a3bd-48be6e857906",
+      "from_agent": "sales_domain_router",
+      "to_agent": "billing_specialist",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.63,
+      "timestamp": "2025-07-14T22:58:10.172626",
+      "latency_ms": 245
+    },
+    {
+      "id": "117bc124-0c5f-400c-b540-5ec47ff73536",
+      "conversation_id": "7e1b6547-ea7b-426c-acbb-52b1074cede9",
+      "from_agent": "bug_triager",
+      "to_agent": "closer",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.61,
+      "timestamp": "2025-01-20T02:57:14.172626",
+      "latency_ms": 111
+    },
+    {
+      "id": "7c58651a-2cc1-4056-96c6-2d4ce1c3968c",
+      "conversation_id": "f21ab78c-3b83-4ede-8874-8c930846fe3d",
+      "from_agent": "billing_specialist",
+      "to_agent": "closer",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.56,
+      "timestamp": "2025-01-09T06:55:24.172626",
+      "latency_ms": 618
+    },
+    {
+      "id": "a81923b2-a5e3-4f0f-9b4b-96e641ad3c48",
+      "conversation_id": "d9060533-a3bc-4332-a3cb-3b21e27fa03b",
+      "from_agent": "onboarding_guide",
+      "to_agent": "escalation_decider",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.68,
+      "timestamp": "2025-08-18T22:17:58.172626",
+      "latency_ms": 1540
+    },
+    {
+      "id": "df089ca9-f6c5-4bb9-89b1-1ce1548451f9",
+      "conversation_id": "a0751081-cb73-4877-a41f-a372193a5707",
+      "from_agent": "integration_helper",
+      "to_agent": "meta_router",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.58,
+      "timestamp": "2025-10-29T12:35:53.172626",
+      "latency_ms": 914
+    },
+    {
+      "id": "8fe5ee6c-9b7c-4c7d-89b6-989a8cb17b15",
+      "conversation_id": "9ce25eb7-6aee-4f12-ad26-d49b0f0b18be",
+      "from_agent": "quality_checker",
+      "to_agent": "sales_domain_router",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.75,
+      "timestamp": "2025-10-14T11:17:26.172626",
+      "latency_ms": 789
+    },
+    {
+      "id": "ad1b5dd8-cfff-4846-bbeb-ebc1fd9cfc2f",
+      "conversation_id": "66c0c6e9-9d05-47f1-a0da-cee147728d54",
+      "from_agent": "billing_specialist",
+      "to_agent": "closer",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.63,
+      "timestamp": "2025-08-29T01:00:23.172626",
+      "latency_ms": 1080
+    },
+    {
+      "id": "d9f541cd-875c-4817-a75a-33c117d13e7f",
+      "conversation_id": "9b02429f-8c0d-417d-80c9-b1557c148a0d",
+      "from_agent": "quality_checker",
+      "to_agent": "human_escalation",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.65,
+      "timestamp": "2025-02-27T17:45:58.172626",
+      "latency_ms": 134
+    },
+    {
+      "id": "d8c2aee2-db97-4cf3-9733-a24785c1ff60",
+      "conversation_id": "60a194a4-b92d-4538-9de6-46e8eb2eeed8",
+      "from_agent": "inbound_qualifier",
+      "to_agent": "onboarding_guide",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.46,
+      "timestamp": "2025-01-12T17:08:28.172626",
+      "latency_ms": 142
+    },
+    {
+      "id": "ed630cc9-802b-4cd5-9d93-46a919e887a6",
+      "conversation_id": "4e3174f7-40ba-4d44-9b29-afd124056853",
+      "from_agent": "human_escalation",
+      "to_agent": "meta_router",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.44,
+      "timestamp": "2025-01-05T13:02:41.172626",
+      "latency_ms": 1130
+    },
+    {
+      "id": "7127ba19-f4bf-4cef-bb37-e1691b7d8473",
+      "conversation_id": "7db96764-0fa6-4d77-ba4f-ac9a0cdc1a00",
+      "from_agent": "integration_helper",
+      "to_agent": "support_domain_router",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.8,
+      "timestamp": "2025-05-14T17:52:56.172626",
+      "latency_ms": 1722
+    },
+    {
+      "id": "ae79cd3d-0f38-4b4d-9b12-8cf0fa219ed4",
+      "conversation_id": "3873e6c0-b4c4-46b8-90e8-f882e8a0c91d",
+      "from_agent": "billing_specialist",
+      "to_agent": "sales_domain_router",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.43,
+      "timestamp": "2025-01-09T01:59:17.172626",
+      "latency_ms": 1341
+    },
+    {
+      "id": "47be71f3-1e3c-4295-84e8-d0153502b9c3",
+      "conversation_id": "9dbd2be8-a8f5-43ec-b053-c6e1a92c6d8f",
+      "from_agent": "meta_router",
+      "to_agent": "quality_checker",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.73,
+      "timestamp": "2025-09-24T12:28:52.172626",
+      "latency_ms": 1573
+    },
+    {
+      "id": "a18f0087-3069-415a-93df-fe8bfb9eefd4",
+      "conversation_id": "f8fdd522-0041-4632-857c-7f9a78a1eae9",
+      "from_agent": "quality_checker",
+      "to_agent": "closer",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.53,
+      "timestamp": "2025-08-03T22:34:51.172626",
+      "latency_ms": 822
+    },
+    {
+      "id": "e92ec93c-faea-4770-91bb-699b8f3f3f65",
+      "conversation_id": "6c9f74ad-3245-41af-8beb-044bb968bbbe",
+      "from_agent": "onboarding_guide",
+      "to_agent": "human_escalation",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.69,
+      "timestamp": "2025-09-17T03:44:09.172626",
+      "latency_ms": 77
+    },
+    {
+      "id": "83a2c497-1826-486b-b57c-9379952e5c8f",
+      "conversation_id": "d6dc622c-cbcc-4d9e-9a42-65afe61e806d",
+      "from_agent": "closer",
+      "to_agent": "onboarding_guide",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.42,
+      "timestamp": "2025-06-12T19:56:20.172626",
+      "latency_ms": 1050
+    },
+    {
+      "id": "556857f1-f573-4a77-b505-77de399d1e20",
+      "conversation_id": "60a194a4-b92d-4538-9de6-46e8eb2eeed8",
+      "from_agent": "billing_specialist",
+      "to_agent": "escalation_decider",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.65,
+      "timestamp": "2025-01-12T17:15:28.172626",
+      "latency_ms": 1533
+    },
+    {
+      "id": "47dfc142-67bf-46a0-a2f2-9ac48a78fe10",
+      "conversation_id": "4a97ea7c-b59a-4abb-b6b6-1fc3fd1c43cb",
+      "from_agent": "human_escalation",
+      "to_agent": "inbound_qualifier",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.79,
+      "timestamp": "2025-09-04T19:58:06.172626",
+      "latency_ms": 1878
+    },
+    {
+      "id": "97a554a1-a218-4886-bdd1-53a3e953ae91",
+      "conversation_id": "ff5d8067-8652-4959-aca9-08e0885bed9e",
+      "from_agent": "bug_triager",
+      "to_agent": "support_domain_router",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.64,
+      "timestamp": "2025-07-15T21:11:04.172626",
+      "latency_ms": 370
+    },
+    {
+      "id": "39bd1056-a9c8-41b1-99b3-0d816f4bd627",
+      "conversation_id": "7406c3dd-9da9-4acc-8711-333b2eb7d015",
+      "from_agent": "escalation_decider",
+      "to_agent": "closer",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.72,
+      "timestamp": "2025-05-27T01:43:19.172626",
+      "latency_ms": 243
+    },
+    {
+      "id": "80143e9e-3a88-4342-89aa-301e4b946796",
+      "conversation_id": "a9455f18-4629-4e3c-bc9f-163f3749741b",
+      "from_agent": "billing_specialist",
+      "to_agent": "integration_helper",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.56,
+      "timestamp": "2025-10-23T07:15:51.172626",
+      "latency_ms": 485
+    },
+    {
+      "id": "27fbb7d9-bad4-4559-b631-ea66cabd490b",
+      "conversation_id": "f7af293d-e447-4411-9c38-eca78248b6f4",
+      "from_agent": "closer",
+      "to_agent": "billing_specialist",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.45,
+      "timestamp": "2025-08-30T06:10:01.172626",
+      "latency_ms": 438
+    },
+    {
+      "id": "698ccec0-198c-402e-bf75-2177e9192b08",
+      "conversation_id": "76272bb0-0800-43c5-9164-5e214830e4c8",
+      "from_agent": "billing_specialist",
+      "to_agent": "escalation_decider",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.5,
+      "timestamp": "2025-02-01T20:43:29.172626",
+      "latency_ms": 433
+    },
+    {
+      "id": "df88ad9f-5bde-4b02-82a0-4aba44a8b3c5",
+      "conversation_id": "2f254b0c-3220-4a10-9d49-c2b1f2a8f470",
+      "from_agent": "support_domain_router",
+      "to_agent": "inbound_qualifier",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.44,
+      "timestamp": "2025-11-19T13:48:28.172626",
+      "latency_ms": 1504
+    },
+    {
+      "id": "0bf8e297-5b9e-4351-a463-edff4b918115",
+      "conversation_id": "64b79ddb-4d88-49fe-962b-13a5bb018eb7",
+      "from_agent": "meta_router",
+      "to_agent": "inbound_qualifier",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.42,
+      "timestamp": "2024-12-05T18:23:39.172626",
+      "latency_ms": 294
+    },
+    {
+      "id": "6c67e02c-e483-4633-a4bd-85ce4ed8047e",
+      "conversation_id": "750dd4f6-faf9-442e-9a17-8175d4fdc7cc",
+      "from_agent": "bug_triager",
+      "to_agent": "onboarding_guide",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.42,
+      "timestamp": "2025-03-07T14:30:49.172626",
+      "latency_ms": 910
+    },
+    {
+      "id": "1a355798-8e0d-4c5f-82f9-77fb644a7309",
+      "conversation_id": "802690b6-860b-49a3-9edb-d03cbcd2ff3a",
+      "from_agent": "onboarding_guide",
+      "to_agent": "inbound_qualifier",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.46,
+      "timestamp": "2025-02-17T07:12:00.172626",
+      "latency_ms": 428
+    },
+    {
+      "id": "aa50bea0-de4b-4bf0-a75a-b4880e17f269",
+      "conversation_id": "1d6375b3-39b7-4eb9-aea3-cf47266920dc",
+      "from_agent": "integration_helper",
+      "to_agent": "meta_router",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.34,
+      "timestamp": "2024-12-07T10:30:34.172626",
+      "latency_ms": 1695
+    },
+    {
+      "id": "a7985094-b4a2-4208-b63e-5e021878ef3c",
+      "conversation_id": "51f53152-24a5-480c-ba68-c6800a01cce3",
+      "from_agent": "sales_domain_router",
+      "to_agent": "escalation_decider",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.53,
+      "timestamp": "2025-05-02T21:07:37.172626",
+      "latency_ms": 1461
+    },
+    {
+      "id": "20f54b19-0473-4b56-8846-5cb604bf8296",
+      "conversation_id": "9a658906-be79-467a-b04d-7fa1233cd945",
+      "from_agent": "billing_specialist",
+      "to_agent": "support_domain_router",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.43,
+      "timestamp": "2025-09-02T05:48:14.172626",
+      "latency_ms": 1440
+    },
+    {
+      "id": "26651a70-f62b-4039-95cb-dcca851229b8",
+      "conversation_id": "64b79ddb-4d88-49fe-962b-13a5bb018eb7",
+      "from_agent": "onboarding_guide",
+      "to_agent": "closer",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.49,
+      "timestamp": "2024-12-05T18:44:39.172626",
+      "latency_ms": 208
+    },
+    {
+      "id": "2c580c5b-11f6-4a28-8676-14ca3896bf8b",
+      "conversation_id": "04fa0ed8-a16e-4d6c-ac82-4181a3bed505",
+      "from_agent": "meta_router",
+      "to_agent": "quality_checker",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.59,
+      "timestamp": "2025-03-07T18:25:07.172626",
+      "latency_ms": 1668
+    },
+    {
+      "id": "6ae8c1b6-431a-4c77-ba99-4444d65c5f40",
+      "conversation_id": "73ca4ba0-ca1f-437a-9be2-111e82c73bed",
+      "from_agent": "sales_domain_router",
+      "to_agent": "billing_specialist",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.59,
+      "timestamp": "2025-09-08T22:15:03.172626",
+      "latency_ms": 104
+    },
+    {
+      "id": "64215fb3-d359-4ae8-8f21-738562ed3e76",
+      "conversation_id": "362c14a8-a2e8-4b1e-84fc-ac790973b253",
+      "from_agent": "closer",
+      "to_agent": "escalation_decider",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.77,
+      "timestamp": "2025-07-03T10:14:33.172626",
+      "latency_ms": 938
+    },
+    {
+      "id": "389e470d-4e31-4a1a-895e-be459595e4b4",
+      "conversation_id": "dc49ff17-44fa-4049-a109-fa84ffbc03dd",
+      "from_agent": "quality_checker",
+      "to_agent": "billing_specialist",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.73,
+      "timestamp": "2024-12-15T10:02:41.172626",
+      "latency_ms": 1146
+    },
+    {
+      "id": "e78df018-a2e3-4feb-a80d-b2e200a0cefd",
+      "conversation_id": "18f62b8b-89cd-41fc-bbf9-153929cdb966",
+      "from_agent": "human_escalation",
+      "to_agent": "integration_helper",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.58,
+      "timestamp": "2025-04-03T22:24:10.172626",
+      "latency_ms": 1674
+    },
+    {
+      "id": "6134bbea-92e4-441e-8f98-a2c72528d495",
+      "conversation_id": "14732e40-bf4e-4356-9bc2-7063a3167f03",
+      "from_agent": "bug_triager",
+      "to_agent": "quality_checker",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.5,
+      "timestamp": "2025-09-18T16:59:57.172626",
+      "latency_ms": 1195
+    },
+    {
+      "id": "f67623ee-5c91-4500-bf6b-0a4414eec36b",
+      "conversation_id": "34f42333-c7d6-4042-b034-92f72b711a3f",
+      "from_agent": "quality_checker",
+      "to_agent": "human_escalation",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.42,
+      "timestamp": "2025-07-16T03:53:22.172626",
+      "latency_ms": 1021
+    },
+    {
+      "id": "0f76d604-e266-4d60-aa0e-8ec7f7766a42",
+      "conversation_id": "e3f1c1ba-3dac-4160-9c2f-23d1b7e965f7",
+      "from_agent": "onboarding_guide",
+      "to_agent": "human_escalation",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.42,
+      "timestamp": "2025-02-18T01:35:33.172626",
+      "latency_ms": 1269
+    },
+    {
+      "id": "0d2a0b73-43b1-4572-9f1f-124eae638d9b",
+      "conversation_id": "fd869d8e-6c4f-4d60-8586-2ea7320bb66f",
+      "from_agent": "billing_specialist",
+      "to_agent": "onboarding_guide",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.34,
+      "timestamp": "2025-07-13T17:08:52.172626",
+      "latency_ms": 890
+    },
+    {
+      "id": "42e92b48-2d28-47bf-a148-3905c36a406e",
+      "conversation_id": "402ca09e-2a21-48a3-9a24-0ef6e16c567a",
+      "from_agent": "inbound_qualifier",
+      "to_agent": "meta_router",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.71,
+      "timestamp": "2025-08-13T14:21:49.172626",
+      "latency_ms": 398
+    },
+    {
+      "id": "dc8464d4-a8a0-4830-8d5a-65110e6adce0",
+      "conversation_id": "da282a35-29e3-42ce-be58-3c2fe73831bb",
+      "from_agent": "meta_router",
+      "to_agent": "onboarding_guide",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.58,
+      "timestamp": "2025-09-28T06:27:49.172626",
+      "latency_ms": 672
+    },
+    {
+      "id": "8d8d89c7-6af1-4f37-a814-38d273a988df",
+      "conversation_id": "af23c591-3c40-4e22-a5d8-c48deb55a784",
+      "from_agent": "onboarding_guide",
+      "to_agent": "sales_domain_router",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.33,
+      "timestamp": "2025-02-16T20:02:35.172626",
+      "latency_ms": 1210
+    },
+    {
+      "id": "4995bd10-8980-4b66-a164-5bfca42871f9",
+      "conversation_id": "cf008bec-5075-4031-a5ff-a30b3e0a3b75",
+      "from_agent": "support_domain_router",
+      "to_agent": "onboarding_guide",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.49,
+      "timestamp": "2025-07-22T04:04:18.172626",
+      "latency_ms": 698
+    },
+    {
+      "id": "97f68823-6246-435a-b11c-f3778e5c6a32",
+      "conversation_id": "360a3edc-c919-499a-b795-3be3f1f0da48",
+      "from_agent": "sales_domain_router",
+      "to_agent": "meta_router",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.33,
+      "timestamp": "2024-12-03T22:23:42.172626",
+      "latency_ms": 1063
+    },
+    {
+      "id": "5dfae1ba-76c7-4a91-80c6-0b4daa97a841",
+      "conversation_id": "7a8bd334-d14a-4180-b58b-e096d1e0f100",
+      "from_agent": "integration_helper",
+      "to_agent": "billing_specialist",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.73,
+      "timestamp": "2025-11-23T22:23:05.172626",
+      "latency_ms": 1564
+    },
+    {
+      "id": "83591de2-ba3f-4c99-a2e0-1f93824906e0",
+      "conversation_id": "9ab26759-1e90-490f-9ab5-4eea83a06321",
+      "from_agent": "human_escalation",
+      "to_agent": "inbound_qualifier",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.51,
+      "timestamp": "2025-07-19T07:08:36.172626",
+      "latency_ms": 1242
+    },
+    {
+      "id": "0157d070-3aef-45a5-a72d-a1541edbf3d3",
+      "conversation_id": "8361f54e-048a-4a15-982d-67c221e82199",
+      "from_agent": "support_domain_router",
+      "to_agent": "human_escalation",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.42,
+      "timestamp": "2025-06-09T09:34:21.172626",
+      "latency_ms": 277
+    },
+    {
+      "id": "ec9ccf48-8a0a-4244-9595-c13aa8321746",
+      "conversation_id": "875ad04a-6e57-49a2-b586-b20260c9127e",
+      "from_agent": "inbound_qualifier",
+      "to_agent": "bug_triager",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.46,
+      "timestamp": "2024-12-04T18:48:04.172626",
+      "latency_ms": 1241
+    },
+    {
+      "id": "e9bf46eb-e9c5-4a20-b428-479e86bb8701",
+      "conversation_id": "af92b570-e0d5-4a03-89b5-fff97ca464fb",
+      "from_agent": "closer",
+      "to_agent": "integration_helper",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.77,
+      "timestamp": "2025-01-14T18:23:37.172626",
+      "latency_ms": 1154
+    },
+    {
+      "id": "218d0259-a6f0-46e0-8573-9adea29018c9",
+      "conversation_id": "d3909de4-d633-4681-99f0-aebee62d08f9",
+      "from_agent": "quality_checker",
+      "to_agent": "closer",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.78,
+      "timestamp": "2025-09-04T05:57:12.172626",
+      "latency_ms": 1804
+    },
+    {
+      "id": "56ac6f32-887c-46aa-8474-5d0377a3f63c",
+      "conversation_id": "1eb0bfab-8377-486b-9f7a-a094ec41158f",
+      "from_agent": "sales_domain_router",
+      "to_agent": "bug_triager",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.5,
+      "timestamp": "2025-07-20T23:49:26.172626",
+      "latency_ms": 1039
+    },
+    {
+      "id": "deec9a07-4dca-4883-9b90-69775c134591",
+      "conversation_id": "a0751081-cb73-4877-a41f-a372193a5707",
+      "from_agent": "billing_specialist",
+      "to_agent": "human_escalation",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.66,
+      "timestamp": "2025-10-29T11:59:53.172626",
+      "latency_ms": 718
+    },
+    {
+      "id": "e38e377f-7581-48d2-a27e-af489b61b9fc",
+      "conversation_id": "2d009e7c-e33b-4859-9e14-4916992e0082",
+      "from_agent": "quality_checker",
+      "to_agent": "sales_domain_router",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.32,
+      "timestamp": "2025-08-04T21:21:31.172626",
+      "latency_ms": 352
+    },
+    {
+      "id": "063f254e-ae6e-4514-bec4-374acbee55e6",
+      "conversation_id": "9e3995fb-d638-4802-88ea-6bc0d82675f9",
+      "from_agent": "integration_helper",
+      "to_agent": "sales_domain_router",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.76,
+      "timestamp": "2025-03-27T17:13:03.172626",
+      "latency_ms": 1563
+    },
+    {
+      "id": "13c8304b-aa1f-4113-809d-ca0c830ac1f0",
+      "conversation_id": "13c3d418-b7d4-4a48-a6fb-023e41f73daf",
+      "from_agent": "escalation_decider",
+      "to_agent": "integration_helper",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.52,
+      "timestamp": "2025-06-04T08:40:11.172626",
+      "latency_ms": 710
+    },
+    {
+      "id": "fc08c2b3-3209-43ee-9f70-0c5e2ce95248",
+      "conversation_id": "9981383f-5369-4ce6-b6b5-79e8c8e3d378",
+      "from_agent": "integration_helper",
+      "to_agent": "onboarding_guide",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.33,
+      "timestamp": "2025-11-08T12:09:56.172626",
+      "latency_ms": 648
+    },
+    {
+      "id": "5c742e4a-f6bb-4d1d-b037-db3afe685fb7",
+      "conversation_id": "1e5df23c-af5b-493a-901a-d2985804f098",
+      "from_agent": "onboarding_guide",
+      "to_agent": "sales_domain_router",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.47,
+      "timestamp": "2024-12-22T04:09:58.172626",
+      "latency_ms": 1078
+    },
+    {
+      "id": "51334073-4020-41ed-8c0b-0fdd922cafc5",
+      "conversation_id": "0bf95021-5a2d-4d8e-99c3-83e6ed0e9e3f",
+      "from_agent": "support_domain_router",
+      "to_agent": "integration_helper",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.68,
+      "timestamp": "2025-07-20T02:38:18.172626",
+      "latency_ms": 1428
+    },
+    {
+      "id": "f0782422-69db-4d86-ab83-d19083f4a607",
+      "conversation_id": "1f7c1500-d3e2-4613-ae1a-3e74d90df3d6",
+      "from_agent": "inbound_qualifier",
+      "to_agent": "onboarding_guide",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.46,
+      "timestamp": "2024-12-15T02:06:43.172626",
+      "latency_ms": 1247
+    },
+    {
+      "id": "41f354e7-6d29-4c63-b670-9cad02e27fe8",
+      "conversation_id": "2f2506b9-6642-4df4-99cc-9b17e4fb32dd",
+      "from_agent": "onboarding_guide",
+      "to_agent": "sales_domain_router",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.59,
+      "timestamp": "2025-06-24T05:04:42.172626",
+      "latency_ms": 1835
+    },
+    {
+      "id": "3aac020e-0d92-4845-97ba-1ed8a043ca28",
+      "conversation_id": "48ac0f30-9ce5-463e-8344-8b2b2b6dcd18",
+      "from_agent": "integration_helper",
+      "to_agent": "human_escalation",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.54,
+      "timestamp": "2025-08-31T07:25:34.172626",
+      "latency_ms": 1768
+    },
+    {
+      "id": "09a3060b-ff1e-4642-9161-fefa8e2d95f2",
+      "conversation_id": "cdae7bae-fd55-440f-a4aa-e7674bcc7c3e",
+      "from_agent": "billing_specialist",
+      "to_agent": "bug_triager",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.52,
+      "timestamp": "2025-09-13T21:33:48.172626",
+      "latency_ms": 686
+    },
+    {
+      "id": "51e0108f-d48b-4c8d-bd55-bf8d17422153",
+      "conversation_id": "dc49ff17-44fa-4049-a109-fa84ffbc03dd",
+      "from_agent": "meta_router",
+      "to_agent": "human_escalation",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.53,
+      "timestamp": "2024-12-15T10:16:41.172626",
+      "latency_ms": 1637
+    },
+    {
+      "id": "36acfe17-58bd-4be6-a4f3-24b84043330f",
+      "conversation_id": "c1434c00-5c42-431d-a90d-2bfb58ef8bce",
+      "from_agent": "escalation_decider",
+      "to_agent": "integration_helper",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.35,
+      "timestamp": "2024-12-16T01:46:11.172626",
+      "latency_ms": 1025
+    },
+    {
+      "id": "55fdfd80-3cc4-4b66-b324-ca6bfb685926",
+      "conversation_id": "7af60f0f-873a-4816-aefb-d37fb3f09718",
+      "from_agent": "inbound_qualifier",
+      "to_agent": "escalation_decider",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.39,
+      "timestamp": "2025-03-13T02:57:02.172626",
+      "latency_ms": 1746
+    },
+    {
+      "id": "10d6b7d9-5ec4-4d49-a1ef-6e7a4040d4dd",
+      "conversation_id": "28ffa5b0-504e-4de6-88e1-309f136e7985",
+      "from_agent": "sales_domain_router",
+      "to_agent": "quality_checker",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.7,
+      "timestamp": "2024-12-29T02:51:36.172626",
+      "latency_ms": 682
+    },
+    {
+      "id": "348e618f-0844-4a65-aaba-8b2b2598c692",
+      "conversation_id": "72388b94-6b70-4ec0-870b-e19a15ac50a2",
+      "from_agent": "meta_router",
+      "to_agent": "closer",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.57,
+      "timestamp": "2025-11-22T21:57:12.172626",
+      "latency_ms": 1020
+    },
+    {
+      "id": "10273ba3-f295-4d4c-a14f-71dbecb3cb35",
+      "conversation_id": "2230430b-c582-4bce-b93b-0d6228c319fe",
+      "from_agent": "bug_triager",
+      "to_agent": "meta_router",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.72,
+      "timestamp": "2025-03-12T04:09:28.172626",
+      "latency_ms": 637
+    },
+    {
+      "id": "0b218d99-4b0e-4a6a-9d06-52d59870c11c",
+      "conversation_id": "7058daa1-c718-4eaf-9758-8bae24e5fe09",
+      "from_agent": "onboarding_guide",
+      "to_agent": "inbound_qualifier",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.68,
+      "timestamp": "2025-05-24T03:09:56.172626",
+      "latency_ms": 445
+    },
+    {
+      "id": "d528a3b2-ce9c-403f-8e18-87c2a384b8e5",
+      "conversation_id": "dab7e0ec-a678-489e-b1e6-68a7f3f2eba8",
+      "from_agent": "closer",
+      "to_agent": "onboarding_guide",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.65,
+      "timestamp": "2025-09-25T17:53:56.172626",
+      "latency_ms": 1764
+    },
+    {
+      "id": "5879ef24-f54b-4ff2-be93-88406538da4a",
+      "conversation_id": "aaa7fbcc-4279-4a1f-8dfb-0d04058223d6",
+      "from_agent": "sales_domain_router",
+      "to_agent": "escalation_decider",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.41,
+      "timestamp": "2025-10-09T08:09:09.172626",
+      "latency_ms": 1624
+    },
+    {
+      "id": "ff0169cf-68fa-4e88-9bf1-781a2cb843d0",
+      "conversation_id": "90e31d1f-1236-4ab7-942c-72e44701aa1a",
+      "from_agent": "integration_helper",
+      "to_agent": "bug_triager",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.38,
+      "timestamp": "2025-02-01T04:20:06.172626",
+      "latency_ms": 1778
+    },
+    {
+      "id": "c6943a05-4c49-4292-936f-179aaf84e76f",
+      "conversation_id": "a9455f18-4629-4e3c-bc9f-163f3749741b",
+      "from_agent": "human_escalation",
+      "to_agent": "meta_router",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.49,
+      "timestamp": "2025-10-23T06:54:51.172626",
+      "latency_ms": 423
+    },
+    {
+      "id": "56b4e921-5467-44ff-ac9f-3f3d03efa266",
+      "conversation_id": "04fa0ed8-a16e-4d6c-ac82-4181a3bed505",
+      "from_agent": "onboarding_guide",
+      "to_agent": "integration_helper",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.7,
+      "timestamp": "2025-03-07T18:56:07.172626",
+      "latency_ms": 427
+    },
+    {
+      "id": "87920799-cb31-4e8a-b9d6-1104696ed332",
+      "conversation_id": "b53cae8d-9a56-43cd-a734-2f7ba5ca90df",
+      "from_agent": "inbound_qualifier",
+      "to_agent": "sales_domain_router",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.76,
+      "timestamp": "2025-10-04T09:27:41.172626",
+      "latency_ms": 923
+    },
+    {
+      "id": "a368bc92-d1c0-4abe-9bb6-d922fef856f8",
+      "conversation_id": "5bb1571c-4091-4f4c-bfc3-1bfca0f5e0bf",
+      "from_agent": "closer",
+      "to_agent": "sales_domain_router",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.32,
+      "timestamp": "2025-01-27T06:04:09.172626",
+      "latency_ms": 710
+    },
+    {
+      "id": "db9ff62d-f86b-4107-a7f5-0c5af036e2f0",
+      "conversation_id": "332bbbdd-8e39-46ff-80bf-bdaa3eaa80e1",
+      "from_agent": "closer",
+      "to_agent": "escalation_decider",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.33,
+      "timestamp": "2025-05-24T00:30:32.172626",
+      "latency_ms": 1708
+    },
+    {
+      "id": "08b1b683-7b14-45bc-b20a-d8071ba42f0e",
+      "conversation_id": "9e3995fb-d638-4802-88ea-6bc0d82675f9",
+      "from_agent": "onboarding_guide",
+      "to_agent": "support_domain_router",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.51,
+      "timestamp": "2025-03-27T16:25:03.172626",
+      "latency_ms": 1676
+    },
+    {
+      "id": "7494847d-c106-4d98-b560-f076ac557768",
+      "conversation_id": "d9fc747d-fe65-4bd4-81d6-d68857d14121",
+      "from_agent": "integration_helper",
+      "to_agent": "billing_specialist",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.43,
+      "timestamp": "2025-06-23T06:54:20.172626",
+      "latency_ms": 1551
+    },
+    {
+      "id": "c020d8af-061c-40d3-b586-5dd40ef5edea",
+      "conversation_id": "360a3edc-c919-499a-b795-3be3f1f0da48",
+      "from_agent": "onboarding_guide",
+      "to_agent": "meta_router",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.56,
+      "timestamp": "2024-12-03T21:51:42.172626",
+      "latency_ms": 533
+    },
+    {
+      "id": "2b135143-0eb2-4107-a3b2-cd0c1d7d8189",
+      "conversation_id": "165918ec-94f5-4d1b-8ba6-955afe935637",
+      "from_agent": "support_domain_router",
+      "to_agent": "quality_checker",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.66,
+      "timestamp": "2025-10-07T11:56:35.172626",
+      "latency_ms": 190
+    },
+    {
+      "id": "300864cc-1c5a-4a20-9360-ca55c7ae6714",
+      "conversation_id": "f65a9c48-798d-47ad-ad93-7ab73106ad10",
+      "from_agent": "meta_router",
+      "to_agent": "closer",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.68,
+      "timestamp": "2024-12-29T07:18:40.172626",
+      "latency_ms": 1020
+    },
+    {
+      "id": "18954474-6533-4aae-bd87-07b017393174",
+      "conversation_id": "ac66b8ed-db7a-4f6d-b609-9be3c59127c0",
+      "from_agent": "onboarding_guide",
+      "to_agent": "billing_specialist",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.73,
+      "timestamp": "2025-11-06T00:58:18.172626",
+      "latency_ms": 542
+    },
+    {
+      "id": "341a04b0-5a57-44e5-9a94-1496e980e35c",
+      "conversation_id": "7db96764-0fa6-4d77-ba4f-ac9a0cdc1a00",
+      "from_agent": "sales_domain_router",
+      "to_agent": "inbound_qualifier",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.51,
+      "timestamp": "2025-05-14T17:58:56.172626",
+      "latency_ms": 1367
+    },
+    {
+      "id": "6177cf12-8abe-48a3-9109-88c9997da3b4",
+      "conversation_id": "243ede23-675d-482a-b815-60ceb7c84c46",
+      "from_agent": "bug_triager",
+      "to_agent": "closer",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.58,
+      "timestamp": "2024-12-26T05:50:28.172626",
+      "latency_ms": 993
+    },
+    {
+      "id": "9e35b2b2-8aa8-4b9d-8e03-fc94408d7f62",
+      "conversation_id": "c5b14834-27cf-45fc-ada5-9cc3fc58e86e",
+      "from_agent": "billing_specialist",
+      "to_agent": "human_escalation",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.77,
+      "timestamp": "2025-01-21T08:25:27.172626",
+      "latency_ms": 867
+    },
+    {
+      "id": "d328ccb5-dcc2-407f-b311-8f3c97d73c5f",
+      "conversation_id": "57b62e90-87a3-46dc-8717-a53a9eca6c12",
+      "from_agent": "inbound_qualifier",
+      "to_agent": "quality_checker",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.41,
+      "timestamp": "2025-06-10T06:36:36.172626",
+      "latency_ms": 1506
+    },
+    {
+      "id": "1c0a3da3-01f7-4645-b061-0f3902596e98",
+      "conversation_id": "0bf95021-5a2d-4d8e-99c3-83e6ed0e9e3f",
+      "from_agent": "billing_specialist",
+      "to_agent": "human_escalation",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.63,
+      "timestamp": "2025-07-20T02:00:18.172626",
+      "latency_ms": 1571
+    },
+    {
+      "id": "a5dbc8ad-252e-49ff-a554-081da828758c",
+      "conversation_id": "006dab58-283f-4b6a-bd37-c83962ec1864",
+      "from_agent": "onboarding_guide",
+      "to_agent": "support_domain_router",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.45,
+      "timestamp": "2025-03-22T00:22:43.172626",
+      "latency_ms": 277
+    },
+    {
+      "id": "57d0df5a-407a-4fad-9e19-5e41cabf0496",
+      "conversation_id": "9023f452-cd9b-4f87-babd-3e87469d15ca",
+      "from_agent": "bug_triager",
+      "to_agent": "inbound_qualifier",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.37,
+      "timestamp": "2025-07-09T10:30:50.172626",
+      "latency_ms": 1420
+    },
+    {
+      "id": "2b71b512-ca0b-48a7-85e6-c8bf39888a93",
+      "conversation_id": "9ab18cff-7937-4179-8ee9-1afefb076617",
+      "from_agent": "sales_domain_router",
+      "to_agent": "meta_router",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.59,
+      "timestamp": "2025-09-07T03:17:39.172626",
+      "latency_ms": 682
+    },
+    {
+      "id": "20e6d3e1-7e8c-4dcc-8a59-d6319a94cecd",
+      "conversation_id": "e304af83-9459-4b18-9942-565eed24cf2b",
+      "from_agent": "sales_domain_router",
+      "to_agent": "escalation_decider",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.69,
+      "timestamp": "2025-05-18T09:14:03.172626",
+      "latency_ms": 737
+    },
+    {
+      "id": "99b0e8fe-f913-46a2-9757-7cea01d056dd",
+      "conversation_id": "60a194a4-b92d-4538-9de6-46e8eb2eeed8",
+      "from_agent": "closer",
+      "to_agent": "sales_domain_router",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.46,
+      "timestamp": "2025-01-12T17:31:28.172626",
+      "latency_ms": 1778
+    },
+    {
+      "id": "00af4ea6-1b69-4069-a5c6-cfec803e5657",
+      "conversation_id": "fc73ede1-f783-47b4-a1d6-10def8648ba8",
+      "from_agent": "sales_domain_router",
+      "to_agent": "billing_specialist",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.38,
+      "timestamp": "2025-11-13T03:43:19.172626",
+      "latency_ms": 1040
+    },
+    {
+      "id": "1299bc34-f423-498e-bb87-d41dda067044",
+      "conversation_id": "dfa00a4e-cc3e-40d3-9003-c39a4aac5a95",
+      "from_agent": "integration_helper",
+      "to_agent": "onboarding_guide",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.32,
+      "timestamp": "2025-09-19T17:37:06.172626",
+      "latency_ms": 248
+    },
+    {
+      "id": "2e891827-09fa-4035-8d43-0c5e072b1eac",
+      "conversation_id": "c33d7043-fd20-4a89-becd-2a8fc74c37d4",
+      "from_agent": "sales_domain_router",
+      "to_agent": "onboarding_guide",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.48,
+      "timestamp": "2025-02-22T15:00:18.172626",
+      "latency_ms": 923
+    },
+    {
+      "id": "59fea40b-7870-4d44-8bfb-8c96a0f906d0",
+      "conversation_id": "525b7877-d8b0-4cb6-9d86-3dd5ba8ceb93",
+      "from_agent": "meta_router",
+      "to_agent": "closer",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.36,
+      "timestamp": "2025-11-11T01:35:38.172626",
+      "latency_ms": 418
+    },
+    {
+      "id": "ffcef1fa-8473-4258-9253-058cdf5bb7a7",
+      "conversation_id": "0345c473-a3b5-45f2-9b36-fb8398451718",
+      "from_agent": "billing_specialist",
+      "to_agent": "meta_router",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.45,
+      "timestamp": "2025-08-11T14:46:53.172626",
+      "latency_ms": 1905
+    },
+    {
+      "id": "f08dfaba-0dc3-4f7a-9827-08f1b58c96a0",
+      "conversation_id": "9284fad8-157e-4573-bbc2-f74aeb1a3e43",
+      "from_agent": "billing_specialist",
+      "to_agent": "inbound_qualifier",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.35,
+      "timestamp": "2025-09-24T05:00:55.172626",
+      "latency_ms": 1061
+    },
+    {
+      "id": "5caa8724-8d15-4e44-a6f7-1872df36e85e",
+      "conversation_id": "60a194a4-b92d-4538-9de6-46e8eb2eeed8",
+      "from_agent": "bug_triager",
+      "to_agent": "sales_domain_router",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.33,
+      "timestamp": "2025-01-12T17:25:28.172626",
+      "latency_ms": 1769
+    },
+    {
+      "id": "a836907a-4d4b-4124-b220-011a204ba3be",
+      "conversation_id": "51f53152-24a5-480c-ba68-c6800a01cce3",
+      "from_agent": "closer",
+      "to_agent": "support_domain_router",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.48,
+      "timestamp": "2025-05-02T21:09:37.172626",
+      "latency_ms": 1933
+    },
+    {
+      "id": "7b964c09-7b28-492f-ac20-962f67a0357b",
+      "conversation_id": "2d973be3-98c0-4e28-86f2-2a313b399783",
+      "from_agent": "inbound_qualifier",
+      "to_agent": "billing_specialist",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.78,
+      "timestamp": "2025-06-03T09:12:22.172626",
+      "latency_ms": 1938
+    },
+    {
+      "id": "44bd0a64-ed97-4ddf-8a19-919cacdc83cf",
+      "conversation_id": "f6aee087-40b9-474d-b500-e32600c92cbb",
+      "from_agent": "billing_specialist",
+      "to_agent": "sales_domain_router",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.33,
+      "timestamp": "2025-09-08T17:55:34.172626",
+      "latency_ms": 608
+    },
+    {
+      "id": "8803bbcb-fc7a-4ffc-98b8-707baab22680",
+      "conversation_id": "beff0b31-99d9-4b14-8cd6-e5de260af841",
+      "from_agent": "closer",
+      "to_agent": "bug_triager",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.44,
+      "timestamp": "2025-06-21T16:53:36.172626",
+      "latency_ms": 1101
+    },
+    {
+      "id": "0cbc209b-e355-40a1-b210-92dab0f87a22",
+      "conversation_id": "dfa00a4e-cc3e-40d3-9003-c39a4aac5a95",
+      "from_agent": "integration_helper",
+      "to_agent": "onboarding_guide",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.35,
+      "timestamp": "2025-09-19T17:17:06.172626",
+      "latency_ms": 1714
+    },
+    {
+      "id": "c1b33753-ef61-447e-9383-01eb49792364",
+      "conversation_id": "718c89ac-6889-4f61-b124-685269963312",
+      "from_agent": "inbound_qualifier",
+      "to_agent": "bug_triager",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.76,
+      "timestamp": "2025-11-14T18:28:00.172626",
+      "latency_ms": 1056
+    },
+    {
+      "id": "0fcfeead-7191-44cc-b575-ac111f4525ce",
+      "conversation_id": "d7a94ef4-b512-480e-94d4-79681116feeb",
+      "from_agent": "integration_helper",
+      "to_agent": "meta_router",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.73,
+      "timestamp": "2025-09-09T01:58:43.172626",
+      "latency_ms": 1144
+    },
+    {
+      "id": "092e994e-b487-43ae-af2d-481e41be316e",
+      "conversation_id": "4e6fe706-7050-45db-8640-1cdda8701c33",
+      "from_agent": "integration_helper",
+      "to_agent": "onboarding_guide",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.54,
+      "timestamp": "2025-08-13T12:31:44.172626",
+      "latency_ms": 601
+    },
+    {
+      "id": "95df25d5-7631-4d4e-9f29-dbf4558c7314",
+      "conversation_id": "7c94b8a7-5eef-4834-870f-3d499780d35a",
+      "from_agent": "quality_checker",
+      "to_agent": "sales_domain_router",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.67,
+      "timestamp": "2025-04-09T22:35:18.172626",
+      "latency_ms": 689
+    },
+    {
+      "id": "ef77d7f1-ca56-4762-ac0d-37c2ed0b84ea",
+      "conversation_id": "a01e1d7a-2310-42cb-b7a7-4696e7686934",
+      "from_agent": "onboarding_guide",
+      "to_agent": "closer",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.45,
+      "timestamp": "2025-06-17T08:44:23.172626",
+      "latency_ms": 1368
+    },
+    {
+      "id": "287934dc-a880-4b47-8c5a-2088cf699ab9",
+      "conversation_id": "f418ca4c-17a7-48ad-8678-e60f202fc1fb",
+      "from_agent": "sales_domain_router",
+      "to_agent": "billing_specialist",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.66,
+      "timestamp": "2025-11-10T07:14:13.172626",
+      "latency_ms": 1566
+    },
+    {
+      "id": "625b270d-46b5-46ba-8162-ef315819c4ad",
+      "conversation_id": "d8fa7bd5-ccec-4312-a582-edacd616f9ce",
+      "from_agent": "integration_helper",
+      "to_agent": "quality_checker",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.74,
+      "timestamp": "2025-09-24T05:48:10.172626",
+      "latency_ms": 1894
+    },
+    {
+      "id": "0460709d-863c-432e-8538-2078487f5b9e",
+      "conversation_id": "5e27067e-3990-49c6-a977-d72475d70ba6",
+      "from_agent": "inbound_qualifier",
+      "to_agent": "human_escalation",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.49,
+      "timestamp": "2025-06-29T09:30:53.172626",
+      "latency_ms": 812
+    },
+    {
+      "id": "d6682578-7cb4-4506-ba08-4cbb0e844441",
+      "conversation_id": "41eefd29-b200-4e61-9d59-5f2943bf73a5",
+      "from_agent": "closer",
+      "to_agent": "escalation_decider",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.48,
+      "timestamp": "2025-11-15T03:37:09.172626",
+      "latency_ms": 1495
+    },
+    {
+      "id": "2984fb63-ffcc-472e-bc11-dfac02ff6b38",
+      "conversation_id": "1cc774fa-0183-4b09-8f39-a9a294f77fa0",
+      "from_agent": "human_escalation",
+      "to_agent": "escalation_decider",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.34,
+      "timestamp": "2025-05-01T22:22:11.172626",
+      "latency_ms": 1504
+    },
+    {
+      "id": "4a4e123f-a267-4731-a169-11c6a5b697d4",
+      "conversation_id": "60a194a4-b92d-4538-9de6-46e8eb2eeed8",
+      "from_agent": "closer",
+      "to_agent": "billing_specialist",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.57,
+      "timestamp": "2025-01-12T17:57:28.172626",
+      "latency_ms": 1178
+    },
+    {
+      "id": "452438f7-4a0e-4f2c-8613-924c09f573c9",
+      "conversation_id": "2d973be3-98c0-4e28-86f2-2a313b399783",
+      "from_agent": "support_domain_router",
+      "to_agent": "sales_domain_router",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.35,
+      "timestamp": "2025-06-03T09:03:22.172626",
+      "latency_ms": 820
+    },
+    {
+      "id": "c82cfc09-ef6c-42f0-bb7e-325f8f1f58c8",
+      "conversation_id": "685e7955-c2f0-4eeb-9254-0390bdbb2e8d",
+      "from_agent": "bug_triager",
+      "to_agent": "escalation_decider",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.54,
+      "timestamp": "2025-05-07T01:34:20.172626",
+      "latency_ms": 609
+    },
+    {
+      "id": "58c6bba0-e3b5-4731-b7d6-3b0ff6d0353f",
+      "conversation_id": "1d5d0f2a-74ce-4ef1-af4d-e9e3e6ff0a6a",
+      "from_agent": "quality_checker",
+      "to_agent": "support_domain_router",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.33,
+      "timestamp": "2025-09-23T22:39:04.172626",
+      "latency_ms": 312
+    },
+    {
+      "id": "31cdc789-9b58-4cdd-946a-9529aafe43f5",
+      "conversation_id": "9d98f4e5-bf09-42a0-841b-e4e603785b96",
+      "from_agent": "onboarding_guide",
+      "to_agent": "escalation_decider",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.67,
+      "timestamp": "2025-07-30T02:33:42.172626",
+      "latency_ms": 1444
+    },
+    {
+      "id": "a21cf8b5-9885-456f-a5dc-af336c93f152",
+      "conversation_id": "1d6375b3-39b7-4eb9-aea3-cf47266920dc",
+      "from_agent": "quality_checker",
+      "to_agent": "onboarding_guide",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.74,
+      "timestamp": "2024-12-07T10:38:34.172626",
+      "latency_ms": 1770
+    },
+    {
+      "id": "b1790a26-e7ff-4d27-9ef5-207c0d42b93b",
+      "conversation_id": "2c6c4b8a-029e-4407-9ca9-f462ae349279",
+      "from_agent": "sales_domain_router",
+      "to_agent": "billing_specialist",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.63,
+      "timestamp": "2025-01-08T02:36:14.172626",
+      "latency_ms": 582
+    },
+    {
+      "id": "75168b60-c05d-4090-95f9-811464213806",
+      "conversation_id": "1da6b541-a3c8-485b-8b8e-215c0e9e0fa9",
+      "from_agent": "integration_helper",
+      "to_agent": "meta_router",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.48,
+      "timestamp": "2025-01-10T04:45:52.172626",
+      "latency_ms": 712
+    },
+    {
+      "id": "63b1e2dc-b0a0-4610-bded-abc8c3f872f4",
+      "conversation_id": "d3909de4-d633-4681-99f0-aebee62d08f9",
+      "from_agent": "billing_specialist",
+      "to_agent": "quality_checker",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.78,
+      "timestamp": "2025-09-04T06:10:12.172626",
+      "latency_ms": 1516
+    },
+    {
+      "id": "6e61e710-9bf0-4713-a902-ac1554c5a3ab",
+      "conversation_id": "006dab58-283f-4b6a-bd37-c83962ec1864",
+      "from_agent": "human_escalation",
+      "to_agent": "integration_helper",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.62,
+      "timestamp": "2025-03-22T00:32:43.172626",
+      "latency_ms": 1191
+    },
+    {
+      "id": "3b710721-0168-41c1-b90a-7271d364363f",
+      "conversation_id": "06223ca2-d0b2-4413-88a6-e47883f5dd54",
+      "from_agent": "closer",
+      "to_agent": "inbound_qualifier",
+      "handoff_reason": "Human review requested",
+      "confidence_before": 0.5,
+      "timestamp": "2024-11-27T21:07:49.172626",
+      "latency_ms": 598
+    },
+    {
+      "id": "4806cc04-f6ce-48a8-8bd0-3b221e25f3dc",
+      "conversation_id": "21d4de80-98fd-4585-8362-b68ecac3c86b",
+      "from_agent": "support_domain_router",
+      "to_agent": "bug_triager",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.67,
+      "timestamp": "2025-07-03T23:22:18.172626",
+      "latency_ms": 1866
+    },
+    {
+      "id": "82519487-5cc8-4b57-b244-7fb27defc81b",
+      "conversation_id": "a9455f18-4629-4e3c-bc9f-163f3749741b",
+      "from_agent": "integration_helper",
+      "to_agent": "support_domain_router",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.76,
+      "timestamp": "2025-10-23T06:30:51.172626",
+      "latency_ms": 1430
+    },
+    {
+      "id": "562b8c6e-364b-408e-a5d8-1a0026d94264",
+      "conversation_id": "470275be-0f94-4b43-9e15-0f93b14d6097",
+      "from_agent": "inbound_qualifier",
+      "to_agent": "bug_triager",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.51,
+      "timestamp": "2025-09-07T12:50:40.172626",
+      "latency_ms": 697
+    },
+    {
+      "id": "10cba95d-68aa-4275-9f35-c98dc8b62b20",
+      "conversation_id": "ea47f521-f6d8-4d40-9b8c-ddff57768f0e",
+      "from_agent": "quality_checker",
+      "to_agent": "inbound_qualifier",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.32,
+      "timestamp": "2024-12-25T08:37:41.172626",
+      "latency_ms": 663
+    },
+    {
+      "id": "52076a3d-6cd1-4cca-931b-0c742bcc1ae1",
+      "conversation_id": "0505cfd5-c53a-40c3-bd12-25862b23efd4",
+      "from_agent": "billing_specialist",
+      "to_agent": "sales_domain_router",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.31,
+      "timestamp": "2025-09-29T07:04:28.172626",
+      "latency_ms": 1153
+    },
+    {
+      "id": "81d9a517-7f58-440b-bd6f-7de0c6a2ab46",
+      "conversation_id": "eb7d1265-fb73-40e1-aa0d-59e94f4e8ecf",
+      "from_agent": "inbound_qualifier",
+      "to_agent": "integration_helper",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.57,
+      "timestamp": "2025-04-28T09:56:07.172626",
+      "latency_ms": 1602
+    },
+    {
+      "id": "f4ffccfb-7559-4124-8885-3449e5809ac2",
+      "conversation_id": "4ba0dc49-2a42-479b-a782-1f14353869e2",
+      "from_agent": "bug_triager",
+      "to_agent": "human_escalation",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.59,
+      "timestamp": "2024-12-20T13:46:48.172626",
+      "latency_ms": 1126
+    },
+    {
+      "id": "2401e43f-5c21-4dd8-b04c-f53aee646194",
+      "conversation_id": "0b8037f7-6a41-4325-9824-55bdc55bea7e",
+      "from_agent": "onboarding_guide",
+      "to_agent": "bug_triager",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.75,
+      "timestamp": "2025-03-26T15:13:38.172626",
+      "latency_ms": 1964
+    },
+    {
+      "id": "672a8955-f4c8-4f8a-a0da-722c0e461f24",
+      "conversation_id": "5f86df81-6314-4011-ae2c-32f59691276d",
+      "from_agent": "escalation_decider",
+      "to_agent": "bug_triager",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.47,
+      "timestamp": "2025-10-12T12:39:11.172626",
+      "latency_ms": 1919
+    },
+    {
+      "id": "640f575e-befd-474e-9034-78c6832925fd",
+      "conversation_id": "e8d1b41a-e2a9-43e2-b076-66583d78d9c9",
+      "from_agent": "support_domain_router",
+      "to_agent": "escalation_decider",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.6,
+      "timestamp": "2025-03-06T17:16:00.172626",
+      "latency_ms": 1532
+    },
+    {
+      "id": "6f0bf9c4-cc38-4bd4-a133-880d140d3de5",
+      "conversation_id": "97f4ad7f-cfc2-4e9d-9cce-a5257042362f",
+      "from_agent": "integration_helper",
+      "to_agent": "sales_domain_router",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.75,
+      "timestamp": "2025-05-06T21:12:08.172626",
+      "latency_ms": 1198
+    },
+    {
+      "id": "c1b464b4-dde9-45a1-b65f-4124822f59e0",
+      "conversation_id": "4ebba7cc-c321-452d-bffe-f0d4a2ad22f2",
+      "from_agent": "inbound_qualifier",
+      "to_agent": "sales_domain_router",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.78,
+      "timestamp": "2025-08-16T18:22:02.172626",
+      "latency_ms": 1496
+    },
+    {
+      "id": "fc407617-e052-4f0b-b15f-0c623369fa95",
+      "conversation_id": "14012dfc-130c-4a12-b61a-ff1dc503eb43",
+      "from_agent": "meta_router",
+      "to_agent": "billing_specialist",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.79,
+      "timestamp": "2025-01-18T16:21:02.172626",
+      "latency_ms": 1561
+    },
+    {
+      "id": "b5cf8f4d-f639-4b87-b0f8-77be06578a6d",
+      "conversation_id": "3b18698b-411f-48a8-8688-fe22b8dd305a",
+      "from_agent": "closer",
+      "to_agent": "billing_specialist",
+      "handoff_reason": "Escalation required",
+      "confidence_before": 0.36,
+      "timestamp": "2025-11-10T06:41:45.172626",
+      "latency_ms": 452
+    },
+    {
+      "id": "c392abdc-4802-45ad-936f-2bf0dac78828",
+      "conversation_id": "e471aab2-169a-404d-9aa0-6b273e433753",
+      "from_agent": "support_domain_router",
+      "to_agent": "integration_helper",
+      "handoff_reason": "Quality check needed",
+      "confidence_before": 0.35,
+      "timestamp": "2025-11-06T12:24:31.172626",
+      "latency_ms": 1297
+    },
+    {
+      "id": "294d1704-93d6-48ae-88bd-29b9fc983744",
+      "conversation_id": "4e6fe706-7050-45db-8640-1cdda8701c33",
+      "from_agent": "meta_router",
+      "to_agent": "inbound_qualifier",
+      "handoff_reason": "Needs specialist expertise",
+      "confidence_before": 0.38,
+      "timestamp": "2025-08-13T12:46:44.172626",
+      "latency_ms": 460
+    },
+    {
+      "id": "7784ae48-4884-42c8-9469-91a7b4a0c49b",
+      "conversation_id": "570b37c6-38e8-4264-a872-55da17421a71",
+      "from_agent": "human_escalation",
+      "to_agent": "onboarding_guide",
+      "handoff_reason": "Policy violation detected",
+      "confidence_before": 0.6,
+      "timestamp": "2025-08-13T09:37:08.172626",
+      "latency_ms": 1179
+    }
+  ]
+}
