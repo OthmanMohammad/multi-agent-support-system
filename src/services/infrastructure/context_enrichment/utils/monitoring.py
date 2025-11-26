@@ -4,22 +4,17 @@ Monitoring and metrics for context enrichment.
 Provides Prometheus metrics and performance tracking for the context enrichment system.
 """
 
-from typing import Dict, Optional
-from dataclasses import dataclass, field
-from datetime import datetime
 import time
+from dataclasses import dataclass, field
+
 import structlog
 
 logger = structlog.get_logger(__name__)
 
 
 try:
-    from prometheus_client import (
-        Counter,
-        Histogram,
-        Gauge,
-        Summary
-    )
+    from prometheus_client import Counter, Gauge, Histogram, Summary
+
     PROMETHEUS_AVAILABLE = True
 except ImportError:
     PROMETHEUS_AVAILABLE = False
@@ -43,13 +38,13 @@ class ContextMetrics:
 
     # Latency metrics
     total_latency_ms: float = 0.0
-    min_latency_ms: float = float('inf')
+    min_latency_ms: float = float("inf")
     max_latency_ms: float = 0.0
 
     # Provider metrics
-    provider_calls: Dict[str, int] = field(default_factory=dict)
-    provider_failures: Dict[str, int] = field(default_factory=dict)
-    provider_timeouts: Dict[str, int] = field(default_factory=dict)
+    provider_calls: dict[str, int] = field(default_factory=dict)
+    provider_failures: dict[str, int] = field(default_factory=dict)
+    provider_timeouts: dict[str, int] = field(default_factory=dict)
 
     # Cache metrics
     l1_hits: int = 0
@@ -140,7 +135,7 @@ class ContextMetrics:
             return 0.0
         return self.l2_hits / total
 
-    def get_summary(self) -> Dict[str, any]:
+    def get_summary(self) -> dict[str, any]:
         """Get metrics summary"""
         return {
             "total_requests": self.total_requests,
@@ -148,7 +143,7 @@ class ContextMetrics:
             "failed_requests": self.failed_requests,
             "success_rate": self.success_rate,
             "avg_latency_ms": self.avg_latency_ms,
-            "min_latency_ms": self.min_latency_ms if self.min_latency_ms != float('inf') else 0.0,
+            "min_latency_ms": self.min_latency_ms if self.min_latency_ms != float("inf") else 0.0,
             "max_latency_ms": self.max_latency_ms,
             "cache_hits": self.cache_hits,
             "cache_misses": self.cache_misses,
@@ -165,62 +160,48 @@ class ContextMetrics:
 if PROMETHEUS_AVAILABLE:
     # Request metrics
     context_enrichment_requests_total = Counter(
-        'context_enrichment_requests_total',
-        'Total context enrichment requests',
-        ['agent_type', 'status']
+        "context_enrichment_requests_total",
+        "Total context enrichment requests",
+        ["agent_type", "status"],
     )
 
     context_enrichment_duration_seconds = Histogram(
-        'context_enrichment_duration_seconds',
-        'Context enrichment duration in seconds',
-        ['agent_type'],
-        buckets=(0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0)
+        "context_enrichment_duration_seconds",
+        "Context enrichment duration in seconds",
+        ["agent_type"],
+        buckets=(0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0),
     )
 
     context_enrichment_duration_summary = Summary(
-        'context_enrichment_duration_summary',
-        'Context enrichment duration summary',
-        ['agent_type']
+        "context_enrichment_duration_summary", "Context enrichment duration summary", ["agent_type"]
     )
 
     # Provider metrics
     context_provider_calls_total = Counter(
-        'context_provider_calls_total',
-        'Total provider calls',
-        ['provider_name', 'status']
+        "context_provider_calls_total", "Total provider calls", ["provider_name", "status"]
     )
 
     context_provider_duration_seconds = Histogram(
-        'context_provider_duration_seconds',
-        'Provider execution duration in seconds',
-        ['provider_name'],
-        buckets=(0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0)
+        "context_provider_duration_seconds",
+        "Provider execution duration in seconds",
+        ["provider_name"],
+        buckets=(0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0),
     )
 
     # Cache metrics
-    context_cache_hits_total = Counter(
-        'context_cache_hits_total',
-        'Cache hits',
-        ['cache_tier']
-    )
+    context_cache_hits_total = Counter("context_cache_hits_total", "Cache hits", ["cache_tier"])
 
     context_cache_misses_total = Counter(
-        'context_cache_misses_total',
-        'Cache misses',
-        ['cache_tier']
+        "context_cache_misses_total", "Cache misses", ["cache_tier"]
     )
 
-    context_cache_size = Gauge(
-        'context_cache_size',
-        'Current cache size',
-        ['cache_tier']
-    )
+    context_cache_size = Gauge("context_cache_size", "Current cache size", ["cache_tier"])
 
     # Error metrics
     context_enrichment_errors_total = Counter(
-        'context_enrichment_errors_total',
-        'Total enrichment errors',
-        ['error_type', 'provider_name']
+        "context_enrichment_errors_total",
+        "Total enrichment errors",
+        ["error_type", "provider_name"],
     )
 else:
     # Stub metrics when Prometheus not available
@@ -249,7 +230,7 @@ else:
 
 
 # Global metrics instance
-_metrics_instance: Optional[ContextMetrics] = None
+_metrics_instance: ContextMetrics | None = None
 
 
 def get_metrics() -> ContextMetrics:
@@ -282,10 +263,7 @@ def reset_metrics() -> None:
 
 # Convenience functions for recording metrics
 def record_enrichment(
-    agent_type: str,
-    success: bool,
-    latency_ms: float,
-    from_cache: bool = False
+    agent_type: str, success: bool, latency_ms: float, from_cache: bool = False
 ) -> None:
     """
     Record enrichment request.
@@ -305,33 +283,23 @@ def record_enrichment(
 
     # Update Prometheus metrics
     status = "success" if success else "failure"
-    context_enrichment_requests_total.labels(
-        agent_type=agent_type,
-        status=status
-    ).inc()
+    context_enrichment_requests_total.labels(agent_type=agent_type, status=status).inc()
 
-    context_enrichment_duration_seconds.labels(
-        agent_type=agent_type
-    ).observe(latency_ms / 1000.0)
+    context_enrichment_duration_seconds.labels(agent_type=agent_type).observe(latency_ms / 1000.0)
 
-    context_enrichment_duration_summary.labels(
-        agent_type=agent_type
-    ).observe(latency_ms / 1000.0)
+    context_enrichment_duration_summary.labels(agent_type=agent_type).observe(latency_ms / 1000.0)
 
     logger.debug(
         "enrichment_recorded",
         agent_type=agent_type,
         success=success,
         latency_ms=latency_ms,
-        from_cache=from_cache
+        from_cache=from_cache,
     )
 
 
 def record_provider_execution(
-    provider_name: str,
-    success: bool,
-    duration_ms: float,
-    timeout: bool = False
+    provider_name: str, success: bool, duration_ms: float, timeout: bool = False
 ) -> None:
     """
     Record provider execution.
@@ -357,21 +325,18 @@ def record_provider_execution(
     else:
         status = "failure"
 
-    context_provider_calls_total.labels(
-        provider_name=provider_name,
-        status=status
-    ).inc()
+    context_provider_calls_total.labels(provider_name=provider_name, status=status).inc()
 
-    context_provider_duration_seconds.labels(
-        provider_name=provider_name
-    ).observe(duration_ms / 1000.0)
+    context_provider_duration_seconds.labels(provider_name=provider_name).observe(
+        duration_ms / 1000.0
+    )
 
     logger.debug(
         "provider_execution_recorded",
         provider=provider_name,
         success=success,
         duration_ms=duration_ms,
-        timeout=timeout
+        timeout=timeout,
     )
 
 
@@ -422,16 +387,9 @@ def record_error(error_type: str, provider_name: str = "unknown") -> None:
     Example:
         >>> record_error("timeout", "CustomerIntelligence")
     """
-    context_enrichment_errors_total.labels(
-        error_type=error_type,
-        provider_name=provider_name
-    ).inc()
+    context_enrichment_errors_total.labels(error_type=error_type, provider_name=provider_name).inc()
 
-    logger.warning(
-        "error_recorded",
-        error_type=error_type,
-        provider=provider_name
-    )
+    logger.warning("error_recorded", error_type=error_type, provider=provider_name)
 
 
 class MetricsTimer:
@@ -447,8 +405,8 @@ class MetricsTimer:
 
     def __init__(self):
         """Initialize timer"""
-        self.start_time: Optional[float] = None
-        self.end_time: Optional[float] = None
+        self.start_time: float | None = None
+        self.end_time: float | None = None
 
     def __enter__(self):
         """Start timer"""
