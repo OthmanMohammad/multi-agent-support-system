@@ -3,18 +3,12 @@ Test script for all repositories
 Can be run with pytest or directly with Python
 """
 import asyncio
-import sys
-from pathlib import Path
 from datetime import datetime, timedelta, UTC
 from uuid import uuid4
 import pytest
 
-# Add src to path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root / 'src'))
-
-from database.connection import get_db_session, init_db, close_db
-from database.repositories import (
+from src.database.connection import get_db_session, init_db, close_db
+from src.database.repositories import (
     CustomerRepository,
     ConversationRepository,
     MessageRepository,
