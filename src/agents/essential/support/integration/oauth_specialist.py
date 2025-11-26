@@ -5,14 +5,10 @@ This agent specializes in OAuth 2.0 setup, troubleshooting authentication flows,
 token refresh, scope management, and common OAuth implementation issues.
 """
 
-from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
-import os
-
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("oauth_specialist", tier="essential", category="integration")
@@ -31,7 +27,13 @@ class OAuthSpecialist(BaseAgent):
     # OAuth-related keywords for detection
     OAUTH_TOPICS = {
         "setup": ["setup oauth", "configure oauth", "register app", "create oauth", "oauth setup"],
-        "callback_error": ["callback", "redirect", "redirect_uri", "callback error", "state mismatch"],
+        "callback_error": [
+            "callback",
+            "redirect",
+            "redirect_uri",
+            "callback error",
+            "state mismatch",
+        ],
         "token_refresh": ["refresh token", "token expired", "renew token", "token refresh"],
         "scope_error": ["scope", "permission", "access denied", "insufficient privileges"],
         "grant_flow": ["authorization code", "grant type", "oauth flow", "authentication flow"],
@@ -53,12 +55,9 @@ class OAuthSpecialist(BaseAgent):
             name="oauth_specialist",
             type=AgentType.SPECIALIST,
             temperature=0.3,
-            capabilities=[
-                AgentCapability.KB_SEARCH,
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="integration",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -78,12 +77,12 @@ class OAuthSpecialist(BaseAgent):
         state = self.update_state(state)
 
         message = state["current_message"]
-        customer_context = state.get("customer_metadata", {})
+        state.get("customer_metadata", {})
 
         self.logger.debug(
             "oauth_processing_details",
             message_preview=message[:100],
-            turn_count=state["turn_count"]
+            turn_count=state["turn_count"],
         )
 
         # Detect OAuth topic
@@ -92,25 +91,14 @@ class OAuthSpecialist(BaseAgent):
         # Extract error code if present
         error_code = self._extract_error_code(message)
 
-        self.logger.info(
-            "oauth_topic_detected",
-            topic=topic,
-            error_code=error_code
-        )
+        self.logger.info("oauth_topic_detected", topic=topic, error_code=error_code)
 
         # Search knowledge base for OAuth documentation
-        kb_results = await self.search_knowledge_base(
-            message,
-            category="integration",
-            limit=2
-        )
+        kb_results = await self.search_knowledge_base(message, category="integration", limit=2)
         state["kb_results"] = kb_results
 
         if kb_results:
-            self.logger.info(
-                "kb_articles_found",
-                count=len(kb_results)
-            )
+            self.logger.info("kb_articles_found", count=len(kb_results))
 
         # Generate OAuth guidance
         response = self._generate_oauth_guide(topic, error_code, kb_results)
@@ -122,11 +110,7 @@ class OAuthSpecialist(BaseAgent):
         state["next_agent"] = None
         state["status"] = "resolved"
 
-        self.logger.info(
-            "oauth_processing_completed",
-            status="resolved",
-            topic=topic
-        )
+        self.logger.info("oauth_processing_completed", status="resolved", topic=topic)
 
         return state
 
@@ -150,7 +134,7 @@ class OAuthSpecialist(BaseAgent):
         # Default to general setup
         return "setup"
 
-    def _extract_error_code(self, message: str) -> Optional[str]:
+    def _extract_error_code(self, message: str) -> str | None:
         """
         Extract OAuth error code from message if present.
 
@@ -162,18 +146,13 @@ class OAuthSpecialist(BaseAgent):
         """
         message_lower = message.lower()
 
-        for error_code in self.ERROR_CODES.keys():
+        for error_code in self.ERROR_CODES:
             if error_code.replace("_", " ") in message_lower or error_code in message_lower:
                 return error_code
 
         return None
 
-    def _generate_oauth_guide(
-        self,
-        topic: str,
-        error_code: Optional[str],
-        kb_results: list
-    ) -> str:
+    def _generate_oauth_guide(self, topic: str, error_code: str | None, kb_results: list) -> str:
         """
         Generate OAuth guidance based on topic and error.
 
@@ -1300,7 +1279,6 @@ REDIRECT_URI = "https://your-app.com/callback"  # Exact match!
 ```
 
 3. Or update registered URI to match your code""",
-
             "invalid_scope": """**Error: invalid_scope**
 
 You requested a scope that doesn't exist or isn't allowed.
@@ -1318,7 +1296,6 @@ scope = "invalid_scope"  # ❌ Doesn't exist
 ```
 
 3. Contact support if you need a specific scope""",
-
             "access_denied": """**Error: access_denied**
 
 User clicked "Deny" on authorization screen.
@@ -1335,7 +1312,6 @@ def callback():
             <a href="/login">Try again</a>
         '''
 ```""",
-
             "invalid_grant": """**Error: invalid_grant**
 
 Authorization code is invalid, expired, or already used.
@@ -1347,7 +1323,6 @@ Authorization code is invalid, expired, or already used.
 
 **Fix:**
 Restart OAuth flow - redirect user to authorize again""",
-
             "unauthorized_client": """**Error: unauthorized_client**
 
 Your OAuth app isn't authorized for this grant type.
@@ -1356,7 +1331,6 @@ Your OAuth app isn't authorized for this grant type.
 1. Check grant type: Should be `authorization_code`
 2. Verify OAuth app settings: **Settings > OAuth Apps**
 3. Ensure app is active (not suspended)""",
-
             "unsupported_grant_type": """**Error: unsupported_grant_type**
 
 Grant type not supported.
@@ -1379,15 +1353,19 @@ data = {
 ```""",
         }
 
-        return fixes.get(error_code, f"""**Error: {error_code}**
+        return fixes.get(
+            error_code,
+            f"""**Error: {error_code}**
 
 {error_description}
 
-Share more details about when this error occurs and I'll help you fix it.""")
+Share more details about when this error occurs and I'll help you fix it.""",
+        )
 
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -1429,4 +1407,3 @@ if __name__ == "__main__":
         print(f"\nResponse preview:\n{result3['agent_response'][:300]}...")
 
     asyncio.run(test())
-    
