@@ -147,6 +147,122 @@ class CompetitorComparisonHandler(BaseAgent):
             ],
             "migration_difficulty": "easy",
             "common_pain_points": ["limited automation", "scalability", "basic features"]
+        },
+        "trello": {
+            "name": "Trello",
+            "category": "Project Management",
+            "our_advantages": [
+                "More powerful project views (Gantt, Timeline, Calendar)",
+                "Advanced reporting and analytics",
+                "Better team collaboration features",
+                "Stronger automation capabilities",
+                "Enterprise-grade security",
+                "Scalable for larger teams"
+            ],
+            "their_weaknesses": [
+                "Limited to basic Kanban boards",
+                "Gets messy with many cards",
+                "No built-in time tracking",
+                "Limited reporting",
+                "Not suitable for complex projects"
+            ],
+            "migration_difficulty": "easy",
+            "common_pain_points": ["gets messy at scale", "limited views", "basic features only", "lack of reporting"]
+        },
+        "asana": {
+            "name": "Asana",
+            "category": "Project Management",
+            "our_advantages": [
+                "More intuitive interface",
+                "Better pricing for teams",
+                "Stronger integration ecosystem",
+                "More flexible workflows",
+                "Better mobile experience"
+            ],
+            "their_weaknesses": [
+                "Can be overwhelming with features",
+                "Complex permission system",
+                "Expensive at scale",
+                "Steep learning curve"
+            ],
+            "migration_difficulty": "easy",
+            "common_pain_points": ["complexity", "pricing", "overwhelming features"]
+        },
+        "monday": {
+            "name": "Monday.com",
+            "category": "Project Management",
+            "our_advantages": [
+                "More cost-effective per user",
+                "Better out-of-box workflows",
+                "Simpler pricing model",
+                "Faster implementation",
+                "Better customer support"
+            ],
+            "their_weaknesses": [
+                "Very expensive",
+                "Complex pricing tiers",
+                "Requires significant setup",
+                "Too many features for simple needs"
+            ],
+            "migration_difficulty": "easy",
+            "common_pain_points": ["expensive", "complex pricing", "feature bloat"]
+        },
+        "jira": {
+            "name": "Jira",
+            "category": "Project Management",
+            "our_advantages": [
+                "Easier to use for non-technical teams",
+                "Faster setup and onboarding",
+                "Better user experience",
+                "Lower administrative overhead",
+                "More flexible for different use cases"
+            ],
+            "their_weaknesses": [
+                "Complex admin and configuration",
+                "Steep learning curve",
+                "Designed primarily for software teams",
+                "Requires dedicated admin"
+            ],
+            "migration_difficulty": "medium",
+            "common_pain_points": ["complexity", "learning curve", "too developer-focused"]
+        },
+        "basecamp": {
+            "name": "Basecamp",
+            "category": "Project Management",
+            "our_advantages": [
+                "More powerful features",
+                "Better for scaling teams",
+                "Advanced automation",
+                "Superior integrations",
+                "Better reporting"
+            ],
+            "their_weaknesses": [
+                "Limited feature set",
+                "Basic task management",
+                "No time tracking",
+                "Limited customization"
+            ],
+            "migration_difficulty": "easy",
+            "common_pain_points": ["limited features", "basic functionality"]
+        },
+        "clickup": {
+            "name": "ClickUp",
+            "category": "Project Management",
+            "our_advantages": [
+                "Simpler interface",
+                "Better performance",
+                "More reliable platform",
+                "Better customer support",
+                "Clearer pricing"
+            ],
+            "their_weaknesses": [
+                "Feature overload",
+                "Performance issues",
+                "Steep learning curve",
+                "Frequent changes to interface"
+            ],
+            "migration_difficulty": "easy",
+            "common_pain_points": ["performance", "too many features", "constant changes"]
         }
     }
 
@@ -212,6 +328,34 @@ class CompetitorComparisonHandler(BaseAgent):
             "from_competitor": "intercom",
             "results": "70% cost reduction, better features, no conversation limits",
             "quote": "Intercom became impossibly expensive. We got more for less",
+            "industry": "technology"
+        },
+        "trello_to_us": {
+            "company": "DesignStudio (75 employees)",
+            "from_competitor": "trello",
+            "results": "3x better project visibility, 50% faster delivery times, proper reporting",
+            "quote": "Trello was fine until we grew. Now we actually know what's happening across teams",
+            "industry": "creative"
+        },
+        "asana_to_us": {
+            "company": "MarketingPros (120 employees)",
+            "from_competitor": "asana",
+            "results": "40% cost savings, simpler workflows, 90% team adoption in first week",
+            "quote": "Asana was too complex for what we needed. This just works",
+            "industry": "marketing"
+        },
+        "monday_to_us": {
+            "company": "ConsultCo (200 employees)",
+            "from_competitor": "monday",
+            "results": "60% cost reduction, same features, better support",
+            "quote": "Monday.com pricing was crushing us. We got everything we needed for less",
+            "industry": "consulting"
+        },
+        "jira_to_us": {
+            "company": "AgileTeam (80 employees)",
+            "from_competitor": "jira",
+            "results": "2x faster onboarding, no admin overhead, happier non-dev teams",
+            "quote": "Jira is great for developers but our whole company uses project management. This fits everyone",
             "industry": "technology"
         }
     }

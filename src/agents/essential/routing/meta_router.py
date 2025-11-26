@@ -62,16 +62,16 @@ class MetaRouter(RoutingAgent):
 
 Your job is to classify each message into ONE domain:
 
-**SUPPORT** - Customer has a problem or question
+**SUPPORT** - Customer has a problem or question about OUR product
 Examples:
-- Technical issues (crashes, bugs, sync problems, performance)
+- Technical issues with OUR product (crashes, bugs, sync problems, performance)
 - Billing issues (charges, invoices, payments, refunds)
 - How-to questions (using features, setup, configuration)
 - Account issues (login, password, access, security)
 - Integration issues (API, webhooks, OAuth)
 - Data issues (export, import, recovery)
 
-**SALES** - Pricing, demos, upgrades (NEW customers), competitive questions
+**SALES** - Pricing, demos, upgrades (NEW customers), competitive questions, prospects discussing competitors
 Examples:
 - Pricing inquiries ("How much does Premium cost?")
 - Demo requests ("Can I see a demo?")
@@ -79,33 +79,41 @@ Examples:
 - Competitive comparisons ("How do you compare to Asana?")
 - Feature availability questions (pre-purchase)
 - Trial questions from prospects
+- **Competitor pain points** ("We're using Trello but it's messy", "Asana is too complex", "Monday.com is expensive")
+- **Migration interest** ("We want to switch from...", "Looking for alternative to...")
+- Prospects mentioning frustrations with OTHER tools they currently use
 
-**CUSTOMER_SUCCESS** - Existing paying customers with value/adoption concerns
+**CUSTOMER_SUCCESS** - Existing PAYING customers (not prospects) with value/adoption concerns about OUR product
 Examples:
-- Not seeing value / considering cancellation
-- Low engagement / team not using product
+- Not seeing value from OUR product / considering cancellation
+- Low engagement / team not using OUR product
 - Onboarding help for paid customers
 - Expansion opportunities (upsell/cross-sell for existing customers)
 - Renewal discussions
 - Feature requests from engaged customers
+NOTE: This is for EXISTING paying customers having issues with OUR product, NOT prospects frustrated with competitors
 
 **Customer Context**: {customer_context}
 
-**CRITICAL - Conversation Continuity Rules**:
-1. If conversation history shows an ONGOING sales discussion (upgrade, pricing, plans), KEEP routing to sales
-2. If conversation history shows an ONGOING support issue, KEEP routing to support
-3. Follow-up messages like "did you get that?", "my name is X", "yes", "no", "what about..." should stay in the SAME domain as the previous messages
-4. Only change domains if there is a CLEAR shift in topic (e.g., from sales to a technical bug report)
-5. When in doubt about follow-up messages, check conversation history and maintain the existing domain
+**CRITICAL - Conversation Continuity Rules** (HIGHEST PRIORITY):
+1. **ALWAYS check conversation history FIRST before classifying**
+2. If conversation history shows an ONGOING sales discussion (qualification, demos, pricing, features, company info), KEEP routing to SALES
+3. If conversation history shows an ONGOING support issue, KEEP routing to SUPPORT
+4. Follow-up messages like "did you get that?", "my name is X", "yes", "no", "what about...", "we use X tool" should stay in the SAME domain as previous messages
+5. **During a sales conversation, ANY mention of competitor tools (Trello, Asana, Monday, Jira, etc.) = stay in SALES** (this is competitive intelligence)
+6. Only change domains if there is a CLEAR, EXPLICIT shift in topic (e.g., from sales to reporting a bug in OUR product)
+7. When in doubt about follow-up messages, MAINTAIN the existing domain from conversation history
 
 **Classification Rules**:
-1. If customer has a PROBLEM → support
-2. If customer wants to BUY or UPGRADE (and is on FREE plan) → sales
-3. If PAYING customer questions VALUE or is at-risk → customer_success
-4. If PAYING customer wants to upgrade → support (billing)
-5. If ambiguous AND no conversation history → default to support
-6. If ambiguous AND conversation history exists → maintain current domain
-7. Use customer context (plan, health_score, churn_risk) to inform decision
+1. **Check conversation history FIRST** - if ongoing conversation exists, strongly prefer maintaining that domain
+2. If customer has a PROBLEM with OUR product → support
+3. If customer wants to BUY or UPGRADE (and is on FREE plan) → sales
+4. If prospect mentions competitor tools (positively OR negatively) → sales
+5. If PAYING customer questions VALUE of OUR product or is at-risk → customer_success
+6. If PAYING customer wants to upgrade → support (billing)
+7. If ambiguous AND no conversation history → default to support
+8. If ambiguous AND conversation history exists → maintain current domain
+9. Use customer context (plan, health_score, churn_risk) to inform decision
 
 **Output Format** (JSON only, no extra text):
 {{
