@@ -4,12 +4,12 @@ Login Specialist Agent - Resolves login and authentication issues.
 Specialist for password resets, account unlocks, 2FA issues, SSO problems.
 """
 
-from typing import Dict, Any, Optional
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("login_specialist", tier="essential", category="technical")
@@ -33,10 +33,10 @@ class LoginSpecialist(BaseAgent):
             capabilities=[
                 AgentCapability.KB_SEARCH,
                 AgentCapability.CONTEXT_AWARE,
-                AgentCapability.DATABASE_WRITE
+                AgentCapability.DATABASE_WRITE,
             ],
             kb_category="account",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -54,16 +54,13 @@ class LoginSpecialist(BaseAgent):
             "login_issue_processing_started",
             message_preview=message[:100],
             customer_email=customer_email,
-            turn_count=state["turn_count"]
+            turn_count=state["turn_count"],
         )
 
         # Detect login issue type
         login_issue = self._detect_login_issue(message)
 
-        self.logger.info(
-            "login_issue_detected",
-            issue_type=login_issue
-        )
+        self.logger.info("login_issue_detected", issue_type=login_issue)
 
         # Handle the specific login issue
         if login_issue == "forgot_password":
@@ -80,18 +77,11 @@ class LoginSpecialist(BaseAgent):
             response = await self._diagnose_login_issue(customer_email, message)
 
         # Search KB for login help
-        kb_results = await self.search_knowledge_base(
-            message,
-            category="account",
-            limit=2
-        )
+        kb_results = await self.search_knowledge_base(message, category="account", limit=2)
         state["kb_results"] = kb_results
 
         if kb_results:
-            self.logger.info(
-                "login_kb_articles_found",
-                count=len(kb_results)
-            )
+            self.logger.info("login_kb_articles_found", count=len(kb_results))
 
         formatted_response = self._format_response(response, kb_results)
 
@@ -106,7 +96,7 @@ class LoginSpecialist(BaseAgent):
             "login_issue_resolved",
             issue_type=login_issue,
             action=response.get("action"),
-            status="resolved"
+            status="resolved",
         )
 
         return state
@@ -115,13 +105,21 @@ class LoginSpecialist(BaseAgent):
         """Detect the type of login issue"""
         message_lower = message.lower()
 
-        if any(phrase in message_lower for phrase in ["forgot password", "reset password", "can't remember password"]) or \
-           ("forgot" in message_lower and "password" in message_lower) or \
-           ("remember" in message_lower and "password" in message_lower):
+        if (
+            any(
+                phrase in message_lower
+                for phrase in ["forgot password", "reset password", "can't remember password"]
+            )
+            or ("forgot" in message_lower and "password" in message_lower)
+            or ("remember" in message_lower and "password" in message_lower)
+        ):
             return "forgot_password"
         elif any(word in message_lower for word in ["locked", "locked out", "too many attempts"]):
             return "locked"
-        elif any(word in message_lower for word in ["2fa", "two factor", "authenticator", "verification code"]):
+        elif any(
+            word in message_lower
+            for word in ["2fa", "two factor", "authenticator", "verification code"]
+        ):
             return "2fa_issue"
         elif any(word in message_lower for word in ["sso", "single sign", "saml", "oauth"]):
             return "sso_issue"
@@ -130,12 +128,9 @@ class LoginSpecialist(BaseAgent):
         else:
             return "unknown"
 
-    async def _handle_password_reset(self, email: str) -> Dict[str, Any]:
+    async def _handle_password_reset(self, email: str) -> dict[str, Any]:
         """Send password reset email"""
-        self.logger.info(
-            "password_reset_initiated",
-            email=email
-        )
+        self.logger.info("password_reset_initiated", email=email)
 
         # In production: Call auth API to send reset email
         # auth_service.send_password_reset(email)
@@ -160,17 +155,11 @@ Let me know and I'll resend it. If you don't see it after 5 minutes, check:
 - Email address is correct
 - Email filters"""
 
-        return {
-            "message": message,
-            "action": "password_reset_sent"
-        }
+        return {"message": message, "action": "password_reset_sent"}
 
-    async def _unlock_account(self, email: str) -> Dict[str, Any]:
+    async def _unlock_account(self, email: str) -> dict[str, Any]:
         """Unlock locked account"""
-        self.logger.info(
-            "account_unlock_initiated",
-            email=email
-        )
+        self.logger.info("account_unlock_initiated", email=email)
 
         # In production: Call auth API to unlock account
         # auth_service.unlock_account(email)
@@ -197,17 +186,11 @@ Let me know and I can:
 - Check if there are other issues
 - Verify your account details"""
 
-        return {
-            "message": message,
-            "action": "account_unlocked"
-        }
+        return {"message": message, "action": "account_unlocked"}
 
-    def _handle_2fa_issue(self, email: str) -> Dict[str, Any]:
+    def _handle_2fa_issue(self, email: str) -> dict[str, Any]:
         """Handle 2FA problems"""
-        self.logger.info(
-            "2fa_issue_handling_started",
-            email=email
-        )
+        self.logger.info("2fa_issue_handling_started", email=email)
 
         message = """Having trouble with two-factor authentication?
 
@@ -239,12 +222,9 @@ I can disable 2FA so you can log in, but I'll need to verify your identity first
 
 Would you like me to disable 2FA? (You can re-enable it after logging in)"""
 
-        return {
-            "message": message,
-            "action": "2fa_troubleshooting_provided"
-        }
+        return {"message": message, "action": "2fa_troubleshooting_provided"}
 
-    def _handle_sso_issue(self, message: str) -> Dict[str, Any]:
+    def _handle_sso_issue(self, message: str) -> dict[str, Any]:
         """Handle SSO/SAML issues"""
         self.logger.info("sso_issue_handling_started")
 
@@ -287,12 +267,9 @@ If you're setting up SSO, you'll need:
 
 Would you like me to escalate this to our SSO support team?"""
 
-        return {
-            "message": response_message,
-            "action": "sso_troubleshooting_provided"
-        }
+        return {"message": response_message, "action": "sso_troubleshooting_provided"}
 
-    def _handle_session_issue(self) -> Dict[str, Any]:
+    def _handle_session_issue(self) -> dict[str, Any]:
         """Handle session expiration issues"""
         self.logger.info("session_issue_handling_started")
 
@@ -329,12 +306,9 @@ Your IT admin can configure session timeout in Settings > Security > Session Man
 
 Would you like me to enable "stay logged in" for your account?"""
 
-        return {
-            "message": message,
-            "action": "session_troubleshooting_provided"
-        }
+        return {"message": message, "action": "session_troubleshooting_provided"}
 
-    async def _diagnose_login_issue(self, email: str, message: str) -> Dict[str, Any]:
+    async def _diagnose_login_issue(self, email: str, message: str) -> dict[str, Any]:
         """Diagnose general login issue"""
         self.logger.info("general_login_diagnosis_started")
 
@@ -376,12 +350,9 @@ Tell me which error you're seeing:
 
 I can help once I know the specific error!"""
 
-        return {
-            "message": response_message,
-            "action": "diagnosis_provided"
-        }
+        return {"message": response_message, "action": "diagnosis_provided"}
 
-    def _format_response(self, response: Dict[str, Any], kb_results: list) -> str:
+    def _format_response(self, response: dict[str, Any], kb_results: list) -> str:
         """Format response with KB context"""
         kb_context = ""
         if kb_results:
@@ -394,6 +365,7 @@ I can help once I know the specific error!"""
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
