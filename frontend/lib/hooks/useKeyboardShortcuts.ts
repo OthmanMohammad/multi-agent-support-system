@@ -4,9 +4,9 @@
  * Provides keyboard shortcut handling for the application.
  */
 
-'use client';
+"use client";
 
-import { useEffect, useCallback } from 'react';
+import { useCallback, useEffect } from "react";
 
 // =============================================================================
 // TYPES
@@ -19,9 +19,9 @@ export interface Shortcut {
   shift?: boolean;
   alt?: boolean;
   shiftKey?: boolean; // Alias for shift
-  ctrlKey?: boolean;  // Alias for ctrl
-  metaKey?: boolean;  // Alias for meta
-  altKey?: boolean;   // Alias for alt
+  ctrlKey?: boolean; // Alias for ctrl
+  metaKey?: boolean; // Alias for meta
+  altKey?: boolean; // Alias for alt
   handler: () => void;
   description?: string;
   preventDefault?: boolean;
@@ -47,47 +47,47 @@ export interface UseKeyboardShortcutsOptions {
 
 export const CHAT_SHORTCUTS = {
   NEW_CONVERSATION: {
-    key: 'n',
+    key: "n",
     ctrl: true,
-    description: 'New Conversation',
+    description: "New Conversation",
   } as ShortcutDefinition,
   SEARCH: {
-    key: 'k',
+    key: "k",
     ctrl: true,
-    description: 'Search',
+    description: "Search",
   } as ShortcutDefinition,
   TOGGLE_SIDEBAR: {
-    key: 'b',
+    key: "b",
     ctrl: true,
-    description: 'Toggle Sidebar',
+    description: "Toggle Sidebar",
   } as ShortcutDefinition,
   FOCUS_INPUT: {
-    key: '/',
-    description: 'Focus Input',
+    key: "/",
+    description: "Focus Input",
   } as ShortcutDefinition,
   EXPORT: {
-    key: 'e',
+    key: "e",
     ctrl: true,
-    description: 'Export Conversation',
+    description: "Export Conversation",
   } as ShortcutDefinition,
   DELETE_CONVERSATION: {
-    key: 'Delete',
+    key: "Delete",
     ctrl: true,
-    description: 'Delete Conversation',
+    description: "Delete Conversation",
   } as ShortcutDefinition,
   SETTINGS: {
-    key: ',',
+    key: ",",
     ctrl: true,
-    description: 'Open Settings',
+    description: "Open Settings",
   } as ShortcutDefinition,
   SEND_MESSAGE: {
-    key: 'Enter',
-    description: 'Send Message',
+    key: "Enter",
+    description: "Send Message",
   } as ShortcutDefinition,
   NEW_LINE: {
-    key: 'Enter',
+    key: "Enter",
     shift: true,
-    description: 'New Line',
+    description: "New Line",
   } as ShortcutDefinition,
 } as const;
 
@@ -100,47 +100,48 @@ export const CHAT_SHORTCUTS = {
  */
 export function formatShortcut(shortcut: ShortcutDefinition): string {
   const parts: string[] = [];
-  const isMac = typeof navigator !== 'undefined' && navigator.platform.includes('Mac');
+  const isMac =
+    typeof navigator !== "undefined" && navigator.platform.includes("Mac");
 
   if (shortcut.ctrl) {
-    parts.push(isMac ? '⌘' : 'Ctrl');
+    parts.push(isMac ? "⌘" : "Ctrl");
   }
   if (shortcut.meta) {
-    parts.push(isMac ? '⌘' : 'Win');
+    parts.push(isMac ? "⌘" : "Win");
   }
   if (shortcut.alt) {
-    parts.push(isMac ? '⌥' : 'Alt');
+    parts.push(isMac ? "⌥" : "Alt");
   }
   if (shortcut.shift) {
-    parts.push(isMac ? '⇧' : 'Shift');
+    parts.push(isMac ? "⇧" : "Shift");
   }
 
   // Format special keys
   let keyDisplay = shortcut.key;
   switch (shortcut.key.toLowerCase()) {
-    case 'enter':
-      keyDisplay = isMac ? '↩' : 'Enter';
+    case "enter":
+      keyDisplay = isMac ? "↩" : "Enter";
       break;
-    case 'escape':
-      keyDisplay = 'Esc';
+    case "escape":
+      keyDisplay = "Esc";
       break;
-    case 'delete':
-      keyDisplay = isMac ? '⌫' : 'Del';
+    case "delete":
+      keyDisplay = isMac ? "⌫" : "Del";
       break;
-    case 'arrowup':
-      keyDisplay = '↑';
+    case "arrowup":
+      keyDisplay = "↑";
       break;
-    case 'arrowdown':
-      keyDisplay = '↓';
+    case "arrowdown":
+      keyDisplay = "↓";
       break;
-    case 'arrowleft':
-      keyDisplay = '←';
+    case "arrowleft":
+      keyDisplay = "←";
       break;
-    case 'arrowright':
-      keyDisplay = '→';
+    case "arrowright":
+      keyDisplay = "→";
       break;
-    case ' ':
-      keyDisplay = 'Space';
+    case " ":
+      keyDisplay = "Space";
       break;
     default:
       keyDisplay = shortcut.key.toUpperCase();
@@ -148,7 +149,7 @@ export function formatShortcut(shortcut: ShortcutDefinition): string {
 
   parts.push(keyDisplay);
 
-  return parts.join(isMac ? '' : '+');
+  return parts.join(isMac ? "" : "+");
 }
 
 // =============================================================================
@@ -158,16 +159,20 @@ export function formatShortcut(shortcut: ShortcutDefinition): string {
 /**
  * Hook to handle keyboard shortcuts
  */
-export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions): void {
+export function useKeyboardShortcuts(
+  options: UseKeyboardShortcutsOptions
+): void {
   const { shortcuts, enabled = true } = options;
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
-      if (!enabled) return;
+      if (!enabled) {
+        return;
+      }
 
       // Don't trigger shortcuts when typing in inputs (unless it's Escape)
       const target = event.target as HTMLElement;
-      const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
+      const isInput = ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
       const isContentEditable = target.isContentEditable;
 
       for (const shortcut of shortcuts) {
@@ -177,7 +182,9 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions): void
         const alt = shortcut.alt ?? shortcut.altKey ?? false;
 
         // For special keys like Escape, allow them even in inputs
-        const isSpecialKey = ['Escape', 'F1', 'F2', 'F3'].includes(shortcut.key);
+        const isSpecialKey = ["Escape", "F1", "F2", "F3"].includes(
+          shortcut.key
+        );
 
         // Skip if in input and not a special key
         if ((isInput || isContentEditable) && !isSpecialKey && !ctrl && !meta) {
@@ -208,11 +215,13 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions): void
   );
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      return;
+    }
 
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [handleKeyDown, enabled]);
 }
