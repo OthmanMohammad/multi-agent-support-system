@@ -5,13 +5,13 @@ Handles data migration from legacy systems, validates data integrity, and ensure
 smooth transition. Coordinates extraction, transformation, validation, and loading.
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("data_migration", tier="revenue", category="customer_success")
@@ -37,16 +37,11 @@ class DataMigrationAgent(BaseAgent):
         "transformation": {"weight": 20, "critical": True},
         "validation": {"weight": 15, "critical": True},
         "loading": {"weight": 15, "critical": True},
-        "verification": {"weight": 5, "critical": True}
+        "verification": {"weight": 5, "critical": True},
     }
 
     # Data quality thresholds
-    QUALITY_THRESHOLDS = {
-        "excellent": 99.0,
-        "good": 95.0,
-        "acceptable": 90.0,
-        "poor": 80.0
-    }
+    QUALITY_THRESHOLDS = {"excellent": 99.0, "good": 95.0, "acceptable": 90.0, "poor": 80.0}
 
     def __init__(self):
         config = AgentConfig(
@@ -54,12 +49,9 @@ class DataMigrationAgent(BaseAgent):
             type=AgentType.SPECIALIST,
             temperature=0.2,
             max_tokens=750,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.KB_SEARCH
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.KB_SEARCH],
             kb_category="customer_success",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -86,14 +78,11 @@ class DataMigrationAgent(BaseAgent):
             "data_migration_details",
             customer_id=customer_id,
             current_phase=migration_data.get("current_phase"),
-            records_migrated=migration_data.get("records_migrated", 0)
+            records_migrated=migration_data.get("records_migrated", 0),
         )
 
         # Analyze migration status
-        migration_analysis = self._analyze_migration_status(
-            migration_data,
-            customer_metadata
-        )
+        migration_analysis = self._analyze_migration_status(migration_data, customer_metadata)
 
         # Generate recommendations
         recommendations = self._generate_recommendations(migration_analysis)
@@ -102,11 +91,7 @@ class DataMigrationAgent(BaseAgent):
         risks = self._assess_migration_risks(migration_analysis, migration_data)
 
         # Build response
-        response = self._format_migration_report(
-            migration_analysis,
-            recommendations,
-            risks
-        )
+        response = self._format_migration_report(migration_analysis, recommendations, risks)
 
         state["agent_response"] = response
         state["migration_status"] = migration_analysis["overall_status"]
@@ -123,16 +108,14 @@ class DataMigrationAgent(BaseAgent):
             customer_id=customer_id,
             migration_status=migration_analysis["overall_status"],
             data_quality=migration_analysis["data_quality_score"],
-            progress=migration_analysis["progress_percentage"]
+            progress=migration_analysis["progress_percentage"],
         )
 
         return state
 
     def _analyze_migration_status(
-        self,
-        migration_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, migration_data: dict[str, Any], customer_metadata: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Analyze data migration status and quality.
 
@@ -160,17 +143,12 @@ class DataMigrationAgent(BaseAgent):
 
         # Determine overall status
         overall_status = self._determine_migration_status(
-            current_phase,
-            quality_metrics,
-            data_issues,
-            velocity_analysis
+            current_phase, quality_metrics, data_issues, velocity_analysis
         )
 
         # Calculate estimated completion
         estimated_completion = self._estimate_completion(
-            progress_percentage,
-            velocity_analysis,
-            data_issues
+            progress_percentage, velocity_analysis, data_issues
         )
 
         return {
@@ -187,14 +165,10 @@ class DataMigrationAgent(BaseAgent):
             "data_issues": data_issues,
             "estimated_completion_days": estimated_completion,
             "quality_metrics": quality_metrics,
-            "analyzed_at": datetime.now(UTC).isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat(),
         }
 
-    def _calculate_progress(
-        self,
-        current_phase: str,
-        completed_phases: List[str]
-    ) -> int:
+    def _calculate_progress(self, current_phase: str, completed_phases: list[str]) -> int:
         """Calculate overall migration progress percentage."""
         total_weight = sum(phase["weight"] for phase in self.MIGRATION_PHASES.values())
         completed_weight = sum(
@@ -209,19 +183,25 @@ class DataMigrationAgent(BaseAgent):
 
         return int((completed_weight / total_weight) * 100)
 
-    def _calculate_data_quality(self, migration_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _calculate_data_quality(self, migration_data: dict[str, Any]) -> dict[str, Any]:
         """Calculate comprehensive data quality metrics."""
         total_records = migration_data.get("total_records", 0)
         migrated_records = migration_data.get("records_migrated", 0)
         failed_records = migration_data.get("records_failed", 0)
 
         # Success rate
-        success_rate = ((migrated_records - failed_records) / total_records * 100) if total_records > 0 else 100
+        success_rate = (
+            ((migrated_records - failed_records) / total_records * 100)
+            if total_records > 0
+            else 100
+        )
 
         # Validation metrics
         validation_passed = migration_data.get("validation_passed", 0)
         validation_total = migration_data.get("validation_total", migrated_records)
-        validation_rate = (validation_passed / validation_total * 100) if validation_total > 0 else 100
+        validation_rate = (
+            (validation_passed / validation_total * 100) if validation_total > 0 else 100
+        )
 
         # Completeness score
         completeness = migration_data.get("data_completeness", 95.0)
@@ -231,15 +211,17 @@ class DataMigrationAgent(BaseAgent):
 
         # Calculate overall quality (weighted average)
         overall_quality = (
-            success_rate * 0.3 +
-            validation_rate * 0.3 +
-            completeness * 0.2 +
-            schema_compliance * 0.2
+            success_rate * 0.3
+            + validation_rate * 0.3
+            + completeness * 0.2
+            + schema_compliance * 0.2
         )
 
         # Determine quality category
         quality_category = "poor"
-        for category, threshold in sorted(self.QUALITY_THRESHOLDS.items(), key=lambda x: x[1], reverse=True):
+        for category, threshold in sorted(
+            self.QUALITY_THRESHOLDS.items(), key=lambda x: x[1], reverse=True
+        ):
             if overall_quality >= threshold:
                 quality_category = category
                 break
@@ -250,22 +232,18 @@ class DataMigrationAgent(BaseAgent):
             "success_rate": round(success_rate, 2),
             "validation_rate": round(validation_rate, 2),
             "completeness": round(completeness, 2),
-            "schema_compliance": round(schema_compliance, 2)
+            "schema_compliance": round(schema_compliance, 2),
         }
 
-    def _analyze_velocity(self, migration_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_velocity(self, migration_data: dict[str, Any]) -> dict[str, Any]:
         """Analyze migration velocity and throughput."""
         start_date_str = migration_data.get("migration_start_date")
         if not start_date_str:
-            return {
-                "status": "not_started",
-                "days_elapsed": 0,
-                "records_per_day": 0
-            }
+            return {"status": "not_started", "days_elapsed": 0, "records_per_day": 0}
 
         try:
-            start_date = datetime.fromisoformat(start_date_str.replace('Z', '+00:00'))
-        except:
+            start_date = datetime.fromisoformat(start_date_str.replace("Z", "+00:00"))
+        except Exception:
             start_date = datetime.now(UTC)
 
         days_elapsed = max((datetime.now(UTC) - start_date).days, 1)
@@ -285,81 +263,91 @@ class DataMigrationAgent(BaseAgent):
             "status": velocity_status,
             "days_elapsed": days_elapsed,
             "records_per_day": records_per_day,
-            "expected_daily_rate": expected_daily_rate
+            "expected_daily_rate": expected_daily_rate,
         }
 
     def _identify_data_issues(
-        self,
-        migration_data: Dict[str, Any],
-        quality_metrics: Dict[str, Any]
-    ) -> List[Dict[str, str]]:
+        self, migration_data: dict[str, Any], quality_metrics: dict[str, Any]
+    ) -> list[dict[str, str]]:
         """Identify data quality and migration issues."""
         issues = []
 
         # Failed records issue
         failed_records = migration_data.get("records_failed", 0)
         if failed_records > 100:
-            issues.append({
-                "issue": f"{failed_records} records failed migration",
-                "severity": "high",
-                "impact": "Data loss risk - need to investigate failure patterns",
-                "category": "data_loss"
-            })
+            issues.append(
+                {
+                    "issue": f"{failed_records} records failed migration",
+                    "severity": "high",
+                    "impact": "Data loss risk - need to investigate failure patterns",
+                    "category": "data_loss",
+                }
+            )
 
         # Validation failures
         if quality_metrics["validation_rate"] < 90:
-            issues.append({
-                "issue": f"Low validation rate: {quality_metrics['validation_rate']}%",
-                "severity": "critical",
-                "impact": "Data integrity concerns - migrated data may be corrupted",
-                "category": "data_integrity"
-            })
+            issues.append(
+                {
+                    "issue": f"Low validation rate: {quality_metrics['validation_rate']}%",
+                    "severity": "critical",
+                    "impact": "Data integrity concerns - migrated data may be corrupted",
+                    "category": "data_integrity",
+                }
+            )
 
         # Incomplete data
         if quality_metrics["completeness"] < 90:
-            issues.append({
-                "issue": f"Data completeness only {quality_metrics['completeness']}%",
-                "severity": "high",
-                "impact": "Missing critical data fields",
-                "category": "data_completeness"
-            })
+            issues.append(
+                {
+                    "issue": f"Data completeness only {quality_metrics['completeness']}%",
+                    "severity": "high",
+                    "impact": "Missing critical data fields",
+                    "category": "data_completeness",
+                }
+            )
 
         # Schema compliance issues
         if quality_metrics["schema_compliance"] < 95:
-            issues.append({
-                "issue": f"Schema compliance at {quality_metrics['schema_compliance']}%",
-                "severity": "medium",
-                "impact": "Data transformation errors detected",
-                "category": "schema_mapping"
-            })
+            issues.append(
+                {
+                    "issue": f"Schema compliance at {quality_metrics['schema_compliance']}%",
+                    "severity": "medium",
+                    "impact": "Data transformation errors detected",
+                    "category": "schema_mapping",
+                }
+            )
 
         # Legacy system access issues
         if migration_data.get("source_system_errors", False):
-            issues.append({
-                "issue": "Legacy system connection errors",
-                "severity": "critical",
-                "impact": "Cannot extract data - migration blocked",
-                "category": "connectivity"
-            })
+            issues.append(
+                {
+                    "issue": "Legacy system connection errors",
+                    "severity": "critical",
+                    "impact": "Cannot extract data - migration blocked",
+                    "category": "connectivity",
+                }
+            )
 
         # Duplicate records
         duplicate_count = migration_data.get("duplicate_records", 0)
         if duplicate_count > 50:
-            issues.append({
-                "issue": f"{duplicate_count} duplicate records detected",
-                "severity": "medium",
-                "impact": "Data deduplication required",
-                "category": "data_quality"
-            })
+            issues.append(
+                {
+                    "issue": f"{duplicate_count} duplicate records detected",
+                    "severity": "medium",
+                    "impact": "Data deduplication required",
+                    "category": "data_quality",
+                }
+            )
 
         return issues
 
     def _determine_migration_status(
         self,
         current_phase: str,
-        quality_metrics: Dict[str, Any],
-        data_issues: List[Dict[str, str]],
-        velocity_analysis: Dict[str, Any]
+        quality_metrics: dict[str, Any],
+        data_issues: list[dict[str, str]],
+        velocity_analysis: dict[str, Any],
     ) -> str:
         """Determine overall migration status."""
         critical_issues = [i for i in data_issues if i["severity"] == "critical"]
@@ -381,8 +369,8 @@ class DataMigrationAgent(BaseAgent):
     def _estimate_completion(
         self,
         progress_pct: int,
-        velocity_analysis: Dict[str, Any],
-        data_issues: List[Dict[str, str]]
+        velocity_analysis: dict[str, Any],
+        data_issues: list[dict[str, str]],
     ) -> int:
         """Estimate days until migration completion."""
         if progress_pct >= 100:
@@ -403,46 +391,47 @@ class DataMigrationAgent(BaseAgent):
         return max(remaining_days, 0)
 
     def _assess_migration_risks(
-        self,
-        migration_analysis: Dict[str, Any],
-        migration_data: Dict[str, Any]
-    ) -> List[Dict[str, str]]:
+        self, migration_analysis: dict[str, Any], migration_data: dict[str, Any]
+    ) -> list[dict[str, str]]:
         """Assess migration risks."""
         risks = []
 
         # Data loss risk
         if migration_analysis["data_quality_score"] < 95:
-            risks.append({
-                "risk": "Data quality below acceptable threshold",
-                "probability": "high",
-                "impact": "Customer may lose critical business data",
-                "mitigation": "Pause migration, fix transformation logic, re-migrate failed records"
-            })
+            risks.append(
+                {
+                    "risk": "Data quality below acceptable threshold",
+                    "probability": "high",
+                    "impact": "Customer may lose critical business data",
+                    "mitigation": "Pause migration, fix transformation logic, re-migrate failed records",
+                }
+            )
 
         # Timeline risk
         if migration_analysis["estimated_completion_days"] > 20:
-            risks.append({
-                "risk": "Migration timeline at risk",
-                "probability": "medium",
-                "impact": "Delays onboarding completion and time-to-value",
-                "mitigation": "Increase migration resources, parallelize extraction"
-            })
+            risks.append(
+                {
+                    "risk": "Migration timeline at risk",
+                    "probability": "medium",
+                    "impact": "Delays onboarding completion and time-to-value",
+                    "mitigation": "Increase migration resources, parallelize extraction",
+                }
+            )
 
         # Legacy system dependency
         if migration_data.get("legacy_system_required", True):
-            risks.append({
-                "risk": "Dependency on legacy system access",
-                "probability": "medium",
-                "impact": "Migration can be blocked by legacy system downtime",
-                "mitigation": "Create data snapshots, establish backup extraction method"
-            })
+            risks.append(
+                {
+                    "risk": "Dependency on legacy system access",
+                    "probability": "medium",
+                    "impact": "Migration can be blocked by legacy system downtime",
+                    "mitigation": "Create data snapshots, establish backup extraction method",
+                }
+            )
 
         return risks
 
-    def _generate_recommendations(
-        self,
-        migration_analysis: Dict[str, Any]
-    ) -> List[Dict[str, str]]:
+    def _generate_recommendations(self, migration_analysis: dict[str, Any]) -> list[dict[str, str]]:
         """Generate migration recommendations."""
         recommendations = []
 
@@ -452,63 +441,75 @@ class DataMigrationAgent(BaseAgent):
 
         # Status-based recommendations
         if status == "blocked":
-            recommendations.append({
-                "action": "Halt migration and resolve critical issues immediately",
-                "priority": "critical",
-                "owner": "Data Migration Specialist",
-                "timeline": "Before proceeding"
-            })
+            recommendations.append(
+                {
+                    "action": "Halt migration and resolve critical issues immediately",
+                    "priority": "critical",
+                    "owner": "Data Migration Specialist",
+                    "timeline": "Before proceeding",
+                }
+            )
 
         if status == "at_risk":
-            recommendations.append({
-                "action": "Increase migration resources to accelerate timeline",
-                "priority": "high",
-                "owner": "Solutions Engineer",
-                "timeline": "This week"
-            })
+            recommendations.append(
+                {
+                    "action": "Increase migration resources to accelerate timeline",
+                    "priority": "high",
+                    "owner": "Solutions Engineer",
+                    "timeline": "This week",
+                }
+            )
 
         # Issue-based recommendations
         for issue in data_issues:
             if issue["category"] == "data_integrity":
-                recommendations.append({
-                    "action": "Review and fix data transformation mappings",
-                    "priority": "critical",
-                    "owner": "Data Migration Specialist",
-                    "timeline": "Within 2 days"
-                })
+                recommendations.append(
+                    {
+                        "action": "Review and fix data transformation mappings",
+                        "priority": "critical",
+                        "owner": "Data Migration Specialist",
+                        "timeline": "Within 2 days",
+                    }
+                )
             elif issue["category"] == "connectivity":
-                recommendations.append({
-                    "action": "Work with customer IT to restore legacy system access",
-                    "priority": "critical",
-                    "owner": "Solutions Engineer",
-                    "timeline": "Immediately"
-                })
+                recommendations.append(
+                    {
+                        "action": "Work with customer IT to restore legacy system access",
+                        "priority": "critical",
+                        "owner": "Solutions Engineer",
+                        "timeline": "Immediately",
+                    }
+                )
 
         # Quality-based recommendations
         if quality_score < 90:
-            recommendations.append({
-                "action": "Perform comprehensive data quality audit",
-                "priority": "high",
-                "owner": "Data Migration Specialist",
-                "timeline": "Before loading phase"
-            })
+            recommendations.append(
+                {
+                    "action": "Perform comprehensive data quality audit",
+                    "priority": "high",
+                    "owner": "Data Migration Specialist",
+                    "timeline": "Before loading phase",
+                }
+            )
 
         # Proactive recommendations
         if migration_analysis["current_phase"] in ["loading", "verification"]:
-            recommendations.append({
-                "action": "Schedule customer data validation review session",
-                "priority": "medium",
-                "owner": "CSM",
-                "timeline": "Before sign-off"
-            })
+            recommendations.append(
+                {
+                    "action": "Schedule customer data validation review session",
+                    "priority": "medium",
+                    "owner": "CSM",
+                    "timeline": "Before sign-off",
+                }
+            )
 
         return recommendations[:5]
 
     def _format_migration_report(
         self,
-        migration_analysis: Dict[str, Any],
-        recommendations: List[Dict[str, str]],
-        risks: List[Dict[str, str]]
+        migration_analysis: dict[str, Any],
+        recommendations: list[dict[str, str]],
+        risks: list[dict[str, str]],
     ) -> str:
         """Format data migration report."""
         status = migration_analysis["overall_status"]
@@ -519,40 +520,35 @@ class DataMigrationAgent(BaseAgent):
             "on_track": "????",
             "in_progress": "???",
             "at_risk": "??????",
-            "blocked": "????"
+            "blocked": "????",
         }
 
-        quality_emoji = {
-            "excellent": "????",
-            "good": "???",
-            "acceptable": "??????",
-            "poor": "????"
-        }
+        quality_emoji = {"excellent": "????", "good": "???", "acceptable": "??????", "poor": "????"}
 
-        report = f"""**{status_emoji.get(status, '????')} Data Migration Report**
+        report = f"""**{status_emoji.get(status, "????")} Data Migration Report**
 
-**Overall Status:** {status.replace('_', ' ').title()}
-**Current Phase:** {migration_analysis['current_phase'].title()}
-**Progress:** {migration_analysis['progress_percentage']}%
+**Overall Status:** {status.replace("_", " ").title()}
+**Current Phase:** {migration_analysis["current_phase"].title()}
+**Progress:** {migration_analysis["progress_percentage"]}%
 
 **Data Quality Metrics:**
-- Overall Quality Score: {migration_analysis['data_quality_score']}/100 {quality_emoji.get(migration_analysis['data_quality_category'], '????')}
-- Category: {migration_analysis['data_quality_category'].title()}
-- Success Rate: {migration_analysis['quality_metrics']['success_rate']}%
-- Validation Rate: {migration_analysis['quality_metrics']['validation_rate']}%
-- Completeness: {migration_analysis['quality_metrics']['completeness']}%
-- Schema Compliance: {migration_analysis['quality_metrics']['schema_compliance']}%
+- Overall Quality Score: {migration_analysis["data_quality_score"]}/100 {quality_emoji.get(migration_analysis["data_quality_category"], "????")}
+- Category: {migration_analysis["data_quality_category"].title()}
+- Success Rate: {migration_analysis["quality_metrics"]["success_rate"]}%
+- Validation Rate: {migration_analysis["quality_metrics"]["validation_rate"]}%
+- Completeness: {migration_analysis["quality_metrics"]["completeness"]}%
+- Schema Compliance: {migration_analysis["quality_metrics"]["schema_compliance"]}%
 
 **Migration Progress:**
-- Records Migrated: {migration_analysis['records_migrated']:,}/{migration_analysis['records_total']:,}
-- Records Failed: {migration_analysis['records_failed']:,}
-- Completed Phases: {len(migration_analysis['completed_phases'])}/{len(self.MIGRATION_PHASES)}
+- Records Migrated: {migration_analysis["records_migrated"]:,}/{migration_analysis["records_total"]:,}
+- Records Failed: {migration_analysis["records_failed"]:,}
+- Completed Phases: {len(migration_analysis["completed_phases"])}/{len(self.MIGRATION_PHASES)}
 
 **Velocity Analysis:**
-- Status: {migration_analysis['velocity_analysis']['status'].replace('_', ' ').title()}
-- Days Elapsed: {migration_analysis['velocity_analysis']['days_elapsed']}
-- Records/Day: {migration_analysis['velocity_analysis']['records_per_day']:,}
-- Estimated Completion: {migration_analysis['estimated_completion_days']} days
+- Status: {migration_analysis["velocity_analysis"]["status"].replace("_", " ").title()}
+- Days Elapsed: {migration_analysis["velocity_analysis"]["days_elapsed"]}
+- Records/Day: {migration_analysis["velocity_analysis"]["records_per_day"]:,}
+- Estimated Completion: {migration_analysis["estimated_completion_days"]} days
 """
 
         # Data Issues
@@ -585,6 +581,7 @@ class DataMigrationAgent(BaseAgent):
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -600,10 +597,7 @@ if __name__ == "__main__":
 
         state1 = create_initial_state(
             "Check data migration status",
-            context={
-                "customer_id": "cust_123",
-                "customer_metadata": {"plan": "enterprise"}
-            }
+            context={"customer_id": "cust_123", "customer_metadata": {"plan": "enterprise"}},
         )
         state1["entities"] = {
             "migration_data": {
@@ -617,7 +611,7 @@ if __name__ == "__main__":
                 "validation_total": 48500,
                 "data_completeness": 97.5,
                 "schema_compliance": 98.5,
-                "expected_daily_rate": 5000
+                "expected_daily_rate": 5000,
             }
         }
 
@@ -636,10 +630,7 @@ if __name__ == "__main__":
 
         state2 = create_initial_state(
             "Assess migration issues",
-            context={
-                "customer_id": "cust_456",
-                "customer_metadata": {"plan": "premium"}
-            }
+            context={"customer_id": "cust_456", "customer_metadata": {"plan": "premium"}},
         )
         state2["entities"] = {
             "migration_data": {
@@ -655,7 +646,7 @@ if __name__ == "__main__":
                 "schema_compliance": 88.0,
                 "expected_daily_rate": 2000,
                 "source_system_errors": True,
-                "duplicate_records": 150
+                "duplicate_records": 150,
             }
         }
 
