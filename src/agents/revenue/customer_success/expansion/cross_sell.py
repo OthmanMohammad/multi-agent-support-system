@@ -5,13 +5,13 @@ Identifies cross-sell opportunities for complementary products, add-ons, and mod
 based on customer usage patterns, industry, and business needs.
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("cross_sell", tier="revenue", category="customer_success")
@@ -34,74 +34,71 @@ class CrossSellAgent(BaseAgent):
             "category": "analytics",
             "complements": ["data_warehouse", "business_intelligence", "reporting_suite"],
             "typical_arr": 25000,
-            "industries": ["technology", "finance", "healthcare", "retail"]
+            "industries": ["technology", "finance", "healthcare", "retail"],
         },
         "data_warehouse": {
             "category": "data_infrastructure",
             "complements": ["analytics_platform", "etl_tools", "data_governance"],
             "typical_arr": 40000,
-            "industries": ["technology", "finance", "healthcare"]
+            "industries": ["technology", "finance", "healthcare"],
         },
         "business_intelligence": {
             "category": "analytics",
             "complements": ["analytics_platform", "data_warehouse", "predictive_analytics"],
             "typical_arr": 30000,
-            "industries": ["retail", "finance", "manufacturing"]
+            "industries": ["retail", "finance", "manufacturing"],
         },
         "collaboration_suite": {
             "category": "productivity",
             "complements": ["project_management", "document_management", "communication_tools"],
             "typical_arr": 15000,
-            "industries": ["technology", "professional_services", "education"]
+            "industries": ["technology", "professional_services", "education"],
         },
         "security_suite": {
             "category": "security",
             "complements": ["compliance_module", "audit_logging", "identity_management"],
             "typical_arr": 35000,
-            "industries": ["finance", "healthcare", "government"]
+            "industries": ["finance", "healthcare", "government"],
         },
         "api_gateway": {
             "category": "infrastructure",
             "complements": ["monitoring_suite", "developer_portal", "rate_limiting"],
             "typical_arr": 20000,
-            "industries": ["technology", "finance"]
+            "industries": ["technology", "finance"],
         },
         "mobile_app": {
             "category": "mobile",
             "complements": ["push_notifications", "mobile_analytics", "app_store_optimization"],
             "typical_arr": 18000,
-            "industries": ["retail", "media", "education"]
+            "industries": ["retail", "media", "education"],
         },
         "compliance_module": {
             "category": "compliance",
             "complements": ["security_suite", "audit_logging", "data_governance"],
             "typical_arr": 28000,
-            "industries": ["finance", "healthcare", "government"]
-        }
+            "industries": ["finance", "healthcare", "government"],
+        },
     }
 
     # Add-on modules
     ADD_ON_MODULES = {
         "premium_support": {
             "value": 12000,
-            "signals": ["high_ticket_volume", "complex_use_case", "enterprise_tier"]
+            "signals": ["high_ticket_volume", "complex_use_case", "enterprise_tier"],
         },
         "advanced_training": {
             "value": 8000,
-            "signals": ["low_adoption", "new_features", "team_growth"]
+            "signals": ["low_adoption", "new_features", "team_growth"],
         },
         "custom_integration": {
             "value": 15000,
-            "signals": ["integration_requests", "api_usage", "workflow_complexity"]
+            "signals": ["integration_requests", "api_usage", "workflow_complexity"],
         },
         "dedicated_csm": {
             "value": 25000,
-            "signals": ["strategic_account", "high_arr", "executive_engagement"]
+            "signals": ["strategic_account", "high_arr", "executive_engagement"],
         },
-        "white_label": {
-            "value": 20000,
-            "signals": ["agency", "reseller", "brand_requirements"]
-        }
+        "white_label": {"value": 20000, "signals": ["agency", "reseller", "brand_requirements"]},
     }
 
     # Cross-sell readiness scoring
@@ -110,7 +107,7 @@ class CrossSellAgent(BaseAgent):
         "customer_health": 25,
         "usage_signals": 20,
         "account_maturity": 15,
-        "budget_timing": 10
+        "budget_timing": 10,
     }
 
     def __init__(self):
@@ -119,12 +116,9 @@ class CrossSellAgent(BaseAgent):
             type=AgentType.SPECIALIST,
             temperature=0.4,
             max_tokens=800,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.KB_SEARCH
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.KB_SEARCH],
             kb_category="customer_success",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -152,51 +146,37 @@ class CrossSellAgent(BaseAgent):
             "cross_sell_analysis_details",
             customer_id=customer_id,
             current_products=len(contract_data.get("current_products", [])),
-            industry=customer_metadata.get("industry", "unknown")
+            industry=customer_metadata.get("industry", "unknown"),
         )
 
         # Analyze customer profile for cross-sell fit
         profile_analysis = self._analyze_customer_profile(
-            customer_metadata,
-            contract_data,
-            usage_data
+            customer_metadata, contract_data, usage_data
         )
 
         # Identify cross-sell opportunities
         cross_sell_opportunities = self._identify_cross_sell_opportunities(
-            profile_analysis,
-            contract_data,
-            customer_metadata
+            profile_analysis, contract_data, customer_metadata
         )
 
         # Identify add-on opportunities
         add_on_opportunities = self._identify_add_on_opportunities(
-            usage_data,
-            contract_data,
-            customer_metadata
+            usage_data, contract_data, customer_metadata
         )
 
         # Calculate cross-sell readiness
         readiness_scores = self._calculate_cross_sell_readiness(
-            cross_sell_opportunities,
-            add_on_opportunities,
-            profile_analysis,
-            customer_metadata
+            cross_sell_opportunities, add_on_opportunities, profile_analysis, customer_metadata
         )
 
         # Calculate revenue potential
         revenue_potential = self._calculate_cross_sell_revenue(
-            cross_sell_opportunities,
-            add_on_opportunities,
-            contract_data
+            cross_sell_opportunities, add_on_opportunities, contract_data
         )
 
         # Generate cross-sell strategy
         cross_sell_strategy = self._generate_cross_sell_strategy(
-            cross_sell_opportunities,
-            add_on_opportunities,
-            readiness_scores,
-            customer_metadata
+            cross_sell_opportunities, add_on_opportunities, readiness_scores, customer_metadata
         )
 
         # Format response
@@ -206,13 +186,17 @@ class CrossSellAgent(BaseAgent):
             add_on_opportunities,
             readiness_scores,
             revenue_potential,
-            cross_sell_strategy
+            cross_sell_strategy,
         )
 
         state["agent_response"] = response
-        state["cross_sell_opportunities_count"] = len(cross_sell_opportunities) + len(add_on_opportunities)
+        state["cross_sell_opportunities_count"] = len(cross_sell_opportunities) + len(
+            add_on_opportunities
+        )
         state["cross_sell_revenue_potential"] = revenue_potential["total_potential"]
-        state["top_cross_sell_readiness"] = readiness_scores[0]["readiness_score"] if readiness_scores else 0
+        state["top_cross_sell_readiness"] = (
+            readiness_scores[0]["readiness_score"] if readiness_scores else 0
+        )
         state["cross_sell_analysis"] = profile_analysis
         state["response_confidence"] = 0.86
         state["status"] = "resolved"
@@ -222,17 +206,17 @@ class CrossSellAgent(BaseAgent):
             "cross_sell_analysis_completed",
             customer_id=customer_id,
             opportunities_found=len(cross_sell_opportunities) + len(add_on_opportunities),
-            revenue_potential=revenue_potential["total_potential"]
+            revenue_potential=revenue_potential["total_potential"],
         )
 
         return state
 
     def _analyze_customer_profile(
         self,
-        customer_metadata: Dict[str, Any],
-        contract_data: Dict[str, Any],
-        usage_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        customer_metadata: dict[str, Any],
+        contract_data: dict[str, Any],
+        usage_data: dict[str, Any],
+    ) -> dict[str, Any]:
         """
         Analyze customer profile for cross-sell fit.
 
@@ -273,7 +257,9 @@ class CrossSellAgent(BaseAgent):
 
         # Calculate customer health for cross-sell timing
         health_score = customer_metadata.get("health_score", 50)
-        health_status = "excellent" if health_score >= 80 else "good" if health_score >= 60 else "fair"
+        health_status = (
+            "excellent" if health_score >= 80 else "good" if health_score >= 60 else "fair"
+        )
 
         # Determine account maturity
         months_as_customer = contract_data.get("months_as_customer", 0)
@@ -294,15 +280,15 @@ class CrossSellAgent(BaseAgent):
             "health_status": health_status,
             "account_maturity": maturity,
             "months_as_customer": months_as_customer,
-            "analyzed_at": datetime.now(UTC).isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat(),
         }
 
     def _identify_cross_sell_opportunities(
         self,
-        profile_analysis: Dict[str, Any],
-        contract_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        profile_analysis: dict[str, Any],
+        contract_data: dict[str, Any],
+        customer_metadata: dict[str, Any],
+    ) -> list[dict[str, Any]]:
         """
         Identify product cross-sell opportunities.
 
@@ -333,26 +319,23 @@ class CrossSellAgent(BaseAgent):
 
                         # Calculate product fit score
                         fit_score = self._calculate_product_fit_score(
-                            complement,
-                            complement_info,
-                            profile_analysis,
-                            industry_fit
+                            complement, complement_info, profile_analysis, industry_fit
                         )
 
                         if fit_score >= 50:  # Minimum threshold
-                            opportunities.append({
-                                "product": complement,
-                                "category": complement_info["category"],
-                                "typical_arr": complement_info["typical_arr"],
-                                "fit_score": fit_score,
-                                "complements": owned_product,
-                                "industry_fit": industry_fit,
-                                "business_case": self._build_product_business_case(
-                                    complement,
-                                    owned_product,
-                                    profile_analysis
-                                )
-                            })
+                            opportunities.append(
+                                {
+                                    "product": complement,
+                                    "category": complement_info["category"],
+                                    "typical_arr": complement_info["typical_arr"],
+                                    "fit_score": fit_score,
+                                    "complements": owned_product,
+                                    "industry_fit": industry_fit,
+                                    "business_case": self._build_product_business_case(
+                                        complement, owned_product, profile_analysis
+                                    ),
+                                }
+                            )
 
         # Remove duplicates and sort by fit score
         seen_products = set()
@@ -367,9 +350,9 @@ class CrossSellAgent(BaseAgent):
     def _calculate_product_fit_score(
         self,
         product: str,
-        product_info: Dict[str, Any],
-        profile_analysis: Dict[str, Any],
-        industry_fit: bool
+        product_info: dict[str, Any],
+        profile_analysis: dict[str, Any],
+        industry_fit: bool,
     ) -> int:
         """Calculate product fit score (0-100)."""
         score = 0
@@ -382,15 +365,30 @@ class CrossSellAgent(BaseAgent):
 
         # Usage signals alignment (0-40 points)
         signal_matches = 0
-        if product_info["category"] == "analytics" and "data_growth" in profile_analysis["usage_signals"]:
+        if (
+            product_info["category"] == "analytics"
+            and "data_growth" in profile_analysis["usage_signals"]
+        ):
             signal_matches += 1
-        if product_info["category"] == "security" and "security_interest" in profile_analysis["usage_signals"]:
+        if (
+            product_info["category"] == "security"
+            and "security_interest" in profile_analysis["usage_signals"]
+        ):
             signal_matches += 1
-        if product_info["category"] == "infrastructure" and "high_api_usage" in profile_analysis["usage_signals"]:
+        if (
+            product_info["category"] == "infrastructure"
+            and "high_api_usage" in profile_analysis["usage_signals"]
+        ):
             signal_matches += 1
-        if product_info["category"] == "mobile" and "mobile_needs" in profile_analysis["usage_signals"]:
+        if (
+            product_info["category"] == "mobile"
+            and "mobile_needs" in profile_analysis["usage_signals"]
+        ):
             signal_matches += 1
-        if product_info["category"] == "productivity" and "team_collaboration" in profile_analysis["usage_signals"]:
+        if (
+            product_info["category"] == "productivity"
+            and "team_collaboration" in profile_analysis["usage_signals"]
+        ):
             signal_matches += 1
 
         score += min(signal_matches * 15, 40)
@@ -408,10 +406,7 @@ class CrossSellAgent(BaseAgent):
         return min(int(score), 100)
 
     def _build_product_business_case(
-        self,
-        product: str,
-        owned_product: str,
-        profile_analysis: Dict[str, Any]
+        self, product: str, owned_product: str, profile_analysis: dict[str, Any]
     ) -> str:
         """Build business case for cross-sell product."""
         product_name = product.replace("_", " ").title()
@@ -424,7 +419,7 @@ class CrossSellAgent(BaseAgent):
             "infrastructure": f"Build robust infrastructure for {owned_name}",
             "productivity": f"Improve team efficiency alongside {owned_name}",
             "mobile": f"Extend {owned_name} to mobile users",
-            "compliance": f"Meet regulatory requirements for {owned_name}"
+            "compliance": f"Meet regulatory requirements for {owned_name}",
         }
 
         category = self.PRODUCT_CATALOG.get(product, {}).get("category", "general")
@@ -432,10 +427,10 @@ class CrossSellAgent(BaseAgent):
 
     def _identify_add_on_opportunities(
         self,
-        usage_data: Dict[str, Any],
-        contract_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        usage_data: dict[str, Any],
+        contract_data: dict[str, Any],
+        customer_metadata: dict[str, Any],
+    ) -> list[dict[str, Any]]:
         """
         Identify add-on module opportunities.
 
@@ -456,18 +451,22 @@ class CrossSellAgent(BaseAgent):
 
             # Check for signal matches
             for signal in config["signals"]:
-                if self._check_add_on_signal(signal, usage_data, contract_data, customer_metadata, current_arr):
+                if self._check_add_on_signal(
+                    signal, usage_data, contract_data, customer_metadata, current_arr
+                ):
                     signals_matched.append(signal)
 
             # If 2 or more signals match, it's a good opportunity
             if len(signals_matched) >= 2:
-                opportunities.append({
-                    "add_on": add_on,
-                    "value": config["value"],
-                    "signals_matched": signals_matched,
-                    "fit_score": min(len(signals_matched) * 33, 100),
-                    "business_case": self._build_add_on_business_case(add_on, signals_matched)
-                })
+                opportunities.append(
+                    {
+                        "add_on": add_on,
+                        "value": config["value"],
+                        "signals_matched": signals_matched,
+                        "fit_score": min(len(signals_matched) * 33, 100),
+                        "business_case": self._build_add_on_business_case(add_on, signals_matched),
+                    }
+                )
 
         # Sort by value and fit score
         opportunities.sort(key=lambda x: (x["fit_score"], x["value"]), reverse=True)
@@ -477,10 +476,10 @@ class CrossSellAgent(BaseAgent):
     def _check_add_on_signal(
         self,
         signal: str,
-        usage_data: Dict[str, Any],
-        contract_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any],
-        current_arr: int
+        usage_data: dict[str, Any],
+        contract_data: dict[str, Any],
+        customer_metadata: dict[str, Any],
+        current_arr: int,
     ) -> bool:
         """Check if a specific signal is present."""
         signal_checks = {
@@ -498,19 +497,19 @@ class CrossSellAgent(BaseAgent):
             "executive_engagement": customer_metadata.get("executive_sponsor", False),
             "agency": customer_metadata.get("company_type", "") == "agency",
             "reseller": customer_metadata.get("company_type", "") == "reseller",
-            "brand_requirements": customer_metadata.get("brand_customization_requests", 0) > 2
+            "brand_requirements": customer_metadata.get("brand_customization_requests", 0) > 2,
         }
 
         return signal_checks.get(signal, False)
 
-    def _build_add_on_business_case(self, add_on: str, signals: List[str]) -> str:
+    def _build_add_on_business_case(self, add_on: str, signals: list[str]) -> str:
         """Build business case for add-on."""
         cases = {
             "premium_support": "Reduce ticket resolution time and get dedicated support resources",
             "advanced_training": "Accelerate adoption and maximize product value realization",
             "custom_integration": "Streamline workflows with tailored integrations",
             "dedicated_csm": "Get strategic guidance and proactive account management",
-            "white_label": "Deliver branded experience to your customers"
+            "white_label": "Deliver branded experience to your customers",
         }
 
         base_case = cases.get(add_on, f"Enhance capabilities with {add_on.replace('_', ' ')}")
@@ -518,47 +517,47 @@ class CrossSellAgent(BaseAgent):
 
     def _calculate_cross_sell_readiness(
         self,
-        cross_sell_opportunities: List[Dict[str, Any]],
-        add_on_opportunities: List[Dict[str, Any]],
-        profile_analysis: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        cross_sell_opportunities: list[dict[str, Any]],
+        add_on_opportunities: list[dict[str, Any]],
+        profile_analysis: dict[str, Any],
+        customer_metadata: dict[str, Any],
+    ) -> list[dict[str, Any]]:
         """Calculate readiness score for each opportunity."""
         all_opportunities = []
 
         # Score cross-sell products
         for opp in cross_sell_opportunities:
             readiness_score = self._calculate_readiness_score(
-                opp["fit_score"],
-                profile_analysis,
-                customer_metadata
+                opp["fit_score"], profile_analysis, customer_metadata
             )
 
-            all_opportunities.append({
-                "opportunity_type": "product",
-                "name": opp["product"],
-                "readiness_score": readiness_score,
-                "fit_score": opp["fit_score"],
-                "potential_value": opp["typical_arr"],
-                "business_case": opp["business_case"]
-            })
+            all_opportunities.append(
+                {
+                    "opportunity_type": "product",
+                    "name": opp["product"],
+                    "readiness_score": readiness_score,
+                    "fit_score": opp["fit_score"],
+                    "potential_value": opp["typical_arr"],
+                    "business_case": opp["business_case"],
+                }
+            )
 
         # Score add-ons
         for opp in add_on_opportunities:
             readiness_score = self._calculate_readiness_score(
-                opp["fit_score"],
-                profile_analysis,
-                customer_metadata
+                opp["fit_score"], profile_analysis, customer_metadata
             )
 
-            all_opportunities.append({
-                "opportunity_type": "add_on",
-                "name": opp["add_on"],
-                "readiness_score": readiness_score,
-                "fit_score": opp["fit_score"],
-                "potential_value": opp["value"],
-                "business_case": opp["business_case"]
-            })
+            all_opportunities.append(
+                {
+                    "opportunity_type": "add_on",
+                    "name": opp["add_on"],
+                    "readiness_score": readiness_score,
+                    "fit_score": opp["fit_score"],
+                    "potential_value": opp["value"],
+                    "business_case": opp["business_case"],
+                }
+            )
 
         # Sort by readiness score
         all_opportunities.sort(key=lambda x: x["readiness_score"], reverse=True)
@@ -566,10 +565,7 @@ class CrossSellAgent(BaseAgent):
         return all_opportunities
 
     def _calculate_readiness_score(
-        self,
-        fit_score: int,
-        profile_analysis: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
+        self, fit_score: int, profile_analysis: dict[str, Any], customer_metadata: dict[str, Any]
     ) -> int:
         """Calculate overall readiness score for cross-sell."""
         score = 0
@@ -602,20 +598,17 @@ class CrossSellAgent(BaseAgent):
 
     def _calculate_cross_sell_revenue(
         self,
-        cross_sell_opportunities: List[Dict[str, Any]],
-        add_on_opportunities: List[Dict[str, Any]],
-        contract_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        cross_sell_opportunities: list[dict[str, Any]],
+        add_on_opportunities: list[dict[str, Any]],
+        contract_data: dict[str, Any],
+    ) -> dict[str, Any]:
         """Calculate total cross-sell revenue potential."""
         product_potential = sum(opp["typical_arr"] for opp in cross_sell_opportunities)
         add_on_potential = sum(opp["value"] for opp in add_on_opportunities)
         total_potential = product_potential + add_on_potential
 
         current_arr = contract_data.get("contract_value", 0)
-        if current_arr > 0:
-            expansion_pct = (total_potential / current_arr) * 100
-        else:
-            expansion_pct = 0
+        expansion_pct = total_potential / current_arr * 100 if current_arr > 0 else 0
 
         return {
             "total_potential": total_potential,
@@ -623,23 +616,23 @@ class CrossSellAgent(BaseAgent):
             "add_on_potential": add_on_potential,
             "current_arr": current_arr,
             "expansion_percentage": round(expansion_pct, 1),
-            "opportunities_count": len(cross_sell_opportunities) + len(add_on_opportunities)
+            "opportunities_count": len(cross_sell_opportunities) + len(add_on_opportunities),
         }
 
     def _generate_cross_sell_strategy(
         self,
-        cross_sell_opportunities: List[Dict[str, Any]],
-        add_on_opportunities: List[Dict[str, Any]],
-        readiness_scores: List[Dict[str, Any]],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        cross_sell_opportunities: list[dict[str, Any]],
+        add_on_opportunities: list[dict[str, Any]],
+        readiness_scores: list[dict[str, Any]],
+        customer_metadata: dict[str, Any],
+    ) -> dict[str, Any]:
         """Generate strategic approach for cross-sell."""
         if not readiness_scores:
             return {
                 "approach": "nurture",
                 "timeline": "future",
                 "tactics": ["Monitor for cross-sell signals"],
-                "primary_focus": None
+                "primary_focus": None,
             }
 
         top_opportunity = readiness_scores[0]
@@ -651,7 +644,7 @@ class CrossSellAgent(BaseAgent):
             "approach": "",
             "timeline": "",
             "tactics": [],
-            "key_stakeholders": []
+            "key_stakeholders": [],
         }
 
         # Define approach based on readiness
@@ -662,7 +655,7 @@ class CrossSellAgent(BaseAgent):
                 f"Present {top_opportunity['name'].replace('_', ' ')} with ROI analysis",
                 "Provide product demo focused on complementary value",
                 "Share case study from similar customer",
-                "Offer trial period or POC"
+                "Offer trial period or POC",
             ]
             strategy["key_stakeholders"] = ["CSM", "Account Executive", "Sales Engineer"]
         elif top_opportunity["readiness_score"] >= 50:
@@ -672,7 +665,7 @@ class CrossSellAgent(BaseAgent):
                 "Share thought leadership on complementary solutions",
                 "Invite to product webinar or workshop",
                 "Provide use case documentation",
-                "Gather feedback on needs and gaps"
+                "Gather feedback on needs and gaps",
             ]
             strategy["key_stakeholders"] = ["CSM", "Product Marketing"]
         else:
@@ -681,7 +674,7 @@ class CrossSellAgent(BaseAgent):
             strategy["tactics"] = [
                 "Include in product update communications",
                 "Monitor for changing needs",
-                "Build relationship with decision makers"
+                "Build relationship with decision makers",
             ]
             strategy["key_stakeholders"] = ["CSM"]
 
@@ -689,22 +682,22 @@ class CrossSellAgent(BaseAgent):
 
     def _format_cross_sell_report(
         self,
-        profile_analysis: Dict[str, Any],
-        cross_sell_opportunities: List[Dict[str, Any]],
-        add_on_opportunities: List[Dict[str, Any]],
-        readiness_scores: List[Dict[str, Any]],
-        revenue_potential: Dict[str, Any],
-        strategy: Dict[str, Any]
+        profile_analysis: dict[str, Any],
+        cross_sell_opportunities: list[dict[str, Any]],
+        add_on_opportunities: list[dict[str, Any]],
+        readiness_scores: list[dict[str, Any]],
+        revenue_potential: dict[str, Any],
+        strategy: dict[str, Any],
     ) -> str:
         """Format cross-sell analysis report."""
         report = f"""**???? Cross-Sell Opportunity Analysis**
 
 **Customer Profile:**
-- Industry: {profile_analysis['industry'].title()}
-- Company Size: {profile_analysis['company_size'].title()}
-- Account Maturity: {profile_analysis['account_maturity'].title()} ({profile_analysis['months_as_customer']} months)
-- Health Status: {profile_analysis['health_status'].title()} ({profile_analysis['health_score']}/100)
-- Current Products: {len(profile_analysis['current_products'])}
+- Industry: {profile_analysis["industry"].title()}
+- Company Size: {profile_analysis["company_size"].title()}
+- Account Maturity: {profile_analysis["account_maturity"].title()} ({profile_analysis["months_as_customer"]} months)
+- Health Status: {profile_analysis["health_status"].title()} ({profile_analysis["health_score"]}/100)
+- Current Products: {len(profile_analysis["current_products"])}
 
 **Usage Signals for Cross-Sell:**
 """
@@ -717,7 +710,9 @@ class CrossSellAgent(BaseAgent):
 
         # Product cross-sell opportunities
         if cross_sell_opportunities:
-            report += f"\n**???? Product Cross-Sell Opportunities ({len(cross_sell_opportunities)}):**\n"
+            report += (
+                f"\n**???? Product Cross-Sell Opportunities ({len(cross_sell_opportunities)}):**\n"
+            )
             for i, opp in enumerate(cross_sell_opportunities[:3], 1):
                 industry_icon = "???" if opp["industry_fit"] else "??????"
                 report += f"\n{i}. **{opp['product'].replace('_', ' ').title()}** {industry_icon}\n"
@@ -737,7 +732,7 @@ class CrossSellAgent(BaseAgent):
                 report += f"   - Business Case: {opp['business_case']}\n"
 
         # Revenue potential
-        report += f"\n**???? Revenue Potential:**\n"
+        report += "\n**???? Revenue Potential:**\n"
         report += f"- Total Cross-Sell Potential: ${revenue_potential['total_potential']:,}\n"
         report += f"- Product Opportunities: ${revenue_potential['product_potential']:,}\n"
         report += f"- Add-On Opportunities: ${revenue_potential['add_on_potential']:,}\n"
@@ -746,9 +741,15 @@ class CrossSellAgent(BaseAgent):
 
         # Top readiness recommendations
         if readiness_scores:
-            report += f"\n**???? Top Recommendations (by Readiness):**\n"
+            report += "\n**???? Top Recommendations (by Readiness):**\n"
             for i, opp in enumerate(readiness_scores[:3], 1):
-                readiness_icon = "????" if opp["readiness_score"] >= 75 else "????" if opp["readiness_score"] >= 50 else "????"
+                readiness_icon = (
+                    "????"
+                    if opp["readiness_score"] >= 75
+                    else "????"
+                    if opp["readiness_score"] >= 50
+                    else "????"
+                )
                 report += f"\n{i}. **{opp['name'].replace('_', ' ').title()}** {readiness_icon}\n"
                 report += f"   - Type: {opp['opportunity_type'].title()}\n"
                 report += f"   - Readiness Score: {opp['readiness_score']}/100\n"
@@ -756,7 +757,7 @@ class CrossSellAgent(BaseAgent):
 
         # Strategy
         if strategy.get("primary_focus"):
-            report += f"\n**???? Recommended Strategy:**\n"
+            report += "\n**???? Recommended Strategy:**\n"
             report += f"**Primary Focus:** {strategy['primary_focus'].replace('_', ' ').title()}\n"
             report += f"**Approach:** {strategy['approach']}\n"
             report += f"**Timeline:** {strategy['timeline']}\n\n"
@@ -772,6 +773,7 @@ class CrossSellAgent(BaseAgent):
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -794,9 +796,9 @@ if __name__ == "__main__":
                     "company_size": "large",
                     "health_score": 85,
                     "account_tier": "strategic",
-                    "executive_sponsor": True
-                }
-            }
+                    "executive_sponsor": True,
+                },
+            },
         )
         state1["entities"] = {
             "usage_data": {
@@ -807,14 +809,14 @@ if __name__ == "__main__":
                 "support_tickets_last_30d": 12,
                 "advanced_features_used": 7,
                 "api_calls": 150000,
-                "custom_workflows": 15
+                "custom_workflows": 15,
             },
             "contract_data": {
                 "current_products": ["analytics_platform"],
                 "contract_value": 75000,
                 "months_as_customer": 18,
-                "tier": "enterprise"
-            }
+                "tier": "enterprise",
+            },
         }
 
         result1 = await agent.process(state1)
@@ -836,22 +838,22 @@ if __name__ == "__main__":
                 "customer_metadata": {
                     "industry": "retail",
                     "company_size": "small",
-                    "health_score": 55
-                }
-            }
+                    "health_score": 55,
+                },
+            },
         )
         state2["entities"] = {
             "usage_data": {
                 "api_usage_high": False,
                 "support_tickets_last_30d": 2,
-                "advanced_features_used": 1
+                "advanced_features_used": 1,
             },
             "contract_data": {
                 "current_products": ["collaboration_suite"],
                 "contract_value": 18000,
                 "months_as_customer": 3,
-                "tier": "basic"
-            }
+                "tier": "basic",
+            },
         }
 
         result2 = await agent.process(state2)
