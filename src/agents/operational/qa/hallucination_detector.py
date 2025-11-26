@@ -5,13 +5,13 @@ Detects AI-generated false information, fabricated details, and unsupported clai
 Uses Claude Sonnet for nuanced hallucination detection and verification.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("hallucination_detector", tier="operational", category="qa")
@@ -42,7 +42,7 @@ class HallucinationDetectorAgent(BaseAgent):
             "could be",
             "should be",
             "as far as i know",
-            "if i remember correctly"
+            "if i remember correctly",
         ],
         "uncertainty_markers": [
             "not sure",
@@ -50,36 +50,29 @@ class HallucinationDetectorAgent(BaseAgent):
             "maybe",
             "perhaps",
             "possibly",
-            "potentially"
+            "potentially",
         ],
-        "vague_specifics": [
-            "around",
-            "approximately",
-            "roughly",
-            "about",
-            "or so",
-            "give or take"
-        ]
+        "vague_specifics": ["around", "approximately", "roughly", "about", "or so", "give or take"],
     }
 
     # High-risk claim categories (require verification)
     HIGH_RISK_CLAIMS = [
-        "performance_metrics",    # "10x faster", "99.99% uptime"
-        "version_numbers",        # "Version 3.2.1"
-        "release_dates",          # "Released in March 2023"
-        "pricing",                # "$99/month"
-        "integrations",           # "Integrates with Salesforce"
-        "compatibility",          # "Works on iOS 14+"
-        "api_endpoints",          # "POST /api/v2/users"
-        "feature_availability"    # "Available in Enterprise plan"
+        "performance_metrics",  # "10x faster", "99.99% uptime"
+        "version_numbers",  # "Version 3.2.1"
+        "release_dates",  # "Released in March 2023"
+        "pricing",  # "$99/month"
+        "integrations",  # "Integrates with Salesforce"
+        "compatibility",  # "Works on iOS 14+"
+        "api_endpoints",  # "POST /api/v2/users"
+        "feature_availability",  # "Available in Enterprise plan"
     ]
 
     # Confidence level thresholds
     CONFIDENCE_LEVELS = {
-        "high_confidence": 0.85,      # Likely accurate
-        "medium_confidence": 0.60,    # Uncertain
-        "low_confidence": 0.40,       # Likely hallucination
-        "hallucination": 0.20         # Definitely hallucinated
+        "high_confidence": 0.85,  # Likely accurate
+        "medium_confidence": 0.60,  # Uncertain
+        "low_confidence": 0.40,  # Likely hallucination
+        "hallucination": 0.20,  # Definitely hallucinated
     }
 
     def __init__(self):
@@ -90,7 +83,7 @@ class HallucinationDetectorAgent(BaseAgent):
             temperature=0.1,
             max_tokens=2500,
             capabilities=[AgentCapability.DATABASE_READ],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -110,14 +103,16 @@ class HallucinationDetectorAgent(BaseAgent):
         state = self.update_state(state)
 
         # Extract parameters
-        response_text = state.get("entities", {}).get("response_text", state.get("agent_response", ""))
+        response_text = state.get("entities", {}).get(
+            "response_text", state.get("agent_response", "")
+        )
         knowledge_base = state.get("entities", {}).get("knowledge_base", {})
         strict_mode = state.get("entities", {}).get("strict_mode", True)
 
         self.logger.debug(
             "hallucination_detection_details",
             response_length=len(response_text),
-            strict_mode=strict_mode
+            strict_mode=strict_mode,
         )
 
         # Detect uncertainty markers
@@ -134,9 +129,7 @@ class HallucinationDetectorAgent(BaseAgent):
 
         # Aggregate all hallucination signals
         all_issues = self._aggregate_hallucination_signals(
-            uncertainty_issues,
-            unverified_claims,
-            inconsistencies
+            uncertainty_issues, unverified_claims, inconsistencies
         )
 
         # Generate recommendations
@@ -150,10 +143,7 @@ class HallucinationDetectorAgent(BaseAgent):
 
         # Format response
         response = self._format_hallucination_report(
-            all_issues,
-            recommendations,
-            confidence_score,
-            passed
+            all_issues, recommendations, confidence_score, passed
         )
 
         state["agent_response"] = response
@@ -169,12 +159,12 @@ class HallucinationDetectorAgent(BaseAgent):
             "hallucination_detection_completed",
             signals_detected=len(all_issues),
             confidence_score=confidence_score,
-            passed=passed
+            passed=passed,
         )
 
         return state
 
-    def _detect_uncertainty_markers(self, response_text: str) -> List[Dict[str, Any]]:
+    def _detect_uncertainty_markers(self, response_text: str) -> list[dict[str, Any]]:
         """Detect uncertainty and hedging language."""
         issues = []
         text_lower = response_text.lower()
@@ -182,46 +172,53 @@ class HallucinationDetectorAgent(BaseAgent):
         # Check for hedging language
         for phrase in self.HALLUCINATION_INDICATORS["hedging_language"]:
             if phrase in text_lower:
-                issues.append({
-                    "type": "hedging_language",
-                    "severity": "high",
-                    "indicator": phrase,
-                    "message": f"Hedging language detected: '{phrase}' - may indicate uncertainty",
-                    "context": self._extract_context(response_text, phrase),
-                    "confidence_impact": -0.15
-                })
+                issues.append(
+                    {
+                        "type": "hedging_language",
+                        "severity": "high",
+                        "indicator": phrase,
+                        "message": f"Hedging language detected: '{phrase}' - may indicate uncertainty",
+                        "context": self._extract_context(response_text, phrase),
+                        "confidence_impact": -0.15,
+                    }
+                )
 
         # Check for uncertainty markers
         for phrase in self.HALLUCINATION_INDICATORS["uncertainty_markers"]:
             if phrase in text_lower:
-                issues.append({
-                    "type": "uncertainty_marker",
-                    "severity": "medium",
-                    "indicator": phrase,
-                    "message": f"Uncertainty marker: '{phrase}'",
-                    "context": self._extract_context(response_text, phrase),
-                    "confidence_impact": -0.10
-                })
+                issues.append(
+                    {
+                        "type": "uncertainty_marker",
+                        "severity": "medium",
+                        "indicator": phrase,
+                        "message": f"Uncertainty marker: '{phrase}'",
+                        "context": self._extract_context(response_text, phrase),
+                        "confidence_impact": -0.10,
+                    }
+                )
 
         # Check for vague specifics (e.g., "approximately 100" instead of verified number)
         for phrase in self.HALLUCINATION_INDICATORS["vague_specifics"]:
             if phrase in text_lower:
                 # Check if used with numbers
                 import re
+
                 pattern = rf"{phrase}\s+\d+"
                 if re.search(pattern, text_lower):
-                    issues.append({
-                        "type": "vague_specific",
-                        "severity": "low",
-                        "indicator": phrase,
-                        "message": f"Vague specific number: '{phrase} [number]' - verify accuracy",
-                        "context": self._extract_context(response_text, phrase),
-                        "confidence_impact": -0.05
-                    })
+                    issues.append(
+                        {
+                            "type": "vague_specific",
+                            "severity": "low",
+                            "indicator": phrase,
+                            "message": f"Vague specific number: '{phrase} [number]' - verify accuracy",
+                            "context": self._extract_context(response_text, phrase),
+                            "confidence_impact": -0.05,
+                        }
+                    )
 
         return issues
 
-    def _detect_specific_claims(self, response_text: str) -> List[Dict[str, Any]]:
+    def _detect_specific_claims(self, response_text: str) -> list[dict[str, Any]]:
         """Detect specific factual claims that need verification."""
         claims = []
 
@@ -231,69 +228,77 @@ class HallucinationDetectorAgent(BaseAgent):
         version_pattern = r"[Vv]ersion\s+\d+\.\d+(\.\d+)?"
         version_matches = re.finditer(version_pattern, response_text)
         for match in version_matches:
-            claims.append({
-                "claim_type": "version_numbers",
-                "claim_text": match.group(0),
-                "severity": "high",
-                "requires_verification": True,
-                "position": match.start()
-            })
+            claims.append(
+                {
+                    "claim_type": "version_numbers",
+                    "claim_text": match.group(0),
+                    "severity": "high",
+                    "requires_verification": True,
+                    "position": match.start(),
+                }
+            )
 
         # Detect specific dates
         date_pattern = r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}"
         date_matches = re.finditer(date_pattern, response_text)
         for match in date_matches:
-            claims.append({
-                "claim_type": "release_dates",
-                "claim_text": match.group(0),
-                "severity": "high",
-                "requires_verification": True,
-                "position": match.start()
-            })
+            claims.append(
+                {
+                    "claim_type": "release_dates",
+                    "claim_text": match.group(0),
+                    "severity": "high",
+                    "requires_verification": True,
+                    "position": match.start(),
+                }
+            )
 
         # Detect performance metrics
         perf_pattern = r"\d+(\.\d+)?[x×]\s+(faster|slower|more|less)"
         perf_matches = re.finditer(perf_pattern, response_text, re.IGNORECASE)
         for match in perf_matches:
-            claims.append({
-                "claim_type": "performance_metrics",
-                "claim_text": match.group(0),
-                "severity": "critical",
-                "requires_verification": True,
-                "position": match.start()
-            })
+            claims.append(
+                {
+                    "claim_type": "performance_metrics",
+                    "claim_text": match.group(0),
+                    "severity": "critical",
+                    "requires_verification": True,
+                    "position": match.start(),
+                }
+            )
 
         # Detect pricing
         price_pattern = r"\$\d+(\.\d{2})?(/month|/year|/mo|/yr)?"
         price_matches = re.finditer(price_pattern, response_text)
         for match in price_matches:
-            claims.append({
-                "claim_type": "pricing",
-                "claim_text": match.group(0),
-                "severity": "critical",
-                "requires_verification": True,
-                "position": match.start()
-            })
+            claims.append(
+                {
+                    "claim_type": "pricing",
+                    "claim_text": match.group(0),
+                    "severity": "critical",
+                    "requires_verification": True,
+                    "position": match.start(),
+                }
+            )
 
         # Detect API endpoints
         api_pattern = r"(GET|POST|PUT|DELETE|PATCH)\s+/[a-zA-Z0-9/_-]+"
         api_matches = re.finditer(api_pattern, response_text)
         for match in api_matches:
-            claims.append({
-                "claim_type": "api_endpoints",
-                "claim_text": match.group(0),
-                "severity": "high",
-                "requires_verification": True,
-                "position": match.start()
-            })
+            claims.append(
+                {
+                    "claim_type": "api_endpoints",
+                    "claim_text": match.group(0),
+                    "severity": "high",
+                    "requires_verification": True,
+                    "position": match.start(),
+                }
+            )
 
         return claims
 
     def _verify_high_risk_claims(
-        self,
-        claims: List[Dict[str, Any]],
-        knowledge_base: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        self, claims: list[dict[str, Any]], knowledge_base: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Verify high-risk claims against knowledge base."""
         unverified = []
 
@@ -305,62 +310,65 @@ class HallucinationDetectorAgent(BaseAgent):
             is_verified = False  # Mock: assume unverified for demonstration
 
             if not is_verified:
-                unverified.append({
-                    "type": "unverified_claim",
-                    "severity": claim["severity"],
-                    "claim_type": claim["claim_type"],
-                    "claim_text": claim["claim_text"],
-                    "message": f"Unverified {claim['claim_type'].replace('_', ' ')}: '{claim['claim_text']}'",
-                    "context": self._extract_context_at_position(
-                        "",  # Would use full text in production
-                        claim["position"]
-                    ) if "position" in claim else "N/A",
-                    "recommendation": "Verify against knowledge base or remove if uncertain"
-                })
+                unverified.append(
+                    {
+                        "type": "unverified_claim",
+                        "severity": claim["severity"],
+                        "claim_type": claim["claim_type"],
+                        "claim_text": claim["claim_text"],
+                        "message": f"Unverified {claim['claim_type'].replace('_', ' ')}: '{claim['claim_text']}'",
+                        "context": self._extract_context_at_position(
+                            "",  # Would use full text in production
+                            claim["position"],
+                        )
+                        if "position" in claim
+                        else "N/A",
+                        "recommendation": "Verify against knowledge base or remove if uncertain",
+                    }
+                )
 
         return unverified
 
-    def _detect_inconsistencies(self, response_text: str) -> List[Dict[str, Any]]:
+    def _detect_inconsistencies(self, response_text: str) -> list[dict[str, Any]]:
         """Detect logical inconsistencies in the response."""
         issues = []
 
         # Check for contradictory statements (simple heuristic)
-        sentences = response_text.split('.')
+        sentences = response_text.split(".")
 
         # Look for contradictory patterns
         contradictions = [
             (r"is available", r"is not available"),
             (r"supports", r"does not support"),
             (r"can", r"cannot"),
-            (r"works with", r"does not work with")
+            (r"works with", r"does not work with"),
         ]
 
         import re
-        for i, sentence in enumerate(sentences):
+
+        for _i, sentence in enumerate(sentences):
             for positive, negative in contradictions:
                 if re.search(positive, sentence.lower()) and re.search(negative, sentence.lower()):
-                    issues.append({
-                        "type": "contradiction",
-                        "severity": "critical",
-                        "message": "Contradictory statement detected within same sentence",
-                        "context": sentence.strip(),
-                        "confidence_impact": -0.25
-                    })
+                    issues.append(
+                        {
+                            "type": "contradiction",
+                            "severity": "critical",
+                            "message": "Contradictory statement detected within same sentence",
+                            "context": sentence.strip(),
+                            "confidence_impact": -0.25,
+                        }
+                    )
 
         return issues
 
     def _aggregate_hallucination_signals(
         self,
-        uncertainty_issues: List[Dict[str, Any]],
-        unverified_claims: List[Dict[str, Any]],
-        inconsistencies: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        uncertainty_issues: list[dict[str, Any]],
+        unverified_claims: list[dict[str, Any]],
+        inconsistencies: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
         """Aggregate all hallucination signals."""
-        all_signals = (
-            uncertainty_issues +
-            unverified_claims +
-            inconsistencies
-        )
+        all_signals = uncertainty_issues + unverified_claims + inconsistencies
 
         # Add timestamps
         for signal in all_signals:
@@ -372,7 +380,7 @@ class HallucinationDetectorAgent(BaseAgent):
 
         return all_signals
 
-    def _generate_recommendations(self, issues: List[Dict[str, Any]]) -> List[str]:
+    def _generate_recommendations(self, issues: list[dict[str, Any]]) -> list[str]:
         """Generate hallucination detection recommendations."""
         recommendations = []
 
@@ -383,7 +391,7 @@ class HallucinationDetectorAgent(BaseAgent):
         # Count by severity
         critical = [i for i in issues if i["severity"] == "critical"]
         high = [i for i in issues if i["severity"] == "high"]
-        medium = [i for i in issues if i["severity"] == "medium"]
+        [i for i in issues if i["severity"] == "medium"]
 
         if critical:
             recommendations.append(
@@ -412,16 +420,12 @@ class HallucinationDetectorAgent(BaseAgent):
             )
 
         if "contradiction" in issue_types:
-            recommendations.append(
-                "Resolve contradictory statements - ensure logical consistency"
-            )
+            recommendations.append("Resolve contradictory statements - ensure logical consistency")
 
         return recommendations
 
     def _calculate_confidence_score(
-        self,
-        issues: List[Dict[str, Any]],
-        response_text: str
+        self, issues: list[dict[str, Any]], response_text: str
     ) -> float:
         """Calculate confidence score (0-100) indicating response accuracy."""
         # Start with high confidence
@@ -435,21 +439,13 @@ class HallucinationDetectorAgent(BaseAgent):
             else:
                 # Otherwise use severity
                 severity = issue["severity"]
-                deductions = {
-                    "critical": 25.0,
-                    "high": 15.0,
-                    "medium": 8.0,
-                    "low": 3.0
-                }
+                deductions = {"critical": 25.0, "high": 15.0, "medium": 8.0, "low": 3.0}
                 confidence -= deductions.get(severity, 0)
 
         return max(0.0, round(confidence, 1))
 
     def _determine_pass_fail(
-        self,
-        issues: List[Dict[str, Any]],
-        confidence_score: float,
-        strict_mode: bool
+        self, issues: list[dict[str, Any]], confidence_score: float, strict_mode: bool
     ) -> bool:
         """Determine if hallucination check passes."""
         critical = [i for i in issues if i["severity"] == "critical"]
@@ -500,10 +496,10 @@ class HallucinationDetectorAgent(BaseAgent):
 
     def _format_hallucination_report(
         self,
-        issues: List[Dict[str, Any]],
-        recommendations: List[str],
+        issues: list[dict[str, Any]],
+        recommendations: list[str],
         confidence_score: float,
-        passed: bool
+        passed: bool,
     ) -> str:
         """Format hallucination detection report."""
         status_icon = "✅" if passed else "❌"
@@ -527,7 +523,7 @@ class HallucinationDetectorAgent(BaseAgent):
 
         # Issues by type
         if issues:
-            report += f"\n**Detected Signals:**\n"
+            report += "\n**Detected Signals:**\n"
 
             issue_types = {}
             for issue in issues:
@@ -538,19 +534,25 @@ class HallucinationDetectorAgent(BaseAgent):
                 report += f"- {issue_type.replace('_', ' ').title()}: {count}\n"
 
             # List top issues
-            report += f"\n**Top Issues:**\n"
+            report += "\n**Top Issues:**\n"
             for issue in issues[:5]:
-                icon = "🔴" if issue["severity"] == "critical" else "⚠️" if issue["severity"] == "high" else "ℹ️"
+                icon = (
+                    "🔴"
+                    if issue["severity"] == "critical"
+                    else "⚠️"
+                    if issue["severity"] == "high"
+                    else "ℹ️"
+                )
                 report += f"{icon} [{issue['severity'].upper()}] {issue['message']}\n"
                 if "context" in issue and issue["context"] != "N/A":
-                    report += f"   Context: \"{issue['context']}\"\n"
+                    report += f'   Context: "{issue["context"]}"\n'
 
             if len(issues) > 5:
                 report += f"... and {len(issues) - 5} more signals\n"
 
         # Recommendations
         if recommendations:
-            report += f"\n**Recommendations:**\n"
+            report += "\n**Recommendations:**\n"
             for rec in recommendations:
                 report += f"- {rec}\n"
 
