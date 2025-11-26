@@ -5,14 +5,14 @@ Finds correlations between metrics using Pearson correlation coefficient.
 Identifies significant relationships (r>0.7) between business metrics.
 """
 
-from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime, UTC
 import math
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("correlation_finder", tier="operational", category="analytics")
@@ -35,7 +35,7 @@ class CorrelationFinderAgent(BaseAgent):
         "strong": 0.7,
         "moderate": 0.5,
         "weak": 0.3,
-        "very_weak": 0.1
+        "very_weak": 0.1,
     }
 
     # Significance level
@@ -48,7 +48,7 @@ class CorrelationFinderAgent(BaseAgent):
             temperature=0.2,
             max_tokens=1500,
             capabilities=[AgentCapability.DATABASE_WRITE],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -75,7 +75,7 @@ class CorrelationFinderAgent(BaseAgent):
         self.logger.debug(
             "correlation_analysis_details",
             metrics_count=len(metrics_data),
-            threshold=correlation_threshold
+            threshold=correlation_threshold,
         )
 
         # Prepare metric time series
@@ -86,27 +86,18 @@ class CorrelationFinderAgent(BaseAgent):
 
         # Find significant correlations
         significant_correlations = self._find_significant_correlations(
-            correlation_matrix,
-            correlation_threshold,
-            include_weak
+            correlation_matrix, correlation_threshold, include_weak
         )
 
         # Test statistical significance
-        significance_tests = self._test_significance(
-            significant_correlations,
-            metric_series
-        )
+        significance_tests = self._test_significance(significant_correlations, metric_series)
 
         # Generate insights
-        insights = self._generate_correlation_insights(
-            significant_correlations,
-            significance_tests
-        )
+        insights = self._generate_correlation_insights(significant_correlations, significance_tests)
 
         # Identify potential causation candidates
         causation_candidates = self._identify_causation_candidates(
-            significant_correlations,
-            metric_series
+            significant_correlations, metric_series
         )
 
         # Format response
@@ -115,7 +106,7 @@ class CorrelationFinderAgent(BaseAgent):
             significant_correlations,
             significance_tests,
             insights,
-            causation_candidates
+            causation_candidates,
         )
 
         state["agent_response"] = response
@@ -129,15 +120,12 @@ class CorrelationFinderAgent(BaseAgent):
         self.logger.info(
             "correlation_analysis_completed",
             correlations_found=len(significant_correlations),
-            insights_generated=len(insights)
+            insights_generated=len(insights),
         )
 
         return state
 
-    def _prepare_metric_series(
-        self,
-        metrics_data: Dict[str, Any]
-    ) -> Dict[str, List[float]]:
+    def _prepare_metric_series(self, metrics_data: dict[str, Any]) -> dict[str, list[float]]:
         """
         Prepare metric time series for correlation analysis.
 
@@ -159,22 +147,29 @@ class CorrelationFinderAgent(BaseAgent):
         base_series = [random.gauss(100, 20) for _ in range(n_points)]
 
         metric_series["revenue"] = base_series.copy()
-        metric_series["active_users"] = [v * 1.2 + random.gauss(0, 10) for v in base_series]  # Strong positive correlation
-        metric_series["churn_rate"] = [100 - v * 0.5 + random.gauss(0, 5) for v in base_series]  # Strong negative correlation
-        metric_series["support_tickets"] = [random.gauss(50, 15) for _ in range(n_points)]  # No correlation
-        metric_series["nps_score"] = [v * 0.3 + random.gauss(50, 8) for v in base_series]  # Moderate positive correlation
+        metric_series["active_users"] = [
+            v * 1.2 + random.gauss(0, 10) for v in base_series
+        ]  # Strong positive correlation
+        metric_series["churn_rate"] = [
+            100 - v * 0.5 + random.gauss(0, 5) for v in base_series
+        ]  # Strong negative correlation
+        metric_series["support_tickets"] = [
+            random.gauss(50, 15) for _ in range(n_points)
+        ]  # No correlation
+        metric_series["nps_score"] = [
+            v * 0.3 + random.gauss(50, 8) for v in base_series
+        ]  # Moderate positive correlation
 
         # Add more metrics if provided in input
-        for metric_name in metrics_data.keys():
+        for metric_name in metrics_data:
             if metric_name not in metric_series:
                 metric_series[metric_name] = [random.gauss(50, 15) for _ in range(n_points)]
 
         return metric_series
 
     def _calculate_correlation_matrix(
-        self,
-        metric_series: Dict[str, List[float]]
-    ) -> Dict[str, Dict[str, float]]:
+        self, metric_series: dict[str, list[float]]
+    ) -> dict[str, dict[str, float]]:
         """
         Calculate Pearson correlation matrix.
 
@@ -191,18 +186,13 @@ class CorrelationFinderAgent(BaseAgent):
             matrix[metric1] = {}
             for metric2 in metric_names:
                 correlation = self._calculate_pearson_correlation(
-                    metric_series[metric1],
-                    metric_series[metric2]
+                    metric_series[metric1], metric_series[metric2]
                 )
                 matrix[metric1][metric2] = round(correlation, 4)
 
         return matrix
 
-    def _calculate_pearson_correlation(
-        self,
-        x: List[float],
-        y: List[float]
-    ) -> float:
+    def _calculate_pearson_correlation(self, x: list[float], y: list[float]) -> float:
         """
         Calculate Pearson correlation coefficient.
 
@@ -236,11 +226,8 @@ class CorrelationFinderAgent(BaseAgent):
         return correlation
 
     def _find_significant_correlations(
-        self,
-        correlation_matrix: Dict[str, Dict[str, float]],
-        threshold: float,
-        include_weak: bool
-    ) -> List[Dict[str, Any]]:
+        self, correlation_matrix: dict[str, dict[str, float]], threshold: float, include_weak: bool
+    ) -> list[dict[str, Any]]:
         """
         Find significant correlations above threshold.
 
@@ -274,14 +261,16 @@ class CorrelationFinderAgent(BaseAgent):
                 if abs_correlation >= threshold or (include_weak and abs_correlation >= 0.3):
                     strength = self._classify_correlation_strength(abs_correlation)
 
-                    correlations.append({
-                        "metric1": metric1,
-                        "metric2": metric2,
-                        "correlation": correlation,
-                        "abs_correlation": abs_correlation,
-                        "direction": "positive" if correlation > 0 else "negative",
-                        "strength": strength
-                    })
+                    correlations.append(
+                        {
+                            "metric1": metric1,
+                            "metric2": metric2,
+                            "correlation": correlation,
+                            "abs_correlation": abs_correlation,
+                            "direction": "positive" if correlation > 0 else "negative",
+                            "strength": strength,
+                        }
+                    )
 
         # Sort by absolute correlation
         correlations.sort(key=lambda x: x["abs_correlation"], reverse=True)
@@ -302,10 +291,8 @@ class CorrelationFinderAgent(BaseAgent):
             return "very_weak"
 
     def _test_significance(
-        self,
-        correlations: List[Dict[str, Any]],
-        metric_series: Dict[str, List[float]]
-    ) -> Dict[str, Dict[str, Any]]:
+        self, correlations: list[dict[str, Any]], metric_series: dict[str, list[float]]
+    ) -> dict[str, dict[str, Any]]:
         """
         Test statistical significance of correlations.
 
@@ -327,10 +314,7 @@ class CorrelationFinderAgent(BaseAgent):
             n = len(metric_series[metric1])
 
             # Calculate t-statistic
-            if abs(r) == 1:
-                t_stat = float('inf')
-            else:
-                t_stat = r * math.sqrt(n - 2) / math.sqrt(1 - r**2)
+            t_stat = float("inf") if abs(r) == 1 else r * math.sqrt(n - 2) / math.sqrt(1 - r**2)
 
             # Approximate p-value (two-tailed)
             # For production, use scipy.stats.t.sf
@@ -343,21 +327,21 @@ class CorrelationFinderAgent(BaseAgent):
                 "t_statistic": round(t_stat, 3),
                 "p_value": p_value,
                 "is_significant": is_significant,
-                "sample_size": n
+                "sample_size": n,
             }
 
         return significance_tests
 
     def _generate_correlation_insights(
-        self,
-        correlations: List[Dict[str, Any]],
-        significance_tests: Dict[str, Dict[str, Any]]
-    ) -> List[str]:
+        self, correlations: list[dict[str, Any]], significance_tests: dict[str, dict[str, Any]]
+    ) -> list[str]:
         """Generate insights from correlations."""
         insights = []
 
         # Strong correlations
-        strong_correlations = [c for c in correlations if c["strength"] in ["strong", "very_strong"]]
+        strong_correlations = [
+            c for c in correlations if c["strength"] in ["strong", "very_strong"]
+        ]
 
         if strong_correlations:
             insights.append(
@@ -371,11 +355,13 @@ class CorrelationFinderAgent(BaseAgent):
                 )
 
         # Negative correlations
-        negative_correlations = [c for c in correlations if c["direction"] == "negative" and c["abs_correlation"] > 0.7]
+        negative_correlations = [
+            c for c in correlations if c["direction"] == "negative" and c["abs_correlation"] > 0.7
+        ]
 
         if negative_correlations:
             insights.append(
-                f"Strong negative correlations suggest inverse relationships - monitor carefully"
+                "Strong negative correlations suggest inverse relationships - monitor carefully"
             )
 
         # Correlation ≠ causation warning
@@ -386,33 +372,33 @@ class CorrelationFinderAgent(BaseAgent):
         return insights
 
     def _identify_causation_candidates(
-        self,
-        correlations: List[Dict[str, Any]],
-        metric_series: Dict[str, List[float]]
-    ) -> List[Dict[str, Any]]:
+        self, correlations: list[dict[str, Any]], metric_series: dict[str, list[float]]
+    ) -> list[dict[str, Any]]:
         """Identify potential causation relationships."""
         candidates = []
 
         # Look for very strong correlations with potential causal logic
         for corr in correlations:
             if corr["abs_correlation"] > 0.85:
-                candidates.append({
-                    "metric1": corr["metric1"],
-                    "metric2": corr["metric2"],
-                    "correlation": corr["correlation"],
-                    "potential_causation": "Possible - requires domain knowledge to confirm",
-                    "suggested_analysis": "Time-lagged correlation or Granger causality test"
-                })
+                candidates.append(
+                    {
+                        "metric1": corr["metric1"],
+                        "metric2": corr["metric2"],
+                        "correlation": corr["correlation"],
+                        "potential_causation": "Possible - requires domain knowledge to confirm",
+                        "suggested_analysis": "Time-lagged correlation or Granger causality test",
+                    }
+                )
 
         return candidates[:5]  # Top 5
 
     def _format_correlation_report(
         self,
-        correlation_matrix: Dict[str, Dict[str, float]],
-        significant_correlations: List[Dict[str, Any]],
-        significance_tests: Dict[str, Dict[str, Any]],
-        insights: List[str],
-        causation_candidates: List[Dict[str, Any]]
+        correlation_matrix: dict[str, dict[str, float]],
+        significant_correlations: list[dict[str, Any]],
+        significance_tests: dict[str, dict[str, Any]],
+        insights: list[str],
+        causation_candidates: list[dict[str, Any]],
     ) -> str:
         """Format correlation analysis report."""
         report = f"""**Correlation Analysis Report**
@@ -428,12 +414,20 @@ class CorrelationFinderAgent(BaseAgent):
 
         for corr in significant_correlations[:10]:
             direction_icon = "📈" if corr["direction"] == "positive" else "📉"
-            strength_icon = "🔴" if corr["strength"] == "very_strong" else "🟡" if corr["strength"] == "strong" else "🟢"
+            strength_icon = (
+                "🔴"
+                if corr["strength"] == "very_strong"
+                else "🟡"
+                if corr["strength"] == "strong"
+                else "🟢"
+            )
 
             key = f"{corr['metric1']}__{corr['metric2']}"
             sig_test = significance_tests.get(key, {})
 
-            report += f"{direction_icon} {strength_icon} **{corr['metric1']} ↔ {corr['metric2']}**\n"
+            report += (
+                f"{direction_icon} {strength_icon} **{corr['metric1']} ↔ {corr['metric2']}**\n"
+            )
             report += f"   - Correlation: r={corr['correlation']:+.3f}\n"
             report += f"   - Strength: {corr['strength'].replace('_', ' ').title()}\n"
             report += f"   - Direction: {corr['direction'].title()}\n"
