@@ -16,16 +16,17 @@ Part of: Phase 3 - GPU Orchestration (Vast.ai / Modal)
 """
 
 import os
-from typing import Optional, Dict, Any, Literal
 from datetime import datetime
+from typing import Any, Literal
+
 import httpx
 import structlog
 
-from src.llm.litellm_config import litellm_config, LLMBackend
-from src.llm.client import llm_client
-from src.vllm.vastai.orchestrator import gpu_orchestrator
-from src.vllm import get_modal_orchestrator, init_modal_orchestrator, is_modal_configured
 from src.core.config import get_settings
+from src.llm.client import llm_client
+from src.llm.litellm_config import LLMBackend, litellm_config
+from src.vllm import get_modal_orchestrator, init_modal_orchestrator, is_modal_configured
+from src.vllm.vastai.orchestrator import gpu_orchestrator
 
 logger = structlog.get_logger(__name__)
 settings = get_settings()
@@ -57,13 +58,13 @@ class BackendManager:
         self.llm_client = llm_client
 
         # Track backend health status
-        self.health_status: Dict[LLMBackend, bool] = {
+        self.health_status: dict[LLMBackend, bool] = {
             LLMBackend.ANTHROPIC: True,  # Assume healthy initially
-            LLMBackend.VLLM: False,      # Initially unavailable
+            LLMBackend.VLLM: False,  # Initially unavailable
         }
 
         # Track last health check times
-        self.last_health_check: Dict[LLMBackend, Optional[datetime]] = {
+        self.last_health_check: dict[LLMBackend, datetime | None] = {
             LLMBackend.ANTHROPIC: None,
             LLMBackend.VLLM: None,
         }
@@ -107,10 +108,8 @@ class BackendManager:
         return "none"
 
     async def switch_backend(
-        self,
-        backend: LLMBackend,
-        skip_health_check: bool = False
-    ) -> Dict[str, Any]:
+        self, backend: LLMBackend, skip_health_check: bool = False
+    ) -> dict[str, Any]:
         """
         Switch to specified backend.
 
@@ -286,7 +285,7 @@ class BackendManager:
             )
             return False
 
-    async def check_all_backends(self) -> Dict[str, Any]:
+    async def check_all_backends(self) -> dict[str, Any]:
         """
         Check health of all backends.
 
@@ -308,7 +307,7 @@ class BackendManager:
         """Get currently active backend"""
         return self.config.get_current_backend()
 
-    def get_backend_info(self) -> Dict[str, Any]:
+    def get_backend_info(self) -> dict[str, Any]:
         """
         Get comprehensive backend information.
 
@@ -321,10 +320,7 @@ class BackendManager:
             "current_backend": current_backend.value,
             "vllm_endpoint": self.config.vllm_endpoint,
             "vllm_configured": self.config.is_vllm_configured(),
-            "health_status": {
-                backend.value: self.health_status[backend]
-                for backend in LLMBackend
-            },
+            "health_status": {backend.value: self.health_status[backend] for backend in LLMBackend},
             "last_health_check": {
                 backend.value: (
                     self.last_health_check[backend].isoformat()
@@ -343,7 +339,7 @@ class BackendManager:
 
         return info
 
-    async def set_vllm_endpoint(self, endpoint: str) -> Dict[str, Any]:
+    async def set_vllm_endpoint(self, endpoint: str) -> dict[str, Any]:
         """
         Set vLLM endpoint and check health.
 
@@ -379,7 +375,7 @@ class BackendManager:
         self,
         keep_alive_minutes: int = 45,
         auto_switch: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Launch vLLM GPU instance via GPU provider (Vast.ai / Modal).
 
@@ -441,7 +437,7 @@ class BackendManager:
                 "message": f"Failed to launch vLLM GPU via {self.gpu_provider}",
             }
 
-    async def _launch_modal_vllm(self, auto_switch: bool) -> Dict[str, Any]:
+    async def _launch_modal_vllm(self, auto_switch: bool) -> dict[str, Any]:
         """
         Configure Modal vLLM endpoint (instant, no launch needed).
 
@@ -499,7 +495,7 @@ class BackendManager:
         self,
         keep_alive_minutes: int,
         auto_switch: bool,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Launch Vast.ai GPU instance (async, non-blocking).
 
@@ -511,9 +507,7 @@ class BackendManager:
             Launch initiation status dictionary
         """
         # Launch GPU instance asynchronously (returns immediately)
-        result = gpu_orchestrator.launch_gpu_async(
-            keep_alive_minutes=keep_alive_minutes
-        )
+        result = gpu_orchestrator.launch_gpu_async(keep_alive_minutes=keep_alive_minutes)
 
         logger.info(
             "vastai_vllm_launch_initiated",
@@ -528,7 +522,7 @@ class BackendManager:
             "status_endpoint": "/api/admin/vllm/status",
         }
 
-    async def destroy_vllm_gpu(self) -> Dict[str, Any]:
+    async def destroy_vllm_gpu(self) -> dict[str, Any]:
         """
         Destroy current vLLM GPU instance (Vast.ai only).
 
@@ -550,8 +544,7 @@ class BackendManager:
                     "success": True,
                     "provider": "modal",
                     "message": (
-                        "Modal auto-scales down automatically. "
-                        "No manual destruction needed."
+                        "Modal auto-scales down automatically. No manual destruction needed."
                     ),
                 }
 
@@ -602,7 +595,7 @@ class BackendManager:
                 "message": f"Error destroying {self.gpu_provider} GPU instance",
             }
 
-    async def get_vllm_status(self) -> Dict[str, Any]:
+    async def get_vllm_status(self) -> dict[str, Any]:
         """
         Get vLLM GPU orchestrator status.
 
@@ -637,10 +630,7 @@ class BackendManager:
                 return {
                     "provider": "none",
                     "status": "unconfigured",
-                    "message": (
-                        "No GPU provider configured. "
-                        "Set MODAL_WEB_URL or VASTAI_API_KEY."
-                    ),
+                    "message": ("No GPU provider configured. Set MODAL_WEB_URL or VASTAI_API_KEY."),
                 }
 
         except Exception as e:
