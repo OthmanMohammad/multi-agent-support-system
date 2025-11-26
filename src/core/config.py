@@ -2,8 +2,8 @@
 Centralized configuration management using Pydantic Settings.
 
 All configuration loaded from environment variables with validation.
-Supports staging and production environments only.
-Integrates with Doppler for secrets management.
+Supports development, test, staging, and production environments.
+Integrates with Doppler for secrets management in staging/production.
 """
 
 from typing import Literal
@@ -16,7 +16,7 @@ class DatabaseConfig(BaseSettings):
     """Database configuration"""
 
     url: PostgresDsn = Field(
-        ...,
+        default="postgresql+asyncpg://user:password@localhost:5432/test_db",
         description="PostgreSQL database URL",
         examples=["postgresql+asyncpg://user:pass@host:5432/db"],
     )
@@ -85,7 +85,11 @@ class APIConfig(BaseSettings):
 class AnthropicConfig(BaseSettings):
     """Anthropic Claude API configuration"""
 
-    api_key: str = Field(..., min_length=10)
+    api_key: str = Field(
+        default="sk-ant-test-key-for-development-only",
+        min_length=10,
+        description="Anthropic API key (set via ANTHROPIC_API_KEY env var)",
+    )
     model: str = Field(
         default="claude-3-haiku-20240307",
         description="Claude model to use (set via ANTHROPIC_MODEL env var)",
@@ -116,7 +120,7 @@ class AnthropicConfig(BaseSettings):
 class QdrantConfig(BaseSettings):
     """Qdrant vector database configuration"""
 
-    url: str = Field(..., description="Qdrant server URL")
+    url: str = Field(default="http://localhost:6333", description="Qdrant server URL")
     api_key: str | None = Field(default=None)
     collection_name: str = Field(default="support_knowledge_base")
     vector_size: int = Field(default=384, ge=1)
@@ -166,7 +170,7 @@ class SentryConfig(BaseSettings):
     """Sentry error tracking configuration"""
 
     dsn: str | None = Field(default=None)
-    environment: str = Field(...)
+    environment: str = Field(default="development", description="Sentry environment")
     traces_sample_rate: float = Field(default=0.1, ge=0.0, le=1.0)
     profiles_sample_rate: float = Field(default=0.1, ge=0.0, le=1.0)
     send_default_pii: bool = Field(default=False)
@@ -229,7 +233,9 @@ class JWTConfig(BaseSettings):
     """JWT authentication configuration"""
 
     secret_key: str = Field(
-        ..., min_length=32, description="Secret key for JWT encoding (min 32 characters)"
+        default="development-secret-key-for-testing-only-not-for-production-use-min-32-chars",
+        min_length=32,
+        description="Secret key for JWT encoding (min 32 characters)",
     )
     algorithm: str = Field(default="HS256")
     access_token_expire_minutes: int = Field(default=60, ge=1, le=1440)
@@ -514,13 +520,13 @@ class Settings(BaseSettings):
     Main application settings.
 
     All configuration loaded from environment variables.
-    Only staging and production environments supported.
-    Integrates with Doppler for secrets management.
+    Supports development, test, staging, and production environments.
+    Integrates with Doppler for secrets management in staging/production.
     """
 
     # Application environment
-    environment: Literal["staging", "production"] = Field(
-        default="staging", description="Application environment (staging or production only)"
+    environment: Literal["development", "test", "staging", "production"] = Field(
+        default="development", description="Application environment"
     )
 
     # Application info
@@ -563,6 +569,14 @@ class Settings(BaseSettings):
     def is_staging(self) -> bool:
         """Check if running in staging"""
         return self.environment == "staging"
+
+    def is_development(self) -> bool:
+        """Check if running in development"""
+        return self.environment == "development"
+
+    def is_test(self) -> bool:
+        """Check if running in test"""
+        return self.environment == "test"
 
     def __repr__(self) -> str:
         """Safe representation without sensitive data"""
