@@ -5,15 +5,15 @@ Comprehensive, tamper-proof audit logging for all security events.
 Ensures compliance with SOC 2, ISO 27001, and regulatory requirements.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, UTC
 import hashlib
 import json
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("audit_logger", tier="operational", category="security")
@@ -47,7 +47,7 @@ class AuditLoggerAgent(BaseAgent):
         "data_access": ["data_read", "data_write", "data_delete", "data_export"],
         "system": ["config_change", "system_start", "system_stop", "backup", "restore"],
         "security": ["security_alert", "incident_detected", "vulnerability_found", "patch_applied"],
-        "admin": ["user_created", "user_deleted", "role_assigned", "permission_granted"]
+        "admin": ["user_created", "user_deleted", "role_assigned", "permission_granted"],
     }
 
     # Event severity levels
@@ -64,7 +64,7 @@ class AuditLoggerAgent(BaseAgent):
             temperature=0.1,
             max_tokens=2000,
             capabilities=[AgentCapability.DATABASE_WRITE],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -98,7 +98,7 @@ class AuditLoggerAgent(BaseAgent):
             event_type=event_type,
             event_category=event_category,
             user_id=user_id,
-            severity=severity
+            severity=severity,
         )
 
         # Create audit log entry
@@ -110,7 +110,7 @@ class AuditLoggerAgent(BaseAgent):
             event_data,
             severity,
             ip_address,
-            session_id
+            session_id,
         )
 
         # Calculate integrity hash
@@ -135,19 +135,10 @@ class AuditLoggerAgent(BaseAgent):
         formatted_entry = self._format_audit_entry(audit_entry)
 
         # Generate recommendations
-        recommendations = self._generate_recommendations(
-            audit_entry,
-            anomalies,
-            alerts
-        )
+        recommendations = self._generate_recommendations(audit_entry, anomalies, alerts)
 
         # Format response
-        response = self._format_audit_report(
-            audit_entry,
-            anomalies,
-            alerts,
-            recommendations
-        )
+        response = self._format_audit_report(audit_entry, anomalies, alerts, recommendations)
 
         state["agent_response"] = response
         state["audit_entry"] = audit_entry
@@ -171,7 +162,7 @@ class AuditLoggerAgent(BaseAgent):
             log_id=audit_entry["log_id"],
             event_type=event_type,
             anomalies=len(anomalies),
-            alerts=len(alerts)
+            alerts=len(alerts),
         )
 
         return state
@@ -181,12 +172,12 @@ class AuditLoggerAgent(BaseAgent):
         event_type: str,
         event_category: str,
         user_id: str,
-        resource_id: Optional[str],
-        event_data: Dict[str, Any],
+        resource_id: str | None,
+        event_data: dict[str, Any],
         severity: str,
         ip_address: str,
-        session_id: Optional[str]
-    ) -> Dict[str, Any]:
+        session_id: str | None,
+    ) -> dict[str, Any]:
         """
         Create structured audit log entry.
 
@@ -218,10 +209,10 @@ class AuditLoggerAgent(BaseAgent):
             "session_id": session_id,
             "system_version": "1.0.0",
             "environment": "production",
-            "created_at": timestamp.isoformat()
+            "created_at": timestamp.isoformat(),
         }
 
-    def _calculate_integrity_hash(self, audit_entry: Dict[str, Any]) -> str:
+    def _calculate_integrity_hash(self, audit_entry: dict[str, Any]) -> str:
         """
         Calculate cryptographic hash for tamper detection.
 
@@ -242,7 +233,7 @@ class AuditLoggerAgent(BaseAgent):
         hash_object = hashlib.sha256(entry_string.encode())
         return hash_object.hexdigest()
 
-    def _add_compliance_tags(self, event_category: str, event_type: str) -> List[str]:
+    def _add_compliance_tags(self, event_category: str, event_type: str) -> list[str]:
         """
         Add compliance framework tags.
 
@@ -307,11 +298,8 @@ class AuditLoggerAgent(BaseAgent):
         return 365
 
     def _detect_anomalies(
-        self,
-        audit_entry: Dict[str, Any],
-        event_type: str,
-        user_id: str
-    ) -> List[Dict[str, Any]]:
+        self, audit_entry: dict[str, Any], event_type: str, user_id: str
+    ) -> list[dict[str, Any]]:
         """
         Detect anomalies in audit logs.
 
@@ -328,51 +316,57 @@ class AuditLoggerAgent(BaseAgent):
         # Check for suspicious patterns
         # 1. Multiple failed logins
         if event_type == "login_failed":
-            anomalies.append({
-                "type": "failed_login",
-                "severity": "medium",
-                "message": "Failed login attempt detected",
-                "user_id": user_id,
-                "requires_monitoring": True
-            })
+            anomalies.append(
+                {
+                    "type": "failed_login",
+                    "severity": "medium",
+                    "message": "Failed login attempt detected",
+                    "user_id": user_id,
+                    "requires_monitoring": True,
+                }
+            )
 
         # 2. After-hours access
         current_hour = datetime.now(UTC).hour
         if current_hour < 6 or current_hour > 22:
             if event_type in ["data_access", "data_export", "config_change"]:
-                anomalies.append({
-                    "type": "after_hours_access",
-                    "severity": "medium",
-                    "message": "Sensitive operation performed outside business hours",
-                    "hour": current_hour,
-                    "requires_review": True
-                })
+                anomalies.append(
+                    {
+                        "type": "after_hours_access",
+                        "severity": "medium",
+                        "message": "Sensitive operation performed outside business hours",
+                        "hour": current_hour,
+                        "requires_review": True,
+                    }
+                )
 
         # 3. Privilege escalation
         if event_type in ["role_change", "permission_granted"]:
-            anomalies.append({
-                "type": "privilege_change",
-                "severity": "high",
-                "message": "User privilege modification detected",
-                "requires_approval": True
-            })
+            anomalies.append(
+                {
+                    "type": "privilege_change",
+                    "severity": "high",
+                    "message": "User privilege modification detected",
+                    "requires_approval": True,
+                }
+            )
 
         # 4. Data export
         if event_type == "data_export":
-            anomalies.append({
-                "type": "data_exfiltration_risk",
-                "severity": "high",
-                "message": "Large data export - potential data exfiltration",
-                "requires_investigation": True
-            })
+            anomalies.append(
+                {
+                    "type": "data_exfiltration_risk",
+                    "severity": "high",
+                    "message": "Large data export - potential data exfiltration",
+                    "requires_investigation": True,
+                }
+            )
 
         return anomalies
 
     def _generate_alerts(
-        self,
-        audit_entry: Dict[str, Any],
-        anomalies: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, audit_entry: dict[str, Any], anomalies: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """
         Generate security alerts based on audit entry.
 
@@ -387,28 +381,32 @@ class AuditLoggerAgent(BaseAgent):
 
         # Critical severity events always generate alerts
         if audit_entry["severity"] == "critical":
-            alerts.append({
-                "alert_type": "critical_event",
-                "severity": "critical",
-                "message": f"Critical security event: {audit_entry['event_type']}",
-                "event_id": audit_entry["log_id"],
-                "requires_immediate_action": True
-            })
+            alerts.append(
+                {
+                    "alert_type": "critical_event",
+                    "severity": "critical",
+                    "message": f"Critical security event: {audit_entry['event_type']}",
+                    "event_id": audit_entry["log_id"],
+                    "requires_immediate_action": True,
+                }
+            )
 
         # High-severity anomalies
         high_severity_anomalies = [a for a in anomalies if a["severity"] == "high"]
         if high_severity_anomalies:
-            alerts.append({
-                "alert_type": "security_anomaly",
-                "severity": "high",
-                "message": f"{len(high_severity_anomalies)} high-severity anomalies detected",
-                "anomalies": high_severity_anomalies,
-                "requires_investigation": True
-            })
+            alerts.append(
+                {
+                    "alert_type": "security_anomaly",
+                    "severity": "high",
+                    "message": f"{len(high_severity_anomalies)} high-severity anomalies detected",
+                    "anomalies": high_severity_anomalies,
+                    "requires_investigation": True,
+                }
+            )
 
         return alerts
 
-    def _format_audit_entry(self, audit_entry: Dict[str, Any]) -> str:
+    def _format_audit_entry(self, audit_entry: dict[str, Any]) -> str:
         """
         Format audit entry for storage.
 
@@ -422,10 +420,10 @@ class AuditLoggerAgent(BaseAgent):
 
     def _generate_recommendations(
         self,
-        audit_entry: Dict[str, Any],
-        anomalies: List[Dict[str, Any]],
-        alerts: List[Dict[str, Any]]
-    ) -> List[str]:
+        audit_entry: dict[str, Any],
+        anomalies: list[dict[str, Any]],
+        alerts: list[dict[str, Any]],
+    ) -> list[str]:
         """
         Generate recommendations based on audit entry.
 
@@ -440,9 +438,7 @@ class AuditLoggerAgent(BaseAgent):
         recommendations = []
 
         if alerts:
-            recommendations.append(
-                "CRITICAL: Security alerts generated. Investigate immediately."
-            )
+            recommendations.append("CRITICAL: Security alerts generated. Investigate immediately.")
 
         if anomalies:
             recommendations.append(
@@ -467,30 +463,36 @@ class AuditLoggerAgent(BaseAgent):
 
     def _format_audit_report(
         self,
-        audit_entry: Dict[str, Any],
-        anomalies: List[Dict[str, Any]],
-        alerts: List[Dict[str, Any]],
-        recommendations: List[str]
+        audit_entry: dict[str, Any],
+        anomalies: list[dict[str, Any]],
+        alerts: list[dict[str, Any]],
+        recommendations: list[str],
     ) -> str:
         """Format audit logging report."""
-        severity_icon = "🔴" if audit_entry["severity"] == "critical" else "⚠️" if audit_entry["severity"] == "high" else "ℹ️"
+        severity_icon = (
+            "🔴"
+            if audit_entry["severity"] == "critical"
+            else "⚠️"
+            if audit_entry["severity"] == "high"
+            else "ℹ️"
+        )
 
         report = f"""**Audit Log Entry Created**
 
-**Log ID:** {audit_entry['log_id']}
-**Event Type:** {audit_entry['event_type']}
-**Category:** {audit_entry['event_category']}
-**Severity:** {severity_icon} {audit_entry['severity'].upper()}
-**User ID:** {audit_entry['user_id']}
-**Timestamp:** {audit_entry['timestamp']}
+**Log ID:** {audit_entry["log_id"]}
+**Event Type:** {audit_entry["event_type"]}
+**Category:** {audit_entry["event_category"]}
+**Severity:** {severity_icon} {audit_entry["severity"].upper()}
+**User ID:** {audit_entry["user_id"]}
+**Timestamp:** {audit_entry["timestamp"]}
 
 **Security Details:**
-- IP Address: {audit_entry['ip_address']}
-- Session ID: {audit_entry.get('session_id', 'N/A')}
-- Integrity Hash: {audit_entry.get('integrity_hash', 'N/A')[:32]}...
-- Retention Period: {audit_entry.get('retention_period_days', 0)} days
+- IP Address: {audit_entry["ip_address"]}
+- Session ID: {audit_entry.get("session_id", "N/A")}
+- Integrity Hash: {audit_entry.get("integrity_hash", "N/A")[:32]}...
+- Retention Period: {audit_entry.get("retention_period_days", 0)} days
 
-**Compliance Tags:** {', '.join(audit_entry.get('compliance_tags', []))}
+**Compliance Tags:** {", ".join(audit_entry.get("compliance_tags", []))}
 
 """
 
@@ -511,11 +513,11 @@ class AuditLoggerAgent(BaseAgent):
 
         # Recommendations
         if recommendations:
-            report += f"**Recommendations:**\n"
+            report += "**Recommendations:**\n"
             for rec in recommendations:
                 report += f"- {rec}\n"
 
         report += f"\n*Audit log entry created at {datetime.now(UTC).isoformat()}*"
-        report += f"\n*Tamper-proof logging enabled*"
+        report += "\n*Tamper-proof logging enabled*"
 
         return report
