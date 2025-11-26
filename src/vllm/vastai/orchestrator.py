@@ -16,19 +16,20 @@ Vast.ai GPU Orchestration
 """
 
 import asyncio
-from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
-from collections import deque
-from enum import Enum
 import time
+from collections import deque
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any
+
 import httpx
 import structlog
 
-from src.vllm.vastai.client import VastAIClient, VastAIError, VastAINotFoundError
-from src.vllm.vastai.gpu_configs import GPU_FALLBACK_CONFIGS, GPUConfig, filter_compatible_offers
-from src.vllm.vastai.docker_config import VLLMDockerConfig
-from src.utils.cost_tracking import cost_tracker
 from src.core.config import get_settings
+from src.utils.cost_tracking import cost_tracker
+from src.vllm.vastai.client import VastAIClient, VastAIError, VastAINotFoundError
+from src.vllm.vastai.docker_config import VLLMDockerConfig
+from src.vllm.vastai.gpu_configs import GPU_FALLBACK_CONFIGS, filter_compatible_offers
 
 logger = structlog.get_logger(__name__)
 settings = get_settings()
@@ -36,6 +37,7 @@ settings = get_settings()
 
 class LaunchState(str, Enum):
     """GPU instance launch states"""
+
     IDLE = "idle"
     SEARCHING = "searching"
     LAUNCHING = "launching"
@@ -74,16 +76,16 @@ class GPUOrchestrator:
 
     def __init__(self):
         """Initialize GPU orchestrator"""
-        self.vast_client: Optional[VastAIClient] = None
-        self.current_instance: Optional[Dict[str, Any]] = None
-        self.instance_start_time: Optional[datetime] = None
-        self.keep_alive_until: Optional[datetime] = None
-        self.vllm_endpoint: Optional[str] = None
+        self.vast_client: VastAIClient | None = None
+        self.current_instance: dict[str, Any] | None = None
+        self.instance_start_time: datetime | None = None
+        self.keep_alive_until: datetime | None = None
+        self.vllm_endpoint: str | None = None
 
         # Launch state tracking
         self.launch_state = LaunchState.IDLE
-        self.launch_error: Optional[str] = None
-        self.launch_task: Optional[asyncio.Task] = None
+        self.launch_error: str | None = None
+        self.launch_task: asyncio.Task | None = None
 
         # Budget tracking
         self.budget_limit = settings.vastai.budget_limit
@@ -97,8 +99,8 @@ class GPUOrchestrator:
         self.recent_requests = deque(maxlen=100)
 
         # Background task handles
-        self._keep_alive_task: Optional[asyncio.Task] = None
-        self._health_monitor_task: Optional[asyncio.Task] = None
+        self._keep_alive_task: asyncio.Task | None = None
+        self._health_monitor_task: asyncio.Task | None = None
 
         logger.info(
             "gpu_orchestrator_initialized",
@@ -111,7 +113,7 @@ class GPUOrchestrator:
         if not self.vast_client:
             self.vast_client = VastAIClient()
 
-    def launch_gpu_async(self, keep_alive_minutes: Optional[int] = None) -> Dict[str, Any]:
+    def launch_gpu_async(self, keep_alive_minutes: int | None = None) -> dict[str, Any]:
         """
         Launch GPU instance asynchronously (non-blocking).
 
@@ -139,9 +141,7 @@ class GPUOrchestrator:
         self.launch_error = None
 
         # Start background task
-        self.launch_task = asyncio.create_task(
-            self._launch_gpu_background(keep_alive_minutes)
-        )
+        self.launch_task = asyncio.create_task(self._launch_gpu_background(keep_alive_minutes))
 
         logger.info(
             "gpu_async_launch_started",
@@ -154,7 +154,7 @@ class GPUOrchestrator:
             "message": "GPU launch initiated. Check /api/admin/vllm/status for progress.",
         }
 
-    async def _launch_gpu_background(self, keep_alive_minutes: Optional[int]):
+    async def _launch_gpu_background(self, keep_alive_minutes: int | None):
         """
         Background task for launching GPU and waiting for vLLM ready.
 
@@ -179,7 +179,7 @@ class GPUOrchestrator:
 
     async def ensure_gpu_ready(
         self,
-        keep_alive_minutes: Optional[int] = None,
+        keep_alive_minutes: int | None = None,
     ) -> str:
         """
         Ensure GPU instance is running and vLLM is ready.
@@ -260,7 +260,7 @@ class GPUOrchestrator:
 
         return endpoint
 
-    async def _search_and_launch(self) -> Dict[str, Any]:
+    async def _search_and_launch(self) -> dict[str, Any]:
         """
         Search for available GPU and launch instance.
 
@@ -405,7 +405,7 @@ class GPUOrchestrator:
 
     async def _wait_for_vllm_ready(
         self,
-        instance: Dict[str, Any],
+        instance: dict[str, Any],
     ) -> str:
         """
         Wait for vLLM to be ready and responding.
@@ -506,7 +506,9 @@ class GPUOrchestrator:
 
                             if response.status_code == 200:
                                 total_time = (datetime.utcnow() - start_time).total_seconds()
-                                metrics["vllm_ready_time"] = total_time - (metrics["instance_boot_time"] or 0)
+                                metrics["vllm_ready_time"] = total_time - (
+                                    metrics["instance_boot_time"] or 0
+                                )
                                 metrics["total_startup_time"] = total_time
 
                                 logger.info(
@@ -655,7 +657,8 @@ class GPUOrchestrator:
                 instance_id=instance_id,
                 runtime_minutes=(
                     (datetime.utcnow() - self.instance_start_time).total_seconds() / 60
-                    if self.instance_start_time else 0
+                    if self.instance_start_time
+                    else 0
                 ),
             )
 
@@ -733,9 +736,9 @@ class GPUOrchestrator:
     def _is_instance_alive(self) -> bool:
         """Check if current instance is still alive"""
         return (
-            self.current_instance is not None and
-            self.keep_alive_until is not None and
-            datetime.utcnow() < self.keep_alive_until
+            self.current_instance is not None
+            and self.keep_alive_until is not None
+            and datetime.utcnow() < self.keep_alive_until
         )
 
     def _start_background_tasks(self):
@@ -852,7 +855,7 @@ class GPUOrchestrator:
                 exc_info=True,
             )
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """
         Get comprehensive orchestrator status.
 
@@ -888,7 +891,9 @@ class GPUOrchestrator:
                 "price_per_hour": price_per_hour,
             },
             "runtime_minutes": round(runtime_seconds / 60, 1),
-            "keep_alive_until": self.keep_alive_until.isoformat() if self.keep_alive_until else None,
+            "keep_alive_until": self.keep_alive_until.isoformat()
+            if self.keep_alive_until
+            else None,
             "estimated_cost": round(estimated_cost, 6),
             "health_failures": self.health_check_failures,
         }
