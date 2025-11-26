@@ -5,13 +5,12 @@ This agent helps customers update their personal profile information, company de
 preferences, timezone settings, and other account-related configurations.
 """
 
-from typing import Dict, Any, Optional
-from datetime import datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("profile_manager", tier="essential", category="account")
@@ -33,25 +32,33 @@ class ProfileManager(BaseAgent):
         "company": "Company information (admin only)",
         "settings": "User preferences and settings",
         "timezone": "Timezone configuration",
-        "avatar": "Profile picture upload"
+        "avatar": "Profile picture upload",
     }
 
     # Allowed user profile fields
-    ALLOWED_USER_FIELDS = [
-        "name", "email", "phone", "avatar_url",
-        "job_title", "department", "bio"
-    ]
+    ALLOWED_USER_FIELDS = ["name", "email", "phone", "avatar_url", "job_title", "department", "bio"]
 
     # Allowed company fields (admin/owner only)
     ALLOWED_COMPANY_FIELDS = [
-        "company_name", "industry", "company_size",
-        "website", "address", "billing_email"
+        "company_name",
+        "industry",
+        "company_size",
+        "website",
+        "address",
+        "billing_email",
     ]
 
     # Timezone-related keywords
     TIMEZONE_KEYWORDS = [
-        "timezone", "time zone", "utc", "gmt",
-        "time", "clock", "eastern", "pacific", "central"
+        "timezone",
+        "time zone",
+        "utc",
+        "gmt",
+        "time",
+        "clock",
+        "eastern",
+        "pacific",
+        "central",
     ]
 
     # Profile-related keywords
@@ -67,12 +74,9 @@ class ProfileManager(BaseAgent):
             name="profile_manager",
             type=AgentType.SPECIALIST,
             temperature=0.3,
-            capabilities=[
-                AgentCapability.KB_SEARCH,
-                AgentCapability.CONTEXT_AWARE
-            ],
+            capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="account",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -98,7 +102,7 @@ class ProfileManager(BaseAgent):
             "profile_processing_details",
             message_preview=message[:100],
             turn_count=state["turn_count"],
-            customer_plan=customer_context.get("plan", "free")
+            customer_plan=customer_context.get("plan", "free"),
         )
 
         # Detect update type from message
@@ -109,25 +113,15 @@ class ProfileManager(BaseAgent):
         update_data = state.get("entities", {}).get("profile_data", {})
 
         # Search knowledge base for profile-related articles
-        kb_results = await self.search_knowledge_base(
-            message,
-            category="account",
-            limit=2
-        )
+        kb_results = await self.search_knowledge_base(message, category="account", limit=2)
         state["kb_results"] = kb_results
 
         if kb_results:
-            self.logger.info(
-                "profile_kb_articles_found",
-                count=len(kb_results)
-            )
+            self.logger.info("profile_kb_articles_found", count=len(kb_results))
 
         # Generate profile management response
         response = self._generate_profile_response(
-            update_type,
-            update_data,
-            customer_context,
-            kb_results
+            update_type, update_data, customer_context, kb_results
         )
 
         state["agent_response"] = response
@@ -136,11 +130,7 @@ class ProfileManager(BaseAgent):
         state["next_agent"] = None
         state["status"] = "resolved"
 
-        self.logger.info(
-            "profile_processing_completed",
-            status="resolved",
-            update_type=update_type
-        )
+        self.logger.info("profile_processing_completed", status="resolved", update_type=update_type)
 
         return state
 
@@ -167,9 +157,9 @@ class ProfileManager(BaseAgent):
     def _generate_profile_response(
         self,
         update_type: str,
-        update_data: Dict[str, Any],
-        customer_context: Dict[str, Any],
-        kb_results: list
+        update_data: dict[str, Any],
+        customer_context: dict[str, Any],
+        kb_results: list,
     ) -> str:
         """
         Generate profile management response.
@@ -205,14 +195,12 @@ class ProfileManager(BaseAgent):
         return response
 
     def _guide_user_profile_update(
-        self,
-        customer_context: Dict[str, Any],
-        update_data: Dict[str, Any]
+        self, customer_context: dict[str, Any], update_data: dict[str, Any]
     ) -> str:
         """Guide for updating user profile."""
-        user_role = customer_context.get("role", "member")
+        customer_context.get("role", "member")
 
-        return f"""**👤 Update Your Profile**
+        return """**👤 Update Your Profile**
 
 **How to update your profile:**
 
@@ -258,9 +246,7 @@ class ProfileManager(BaseAgent):
 **Need help with a specific field?** Let me know what you'd like to update!"""
 
     def _guide_company_profile_update(
-        self,
-        customer_context: Dict[str, Any],
-        update_data: Dict[str, Any]
+        self, customer_context: dict[str, Any], update_data: dict[str, Any]
     ) -> str:
         """Guide for updating company profile."""
         user_role = customer_context.get("role", "member")
@@ -284,7 +270,7 @@ Only **account owners** and **admins** can update company information.
 
 **Need help with something else?** I can help you update your personal information!"""
 
-        return f"""**🏢 Update Company Information**
+        return """**🏢 Update Company Information**
 
 **How to update company details:**
 
@@ -333,9 +319,7 @@ Only **account owners** and **admins** can update company information.
 **Need help with specific fields?** Let me know what you'd like to change!"""
 
     def _guide_preferences_update(
-        self,
-        customer_context: Dict[str, Any],
-        update_data: Dict[str, Any]
+        self, customer_context: dict[str, Any], update_data: dict[str, Any]
     ) -> str:
         """Guide for updating user preferences."""
         return """**⚙️ Update Your Preferences**
@@ -401,14 +385,12 @@ Only **account owners** and **admins** can update company information.
 **Need help configuring something specific?** Let me know!"""
 
     def _guide_timezone_update(
-        self,
-        customer_context: Dict[str, Any],
-        update_data: Dict[str, Any]
+        self, customer_context: dict[str, Any], update_data: dict[str, Any]
     ) -> str:
         """Guide for updating timezone."""
-        current_timezone = update_data.get("timezone", "UTC")
+        update_data.get("timezone", "UTC")
 
-        return f"""**🌍 Update Your Timezone**
+        return """**🌍 Update Your Timezone**
 
 **Why timezone matters:**
 - Email delivery times
@@ -573,6 +555,7 @@ I'm here to help! 😊"""
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -586,12 +569,7 @@ if __name__ == "__main__":
 
         state1 = create_initial_state(
             "How do I update my email address?",
-            context={
-                "customer_metadata": {
-                    "plan": "premium",
-                    "role": "member"
-                }
-            }
+            context={"customer_metadata": {"plan": "premium", "role": "member"}},
         )
 
         agent = ProfileManager()
@@ -607,12 +585,7 @@ if __name__ == "__main__":
 
         state2 = create_initial_state(
             "I need to update our company name",
-            context={
-                "customer_metadata": {
-                    "plan": "enterprise",
-                    "role": "owner"
-                }
-            }
+            context={"customer_metadata": {"plan": "enterprise", "role": "owner"}},
         )
 
         result2 = await agent.process(state2)
@@ -627,11 +600,7 @@ if __name__ == "__main__":
 
         state3 = create_initial_state(
             "How do I change my timezone to Pacific time?",
-            context={
-                "customer_metadata": {
-                    "plan": "basic"
-                }
-            }
+            context={"customer_metadata": {"plan": "basic"}},
         )
 
         result3 = await agent.process(state3)
