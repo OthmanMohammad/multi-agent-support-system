@@ -10,8 +10,8 @@ Vast.ai GPU Orchestration
 
 import asyncio
 import json
-from typing import List, Dict, Any, Optional
-from datetime import datetime
+from typing import Any
+
 import httpx
 import structlog
 
@@ -23,21 +23,25 @@ settings = get_settings()
 
 class VastAIError(Exception):
     """Base exception for Vast.ai API errors"""
+
     pass
 
 
 class VastAIAuthError(VastAIError):
     """Authentication error"""
+
     pass
 
 
 class VastAINotFoundError(VastAIError):
     """Resource not found"""
+
     pass
 
 
 class VastAIRateLimitError(VastAIError):
     """Rate limit exceeded"""
+
     pass
 
 
@@ -78,7 +82,7 @@ class VastAIClient:
 
     BASE_URL = "https://console.vast.ai/api/v0"
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: str | None = None):
         """
         Initialize Vast.ai client.
 
@@ -115,11 +119,7 @@ class VastAIClient:
         logger.info("vastai_client_initialized", base_url=self.BASE_URL)
 
     async def _request_with_retry(
-        self,
-        method: str,
-        endpoint: str,
-        max_retries: Optional[int] = None,
-        **kwargs
+        self, method: str, endpoint: str, max_retries: int | None = None, **kwargs
     ) -> httpx.Response:
         """
         Make HTTP request with exponential backoff retry.
@@ -172,17 +172,13 @@ class VastAIClient:
                         endpoint=endpoint,
                         attempt=attempt + 1,
                     )
-                    last_exception = VastAIError(
-                        f"Server error: {response.status_code}"
-                    )
+                    last_exception = VastAIError(f"Server error: {response.status_code}")
                     continue
 
                 elif response.status_code >= 400:
                     # Client error - don't retry
                     error_text = response.text
-                    raise VastAIError(
-                        f"API error {response.status_code}: {error_text}"
-                    )
+                    raise VastAIError(f"API error {response.status_code}: {error_text}")
 
                 # Success
                 response.raise_for_status()
@@ -203,15 +199,15 @@ class VastAIClient:
                     attempt=attempt + 1,
                     endpoint=endpoint,
                 )
-                last_exception = VastAIError(f"Network error: {str(e)}")
+                last_exception = VastAIError(f"Network error: {e!s}")
 
-            except (VastAIAuthError, VastAINotFoundError) as e:
+            except (VastAIAuthError, VastAINotFoundError):
                 # Don't retry auth or not-found errors
                 raise
 
             except VastAIRateLimitError:
                 # Longer delay for rate limiting
-                delay = self.base_delay * (2 ** attempt) * 2
+                delay = self.base_delay * (2**attempt) * 2
                 logger.warning(
                     "vastai_api_rate_limited",
                     delay_seconds=delay,
@@ -225,7 +221,7 @@ class VastAIClient:
 
             # Exponential backoff before retry
             if attempt < max_retries - 1:
-                delay = self.base_delay * (2 ** attempt)  # 2s, 4s, 8s
+                delay = self.base_delay * (2**attempt)  # 2s, 4s, 8s
                 logger.info(
                     "vastai_api_retry",
                     attempt=attempt + 1,
@@ -244,7 +240,7 @@ class VastAIClient:
         max_price: float,
         verified_only: bool = True,
         available_only: bool = True,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Search for available GPU offers.
 
@@ -296,11 +292,12 @@ class VastAIClient:
 
             # Filter by VRAM and price
             filtered_offers = [
-                offer for offer in offers
+                offer
+                for offer in offers
                 if (
-                    offer.get("gpu_ram", 0) >= min_vram_gb * 1024 and  # MB to GB
-                    offer.get("dph_total", 999) <= max_price and
-                    (not available_only or offer.get("rentable", False))
+                    offer.get("gpu_ram", 0) >= min_vram_gb * 1024  # MB to GB
+                    and offer.get("dph_total", 999) <= max_price
+                    and (not available_only or offer.get("rentable", False))
                 )
             ]
 
@@ -330,12 +327,12 @@ class VastAIClient:
         offer_id: int,
         image: str,
         disk_gb: int = 50,
-        label: Optional[str] = None,
-        docker_args: Optional[List[str]] = None,
-        env_vars: Optional[Dict[str, str]] = None,
+        label: str | None = None,
+        docker_args: list[str] | None = None,
+        env_vars: dict[str, str] | None = None,
         runtype: str = "args",
-        onstart: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        onstart: str | None = None,
+    ) -> dict[str, Any]:
         """
         Launch GPU instance from offer.
 
@@ -425,7 +422,7 @@ class VastAIClient:
             )
             raise
 
-    async def get_instance(self, instance_id: int) -> Dict[str, Any]:
+    async def get_instance(self, instance_id: int) -> dict[str, Any]:
         """
         Get instance details by querying all instances and filtering by ID.
 
@@ -449,10 +446,7 @@ class VastAIClient:
             instances = data.get("instances", [])
 
             # Filter by instance ID
-            matching_instances = [
-                inst for inst in instances
-                if inst.get("id") == instance_id
-            ]
+            matching_instances = [inst for inst in instances if inst.get("id") == instance_id]
 
             if not matching_instances:
                 logger.warning(
@@ -460,7 +454,9 @@ class VastAIClient:
                     instance_id=instance_id,
                     total_instances=len(instances),
                 )
-                raise VastAINotFoundError(f"Instance {instance_id} not found in instances list (may still be starting up)")
+                raise VastAINotFoundError(
+                    f"Instance {instance_id} not found in instances list (may still be starting up)"
+                )
 
             instance = matching_instances[0]
             logger.debug(
@@ -484,7 +480,7 @@ class VastAIClient:
             )
             raise
 
-    async def list_instances(self) -> List[Dict[str, Any]]:
+    async def list_instances(self) -> list[dict[str, Any]]:
         """
         List all running instances.
 
