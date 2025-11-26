@@ -5,13 +5,13 @@ Drives deals to signature, creates urgency with incentives, executive alignment 
 and final objection handling to successfully close deals.
 """
 
-from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("closer", tier="revenue", category="sales")
@@ -32,27 +32,39 @@ class Closer(BaseAgent):
         "trial_conversion": {
             "primary_tactic": "value_reinforcement",
             "urgency_method": "trial_ending",
-            "key_messages": ["You've seen the value", "Don't lose progress", "Team is already using it"],
-            "incentive": "trial_extension_or_discount"
+            "key_messages": [
+                "You've seen the value",
+                "Don't lose progress",
+                "Team is already using it",
+            ],
+            "incentive": "trial_extension_or_discount",
         },
         "proposal_acceptance": {
             "primary_tactic": "roi_focus",
             "urgency_method": "limited_time_offer",
-            "key_messages": ["Clear ROI demonstrated", "Solution addresses needs", "Time to move forward"],
-            "incentive": "early_adopter_pricing"
+            "key_messages": [
+                "Clear ROI demonstrated",
+                "Solution addresses needs",
+                "Time to move forward",
+            ],
+            "incentive": "early_adopter_pricing",
         },
         "negotiation_complete": {
             "primary_tactic": "commitment_seeking",
             "urgency_method": "quarter_end",
             "key_messages": ["All concerns addressed", "Terms agreed", "Ready to start"],
-            "incentive": "implementation_priority"
+            "incentive": "implementation_priority",
         },
         "verbal_agreement": {
             "primary_tactic": "contract_facilitation",
             "urgency_method": "business_impact",
-            "key_messages": ["Let's make it official", "Start delivering value", "Lock in these terms"],
-            "incentive": "accelerated_onboarding"
-        }
+            "key_messages": [
+                "Let's make it official",
+                "Start delivering value",
+                "Lock in these terms",
+            ],
+            "incentive": "accelerated_onboarding",
+        },
     }
 
     # Urgency creation tactics
@@ -62,70 +74,75 @@ class Closer(BaseAgent):
             "duration_days": 7,
             "message": "Special pricing available until [DATE]",
             "discount_range": (0.05, 0.15),
-            "effectiveness": 0.85
+            "effectiveness": 0.85,
         },
         "quarter_end_incentive": {
             "type": "pricing",
             "duration_days": 14,
             "message": "Quarter-end special - additional savings this month",
             "discount_range": (0.10, 0.20),
-            "effectiveness": 0.80
+            "effectiveness": 0.80,
         },
         "implementation_priority": {
             "type": "service",
             "duration_days": 10,
             "message": "Sign by [DATE] for priority implementation slot",
             "value": "accelerated_timeline",
-            "effectiveness": 0.75
+            "effectiveness": 0.75,
         },
         "feature_early_access": {
             "type": "value_add",
             "duration_days": 14,
             "message": "Early access to upcoming features for early adopters",
             "value": "beta_features",
-            "effectiveness": 0.70
+            "effectiveness": 0.70,
         },
         "price_increase_pending": {
             "type": "pricing",
             "duration_days": 30,
             "message": "Lock in current pricing before upcoming increase",
             "impact": "price_protection",
-            "effectiveness": 0.75
+            "effectiveness": 0.75,
         },
         "competitive_window": {
             "type": "strategic",
             "duration_days": 5,
             "message": "Limited availability in your market segment",
             "value": "exclusivity",
-            "effectiveness": 0.65
-        }
+            "effectiveness": 0.65,
+        },
     }
 
     # Executive alignment strategies
     EXECUTIVE_ALIGNMENT = {
         "champion_enablement": {
             "objective": "Arm internal champion with materials",
-            "deliverables": ["Executive summary", "ROI deck", "Business case", "Competitor comparison"],
-            "timeline_days": 3
+            "deliverables": [
+                "Executive summary",
+                "ROI deck",
+                "Business case",
+                "Competitor comparison",
+            ],
+            "timeline_days": 3,
         },
         "executive_briefing": {
             "objective": "Present to economic buyer",
             "format": "30-minute executive overview",
             "focus": ["Strategic value", "ROI metrics", "Risk mitigation", "Success timeline"],
-            "timeline_days": 7
+            "timeline_days": 7,
         },
         "peer_reference": {
             "objective": "Connect with similar customer",
             "approach": "Reference call with peer executive",
             "value": "Social proof and best practices",
-            "timeline_days": 5
+            "timeline_days": 5,
         },
         "executive_sponsor": {
             "objective": "Engage vendor executive",
             "approach": "VP-level relationship building",
             "value": "Strategic partnership discussion",
-            "timeline_days": 10
-        }
+            "timeline_days": 10,
+        },
     }
 
     # Final objection patterns
@@ -133,39 +150,47 @@ class Closer(BaseAgent):
         "need_more_time": {
             "type": "stalling",
             "response_strategy": "create_urgency",
-            "tactics": ["Highlight cost of delay", "Offer pilot program", "Set specific decision date"],
-            "success_rate": 0.60
+            "tactics": [
+                "Highlight cost of delay",
+                "Offer pilot program",
+                "Set specific decision date",
+            ],
+            "success_rate": 0.60,
         },
         "budget_approval_pending": {
             "type": "process",
             "response_strategy": "facilitate_approval",
-            "tactics": ["Provide budget justification", "Offer phased approach", "Executive briefing"],
-            "success_rate": 0.70
+            "tactics": [
+                "Provide budget justification",
+                "Offer phased approach",
+                "Executive briefing",
+            ],
+            "success_rate": 0.70,
         },
         "need_executive_approval": {
             "type": "decision_maker",
             "response_strategy": "executive_alignment",
             "tactics": ["Executive summary", "ROI presentation", "Reference call"],
-            "success_rate": 0.75
+            "success_rate": 0.75,
         },
         "comparing_alternatives": {
             "type": "competitive",
             "response_strategy": "differentiation",
             "tactics": ["Feature comparison", "TCO analysis", "Customer success stories"],
-            "success_rate": 0.65
+            "success_rate": 0.65,
         },
         "internal_resistance": {
             "type": "political",
             "response_strategy": "stakeholder_management",
             "tactics": ["Identify blockers", "Address concerns", "Build coalition"],
-            "success_rate": 0.55
+            "success_rate": 0.55,
         },
         "timing_not_right": {
             "type": "priority",
             "response_strategy": "value_reframing",
             "tactics": ["Cost of inaction", "Competitive risk", "Quick wins"],
-            "success_rate": 0.50
-        }
+            "success_rate": 0.50,
+        },
     }
 
     # Closing signals (buying indicators)
@@ -176,21 +201,21 @@ class Closer(BaseAgent):
             "introduced_procurement_team",
             "discussing_specific_start_dates",
             "asking_detailed_technical_questions",
-            "requested_reference_calls"
+            "requested_reference_calls",
         ],
         "moderate": [
             "positive_trial_feedback",
             "multiple_stakeholder_engagement",
             "detailed_pricing_questions",
             "asking_about_support_options",
-            "discussing_integration_details"
+            "discussing_integration_details",
         ],
         "weak": [
             "general_interest",
             "exploring_options",
             "early_stage_questions",
-            "broad_research"
-        ]
+            "broad_research",
+        ],
     }
 
     # Deal momentum indicators
@@ -198,23 +223,23 @@ class Closer(BaseAgent):
         "high": {
             "indicators": ["frequent_communication", "rapid_responses", "expanding_stakeholders"],
             "action": "accelerate_to_close",
-            "timeline": "1-2 weeks"
+            "timeline": "1-2 weeks",
         },
         "medium": {
             "indicators": ["regular_communication", "steady_progress", "stable_engagement"],
             "action": "maintain_pressure",
-            "timeline": "3-4 weeks"
+            "timeline": "3-4 weeks",
         },
         "low": {
             "indicators": ["slow_responses", "delayed_meetings", "single_contact"],
             "action": "create_urgency",
-            "timeline": "4-6 weeks"
+            "timeline": "4-6 weeks",
         },
         "stalled": {
             "indicators": ["no_response", "cancelled_meetings", "radio_silence"],
             "action": "re_engage_or_disqualify",
-            "timeline": "indefinite"
-        }
+            "timeline": "indefinite",
+        },
     }
 
     def __init__(self):
@@ -226,10 +251,10 @@ class Closer(BaseAgent):
             capabilities=[
                 AgentCapability.KB_SEARCH,
                 AgentCapability.CONTEXT_AWARE,
-                AgentCapability.ENTITY_EXTRACTION
+                AgentCapability.ENTITY_EXTRACTION,
             ],
             kb_category="sales",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -254,17 +279,11 @@ class Closer(BaseAgent):
         deal_stage = state.get("deal_stage", "proposal_acceptance")
 
         self.logger.debug(
-            "closing_details",
-            stage=deal_stage,
-            deal_value=deal_details.get("deal_value", 0)
+            "closing_details", stage=deal_stage, deal_value=deal_details.get("deal_value", 0)
         )
 
         # Assess deal readiness
-        deal_readiness = self._assess_deal_readiness(
-            message,
-            deal_details,
-            deal_stage
-        )
+        deal_readiness = self._assess_deal_readiness(message, deal_details, deal_stage)
 
         # Identify closing signals
         closing_signals = self._identify_closing_signals(message, deal_details)
@@ -276,47 +295,27 @@ class Closer(BaseAgent):
         momentum = self._assess_deal_momentum(deal_details)
 
         # Select closing strategy
-        closing_strategy = self._select_closing_strategy(
-            deal_stage,
-            deal_readiness,
-            momentum
-        )
+        closing_strategy = self._select_closing_strategy(deal_stage, deal_readiness, momentum)
 
         # Create urgency tactics
-        urgency_tactics = self._create_urgency_tactics(
-            deal_details,
-            closing_strategy,
-            momentum
-        )
+        urgency_tactics = self._create_urgency_tactics(deal_details, closing_strategy, momentum)
 
         # Determine executive alignment needs
-        executive_alignment = self._determine_executive_alignment(
-            deal_details,
-            customer_metadata
-        )
+        executive_alignment = self._determine_executive_alignment(deal_details, customer_metadata)
 
         # Generate closing plan
         closing_plan = self._generate_closing_plan(
-            closing_strategy,
-            urgency_tactics,
-            executive_alignment,
-            final_objections,
-            deal_details
+            closing_strategy, urgency_tactics, executive_alignment, final_objections, deal_details
         )
 
         # Calculate close probability
         close_probability = self._calculate_close_probability(
-            deal_readiness,
-            closing_signals,
-            momentum,
-            final_objections
+            deal_readiness, closing_signals, momentum, final_objections
         )
 
         # Search KB for closing techniques
         kb_results = await self.search_knowledge_base(
-            f"closing techniques {deal_stage}",
-            category="sales",
-            limit=3
+            f"closing techniques {deal_stage}", category="sales", limit=3
         )
         state["kb_results"] = kb_results
 
@@ -330,7 +329,7 @@ class Closer(BaseAgent):
             final_objections,
             kb_results,
             customer_metadata,
-            state
+            state,
         )
 
         # Update state
@@ -352,17 +351,14 @@ class Closer(BaseAgent):
             "closer_completed",
             strategy=closing_strategy["primary_tactic"],
             close_probability=close_probability,
-            momentum=momentum["level"]
+            momentum=momentum["level"],
         )
 
         return state
 
     def _assess_deal_readiness(
-        self,
-        message: str,
-        deal_details: Dict,
-        deal_stage: str
-    ) -> Dict[str, Any]:
+        self, message: str, deal_details: dict, deal_stage: str
+    ) -> dict[str, Any]:
         """Assess if deal is ready to close"""
         readiness_score = 0
         max_score = 10
@@ -410,25 +406,20 @@ class Closer(BaseAgent):
             "max_score": max_score,
             "percentage": readiness_percentage,
             "checklist": checklist,
-            "ready_to_close": readiness_percentage >= 0.7
+            "ready_to_close": readiness_percentage >= 0.7,
         }
 
-    def _identify_closing_signals(
-        self,
-        message: str,
-        deal_details: Dict
-    ) -> Dict[str, List[str]]:
+    def _identify_closing_signals(self, message: str, deal_details: dict) -> dict[str, list[str]]:
         """Identify buying signals in communication"""
-        signals = {
-            "strong": [],
-            "moderate": [],
-            "weak": []
-        }
+        signals = {"strong": [], "moderate": [], "weak": []}
 
         message_lower = message.lower()
 
         # Check for strong signals
-        if any(sig in message_lower for sig in ["implementation", "start date", "contract", "procurement"]):
+        if any(
+            sig in message_lower
+            for sig in ["implementation", "start date", "contract", "procurement"]
+        ):
             signals["strong"].append("asking_about_implementation")
         if "reference" in message_lower:
             signals["strong"].append("requested_references")
@@ -445,32 +436,40 @@ class Closer(BaseAgent):
 
         return signals
 
-    def _detect_final_objections(self, message: str) -> List[Dict[str, Any]]:
+    def _detect_final_objections(self, message: str) -> list[dict[str, Any]]:
         """Detect any final objections before closing"""
         objections = []
         message_lower = message.lower()
 
         for obj_type, obj_details in self.FINAL_OBJECTIONS.items():
             # Simple pattern matching
-            if obj_type == "need_more_time" and any(phrase in message_lower for phrase in ["need time", "think about it", "not ready"]):
-                objections.append({
-                    "type": obj_type,
-                    "details": obj_details
-                })
-            elif obj_type == "budget_approval_pending" and "budget" in message_lower and "approval" in message_lower:
-                objections.append({
-                    "type": obj_type,
-                    "details": obj_details
-                })
-            elif obj_type == "need_executive_approval" and ("executive" in message_lower or "ceo" in message_lower or "approval" in message_lower):
-                objections.append({
-                    "type": obj_type,
-                    "details": obj_details
-                })
+            if (
+                (
+                    obj_type == "need_more_time"
+                    and any(
+                        phrase in message_lower
+                        for phrase in ["need time", "think about it", "not ready"]
+                    )
+                )
+                or (
+                    obj_type == "budget_approval_pending"
+                    and "budget" in message_lower
+                    and "approval" in message_lower
+                )
+                or (
+                    obj_type == "need_executive_approval"
+                    and (
+                        "executive" in message_lower
+                        or "ceo" in message_lower
+                        or "approval" in message_lower
+                    )
+                )
+            ):
+                objections.append({"type": obj_type, "details": obj_details})
 
         return objections
 
-    def _assess_deal_momentum(self, deal_details: Dict) -> Dict[str, Any]:
+    def _assess_deal_momentum(self, deal_details: dict) -> dict[str, Any]:
         """Assess current deal momentum"""
         # Analyze engagement patterns
         days_since_last_contact = deal_details.get("days_since_last_contact", 0)
@@ -494,15 +493,12 @@ class Closer(BaseAgent):
             "action": momentum_info["action"],
             "timeline": momentum_info["timeline"],
             "days_since_contact": days_since_last_contact,
-            "response_time": response_time_hours
+            "response_time": response_time_hours,
         }
 
     def _select_closing_strategy(
-        self,
-        deal_stage: str,
-        readiness: Dict,
-        momentum: Dict
-    ) -> Dict[str, Any]:
+        self, deal_stage: str, readiness: dict, momentum: dict
+    ) -> dict[str, Any]:
         """Select appropriate closing strategy"""
         # Get base strategy for stage
         if deal_stage in self.CLOSING_STRATEGIES:
@@ -523,57 +519,60 @@ class Closer(BaseAgent):
         return strategy
 
     def _create_urgency_tactics(
-        self,
-        deal_details: Dict,
-        strategy: Dict,
-        momentum: Dict
-    ) -> List[Dict[str, Any]]:
+        self, deal_details: dict, strategy: dict, momentum: dict
+    ) -> list[dict[str, Any]]:
         """Create urgency tactics appropriate for the deal"""
         tactics = []
 
-        deal_value = deal_details.get("deal_value", 0)
+        deal_details.get("deal_value", 0)
 
         # Select tactics based on momentum
         if momentum["level"] == "high":
             # Use aggressive urgency
-            tactics.append({
-                "tactic": "implementation_priority",
-                "details": self.URGENCY_TACTICS["implementation_priority"],
-                "deadline": (datetime.now() + timedelta(days=7)).strftime("%B %d, %Y")
-            })
+            tactics.append(
+                {
+                    "tactic": "implementation_priority",
+                    "details": self.URGENCY_TACTICS["implementation_priority"],
+                    "deadline": (datetime.now() + timedelta(days=7)).strftime("%B %d, %Y"),
+                }
+            )
         elif momentum["level"] == "medium":
             # Use moderate urgency
-            tactics.append({
-                "tactic": "time_limited_discount",
-                "details": self.URGENCY_TACTICS["time_limited_discount"],
-                "deadline": (datetime.now() + timedelta(days=10)).strftime("%B %d, %Y"),
-                "discount": "10%"
-            })
+            tactics.append(
+                {
+                    "tactic": "time_limited_discount",
+                    "details": self.URGENCY_TACTICS["time_limited_discount"],
+                    "deadline": (datetime.now() + timedelta(days=10)).strftime("%B %d, %Y"),
+                    "discount": "10%",
+                }
+            )
         else:
             # Use value-focused urgency
-            tactics.append({
-                "tactic": "competitive_window",
-                "details": self.URGENCY_TACTICS["competitive_window"],
-                "deadline": (datetime.now() + timedelta(days=14)).strftime("%B %d, %Y")
-            })
+            tactics.append(
+                {
+                    "tactic": "competitive_window",
+                    "details": self.URGENCY_TACTICS["competitive_window"],
+                    "deadline": (datetime.now() + timedelta(days=14)).strftime("%B %d, %Y"),
+                }
+            )
 
         # Add quarter-end if applicable
         now = datetime.now()
         days_to_quarter_end = 90 - (now.day % 90)
         if days_to_quarter_end <= 21:
-            tactics.append({
-                "tactic": "quarter_end_incentive",
-                "details": self.URGENCY_TACTICS["quarter_end_incentive"],
-                "deadline": (now + timedelta(days=days_to_quarter_end)).strftime("%B %d, %Y")
-            })
+            tactics.append(
+                {
+                    "tactic": "quarter_end_incentive",
+                    "details": self.URGENCY_TACTICS["quarter_end_incentive"],
+                    "deadline": (now + timedelta(days=days_to_quarter_end)).strftime("%B %d, %Y"),
+                }
+            )
 
         return tactics[:2]  # Return top 2 tactics
 
     def _determine_executive_alignment(
-        self,
-        deal_details: Dict,
-        customer_metadata: Dict
-    ) -> Dict[str, Any]:
+        self, deal_details: dict, customer_metadata: dict
+    ) -> dict[str, Any]:
         """Determine executive alignment strategy"""
         deal_value = deal_details.get("deal_value", 0)
         decision_maker_title = customer_metadata.get("title", "").lower()
@@ -599,70 +598,70 @@ class Closer(BaseAgent):
             return {
                 "needed": True,
                 "strategies": strategies,
-                "priority": "high" if deal_value > 200000 else "medium"
+                "priority": "high" if deal_value > 200000 else "medium",
             }
         else:
-            return {
-                "needed": False,
-                "strategies": [],
-                "priority": "low"
-            }
+            return {"needed": False, "strategies": [], "priority": "low"}
 
     def _generate_closing_plan(
         self,
-        strategy: Dict,
-        urgency_tactics: List[Dict],
-        executive_alignment: Dict,
-        objections: List[Dict],
-        deal_details: Dict
-    ) -> Dict[str, Any]:
+        strategy: dict,
+        urgency_tactics: list[dict],
+        executive_alignment: dict,
+        objections: list[dict],
+        deal_details: dict,
+    ) -> dict[str, Any]:
         """Generate comprehensive closing plan"""
         plan_steps = []
 
         # Step 1: Address any final objections
         if objections:
             for obj in objections:
-                plan_steps.append({
-                    "step": f"Address {obj['type'].replace('_', ' ')}",
-                    "tactics": obj["details"]["tactics"],
-                    "timeline": "Immediate"
-                })
+                plan_steps.append(
+                    {
+                        "step": f"Address {obj['type'].replace('_', ' ')}",
+                        "tactics": obj["details"]["tactics"],
+                        "timeline": "Immediate",
+                    }
+                )
 
         # Step 2: Executive alignment if needed
         if executive_alignment["needed"]:
             for strat in executive_alignment["strategies"]:
-                plan_steps.append({
-                    "step": strat["objective"],
-                    "deliverables": strat.get("deliverables", []),
-                    "timeline": f"{strat['timeline_days']} days"
-                })
+                plan_steps.append(
+                    {
+                        "step": strat["objective"],
+                        "deliverables": strat.get("deliverables", []),
+                        "timeline": f"{strat['timeline_days']} days",
+                    }
+                )
 
         # Step 3: Create urgency
         if urgency_tactics:
-            plan_steps.append({
-                "step": "Present time-limited incentive",
-                "tactics": [t["tactic"] for t in urgency_tactics],
-                "timeline": "This week"
-            })
+            plan_steps.append(
+                {
+                    "step": "Present time-limited incentive",
+                    "tactics": [t["tactic"] for t in urgency_tactics],
+                    "timeline": "This week",
+                }
+            )
 
         # Step 4: Request commitment
-        plan_steps.append({
-            "step": "Request signature",
-            "approach": strategy["primary_tactic"],
-            "timeline": "Next 7-14 days"
-        })
+        plan_steps.append(
+            {
+                "step": "Request signature",
+                "approach": strategy["primary_tactic"],
+                "timeline": "Next 7-14 days",
+            }
+        )
 
         return {
             "steps": plan_steps,
             "total_timeline_days": 14,
-            "success_probability": self._estimate_success_probability(strategy, objections)
+            "success_probability": self._estimate_success_probability(strategy, objections),
         }
 
-    def _estimate_success_probability(
-        self,
-        strategy: Dict,
-        objections: List[Dict]
-    ) -> float:
+    def _estimate_success_probability(self, strategy: dict, objections: list[dict]) -> float:
         """Estimate probability of successful close"""
         base_probability = 0.60
 
@@ -673,11 +672,7 @@ class Closer(BaseAgent):
         return min(max(base_probability, 0.0), 1.0)
 
     def _calculate_close_probability(
-        self,
-        readiness: Dict,
-        signals: Dict,
-        momentum: Dict,
-        objections: List[Dict]
+        self, readiness: dict, signals: dict, momentum: dict, objections: list[dict]
     ) -> float:
         """Calculate overall close probability"""
         # Start with readiness
@@ -689,12 +684,7 @@ class Closer(BaseAgent):
         probability += (strong_signals * 0.10) + (moderate_signals * 0.05)
 
         # Adjust for momentum
-        momentum_adjustments = {
-            "high": 0.15,
-            "medium": 0.05,
-            "low": -0.05,
-            "stalled": -0.20
-        }
+        momentum_adjustments = {"high": 0.15, "medium": 0.05, "low": -0.05, "stalled": -0.20}
         probability += momentum_adjustments.get(momentum["level"], 0)
 
         # Reduce for objections
@@ -705,14 +695,14 @@ class Closer(BaseAgent):
     async def _generate_closing_response(
         self,
         message: str,
-        strategy: Dict,
-        plan: Dict,
-        urgency_tactics: List[Dict],
+        strategy: dict,
+        plan: dict,
+        urgency_tactics: list[dict],
         close_probability: float,
-        objections: List[Dict],
-        kb_results: List[Dict],
-        customer_metadata: Dict,
-        state: AgentState
+        objections: list[dict],
+        kb_results: list[dict],
+        customer_metadata: dict,
+        state: AgentState,
     ) -> str:
         """Generate closing response"""
 
@@ -724,7 +714,9 @@ class Closer(BaseAgent):
         if urgency_tactics:
             urgency_context = "\n\nTime-Limited Opportunities:\n"
             for tactic in urgency_tactics:
-                urgency_context += f"- {tactic['details']['message'].replace('[DATE]', tactic['deadline'])}\n"
+                urgency_context += (
+                    f"- {tactic['details']['message'].replace('[DATE]', tactic['deadline'])}\n"
+                )
 
         # Build objection context
         objection_context = ""
@@ -742,7 +734,7 @@ class Closer(BaseAgent):
 
         system_prompt = f"""You are a helpful sales assistant.
 
-Customer: {customer_metadata.get('company', 'Customer')}
+Customer: {customer_metadata.get("company", "Customer")}
 
 CRITICAL RULES:
 1. NEVER use placeholder text like "[Agent Name]", "[Your Name]", or similar. Just speak naturally without introducing yourself by name.
@@ -766,9 +758,7 @@ Respond helpfully and directly to what the customer is asking. If they're ready 
 
         # Call LLM with conversation history for multi-turn context
         response = await self.call_llm(
-            system_prompt,
-            user_prompt,
-            conversation_history=conversation_history
+            system_prompt, user_prompt, conversation_history=conversation_history
         )
         return response
 
@@ -792,7 +782,7 @@ if __name__ == "__main__":
                     "company": "ReadyBuyer Inc",
                     "title": "VP Operations",
                     "company_size": 200,
-                    "industry": "technology"
+                    "industry": "technology",
                 },
                 "deal_details": {
                     "deal_value": 150000,
@@ -804,16 +794,16 @@ if __name__ == "__main__":
                     "days_since_last_contact": 1,
                     "avg_response_time_hours": 12,
                     "stakeholder_count": 4,
-                    "trial_active": True
+                    "trial_active": True,
                 },
-                "deal_stage": "verbal_agreement"
-            }
+                "deal_stage": "verbal_agreement",
+            },
         )
 
         agent = Closer()
         result1 = await agent.process(state1)
 
-        print(f"\nTest 1 - High-Momentum Ready to Close")
+        print("\nTest 1 - High-Momentum Ready to Close")
         print(f"Deal Readiness: {result1['deal_readiness']['percentage']:.0%}")
         print(f"Momentum Level: {result1['momentum']['level']}")
         print(f"Close Probability: {result1['close_probability']:.0%}")
@@ -829,7 +819,7 @@ if __name__ == "__main__":
                     "company": "SlowDecision Corp",
                     "title": "Director",
                     "company_size": 500,
-                    "industry": "finance"
+                    "industry": "finance",
                 },
                 "deal_details": {
                     "deal_value": 300000,
@@ -840,15 +830,15 @@ if __name__ == "__main__":
                     "budget_confirmed": False,
                     "days_since_last_contact": 5,
                     "avg_response_time_hours": 48,
-                    "stakeholder_count": 2
+                    "stakeholder_count": 2,
                 },
-                "deal_stage": "negotiation_complete"
-            }
+                "deal_stage": "negotiation_complete",
+            },
         )
 
         result2 = await agent.process(state2)
 
-        print(f"\nTest 2 - Deal with Final Objections")
+        print("\nTest 2 - Deal with Final Objections")
         print(f"Final Objections: {len(result2['final_objections'])}")
         print(f"Momentum Level: {result2['momentum']['level']}")
         print(f"Close Probability: {result2['close_probability']:.0%}")
@@ -864,7 +854,7 @@ if __name__ == "__main__":
                     "company": "Stalled Inc",
                     "title": "Manager",
                     "company_size": 75,
-                    "industry": "retail"
+                    "industry": "retail",
                 },
                 "deal_details": {
                     "deal_value": 50000,
@@ -875,15 +865,15 @@ if __name__ == "__main__":
                     "budget_confirmed": False,
                     "days_since_last_contact": 15,
                     "avg_response_time_hours": 120,
-                    "stakeholder_count": 1
+                    "stakeholder_count": 1,
                 },
-                "deal_stage": "proposal_acceptance"
-            }
+                "deal_stage": "proposal_acceptance",
+            },
         )
 
         result3 = await agent.process(state3)
 
-        print(f"\nTest 3 - Stalled Deal Re-engagement")
+        print("\nTest 3 - Stalled Deal Re-engagement")
         print(f"Momentum Level: {result3['momentum']['level']}")
         print(f"Momentum Action: {result3['momentum']['action']}")
         print(f"Close Probability: {result3['close_probability']:.0%}")
