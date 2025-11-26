@@ -5,13 +5,13 @@ Validates success criteria, signs off on onboarding completion, and manages hand
 Ensures all success criteria are met before declaring onboarding complete.
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("success_validator", tier="revenue", category="customer_success")
@@ -33,7 +33,7 @@ class SuccessValidatorAgent(BaseAgent):
         "feature_utilization": {"weight": 20, "threshold": 70},
         "business_outcomes": {"weight": 30, "threshold": 75},
         "technical_integration": {"weight": 15, "threshold": 90},
-        "team_proficiency": {"weight": 10, "threshold": 85}
+        "team_proficiency": {"weight": 10, "threshold": 85},
     }
 
     # Sign-off requirements
@@ -42,7 +42,7 @@ class SuccessValidatorAgent(BaseAgent):
         "customer_satisfaction_confirmed",
         "technical_validation_complete",
         "documentation_delivered",
-        "csm_briefing_complete"
+        "csm_briefing_complete",
     ]
 
     def __init__(self):
@@ -51,12 +51,9 @@ class SuccessValidatorAgent(BaseAgent):
             type=AgentType.SPECIALIST,
             temperature=0.3,
             max_tokens=500,
-            capabilities=[
-                AgentCapability.CONTEXT_AWARE,
-                AgentCapability.KB_SEARCH
-            ],
+            capabilities=[AgentCapability.CONTEXT_AWARE, AgentCapability.KB_SEARCH],
             kb_category="customer_success",
-            tier="revenue"
+            tier="revenue",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -83,30 +80,23 @@ class SuccessValidatorAgent(BaseAgent):
             "success_validation_details",
             customer_id=customer_id,
             criteria_met=len(validation_data.get("criteria_met", [])),
-            ready_for_signoff=validation_data.get("ready_for_signoff", False)
+            ready_for_signoff=validation_data.get("ready_for_signoff", False),
         )
 
         # Validate success criteria
-        validation_analysis = self._validate_success_criteria(
-            validation_data,
-            customer_metadata
-        )
+        validation_analysis = self._validate_success_criteria(validation_data, customer_metadata)
 
         # Check sign-off readiness
         signoff_status = self._check_signoff_readiness(validation_analysis, validation_data)
 
         # Generate handoff package
         handoff_package = self._generate_handoff_package(
-            validation_analysis,
-            validation_data,
-            customer_metadata
+            validation_analysis, validation_data, customer_metadata
         )
 
         # Build response
         response = self._format_validation_report(
-            validation_analysis,
-            signoff_status,
-            handoff_package
+            validation_analysis, signoff_status, handoff_package
         )
 
         state["agent_response"] = response
@@ -124,16 +114,14 @@ class SuccessValidatorAgent(BaseAgent):
             customer_id=customer_id,
             validation_status=validation_analysis["overall_status"],
             success_score=validation_analysis["overall_success_score"],
-            ready_for_signoff=signoff_status["ready"]
+            ready_for_signoff=signoff_status["ready"],
         )
 
         return state
 
     def _validate_success_criteria(
-        self,
-        validation_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, validation_data: dict[str, Any], customer_metadata: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Validate all success criteria categories.
 
@@ -159,13 +147,19 @@ class SuccessValidatorAgent(BaseAgent):
             # Identify gaps
             if score < threshold:
                 gap_size = threshold - score
-                gaps.append({
-                    "category": category,
-                    "current_score": score,
-                    "required_score": threshold,
-                    "gap": gap_size,
-                    "severity": "critical" if gap_size > 20 else "high" if gap_size > 10 else "medium"
-                })
+                gaps.append(
+                    {
+                        "category": category,
+                        "current_score": score,
+                        "required_score": threshold,
+                        "gap": gap_size,
+                        "severity": "critical"
+                        if gap_size > 20
+                        else "high"
+                        if gap_size > 10
+                        else "medium",
+                    }
+                )
 
         # Calculate overall success score (weighted average)
         overall_success_score = sum(
@@ -179,9 +173,7 @@ class SuccessValidatorAgent(BaseAgent):
 
         # Determine overall status
         overall_status = self._determine_validation_status(
-            overall_success_score,
-            achievement_percentage,
-            gaps
+            overall_success_score, achievement_percentage, gaps
         )
 
         return {
@@ -193,14 +185,11 @@ class SuccessValidatorAgent(BaseAgent):
             "categories_met": categories_met,
             "total_categories": len(self.SUCCESS_CATEGORIES),
             "gaps": gaps,
-            "analyzed_at": datetime.now(UTC).isoformat()
+            "analyzed_at": datetime.now(UTC).isoformat(),
         }
 
     def _determine_validation_status(
-        self,
-        success_score: float,
-        achievement_pct: int,
-        gaps: List[Dict[str, Any]]
+        self, success_score: float, achievement_pct: int, gaps: list[dict[str, Any]]
     ) -> str:
         """Determine overall validation status."""
         critical_gaps = [g for g in gaps if g["severity"] == "critical"]
@@ -217,10 +206,8 @@ class SuccessValidatorAgent(BaseAgent):
             return "not_ready"
 
     def _check_signoff_readiness(
-        self,
-        validation_analysis: Dict[str, Any],
-        validation_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, validation_analysis: dict[str, Any], validation_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Check if ready for customer sign-off."""
         readiness_checks = {}
 
@@ -246,12 +233,14 @@ class SuccessValidatorAgent(BaseAgent):
 
         # Overall readiness
         all_requirements_met = all(readiness_checks.values())
-        handoff_ready = all_requirements_met and validation_analysis["overall_status"] in ["excellent", "passed", "passed_with_gaps"]
+        handoff_ready = all_requirements_met and validation_analysis["overall_status"] in [
+            "excellent",
+            "passed",
+            "passed_with_gaps",
+        ]
 
         # Identify missing requirements
-        missing_requirements = [
-            req for req, met in readiness_checks.items() if not met
-        ]
+        missing_requirements = [req for req, met in readiness_checks.items() if not met]
 
         return {
             "ready": all_requirements_met,
@@ -259,36 +248,40 @@ class SuccessValidatorAgent(BaseAgent):
             "readiness_checks": readiness_checks,
             "missing_requirements": missing_requirements,
             "checks_passed": sum(1 for met in readiness_checks.values() if met),
-            "total_checks": len(self.SIGNOFF_REQUIREMENTS)
+            "total_checks": len(self.SIGNOFF_REQUIREMENTS),
         }
 
     def _generate_handoff_package(
         self,
-        validation_analysis: Dict[str, Any],
-        validation_data: Dict[str, Any],
-        customer_metadata: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        validation_analysis: dict[str, Any],
+        validation_data: dict[str, Any],
+        customer_metadata: dict[str, Any],
+    ) -> dict[str, Any]:
         """Generate handoff package for CSM."""
         # Key achievements
         achievements = []
         for category, met in validation_analysis["criteria_met"].items():
             if met:
                 score = validation_analysis["criteria_scores"][category]
-                achievements.append({
-                    "category": category.replace('_', ' ').title(),
-                    "score": score,
-                    "status": "achieved"
-                })
+                achievements.append(
+                    {
+                        "category": category.replace("_", " ").title(),
+                        "score": score,
+                        "status": "achieved",
+                    }
+                )
 
         # Areas for CSM focus
         csm_focus_areas = []
         for gap in validation_analysis["gaps"]:
-            csm_focus_areas.append({
-                "area": gap["category"].replace('_', ' ').title(),
-                "current_state": f"{gap['current_score']}%",
-                "target": f"{gap['required_score']}%",
-                "priority": gap["severity"]
-            })
+            csm_focus_areas.append(
+                {
+                    "area": gap["category"].replace("_", " ").title(),
+                    "current_state": f"{gap['current_score']}%",
+                    "target": f"{gap['required_score']}%",
+                    "priority": gap["severity"],
+                }
+            )
 
         # Customer profile summary
         customer_summary = {
@@ -296,28 +289,23 @@ class SuccessValidatorAgent(BaseAgent):
             "plan": customer_metadata.get("plan", "N/A"),
             "industry": customer_metadata.get("industry", "N/A"),
             "total_users": customer_metadata.get("total_users", 0),
-            "key_stakeholders": validation_data.get("key_stakeholders", [])
+            "key_stakeholders": validation_data.get("key_stakeholders", []),
         }
 
         # Recommended next steps for CSM
-        next_steps = self._generate_csm_next_steps(
-            validation_analysis,
-            csm_focus_areas
-        )
+        next_steps = self._generate_csm_next_steps(validation_analysis, csm_focus_areas)
 
         return {
             "achievements": achievements,
             "csm_focus_areas": csm_focus_areas,
             "customer_summary": customer_summary,
             "next_steps": next_steps,
-            "handoff_date": datetime.now(UTC).date().isoformat()
+            "handoff_date": datetime.now(UTC).date().isoformat(),
         }
 
     def _generate_csm_next_steps(
-        self,
-        validation_analysis: Dict[str, Any],
-        focus_areas: List[Dict[str, Any]]
-    ) -> List[str]:
+        self, validation_analysis: dict[str, Any], focus_areas: list[dict[str, Any]]
+    ) -> list[str]:
         """Generate recommended next steps for CSM."""
         next_steps = []
 
@@ -327,11 +315,13 @@ class SuccessValidatorAgent(BaseAgent):
         # Focus area based recommendations
         for area in focus_areas[:2]:
             if "adoption" in area["area"].lower():
-                next_steps.append(f"Drive user adoption improvement - currently at {area['current_state']}")
+                next_steps.append(
+                    f"Drive user adoption improvement - currently at {area['current_state']}"
+                )
             elif "utilization" in area["area"].lower():
                 next_steps.append(f"Encourage advanced feature adoption - target {area['target']}")
             elif "business" in area["area"].lower():
-                next_steps.append(f"Review and align on business outcomes achievement")
+                next_steps.append("Review and align on business outcomes achievement")
 
         # Status-based recommendations
         if validation_analysis["overall_status"] == "excellent":
@@ -346,9 +336,9 @@ class SuccessValidatorAgent(BaseAgent):
 
     def _format_validation_report(
         self,
-        validation_analysis: Dict[str, Any],
-        signoff_status: Dict[str, Any],
-        handoff_package: Dict[str, Any]
+        validation_analysis: dict[str, Any],
+        signoff_status: dict[str, Any],
+        handoff_package: dict[str, Any],
     ) -> str:
         """Format success validation report."""
         status = validation_analysis["overall_status"]
@@ -358,20 +348,20 @@ class SuccessValidatorAgent(BaseAgent):
             "passed": "???",
             "passed_with_gaps": "??????",
             "failed_critical_gaps": "????",
-            "not_ready": "???"
+            "not_ready": "???",
         }
 
-        report = f"""**{status_emoji.get(status, '????')} Success Validation Report**
+        report = f"""**{status_emoji.get(status, "????")} Success Validation Report**
 
-**Overall Status:** {status.replace('_', ' ').title()}
-**Success Score:** {validation_analysis['overall_success_score']}/100
-**Achievement:** {validation_analysis['achievement_percentage']}% ({validation_analysis['categories_met']}/{validation_analysis['total_categories']} categories)
+**Overall Status:** {status.replace("_", " ").title()}
+**Success Score:** {validation_analysis["overall_success_score"]}/100
+**Achievement:** {validation_analysis["achievement_percentage"]}% ({validation_analysis["categories_met"]}/{validation_analysis["total_categories"]} categories)
 
 **Success Criteria Validation:**
 """
-        for category, score in validation_analysis['criteria_scores'].items():
+        for category, score in validation_analysis["criteria_scores"].items():
             threshold = self.SUCCESS_CATEGORIES[category]["threshold"]
-            met = validation_analysis['criteria_met'][category]
+            met = validation_analysis["criteria_met"][category]
             status_icon = "???" if met else "???"
             report += f"- {category.replace('_', ' ').title()}: {score}% (threshold: {threshold}%) {status_icon}\n"
 
@@ -382,10 +372,12 @@ class SuccessValidatorAgent(BaseAgent):
                 report += f"- {gap['category'].replace('_', ' ').title()}: {gap['gap']}% below threshold ({gap['severity']} priority)\n"
 
         # Sign-off readiness
-        report += f"\n**???? Sign-off Readiness:**\n"
+        report += "\n**???? Sign-off Readiness:**\n"
         report += f"- Ready for Sign-off: {'Yes ???' if signoff_status['ready'] else 'No ???'}\n"
         report += f"- Handoff Ready: {'Yes ???' if signoff_status['handoff_ready'] else 'No ???'}\n"
-        report += f"- Checks Passed: {signoff_status['checks_passed']}/{signoff_status['total_checks']}\n"
+        report += (
+            f"- Checks Passed: {signoff_status['checks_passed']}/{signoff_status['total_checks']}\n"
+        )
 
         if signoff_status.get("missing_requirements"):
             report += "\n**Missing Requirements:**\n"
@@ -408,6 +400,7 @@ class SuccessValidatorAgent(BaseAgent):
 
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
@@ -428,9 +421,9 @@ if __name__ == "__main__":
                 "customer_metadata": {
                     "plan": "enterprise",
                     "industry": "fintech",
-                    "total_users": 50
-                }
-            }
+                    "total_users": 50,
+                },
+            },
         )
         state1["entities"] = {
             "validation_data": {
@@ -444,7 +437,7 @@ if __name__ == "__main__":
                 "technical_validation_passed": True,
                 "documentation_delivered": True,
                 "csm_briefing_complete": True,
-                "key_stakeholders": ["CTO", "VP Operations"]
+                "key_stakeholders": ["CTO", "VP Operations"],
             }
         }
 
@@ -465,11 +458,8 @@ if __name__ == "__main__":
             "Check validation status",
             context={
                 "customer_id": "cust_456",
-                "customer_metadata": {
-                    "plan": "premium",
-                    "total_users": 20
-                }
-            }
+                "customer_metadata": {"plan": "premium", "total_users": 20},
+            },
         )
         state2["entities"] = {
             "validation_data": {
@@ -483,7 +473,7 @@ if __name__ == "__main__":
                 "technical_validation_passed": True,
                 "documentation_delivered": False,
                 "csm_briefing_complete": False,
-                "key_stakeholders": ["Product Manager"]
+                "key_stakeholders": ["Product Manager"],
             }
         }
 
