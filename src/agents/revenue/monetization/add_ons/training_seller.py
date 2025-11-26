@@ -497,5 +497,9 @@ Success Metrics After Training:
 
 Generate an encouraging training recommendation."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # Training context built from usage data
+        )
         return response
