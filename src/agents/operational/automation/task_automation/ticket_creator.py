@@ -208,7 +208,11 @@ Customer Tier: {customer_metadata.get('tier', 'standard')}
 
 Return a JSON structure with title, description, steps_to_reproduce, expected_behavior, actual_behavior, affected_components, and urgency_level."""
 
-        response = await self.call_llm(system_prompt, user_prompt)
+        response = await self.call_llm(
+            system_prompt=system_prompt,
+            user_message=user_prompt,
+            conversation_history=[]  # Ticket analysis uses message context
+        )
 
         # Parse LLM response to extract structured data
         try:
