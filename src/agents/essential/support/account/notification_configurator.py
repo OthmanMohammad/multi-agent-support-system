@@ -2,11 +2,10 @@
 Notification Configurator Agent - Handles email, Slack, and in-app notification settings.
 """
 
-from typing import Dict, Any
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentCapability, AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("notification_configurator", tier="essential", category="account")
@@ -14,7 +13,7 @@ class NotificationConfigurator(BaseAgent):
     """Notification Configurator - Specialist in notification preferences configuration."""
 
     NOTIFICATION_CHANNELS = ["email", "in_app", "slack", "mobile_push", "desktop"]
-    
+
     NOTIFICATION_TYPES = {
         "mentions": "When someone @mentions you",
         "assignments": "When assigned to tasks",
@@ -23,7 +22,7 @@ class NotificationConfigurator(BaseAgent):
         "status_changes": "Status updates on watched items",
         "team_activity": "Team member activity",
         "weekly_digest": "Weekly summary email",
-        "updates": "Product updates and announcements"
+        "updates": "Product updates and announcements",
     }
 
     def __init__(self):
@@ -33,7 +32,7 @@ class NotificationConfigurator(BaseAgent):
             temperature=0.3,
             capabilities=[AgentCapability.KB_SEARCH, AgentCapability.CONTEXT_AWARE],
             kb_category="account",
-            tier="essential"
+            tier="essential",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -42,21 +41,21 @@ class NotificationConfigurator(BaseAgent):
         """Process notification configuration requests."""
         self.logger.info("notification_configurator_processing_started")
         state = self.update_state(state)
-        
+
         message = state["current_message"]
         action = self._detect_notification_action(message)
-        
+
         kb_results = await self.search_knowledge_base(message, category="account", limit=2)
         state["kb_results"] = kb_results
-        
+
         response = self._generate_notification_guide(action)
-        
+
         state["agent_response"] = response
         state["notification_action"] = action
         state["response_confidence"] = 0.85
         state["next_agent"] = None
         state["status"] = "resolved"
-        
+
         self.logger.info("notification_processing_completed", action=action)
         return state
 
@@ -157,7 +156,7 @@ Settings > Notifications > Email Digest
 
 **Email Notifications:**
 - @Mentions: Immediate
-- Assignments: Immediate  
+- Assignments: Immediate
 - Comments: Optional
 - Due Dates: 24h before
 - Weekly Digest: Monday 9 AM
@@ -186,8 +185,10 @@ Settings > Notifications
 - "Configure email digest"
 """
 
+
 if __name__ == "__main__":
     import asyncio
+
     from src.workflow.state import create_initial_state
 
     async def test():
