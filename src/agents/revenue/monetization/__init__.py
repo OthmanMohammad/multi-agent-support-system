@@ -11,67 +11,63 @@ Total: 20 specialized monetization agents for maximizing revenue per customer.
 """
 
 # Usage-Based Billing (5 agents)
-from src.agents.revenue.monetization.usage_billing import (
-    UsageTracker,
-    BillingCalculator,
-    OverageAlert,
-    UsageOptimizer,
-    DisputeResolver,
-)
-
 # Add-On Monetization (5 agents)
 from src.agents.revenue.monetization.add_ons import (
     AddOnRecommender,
-    PremiumSupportSeller,
-    TrainingSeller,
-    ProfServicesSeller,
     AdoptionTracker,
+    PremiumSupportSeller,
+    ProfServicesSeller,
+    TrainingSeller,
 )
 
 # Account Expansion (5 agents)
 from src.agents.revenue.monetization.expansion import (
-    SeatExpansion,
-    PlanUpgrade,
-    MultiYearDeal,
     LandAndExpand,
+    MultiYearDeal,
+    PlanUpgrade,
+    SeatExpansion,
     WhiteSpaceAnalyzer,
 )
 
 # Pricing Optimization (5 agents)
 from src.agents.revenue.monetization.pricing import (
-    PricingAnalyzer,
     DiscountManager,
-    ValueMetricOptimizer,
+    PricingAnalyzer,
     PricingExperiment,
     RevenueForecaster,
+    ValueMetricOptimizer,
+)
+from src.agents.revenue.monetization.usage_billing import (
+    BillingCalculator,
+    DisputeResolver,
+    OverageAlert,
+    UsageOptimizer,
+    UsageTracker,
 )
 
 __all__ = [
-    # Usage-Based Billing (5)
-    "UsageTracker",
-    "BillingCalculator",
-    "OverageAlert",
-    "UsageOptimizer",
-    "DisputeResolver",
-
     # Add-On Monetization (5)
     "AddOnRecommender",
-    "PremiumSupportSeller",
-    "TrainingSeller",
-    "ProfServicesSeller",
     "AdoptionTracker",
-
-    # Account Expansion (5)
-    "SeatExpansion",
-    "PlanUpgrade",
-    "MultiYearDeal",
+    "BillingCalculator",
+    "DiscountManager",
+    "DisputeResolver",
     "LandAndExpand",
-    "WhiteSpaceAnalyzer",
-
+    "MultiYearDeal",
+    "OverageAlert",
+    "PlanUpgrade",
+    "PremiumSupportSeller",
     # Pricing Optimization (5)
     "PricingAnalyzer",
-    "DiscountManager",
-    "ValueMetricOptimizer",
     "PricingExperiment",
+    "ProfServicesSeller",
     "RevenueForecaster",
+    # Account Expansion (5)
+    "SeatExpansion",
+    "TrainingSeller",
+    "UsageOptimizer",
+    # Usage-Based Billing (5)
+    "UsageTracker",
+    "ValueMetricOptimizer",
+    "WhiteSpaceAnalyzer",
 ]
