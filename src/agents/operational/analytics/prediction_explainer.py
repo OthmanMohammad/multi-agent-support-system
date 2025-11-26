@@ -5,13 +5,13 @@ Explains ML prediction results using SHAP values and feature importance.
 Makes black-box models interpretable for business stakeholders.
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+from typing import Any
 
-from src.workflow.state import AgentState
-from src.agents.base import BaseAgent, AgentConfig, AgentType, AgentCapability
-from src.utils.logging.setup import get_logger
+from src.agents.base import AgentConfig, AgentType, BaseAgent
 from src.services.infrastructure.agent_registry import AgentRegistry
+from src.utils.logging.setup import get_logger
+from src.workflow.state import AgentState
 
 
 @AgentRegistry.register("prediction_explainer", tier="operational", category="analytics")
@@ -35,7 +35,7 @@ class PredictionExplainerAgent(BaseAgent):
             temperature=0.3,
             max_tokens=1500,
             capabilities=[],
-            tier="operational"
+            tier="operational",
         )
         super().__init__(config)
         self.logger = get_logger(__name__)
@@ -64,7 +64,7 @@ class PredictionExplainerAgent(BaseAgent):
             "prediction_explanation_details",
             model_type=model_type,
             prediction_value=prediction_value,
-            features_count=len(feature_values)
+            features_count=len(feature_values),
         )
 
         # Calculate or retrieve SHAP values
@@ -76,29 +76,20 @@ class PredictionExplainerAgent(BaseAgent):
 
         # Generate contribution breakdown
         contribution_breakdown = self._generate_contribution_breakdown(
-            shap_values,
-            feature_values,
-            prediction_value
+            shap_values, feature_values, prediction_value
         )
 
         # Create what-if scenarios
-        what_if_scenarios = self._generate_what_if_scenarios(
-            feature_values,
-            feature_importance
-        )
+        what_if_scenarios = self._generate_what_if_scenarios(feature_values, feature_importance)
 
         # Explain confidence
         confidence_explanation = self._explain_confidence(
-            prediction_value,
-            feature_importance,
-            model_type
+            prediction_value, feature_importance, model_type
         )
 
         # Generate business interpretation
         business_interpretation = self._generate_business_interpretation(
-            prediction_value,
-            feature_importance,
-            model_type
+            prediction_value, feature_importance, model_type
         )
 
         # Format response
@@ -109,7 +100,7 @@ class PredictionExplainerAgent(BaseAgent):
             contribution_breakdown,
             what_if_scenarios,
             confidence_explanation,
-            business_interpretation
+            business_interpretation,
         )
 
         state["agent_response"] = response
@@ -124,32 +115,28 @@ class PredictionExplainerAgent(BaseAgent):
         self.logger.info(
             "prediction_explanation_completed",
             model_type=model_type,
-            top_features=len(feature_importance[:5])
+            top_features=len(feature_importance[:5]),
         )
 
         return state
 
     def _calculate_mock_shap_values(
-        self,
-        feature_values: Dict[str, Any],
-        prediction_value: Any
-    ) -> Dict[str, float]:
+        self, feature_values: dict[str, Any], prediction_value: Any
+    ) -> dict[str, float]:
         """Calculate mock SHAP values for demonstration."""
         # In production, use actual SHAP library
         import random
 
         shap_values = {}
-        for feature in feature_values.keys():
+        for feature in feature_values:
             # Generate random SHAP value
             shap_values[feature] = random.uniform(-0.5, 0.5)
 
         return shap_values
 
     def _analyze_feature_importance(
-        self,
-        shap_values: Dict[str, float],
-        feature_values: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        self, shap_values: dict[str, float], feature_values: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """
         Analyze feature importance from SHAP values.
 
@@ -165,14 +152,24 @@ class PredictionExplainerAgent(BaseAgent):
         for feature, shap_value in shap_values.items():
             feature_value = feature_values.get(feature, "N/A")
 
-            importance_list.append({
-                "feature": feature,
-                "shap_value": round(shap_value, 4),
-                "abs_importance": round(abs(shap_value), 4),
-                "feature_value": feature_value,
-                "impact": "positive" if shap_value > 0 else "negative" if shap_value < 0 else "neutral",
-                "impact_magnitude": "high" if abs(shap_value) > 0.3 else "medium" if abs(shap_value) > 0.1 else "low"
-            })
+            importance_list.append(
+                {
+                    "feature": feature,
+                    "shap_value": round(shap_value, 4),
+                    "abs_importance": round(abs(shap_value), 4),
+                    "feature_value": feature_value,
+                    "impact": "positive"
+                    if shap_value > 0
+                    else "negative"
+                    if shap_value < 0
+                    else "neutral",
+                    "impact_magnitude": "high"
+                    if abs(shap_value) > 0.3
+                    else "medium"
+                    if abs(shap_value) > 0.1
+                    else "low",
+                }
+            )
 
         # Sort by absolute importance
         importance_list.sort(key=lambda x: x["abs_importance"], reverse=True)
@@ -180,11 +177,8 @@ class PredictionExplainerAgent(BaseAgent):
         return importance_list
 
     def _generate_contribution_breakdown(
-        self,
-        shap_values: Dict[str, float],
-        feature_values: Dict[str, Any],
-        prediction_value: Any
-    ) -> Dict[str, Any]:
+        self, shap_values: dict[str, float], feature_values: dict[str, Any], prediction_value: Any
+    ) -> dict[str, Any]:
         """Generate prediction contribution breakdown."""
         total_positive = sum(v for v in shap_values.values() if v > 0)
         total_negative = sum(v for v in shap_values.values() if v < 0)
@@ -194,14 +188,12 @@ class PredictionExplainerAgent(BaseAgent):
             "base_value": 0.5,  # Mock base value
             "total_positive_contribution": round(total_positive, 4),
             "total_negative_contribution": round(total_negative, 4),
-            "net_contribution": round(total_positive + total_negative, 4)
+            "net_contribution": round(total_positive + total_negative, 4),
         }
 
     def _generate_what_if_scenarios(
-        self,
-        feature_values: Dict[str, Any],
-        feature_importance: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, feature_values: dict[str, Any], feature_importance: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """Generate what-if scenarios."""
         scenarios = []
 
@@ -224,31 +216,34 @@ class PredictionExplainerAgent(BaseAgent):
                 scenario_action = "Increase"
                 expected_effect = "Higher prediction score"
 
-            scenarios.append({
-                "feature": feature_name,
-                "current_value": current_value,
-                "scenario_action": f"{scenario_action} {feature_name}",
-                "expected_effect": expected_effect,
-                "impact_magnitude": feat["impact_magnitude"]
-            })
+            scenarios.append(
+                {
+                    "feature": feature_name,
+                    "current_value": current_value,
+                    "scenario_action": f"{scenario_action} {feature_name}",
+                    "expected_effect": expected_effect,
+                    "impact_magnitude": feat["impact_magnitude"],
+                }
+            )
 
         return scenarios
 
     def _explain_confidence(
-        self,
-        prediction_value: Any,
-        feature_importance: List[Dict[str, Any]],
-        model_type: str
-    ) -> Dict[str, Any]:
+        self, prediction_value: Any, feature_importance: list[dict[str, Any]], model_type: str
+    ) -> dict[str, Any]:
         """Explain prediction confidence."""
         # Mock confidence calculation
         # In production, use actual model confidence scores
 
-        high_impact_features = len([f for f in feature_importance if f["impact_magnitude"] == "high"])
+        high_impact_features = len(
+            [f for f in feature_importance if f["impact_magnitude"] == "high"]
+        )
 
         if high_impact_features >= 3:
             confidence = "high"
-            explanation = f"{high_impact_features} strong features drive this prediction with clear signals"
+            explanation = (
+                f"{high_impact_features} strong features drive this prediction with clear signals"
+            )
         elif high_impact_features >= 1:
             confidence = "medium"
             explanation = f"Moderate confidence - {high_impact_features} strong features identified"
@@ -259,14 +254,11 @@ class PredictionExplainerAgent(BaseAgent):
         return {
             "confidence_level": confidence,
             "explanation": explanation,
-            "contributing_factors": high_impact_features
+            "contributing_factors": high_impact_features,
         }
 
     def _generate_business_interpretation(
-        self,
-        prediction_value: Any,
-        feature_importance: List[Dict[str, Any]],
-        model_type: str
+        self, prediction_value: Any, feature_importance: list[dict[str, Any]], model_type: str
     ) -> str:
         """Generate business-friendly interpretation."""
         if not feature_importance:
@@ -274,7 +266,7 @@ class PredictionExplainerAgent(BaseAgent):
 
         top_features = feature_importance[:3]
 
-        interpretation = f"This prediction is primarily driven by:\n\n"
+        interpretation = "This prediction is primarily driven by:\n\n"
 
         for i, feat in enumerate(top_features, 1):
             impact_desc = "increasing" if feat["impact"] == "positive" else "decreasing"
@@ -289,21 +281,21 @@ class PredictionExplainerAgent(BaseAgent):
         self,
         prediction_value: Any,
         model_type: str,
-        feature_importance: List[Dict[str, Any]],
-        contribution_breakdown: Dict[str, Any],
-        what_if_scenarios: List[Dict[str, Any]],
-        confidence_explanation: Dict[str, Any],
-        business_interpretation: str
+        feature_importance: list[dict[str, Any]],
+        contribution_breakdown: dict[str, Any],
+        what_if_scenarios: list[dict[str, Any]],
+        confidence_explanation: dict[str, Any],
+        business_interpretation: str,
     ) -> str:
         """Format prediction explanation report."""
         report = f"""**ML Prediction Explanation**
 
 **Prediction:** {prediction_value}
 **Model Type:** {model_type.title()}
-**Confidence:** {confidence_explanation['confidence_level'].upper()}
+**Confidence:** {confidence_explanation["confidence_level"].upper()}
 
 **Explanation:**
-{confidence_explanation['explanation']}
+{confidence_explanation["explanation"]}
 
 **Feature Importance (Top Features):**
 """
@@ -312,7 +304,13 @@ class PredictionExplainerAgent(BaseAgent):
             report += "No feature importance data available.\n\n"
 
         for feat in feature_importance[:10]:
-            impact_icon = "📈" if feat["impact"] == "positive" else "📉" if feat["impact"] == "negative" else "➡️"
+            impact_icon = (
+                "📈"
+                if feat["impact"] == "positive"
+                else "📉"
+                if feat["impact"] == "negative"
+                else "➡️"
+            )
             report += f"{impact_icon} **{feat['feature'].replace('_', ' ').title()}**\n"
             report += f"   - Value: {feat['feature_value']}\n"
             report += f"   - SHAP Impact: {feat['shap_value']:+.4f}\n"
