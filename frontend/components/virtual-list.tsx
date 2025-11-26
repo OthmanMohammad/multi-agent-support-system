@@ -1,5 +1,6 @@
 "use client";
 
+/* eslint-disable react-hooks/incompatible-library -- TanStack Virtual is a known incompatible library */
 import type { JSX } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useRef } from "react";
