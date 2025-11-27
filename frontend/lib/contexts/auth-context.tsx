@@ -1,14 +1,6 @@
 /**
  * Authentication Context
  *
-<<<<<<< HEAD
- * Enterprise-grade authentication state management with:
- * - Global auth state accessible throughout the app
- * - Automatic token refresh and session management
- * - Type-safe context with proper error handling
- * - Integration with NextAuth for session persistence
- * - SWR for efficient data fetching and caching
-=======
  * Clean architecture:
  * - Email/password auth: Direct API calls to FastAPI backend
  * - OAuth (Google/GitHub): Handled by NextAuth, synced to context
@@ -118,17 +110,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     const initializeAuth = async () => {
-<<<<<<< HEAD
-      // Wait for NextAuth session to load
-      if (sessionStatus === "loading") {
-        return;
-      }
-
-      // Skip re-initialization if we've manually authenticated via login/register
-      // This prevents state reset when NextAuth session updates after login
-=======
       // Skip if already manually authenticated
->>>>>>> 5663ce9 (refactor: clean auth architecture - NextAuth for OAuth only)
       if (manualAuthCompletedRef.current) {
         return;
       }
@@ -136,18 +118,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setState((prev) => ({ ...prev, isLoading: true }));
 
       try {
-<<<<<<< HEAD
-        // Check for tokens in localStorage
-        const hasToken = !!TokenManager.getAccessToken();
-
-        if (hasToken) {
-          // Fetch user profile
-=======
         // Step 1: Check localStorage tokens (from credential login)
         const hasToken = !!TokenManager.getAccessToken();
 
         if (hasToken) {
->>>>>>> 5663ce9 (refactor: clean auth architecture - NextAuth for OAuth only)
           const user = await fetchUserProfile();
 
           if (user) {
@@ -162,14 +136,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
             });
             return;
           }
-<<<<<<< HEAD
-        }
-
-        // If NextAuth session exists but no localStorage token,
-        // try to sync from session
-        if (session?.accessToken) {
-=======
-
           // Token invalid - clear it
           TokenManager.clearTokens();
         }
@@ -182,7 +148,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         if (sessionStatus === "authenticated" && session?.accessToken) {
           // Sync OAuth tokens to localStorage
->>>>>>> 5663ce9 (refactor: clean auth architecture - NextAuth for OAuth only)
           TokenManager.setTokens(
             session.accessToken as string,
             (session.refreshToken as string) || ""
@@ -215,10 +180,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         });
       } catch (error) {
         console.error("Auth initialization failed:", error);
-<<<<<<< HEAD
-=======
         TokenManager.clearTokens();
->>>>>>> 5663ce9 (refactor: clean auth architecture - NextAuth for OAuth only)
         setState({
           user: null,
           isAuthenticated: false,
@@ -255,36 +217,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           return { success: false };
         }
 
-<<<<<<< HEAD
-        // Tokens are stored by authAPI.login() via TokenManager
-
-        // Mark manual auth as completed BEFORE signIn to prevent useEffect race condition
-        // When signIn updates the NextAuth session, useEffect will check this flag
-        manualAuthCompletedRef.current = true;
-
-        // Step 2: Create NextAuth session for cookie-based persistence
-        const nextAuthResult = await signIn("credentials", {
-          email,
-          password,
-          redirect: false,
-        });
-
-        if (nextAuthResult?.error) {
-          console.warn(
-            "NextAuth session creation failed:",
-            nextAuthResult.error
-          );
-          // Continue anyway - we have backend tokens
-        }
-
-        // Step 3: Update state with user data
-        const user = result.data.user;
-
-=======
         // Tokens already stored by authAPI.login()
         manualAuthCompletedRef.current = true;
-
->>>>>>> 5663ce9 (refactor: clean auth architecture - NextAuth for OAuth only)
         setState({
           user: result.data.user,
           isAuthenticated: true,
@@ -333,34 +267,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
           return { success: false };
         }
 
-<<<<<<< HEAD
-        // Tokens are stored by authAPI.register() via TokenManager
-
-        // Mark manual auth as completed BEFORE signIn to prevent useEffect race condition
-        // When signIn updates the NextAuth session, useEffect will check this flag
-        manualAuthCompletedRef.current = true;
-
-        // Step 2: Create NextAuth session
-        const nextAuthResult = await signIn("credentials", {
-          email: data.email,
-          password: data.password,
-          redirect: false,
-        });
-
-        if (nextAuthResult?.error) {
-          console.warn(
-            "NextAuth session creation failed:",
-            nextAuthResult.error
-          );
-        }
-
-        // Step 3: Fetch full user profile
-=======
         // Tokens already stored by authAPI.register()
         manualAuthCompletedRef.current = true;
 
         // Fetch full profile
->>>>>>> 5663ce9 (refactor: clean auth architecture - NextAuth for OAuth only)
         const userProfile = await fetchUserProfile();
 
         setState({

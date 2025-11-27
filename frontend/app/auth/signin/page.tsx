@@ -36,10 +36,6 @@ export default function SignInPage(): JSX.Element {
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
   const registered = searchParams.get("registered") === "true";
 
-<<<<<<< HEAD
-  // Use the auth context for login
-=======
->>>>>>> 5663ce9 (refactor: clean auth architecture - NextAuth for OAuth only)
   const {
     login,
     loginWithGoogle,
@@ -67,10 +63,6 @@ export default function SignInPage(): JSX.Element {
     }
   }, [isInitialized, isAuthenticated, router, callbackUrl]);
 
-<<<<<<< HEAD
-  // Handle form submission
-=======
->>>>>>> 5663ce9 (refactor: clean auth architecture - NextAuth for OAuth only)
   const onSubmit = async (data: SignInFormData): Promise<void> => {
     const result = await login(data.email, data.password);
 
@@ -81,32 +73,8 @@ export default function SignInPage(): JSX.Element {
       });
     }
   };
-
-<<<<<<< HEAD
-  // Handle OAuth sign in
-  const handleOAuthSignIn = (provider: "google" | "github"): void => {
-    if (provider === "google") {
-      loginWithGoogle();
-    } else {
-      loginWithGitHub();
-    }
-  };
-
-  // Show loading while checking auth state
-  if (!isInitialized) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
-
-  // Already authenticated - show loading while redirecting
-  if (isAuthenticated) {
-=======
   // Loading state
   if (!isInitialized || isAuthenticated) {
->>>>>>> 5663ce9 (refactor: clean auth architecture - NextAuth for OAuth only)
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

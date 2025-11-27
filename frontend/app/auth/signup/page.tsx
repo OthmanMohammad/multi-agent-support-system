@@ -56,11 +56,6 @@ type SignUpFormData = z.infer<typeof signUpSchema>;
 
 export default function SignUpPage(): JSX.Element {
   const router = useRouter();
-
-<<<<<<< HEAD
-  // Use the auth context for registration
-=======
->>>>>>> 5663ce9 (refactor: clean auth architecture - NextAuth for OAuth only)
   const {
     register: registerUser,
     loginWithGoogle,
@@ -87,11 +82,6 @@ export default function SignUpPage(): JSX.Element {
       router.replace("/dashboard");
     }
   }, [isInitialized, isAuthenticated, router]);
-
-<<<<<<< HEAD
-  // Handle form submission
-=======
->>>>>>> 5663ce9 (refactor: clean auth architecture - NextAuth for OAuth only)
   const onSubmit = async (data: SignUpFormData): Promise<void> => {
     const result = await registerUser({
       email: data.email,
@@ -107,31 +97,8 @@ export default function SignUpPage(): JSX.Element {
     }
   };
 
-<<<<<<< HEAD
-  // Handle OAuth sign up
-  const handleOAuthSignUp = (provider: "google" | "github"): void => {
-    if (provider === "google") {
-      loginWithGoogle();
-    } else {
-      loginWithGitHub();
-    }
-  };
-
-  // Show loading while checking auth state
-  if (!isInitialized) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
-
-  // Already authenticated - show loading while redirecting
-  if (isAuthenticated) {
-=======
   // Loading state
   if (!isInitialized || isAuthenticated) {
->>>>>>> 5663ce9 (refactor: clean auth architecture - NextAuth for OAuth only)
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

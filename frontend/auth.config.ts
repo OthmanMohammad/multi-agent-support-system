@@ -31,41 +31,6 @@ export const isGoogleConfigured = !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET);
 export const isGitHubConfigured = !!(GITHUB_CLIENT_ID && GITHUB_CLIENT_SECRET);
 
 /**
-<<<<<<< HEAD
- * Call backend login endpoint
- */
-async function loginWithBackend(email: string, password: string) {
-  try {
-    const response = await fetch(`${API_URL}/api/auth/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = await response.json();
-
-    // Store JWT tokens in user object (will be saved in session)
-    return {
-      id: data.user.id,
-      email: data.user.email,
-      name: data.user.full_name,
-      role: data.user.role,
-      accessToken: data.access_token,
-      refreshToken: data.refresh_token,
-    };
-  } catch (error) {
-    console.error("Backend login error:", error);
-    return null;
-  }
-}
-
-/**
 =======
 >>>>>>> 5663ce9 (refactor: clean auth architecture - NextAuth for OAuth only)
  * Login or register user via OAuth provider
@@ -144,44 +109,6 @@ const buildProviders = (): Provider[] => {
       })
     );
   }
-
-<<<<<<< HEAD
-  // ==========================================================================
-  // CREDENTIALS (Email/Password) - Always available
-  // ==========================================================================
-  providers.push(
-    Credentials({
-      name: "credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        // Validate input
-        const validatedFields = loginSchema.safeParse(credentials);
-
-        if (!validatedFields.success) {
-          return null;
-        }
-
-        const { email, password } = validatedFields.data;
-
-        // Call backend API
-        const user = await loginWithBackend(email, password);
-
-        if (!user) {
-          return null;
-        }
-
-        // Store tokens in localStorage (client-side)
-        // Note: This runs on server, so we'll pass tokens via session
-        return user;
-      },
-    })
-  );
-
-=======
->>>>>>> 5663ce9 (refactor: clean auth architecture - NextAuth for OAuth only)
   return providers;
 };
 
