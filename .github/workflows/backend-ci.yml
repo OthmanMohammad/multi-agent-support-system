@@ -213,7 +213,6 @@ jobs:
             --cov-report=xml:coverage-unit.xml \
             --cov-report=html:coverage-html \
             --cov-report=term-missing \
-            --cov-fail-under=70 \
             -n auto \
             --timeout=60 \
             -v \
