@@ -1,0 +1,48 @@
+/**
+ * NextAuth Type Definitions
+ *
+ * Extends NextAuth types to include backend JWT tokens and user role.
+ */
+
+import type { DefaultSession } from "next-auth";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- JWT import required for module augmentation
+import { JWT } from "next-auth/jwt";
+
+declare module "next-auth" {
+  /**
+   * Returned by `useSession`, `getSession` and received as a prop on the `SessionProvider` React Context
+   */
+  interface Session {
+    user: {
+      id: string;
+      email: string;
+      name: string;
+      role: string;
+    } & DefaultSession["user"];
+    accessToken: string;
+    refreshToken: string;
+    isNewUser?: boolean;
+  }
+
+  interface User {
+    id: string;
+    email: string;
+    name: string;
+    role?: string;
+    accessToken?: string;
+    refreshToken?: string;
+  }
+}
+
+declare module "next-auth/jwt" {
+  /** Returned by the `jwt` callback and `getToken`, when using JWT sessions */
+  interface JWT {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    accessToken: string;
+    refreshToken: string;
+    isNewUser?: boolean;
+  }
+}
