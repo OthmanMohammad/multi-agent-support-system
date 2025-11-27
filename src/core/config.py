@@ -434,6 +434,32 @@ class VastAIConfig(BaseSettings):
     )
 
 
+class TurnstileConfig(BaseSettings):
+    """Cloudflare Turnstile captcha configuration"""
+
+    enabled: bool = Field(default=True, description="Enable Turnstile verification on registration")
+    secret_key: str = Field(
+        default="1x0000000000000000000000000000000AA",  # Test key - always passes
+        description="Turnstile secret key (server-side)",
+    )
+    site_key: str = Field(
+        default="1x00000000000000000000AA",  # Test key for frontend
+        description="Turnstile site key (client-side, exposed to frontend)",
+    )
+    verify_url: str = Field(
+        default="https://challenges.cloudflare.com/turnstile/v0/siteverify",
+        description="Turnstile verification endpoint",
+    )
+
+    model_config = SettingsConfigDict(
+        env_prefix="TURNSTILE_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
+
+
 class ModalConfig(BaseSettings):
     """
     Modal.com serverless GPU configuration.
@@ -548,6 +574,7 @@ class Settings(BaseSettings):
     context_enrichment: ContextEnrichmentConfig = Field(default_factory=ContextEnrichmentConfig)
     vastai: VastAIConfig = Field(default_factory=VastAIConfig)
     modal: ModalConfig = Field(default_factory=ModalConfig)
+    turnstile: TurnstileConfig = Field(default_factory=TurnstileConfig)
 
     @field_validator("debug")
     @classmethod
