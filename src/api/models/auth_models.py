@@ -23,6 +23,7 @@ class UserRegisterRequest(BaseModel):
     )
     full_name: str = Field(..., min_length=1, max_length=255, description="Full name")
     organization: str | None = Field(None, max_length=255, description="Organization name")
+    turnstile_token: str | None = Field(None, description="Cloudflare Turnstile verification token")
 
     model_config = {
         "json_schema_extra": {
@@ -32,6 +33,7 @@ class UserRegisterRequest(BaseModel):
                     "password": "SecurePass123!",
                     "full_name": "John Doe",
                     "organization": "Acme Corp",
+                    "turnstile_token": "0.xxx...",
                 }
             ]
         }
