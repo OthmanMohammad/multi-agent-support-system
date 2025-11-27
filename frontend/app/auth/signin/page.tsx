@@ -1,12 +1,12 @@
 "use client";
 
 import type { JSX } from "react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Github } from "lucide-react";
+import { Github, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,18 +23,12 @@ import { type SignInFormData, signInSchema } from "@/lib/validations/auth";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { useOAuthProviders } from "@/lib/hooks/use-oauth-providers";
 
-// Show "taking too long" message after this duration
-const INIT_SLOW_THRESHOLD_MS = 5000;
-
 /**
  * Sign In Page
  *
- * Enterprise-grade authentication page with:
- * - Email/password login via useAuth context
- * - OAuth support (Google, GitHub)
- * - Form validation with Zod
- * - Redirect handling for callback URLs
- * - Auto-redirect if already authenticated
+ * Clean implementation:
+ * - Email/password: Direct API call to backend
+ * - OAuth: Handled by NextAuth
  */
 export default function SignInPage(): JSX.Element {
   const router = useRouter();
@@ -42,10 +36,6 @@ export default function SignInPage(): JSX.Element {
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
   const registered = searchParams.get("registered") === "true";
 
-  // Track if initialization is taking too long
-  const [isInitSlow, setIsInitSlow] = useState(false);
-
-  // Use the auth context for login
   const {
     login,
     loginWithGoogle,
@@ -53,10 +43,8 @@ export default function SignInPage(): JSX.Element {
     isLoading,
     isAuthenticated,
     isInitialized,
-    error: authError,
   } = useAuth();
 
-  // Check which OAuth providers are available
   const oauthProviders = useOAuthProviders();
 
   const {
@@ -75,26 +63,6 @@ export default function SignInPage(): JSX.Element {
     }
   }, [isInitialized, isAuthenticated, router, callbackUrl]);
 
-  // Track slow initialization - reset when initialized
-  useEffect(() => {
-    if (isInitialized) {
-      // Already initialized, no need to track
-      return undefined;
-    }
-
-    // Start timeout to detect slow initialization
-    const timeout = setTimeout(() => {
-      setIsInitSlow(true);
-    }, INIT_SLOW_THRESHOLD_MS);
-
-    return () => {
-      clearTimeout(timeout);
-      // Reset on cleanup when isInitialized changes to true
-      setIsInitSlow(false);
-    };
-  }, [isInitialized]);
-
-  // Handle form submission
   const onSubmit = async (data: SignInFormData): Promise<void> => {
     const result = await login(data.email, data.password);
 
@@ -104,54 +72,13 @@ export default function SignInPage(): JSX.Element {
         message: "Invalid email or password",
       });
     }
-    // Success case: login() handles redirect to dashboard
   };
 
-  // Handle OAuth sign in
-  const handleOAuthSignIn = (provider: "google" | "github"): void => {
-    if (provider === "google") {
-      loginWithGoogle();
-    } else {
-      loginWithGitHub();
-    }
-  };
-
-  // Show loading while checking auth state
-  if (!isInitialized) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        {isInitSlow && (
-          <div className="max-w-sm text-center">
-            <p className="text-sm text-foreground-secondary">
-              Taking longer than expected...
-            </p>
-            <p className="mt-1 text-xs text-foreground-secondary">
-              This may indicate a connection issue.{" "}
-              <button
-                type="button"
-                onClick={() => window.location.reload()}
-                className="text-accent underline"
-              >
-                Refresh the page
-              </button>
-            </p>
-          </div>
-        )}
-        {authError && (
-          <p className="text-sm text-error">
-            Connection error: {authError.message}
-          </p>
-        )}
-      </div>
-    );
-  }
-
-  // Already authenticated - show loading while redirecting
-  if (isAuthenticated) {
+  // Loading state
+  if (!isInitialized || isAuthenticated) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -165,6 +92,7 @@ export default function SignInPage(): JSX.Element {
             Enter your credentials to access your account
           </CardDescription>
         </CardHeader>
+
         <CardContent className="space-y-4">
           {/* Success message from registration */}
           {registered && (
@@ -220,11 +148,18 @@ export default function SignInPage(): JSX.Element {
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign in"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                "Sign in"
+              )}
             </Button>
           </form>
 
-          {/* OAuth Section - Only show if at least one provider is configured */}
+          {/* OAuth Section */}
           {oauthProviders.hasAnyOAuth && (
             <>
               <div className="relative">
@@ -245,7 +180,7 @@ export default function SignInPage(): JSX.Element {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => handleOAuthSignIn("google")}
+                    onClick={loginWithGoogle}
                     disabled={isLoading}
                   >
                     <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -273,7 +208,7 @@ export default function SignInPage(): JSX.Element {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => handleOAuthSignIn("github")}
+                    onClick={loginWithGitHub}
                     disabled={isLoading}
                   >
                     <Github className="mr-2 h-4 w-4" />
@@ -284,6 +219,7 @@ export default function SignInPage(): JSX.Element {
             </>
           )}
         </CardContent>
+
         <CardFooter className="flex flex-col space-y-4">
           <div className="text-sm text-foreground-secondary">
             Don&apos;t have an account?{" "}
