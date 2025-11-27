@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import type { JSX } from "react";
-import * as React from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Component, type ReactNode } from 'react';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
+
+import { Button, Card, CardContent } from '@/components/ui';
 
 interface ErrorBoundaryProps {
-  children: React.ReactNode;
-  fallback?: (error: Error, reset: () => void) => React.ReactNode;
+  children: ReactNode;
+  fallback?: ReactNode;
 }
 
 interface ErrorBoundaryState {
@@ -15,20 +15,7 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-/**
- * Error Boundary Component
- * Catches JavaScript errors anywhere in the child component tree,
- * logs those errors, and displays a fallback UI
- *
- * @example
- * <ErrorBoundary>
- *   <YourComponent />
- * </ErrorBoundary>
- */
-export class ErrorBoundary extends React.Component<
-  ErrorBoundaryProps,
-  ErrorBoundaryState
-> {
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -38,29 +25,49 @@ export class ErrorBoundary extends React.Component<
     return { hasError: true, error };
   }
 
-  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    // Log error to error reporting service
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
-
-    // You can also log the error to an error reporting service here
-    // Example: Sentry.captureException(error, { extra: errorInfo });
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo);
   }
 
-  handleReset = (): void => {
+  handleReset = () => {
     this.setState({ hasError: false, error: null });
   };
 
-  override render(): React.ReactNode {
+  render() {
     if (this.state.hasError) {
-      if (this.props.fallback && this.state.error) {
-        return this.props.fallback(this.state.error, this.handleReset);
+      if (this.props.fallback) {
+        return this.props.fallback;
       }
 
       return (
-        <DefaultErrorFallback
-          error={this.state.error}
-          reset={this.handleReset}
-        />
+        <Card className="m-4">
+          <CardContent className="p-8 text-center">
+            <div className="flex justify-center mb-4">
+              <div className="p-3 rounded-full bg-error/10">
+                <AlertTriangle className="h-8 w-8 text-error" />
+              </div>
+            </div>
+            <h2 className="text-xl font-semibold text-text-primary mb-2">Something went wrong</h2>
+            <p className="text-text-secondary mb-6 max-w-md mx-auto">
+              An unexpected error occurred. Please try refreshing the page or contact support if the
+              problem persists.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Button onClick={this.handleReset} variant="outline">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Try Again
+              </Button>
+              <Button onClick={() => window.location.reload()}>Refresh Page</Button>
+            </div>
+            {process.env.NODE_ENV === 'development' && this.state.error && (
+              <pre className="mt-6 p-4 bg-background-secondary rounded-lg text-left text-sm overflow-auto max-h-48">
+                {this.state.error.message}
+                {'\n\n'}
+                {this.state.error.stack}
+              </pre>
+            )}
+          </CardContent>
+        </Card>
       );
     }
 
@@ -68,47 +75,39 @@ export class ErrorBoundary extends React.Component<
   }
 }
 
-/**
- * Default Error Fallback UI
- * Professional error display with reset functionality
- */
-function DefaultErrorFallback({
-  error,
-  reset,
-}: {
-  error: Error | null;
+// Page-level error component (for Next.js error.tsx files)
+interface PageErrorProps {
+  error: Error & { digest?: string };
   reset: () => void;
-}): JSX.Element {
+}
+
+export function PageError({ error, reset }: PageErrorProps) {
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-error">Something went wrong</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-foreground-secondary">
-            {error?.message || "An unexpected error occurred"}
-          </p>
-
-          {process.env.NODE_ENV === "development" && error?.stack && (
-            <details className="rounded-md bg-surface p-4 text-xs">
-              <summary className="cursor-pointer font-semibold">
-                Error Details
-              </summary>
-              <pre className="mt-2 overflow-auto whitespace-pre-wrap">
-                {error.stack}
-              </pre>
-            </details>
-          )}
-
-          <div className="flex gap-2">
-            <Button onClick={reset} variant="default">
-              Try again
-            </Button>
-            <Button onClick={() => window.location.reload()} variant="outline">
-              Reload page
-            </Button>
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <Card className="max-w-lg w-full">
+        <CardContent className="p-8 text-center">
+          <div className="flex justify-center mb-4">
+            <div className="p-3 rounded-full bg-error/10">
+              <AlertTriangle className="h-8 w-8 text-error" />
+            </div>
           </div>
+          <h2 className="text-xl font-semibold text-text-primary mb-2">Something went wrong</h2>
+          <p className="text-text-secondary mb-6">
+            An error occurred while loading this page. Please try again.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Button onClick={reset} variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
+            <Button onClick={() => (window.location.href = '/')}>Go Home</Button>
+          </div>
+          {process.env.NODE_ENV === 'development' && (
+            <pre className="mt-6 p-4 bg-background-secondary rounded-lg text-left text-sm overflow-auto max-h-48">
+              {error.message}
+              {error.digest && `\n\nDigest: ${error.digest}`}
+            </pre>
+          )}
         </CardContent>
       </Card>
     </div>
