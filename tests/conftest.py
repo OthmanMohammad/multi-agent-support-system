@@ -112,6 +112,18 @@ def captured_events():
     return EventCapture()
 
 
+# ===== Job Store Fixtures =====
+
+@pytest.fixture
+async def job_store():
+    """In-memory job store fixture for integration tests"""
+    from src.services.job_store import InMemoryJobStore
+    store = InMemoryJobStore()
+    await store.initialize()
+    yield store
+    await store.close()
+
+
 # ===== Async Test Helpers =====
 
 @pytest.fixture
