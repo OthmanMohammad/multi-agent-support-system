@@ -6,7 +6,7 @@
  * - Automatic token refresh and session management
  * - Type-safe context with proper error handling
  * - Integration with NextAuth for session persistence
- * - SWR for efficient data fetching and caching
+ * - Timeout handling for stuck session loading states
  */
 
 "use client";
@@ -26,6 +26,9 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { authAPI, type RegisterRequest, type UserProfile } from "../api";
 import { TokenManager } from "../api-client";
+
+// Maximum time to wait for NextAuth session before falling back to token-based auth
+const SESSION_LOADING_TIMEOUT_MS = 3000;
 
 // =============================================================================
 // TYPES
@@ -113,27 +116,56 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // INITIALIZE AUTH STATE
   // ---------------------------------------------------------------------------
 
+  // Track session loading timeout
+  const sessionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasTimedOutRef = useRef(false);
+
+  // Handle session loading timeout - if NextAuth session stays "loading" too long,
+  // fall back to token-based authentication
+  useEffect(() => {
+    if (sessionStatus === "loading" && !hasTimedOutRef.current) {
+      sessionTimeoutRef.current = setTimeout(() => {
+        console.warn(
+          "NextAuth session loading timed out, falling back to token-based auth"
+        );
+        hasTimedOutRef.current = true;
+        // Force a re-render by updating state
+        setState((prev) => ({ ...prev }));
+      }, SESSION_LOADING_TIMEOUT_MS);
+    } else if (sessionStatus !== "loading" && sessionTimeoutRef.current) {
+      clearTimeout(sessionTimeoutRef.current);
+      sessionTimeoutRef.current = null;
+    }
+
+    return () => {
+      if (sessionTimeoutRef.current) {
+        clearTimeout(sessionTimeoutRef.current);
+      }
+    };
+  }, [sessionStatus]);
+
   useEffect(() => {
     const initializeAuth = async () => {
-      // Wait for NextAuth session to load
-      if (sessionStatus === "loading") {
-        return;
-      }
-
       // Skip re-initialization if we've manually authenticated via login/register
       // This prevents state reset when NextAuth session updates after login
       if (manualAuthCompletedRef.current) {
         return;
       }
 
+      // Wait for NextAuth session to load, but not forever
+      // If timed out, proceed with token-based auth
+      if (sessionStatus === "loading" && !hasTimedOutRef.current) {
+        return;
+      }
+
       setState((prev) => ({ ...prev, isLoading: true }));
 
       try {
-        // Check for tokens in localStorage
+        // Check for tokens in localStorage first (primary auth method)
         const hasToken = !!TokenManager.getAccessToken();
 
         if (hasToken) {
-          // Fetch user profile
+          // Fetch user profile using stored token
           const user = await fetchUserProfile();
 
           if (user) {
@@ -149,11 +181,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
             });
             return;
           }
+          // Token exists but profile fetch failed - token is invalid
+          // Clear invalid tokens
+          TokenManager.clearTokens();
+          console.warn("Stored token invalid, cleared tokens");
         }
 
         // If NextAuth session exists but no localStorage token,
-        // try to sync from session
-        if (session?.accessToken) {
+        // try to sync from session (only if session loaded successfully)
+        if (sessionStatus === "authenticated" && session?.accessToken) {
           TokenManager.setTokens(
             session.accessToken as string,
             (session.refreshToken as string) || ""
@@ -176,7 +212,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           }
         }
 
-        // No valid auth
+        // No valid auth - user needs to log in
         setState({
           user: null,
           isAuthenticated: false,
@@ -187,6 +223,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         });
       } catch (error) {
         console.error("Auth initialization failed:", error);
+        // Clear any potentially corrupted tokens
+        TokenManager.clearTokens();
         setState({
           user: null,
           isAuthenticated: false,
@@ -234,15 +272,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         // Tokens are stored by authAPI.login() via TokenManager
+        const accessToken = result.data.access_token;
+        const refreshToken = result.data.refresh_token;
 
         // Mark manual auth as completed BEFORE signIn to prevent useEffect race condition
         // When signIn updates the NextAuth session, useEffect will check this flag
         manualAuthCompletedRef.current = true;
 
         // Step 2: Create NextAuth session for cookie-based persistence
+        // Pass tokens to avoid double API call - NextAuth will use these instead
+        // of calling the backend again
         const nextAuthResult = await signIn("credentials", {
           email,
           password,
+          accessToken,
+          refreshToken,
           redirect: false,
         });
 
@@ -311,15 +355,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         // Tokens are stored by authAPI.register() via TokenManager
+        const accessToken = result.data.access_token;
+        const refreshToken = result.data.refresh_token;
 
         // Mark manual auth as completed BEFORE signIn to prevent useEffect race condition
         // When signIn updates the NextAuth session, useEffect will check this flag
         manualAuthCompletedRef.current = true;
 
         // Step 2: Create NextAuth session
+        // Pass tokens to avoid double API call
         const nextAuthResult = await signIn("credentials", {
           email: data.email,
           password: data.password,
+          accessToken,
+          refreshToken,
           redirect: false,
         });
 

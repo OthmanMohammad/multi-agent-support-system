@@ -35,8 +35,35 @@ export const isGitHubConfigured = !!(GITHUB_CLIENT_ID && GITHUB_CLIENT_SECRET);
 
 /**
  * Call backend login endpoint
+ *
+ * This is used by NextAuth's Credentials provider for direct form submissions.
+ * Note: When called from auth-context.tsx, the login API has already been called
+ * and tokens are stored. This second call is redundant but harmless.
+ *
+ * If accessToken is provided (from auth-context), we skip the API call
+ * and just return the user info to create a NextAuth session.
  */
-async function loginWithBackend(email: string, password: string) {
+async function loginWithBackend(
+  email: string,
+  password: string,
+  existingAccessToken?: string,
+  existingRefreshToken?: string
+) {
+  // If tokens are already provided, skip the API call
+  // This happens when auth-context.tsx calls signIn() after a successful login
+  if (existingAccessToken) {
+    // Return minimal user object - the actual user data is already
+    // managed by auth-context via localStorage tokens
+    return {
+      id: "session-user",
+      email,
+      name: "",
+      role: "user",
+      accessToken: existingAccessToken,
+      refreshToken: existingRefreshToken || "",
+    };
+  }
+
   try {
     const response = await fetch(`${API_URL}/api/auth/login`, {
       method: "POST",
@@ -158,8 +185,20 @@ const buildProviders = (): Provider[] => {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        // Optional tokens - when provided, skip backend API call
+        // This is used when auth-context has already authenticated
+        accessToken: { label: "Access Token", type: "text" },
+        refreshToken: { label: "Refresh Token", type: "text" },
       },
       async authorize(credentials) {
+        // Check if we have pre-authenticated tokens (from auth-context)
+        const existingAccessToken = credentials?.accessToken as
+          | string
+          | undefined;
+        const existingRefreshToken = credentials?.refreshToken as
+          | string
+          | undefined;
+
         // Validate input
         const validatedFields = loginSchema.safeParse(credentials);
 
@@ -169,15 +208,19 @@ const buildProviders = (): Provider[] => {
 
         const { email, password } = validatedFields.data;
 
-        // Call backend API
-        const user = await loginWithBackend(email, password);
+        // Call backend API (or skip if tokens already exist)
+        const user = await loginWithBackend(
+          email,
+          password,
+          existingAccessToken,
+          existingRefreshToken
+        );
 
         if (!user) {
           return null;
         }
 
-        // Store tokens in localStorage (client-side)
-        // Note: This runs on server, so we'll pass tokens via session
+        // Return user object - tokens will be saved in JWT callback
         return user;
       },
     })

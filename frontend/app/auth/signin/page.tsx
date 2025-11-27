@@ -1,7 +1,7 @@
 "use client";
 
 import type { JSX } from "react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
@@ -23,6 +23,9 @@ import { type SignInFormData, signInSchema } from "@/lib/validations/auth";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { useOAuthProviders } from "@/lib/hooks/use-oauth-providers";
 
+// Show "taking too long" message after this duration
+const INIT_SLOW_THRESHOLD_MS = 5000;
+
 /**
  * Sign In Page
  *
@@ -39,6 +42,9 @@ export default function SignInPage(): JSX.Element {
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
   const registered = searchParams.get("registered") === "true";
 
+  // Track if initialization is taking too long
+  const [isInitSlow, setIsInitSlow] = useState(false);
+
   // Use the auth context for login
   const {
     login,
@@ -47,6 +53,7 @@ export default function SignInPage(): JSX.Element {
     isLoading,
     isAuthenticated,
     isInitialized,
+    error: authError,
   } = useAuth();
 
   // Check which OAuth providers are available
@@ -67,6 +74,25 @@ export default function SignInPage(): JSX.Element {
       router.replace(callbackUrl);
     }
   }, [isInitialized, isAuthenticated, router, callbackUrl]);
+
+  // Track slow initialization - reset when initialized
+  useEffect(() => {
+    if (isInitialized) {
+      // Already initialized, no need to track
+      return undefined;
+    }
+
+    // Start timeout to detect slow initialization
+    const timeout = setTimeout(() => {
+      setIsInitSlow(true);
+    }, INIT_SLOW_THRESHOLD_MS);
+
+    return () => {
+      clearTimeout(timeout);
+      // Reset on cleanup when isInitialized changes to true
+      setIsInitSlow(false);
+    };
+  }, [isInitialized]);
 
   // Handle form submission
   const onSubmit = async (data: SignInFormData): Promise<void> => {
@@ -93,8 +119,30 @@ export default function SignInPage(): JSX.Element {
   // Show loading while checking auth state
   if (!isInitialized) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        {isInitSlow && (
+          <div className="max-w-sm text-center">
+            <p className="text-sm text-foreground-secondary">
+              Taking longer than expected...
+            </p>
+            <p className="mt-1 text-xs text-foreground-secondary">
+              This may indicate a connection issue.{" "}
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="text-accent underline"
+              >
+                Refresh the page
+              </button>
+            </p>
+          </div>
+        )}
+        {authError && (
+          <p className="text-sm text-error">
+            Connection error: {authError.message}
+          </p>
+        )}
       </div>
     );
   }
