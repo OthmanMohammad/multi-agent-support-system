@@ -1,12 +1,24 @@
 /**
  * Authentication Context
  *
+<<<<<<< HEAD
  * Enterprise-grade authentication state management with:
  * - Global auth state accessible throughout the app
  * - Automatic token refresh and session management
  * - Type-safe context with proper error handling
  * - Integration with NextAuth for session persistence
  * - SWR for efficient data fetching and caching
+=======
+ * Clean architecture:
+ * - Email/password auth: Direct API calls to FastAPI backend
+ * - OAuth (Google/GitHub): Handled by NextAuth, synced to context
+ * - Token storage: localStorage for persistence
+ *
+ * This separation ensures:
+ * - No double API calls
+ * - No dependency on NextAuth for credential auth
+ * - Clear, debuggable auth flow
+>>>>>>> 5663ce9 (refactor: clean auth architecture - NextAuth for OAuth only)
  */
 
 "use client";
@@ -36,7 +48,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   isInitialized: boolean;
-  isNewUser: boolean; // True when user just registered (first-time user)
+  isNewUser: boolean;
   error: Error | null;
 }
 
@@ -47,12 +59,8 @@ interface AuthContextValue extends AuthState {
   loginWithGoogle: () => void;
   loginWithGitHub: () => void;
   refreshUser: () => Promise<void>;
-  clearNewUserFlag: () => void; // Clear the isNewUser flag after onboarding
+  clearNewUserFlag: () => void;
 }
-
-// =============================================================================
-// INITIAL STATE
-// =============================================================================
 
 const initialState: AuthState = {
   user: null,
@@ -62,10 +70,6 @@ const initialState: AuthState = {
   isNewUser: false,
   error: null,
 };
-
-// =============================================================================
-// CONTEXT
-// =============================================================================
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
@@ -82,8 +86,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const { data: session, status: sessionStatus } = useSession();
   const [state, setState] = useState<AuthState>(initialState);
 
-  // Track if we've manually authenticated (login/register) to skip re-initialization
-  // This prevents the useEffect from resetting state when NextAuth session updates
+  // Prevent re-initialization after manual login/register
   const manualAuthCompletedRef = useRef(false);
 
   // ---------------------------------------------------------------------------
@@ -115,6 +118,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     const initializeAuth = async () => {
+<<<<<<< HEAD
       // Wait for NextAuth session to load
       if (sessionStatus === "loading") {
         return;
@@ -122,6 +126,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Skip re-initialization if we've manually authenticated via login/register
       // This prevents state reset when NextAuth session updates after login
+=======
+      // Skip if already manually authenticated
+>>>>>>> 5663ce9 (refactor: clean auth architecture - NextAuth for OAuth only)
       if (manualAuthCompletedRef.current) {
         return;
       }
@@ -129,31 +136,53 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setState((prev) => ({ ...prev, isLoading: true }));
 
       try {
+<<<<<<< HEAD
         // Check for tokens in localStorage
         const hasToken = !!TokenManager.getAccessToken();
 
         if (hasToken) {
           // Fetch user profile
+=======
+        // Step 1: Check localStorage tokens (from credential login)
+        const hasToken = !!TokenManager.getAccessToken();
+
+        if (hasToken) {
+>>>>>>> 5663ce9 (refactor: clean auth architecture - NextAuth for OAuth only)
           const user = await fetchUserProfile();
 
           if (user) {
-            // Mark as completed to prevent future re-runs
             manualAuthCompletedRef.current = true;
             setState({
               user,
               isAuthenticated: true,
               isLoading: false,
               isInitialized: true,
-              isNewUser: false, // Returning user from stored token
+              isNewUser: false,
               error: null,
             });
             return;
           }
+<<<<<<< HEAD
         }
 
         // If NextAuth session exists but no localStorage token,
         // try to sync from session
         if (session?.accessToken) {
+=======
+
+          // Token invalid - clear it
+          TokenManager.clearTokens();
+        }
+
+        // Step 2: Check NextAuth session (from OAuth login)
+        // Only proceed if NextAuth has finished loading
+        if (sessionStatus === "loading") {
+          return; // Will re-run when session loads
+        }
+
+        if (sessionStatus === "authenticated" && session?.accessToken) {
+          // Sync OAuth tokens to localStorage
+>>>>>>> 5663ce9 (refactor: clean auth architecture - NextAuth for OAuth only)
           TokenManager.setTokens(
             session.accessToken as string,
             (session.refreshToken as string) || ""
@@ -162,14 +191,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
           const user = await fetchUserProfile();
 
           if (user) {
-            // Mark as completed to prevent future re-runs
             manualAuthCompletedRef.current = true;
             setState({
               user,
               isAuthenticated: true,
               isLoading: false,
               isInitialized: true,
-              isNewUser: session?.isNewUser ?? false, // Check session for OAuth isNewUser flag
+              isNewUser: session.isNewUser ?? false,
               error: null,
             });
             return;
@@ -187,31 +215,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
         });
       } catch (error) {
         console.error("Auth initialization failed:", error);
+<<<<<<< HEAD
+=======
+        TokenManager.clearTokens();
+>>>>>>> 5663ce9 (refactor: clean auth architecture - NextAuth for OAuth only)
         setState({
           user: null,
           isAuthenticated: false,
           isLoading: false,
           isInitialized: true,
           isNewUser: false,
-          error:
-            error instanceof Error
-              ? error
-              : new Error("Auth initialization failed"),
+          error: error instanceof Error ? error : new Error("Auth failed"),
         });
       }
     };
 
     initializeAuth();
-  }, [
-    sessionStatus,
-    session?.accessToken,
-    session?.refreshToken,
-    session?.isNewUser,
-    fetchUserProfile,
-  ]);
+  }, [sessionStatus, session, fetchUserProfile]);
 
   // ---------------------------------------------------------------------------
-  // LOGIN
+  // LOGIN (Direct API - no NextAuth)
   // ---------------------------------------------------------------------------
 
   const login = useCallback(
@@ -219,11 +242,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
       try {
-        // Step 1: Call backend login API to get tokens
         const result = await authAPI.login(email, password);
 
         if (!result.success) {
-          const errorMessage = result.error?.message || "Login failed";
+          const errorMessage = result.error?.message || "Invalid credentials";
           toast.error(errorMessage);
           setState((prev) => ({
             ...prev,
@@ -233,6 +255,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           return { success: false };
         }
 
+<<<<<<< HEAD
         // Tokens are stored by authAPI.login() via TokenManager
 
         // Mark manual auth as completed BEFORE signIn to prevent useEffect race condition
@@ -257,29 +280,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Step 3: Update state with user data
         const user = result.data.user;
 
+=======
+        // Tokens already stored by authAPI.login()
+        manualAuthCompletedRef.current = true;
+
+>>>>>>> 5663ce9 (refactor: clean auth architecture - NextAuth for OAuth only)
         setState({
-          user,
+          user: result.data.user,
           isAuthenticated: true,
           isLoading: false,
           isInitialized: true,
-          isNewUser: false, // Existing user logging in
+          isNewUser: false,
           error: null,
         });
 
-        toast.success("Logged in successfully!");
+        toast.success("Welcome back!");
         router.push("/dashboard");
-
         return { success: true };
       } catch (error) {
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "An unexpected error occurred";
-        toast.error(errorMessage);
+        const message = error instanceof Error ? error.message : "Login failed";
+        toast.error(message);
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: error instanceof Error ? error : new Error(errorMessage),
+          error: new Error(message),
         }));
         return { success: false };
       }
@@ -288,7 +312,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   );
 
   // ---------------------------------------------------------------------------
-  // REGISTER
+  // REGISTER (Direct API - no NextAuth)
   // ---------------------------------------------------------------------------
 
   const register = useCallback(
@@ -296,7 +320,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
       try {
-        // Step 1: Call backend register API
         const result = await authAPI.register(data);
 
         if (!result.success) {
@@ -310,6 +333,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           return { success: false };
         }
 
+<<<<<<< HEAD
         // Tokens are stored by authAPI.register() via TokenManager
 
         // Mark manual auth as completed BEFORE signIn to prevent useEffect race condition
@@ -331,59 +355,50 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         // Step 3: Fetch full user profile
+=======
+        // Tokens already stored by authAPI.register()
+        manualAuthCompletedRef.current = true;
+
+        // Fetch full profile
+>>>>>>> 5663ce9 (refactor: clean auth architecture - NextAuth for OAuth only)
         const userProfile = await fetchUserProfile();
 
-        if (userProfile) {
-          setState({
-            user: userProfile,
-            isAuthenticated: true,
-            isLoading: false,
-            isInitialized: true,
-            isNewUser: true, // New user just registered
-            error: null,
-          });
-        } else {
-          // Use registration response data as fallback
-          setState({
-            user: {
-              id: result.data.user_id,
-              email: result.data.email,
-              full_name: result.data.full_name,
-              organization: null,
-              role: result.data.role as "user" | "admin" | "moderator",
-              status: result.data.status as
-                | "active"
-                | "inactive"
-                | "suspended"
-                | "pending_verification",
-              is_active: true,
-              is_verified: false,
-              scopes: [],
-              created_at: new Date().toISOString(),
-              last_login_at: null,
-            },
-            isAuthenticated: true,
-            isLoading: false,
-            isInitialized: true,
-            isNewUser: true, // New user just registered
-            error: null,
-          });
-        }
+        setState({
+          user: userProfile || {
+            id: result.data.user_id,
+            email: result.data.email,
+            full_name: result.data.full_name,
+            organization: null,
+            role: result.data.role as "user" | "admin" | "moderator",
+            status: result.data.status as
+              | "active"
+              | "inactive"
+              | "suspended"
+              | "pending_verification",
+            is_active: true,
+            is_verified: false,
+            scopes: [],
+            created_at: new Date().toISOString(),
+            last_login_at: null,
+          },
+          isAuthenticated: true,
+          isLoading: false,
+          isInitialized: true,
+          isNewUser: true,
+          error: null,
+        });
 
-        toast.success("Account created successfully!");
+        toast.success("Account created!");
         router.push("/dashboard");
-
         return { success: true };
       } catch (error) {
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "An unexpected error occurred";
-        toast.error(errorMessage);
+        const message =
+          error instanceof Error ? error.message : "Registration failed";
+        toast.error(message);
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: error instanceof Error ? error : new Error(errorMessage),
+          error: new Error(message),
         }));
         return { success: false };
       }
@@ -396,61 +411,37 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // ---------------------------------------------------------------------------
 
   const logout = useCallback(async () => {
-    setState((prev) => ({ ...prev, isLoading: true }));
-
-    // Reset manual auth flag so next login can initialize properly
     manualAuthCompletedRef.current = false;
 
+    // Clear state immediately
+    setState({
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+      isInitialized: true,
+      isNewUser: false,
+      error: null,
+    });
+
     try {
-      // Step 1: Clear state immediately for instant UI update
-      setState({
-        user: null,
-        isAuthenticated: false,
-        isLoading: true,
-        isInitialized: true,
-        isNewUser: false,
-        error: null,
-      });
-
-      // Step 2: Call backend logout (blacklist token)
+      // Call backend logout
       await authAPI.logout();
-
-      // Step 3: Sign out from NextAuth
-      await signOut({ redirect: false });
-
-      // Step 4: Clear tokens (already done by authAPI.logout())
-      TokenManager.clearTokens();
-
-      setState({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        isInitialized: true,
-        isNewUser: false,
-        error: null,
-      });
-
-      toast.success("Logged out successfully");
-      router.push("/");
     } catch (error) {
-      console.error("Logout error:", error);
-      // Force logout even if there's an error
-      TokenManager.clearTokens();
-      setState({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        isInitialized: true,
-        isNewUser: false,
-        error: null,
-      });
-      toast.success("Logged out successfully");
-      router.push("/");
+      console.error("Backend logout error:", error);
     }
+
+    // Clear tokens
+    TokenManager.clearTokens();
+
+    // Sign out from NextAuth (for OAuth users)
+    await signOut({ redirect: false });
+
+    toast.success("Logged out");
+    router.push("/");
   }, [router]);
 
   // ---------------------------------------------------------------------------
-  // OAUTH
+  // OAUTH (uses NextAuth)
   // ---------------------------------------------------------------------------
 
   const loginWithGoogle = useCallback(() => {
@@ -468,11 +459,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const refreshUser = useCallback(async () => {
     const user = await fetchUserProfile();
     if (user) {
-      setState((prev) => ({
-        ...prev,
-        user,
-        isAuthenticated: true,
-      }));
+      setState((prev) => ({ ...prev, user, isAuthenticated: true }));
     }
   }, [fetchUserProfile]);
 
@@ -481,10 +468,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // ---------------------------------------------------------------------------
 
   const clearNewUserFlag = useCallback(() => {
-    setState((prev) => ({
-      ...prev,
-      isNewUser: false,
-    }));
+    setState((prev) => ({ ...prev, isNewUser: false }));
   }, []);
 
   // ---------------------------------------------------------------------------
@@ -530,10 +514,6 @@ export function useAuth(): AuthContextValue {
 
   return context;
 }
-
-// =============================================================================
-// EXPORTS
-// =============================================================================
 
 export { AuthContext };
 export type { AuthContextValue, AuthState };

@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
-import { Github } from "lucide-react";
+import { Github, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,12 +26,9 @@ import { useOAuthProviders } from "@/lib/hooks/use-oauth-providers";
 /**
  * Sign Up Page
  *
- * Enterprise-grade registration page with:
- * - Form validation with Zod
- * - Password strength requirements
- * - Auto-login after successful registration
- * - OAuth registration support
- * - Auto-redirect if already authenticated
+ * Clean implementation:
+ * - Email/password: Direct API call to backend
+ * - OAuth: Handled by NextAuth
  */
 
 const signUpSchema = z
@@ -60,7 +57,10 @@ type SignUpFormData = z.infer<typeof signUpSchema>;
 export default function SignUpPage(): JSX.Element {
   const router = useRouter();
 
+<<<<<<< HEAD
   // Use the auth context for registration
+=======
+>>>>>>> 5663ce9 (refactor: clean auth architecture - NextAuth for OAuth only)
   const {
     register: registerUser,
     loginWithGoogle,
@@ -70,7 +70,6 @@ export default function SignUpPage(): JSX.Element {
     isInitialized,
   } = useAuth();
 
-  // Check which OAuth providers are available
   const oauthProviders = useOAuthProviders();
 
   const {
@@ -89,7 +88,10 @@ export default function SignUpPage(): JSX.Element {
     }
   }, [isInitialized, isAuthenticated, router]);
 
+<<<<<<< HEAD
   // Handle form submission
+=======
+>>>>>>> 5663ce9 (refactor: clean auth architecture - NextAuth for OAuth only)
   const onSubmit = async (data: SignUpFormData): Promise<void> => {
     const result = await registerUser({
       email: data.email,
@@ -103,9 +105,9 @@ export default function SignUpPage(): JSX.Element {
         message: "Failed to create account. Please try again.",
       });
     }
-    // Success case: registerUser() handles redirect to dashboard
   };
 
+<<<<<<< HEAD
   // Handle OAuth sign up
   const handleOAuthSignUp = (provider: "google" | "github"): void => {
     if (provider === "google") {
@@ -126,9 +128,13 @@ export default function SignUpPage(): JSX.Element {
 
   // Already authenticated - show loading while redirecting
   if (isAuthenticated) {
+=======
+  // Loading state
+  if (!isInitialized || isAuthenticated) {
+>>>>>>> 5663ce9 (refactor: clean auth architecture - NextAuth for OAuth only)
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -142,6 +148,7 @@ export default function SignUpPage(): JSX.Element {
           </CardTitle>
           <CardDescription>Enter your details to get started</CardDescription>
         </CardHeader>
+
         <CardContent className="space-y-4">
           {/* Error message */}
           {errors.root && (
@@ -218,11 +225,18 @@ export default function SignUpPage(): JSX.Element {
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Creating account..." : "Create account"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating account...
+                </>
+              ) : (
+                "Create account"
+              )}
             </Button>
           </form>
 
-          {/* OAuth Section - Only show if at least one provider is configured */}
+          {/* OAuth Section */}
           {oauthProviders.hasAnyOAuth && (
             <>
               <div className="relative">
@@ -243,7 +257,7 @@ export default function SignUpPage(): JSX.Element {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => handleOAuthSignUp("google")}
+                    onClick={loginWithGoogle}
                     disabled={isLoading}
                   >
                     <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -271,7 +285,7 @@ export default function SignUpPage(): JSX.Element {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => handleOAuthSignUp("github")}
+                    onClick={loginWithGitHub}
                     disabled={isLoading}
                   >
                     <Github className="mr-2 h-4 w-4" />
@@ -293,6 +307,7 @@ export default function SignUpPage(): JSX.Element {
             </Link>
           </p>
         </CardContent>
+
         <CardFooter className="flex flex-col space-y-4">
           <div className="text-sm text-foreground-secondary">
             Already have an account?{" "}
