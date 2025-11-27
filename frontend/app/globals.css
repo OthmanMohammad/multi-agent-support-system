@@ -85,8 +85,25 @@
   }
 
   body {
+    font-family: var(--font-sans);
     min-height: 100vh;
     line-height: 1.5;
+  }
+
+  /* Apply font to all elements */
+  *, *::before, *::after {
+    font-family: inherit;
+  }
+
+  /* Headings */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-sans);
+    font-weight: 700;
+  }
+
+  /* Inputs and buttons */
+  input, button, textarea, select {
+    font-family: var(--font-sans);
   }
 
   /* Remove default focus styles and add custom */
