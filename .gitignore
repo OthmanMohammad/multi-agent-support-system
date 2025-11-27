@@ -165,6 +165,7 @@ Thumbs.db
 secrets/
 .env.*
 !.env.example
+!.env.local.example
 .doppler.yaml
 
 # SSH keys
