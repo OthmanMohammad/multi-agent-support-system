@@ -19,6 +19,7 @@ import { NotificationSettings } from "@/components/settings/notification-setting
 import { PrivacySettings } from "@/components/settings/privacy-settings";
 import { KeyboardShortcutsSettings } from "@/components/settings/keyboard-shortcuts-settings";
 import { DataSettings } from "@/components/settings/data-settings";
+import { AuthGuard } from "@/components/auth/auth-guard";
 import { cn } from "@/lib/utils";
 
 type SettingsTab =
@@ -77,7 +78,22 @@ const SETTINGS_TABS: SettingsTabConfig[] = [
 
 /**
  * Settings Page Component
- * Comprehensive settings interface with multiple categories
+ *
+ * Protected route requiring authentication.
+ * Comprehensive settings interface with multiple categories.
+ */
+export default function SettingsPage(): JSX.Element {
+  return (
+    <AuthGuard>
+      <SettingsContent />
+    </AuthGuard>
+  );
+}
+
+/**
+ * Settings Content Component
+ *
+ * Contains the actual settings UI, rendered only when authenticated.
  *
  * Features:
  * - Profile management
@@ -87,7 +103,7 @@ const SETTINGS_TABS: SettingsTabConfig[] = [
  * - Keyboard shortcuts
  * - Data export/import
  */
-export default function SettingsPage(): JSX.Element {
+function SettingsContent(): JSX.Element {
   const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
 
   const renderContent = (): JSX.Element => {
