@@ -1,80 +1,67 @@
-import type { JSX } from "react";
-import type { Metadata } from "next";
-import { SessionProvider } from "next-auth/react";
+import type { Metadata, Viewport } from 'next';
+import { Toaster } from 'sonner';
 
-import { ThemeProvider } from "@/components/theme-provider";
-import { QueryProvider } from "@/lib/react-query/provider";
-import { ToastProvider } from "@/components/providers/toast-provider";
-import { CommandPalette } from "@/components/command-palette";
-import { KeyboardShortcutsOverlay } from "@/components/keyboard-shortcuts-overlay";
-import { PerformanceMonitor } from "@/components/performance-monitor";
-import { Header } from "@/components/layout/header";
-import { AuthProvider } from "@/lib/contexts/auth-context";
-import { siteConfig } from "@/config/site";
+import { Providers } from '@/components/shared/providers';
 
-import "./globals.css";
+import './globals.css';
 
 export const metadata: Metadata = {
   title: {
-    default: siteConfig.name,
-    template: `%s | ${siteConfig.name}`,
+    default: 'Multi-Agent Support | AI-Powered Customer Support',
+    template: '%s | Multi-Agent Support',
   },
-  description: siteConfig.description,
-  keywords: [
-    "AI",
-    "Customer Support",
-    "Multi-Agent",
-    "Chatbot",
-    "Next.js",
-    "React",
-    "Tailwind CSS",
-  ],
-  authors: [
-    {
-      name: "Othman Mohammad",
-      url: siteConfig.links.github,
-    },
-  ],
-  creator: "Othman Mohammad",
+  description:
+    'Enterprise-grade AI-powered customer support platform with 243+ specialized agents. Handle support, sales, and success at scale.',
+  keywords: ['AI', 'customer support', 'multi-agent', 'chatbot', 'enterprise'],
+  authors: [{ name: 'Multi-Agent Support' }],
   openGraph: {
-    type: "website",
-    locale: "en_US",
-    url: siteConfig.url,
-    title: siteConfig.name,
-    description: siteConfig.description,
-    siteName: siteConfig.name,
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://thatagentsproject.com',
+    siteName: 'Multi-Agent Support',
+    title: 'Multi-Agent Support | AI-Powered Customer Support',
+    description:
+      'Enterprise-grade AI-powered customer support platform with 243+ specialized agents.',
   },
   twitter: {
-    card: "summary_large_image",
-    title: siteConfig.name,
-    description: siteConfig.description,
+    card: 'summary_large_image',
+    title: 'Multi-Agent Support | AI-Powered Customer Support',
+    description:
+      'Enterprise-grade AI-powered customer support platform with 243+ specialized agents.',
   },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#FF8205',
 };
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>): JSX.Element {
+}>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="font-sans antialiased">
-        <SessionProvider>
-          <QueryProvider>
-            <ThemeProvider>
-              <AuthProvider>
-                <div className="relative flex min-h-screen flex-col">
-                  <Header />
-                  <main className="flex-1">{children}</main>
-                </div>
-                <ToastProvider />
-                <CommandPalette />
-                <KeyboardShortcutsOverlay />
-                <PerformanceMonitor showDebugPanel={false} />
-              </AuthProvider>
-            </ThemeProvider>
-          </QueryProvider>
-        </SessionProvider>
+    <html lang="en">
+      <body className="min-h-screen bg-background antialiased">
+        <Providers>
+          {children}
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              style: {
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-primary)',
+              },
+            }}
+          />
+        </Providers>
       </body>
     </html>
   );

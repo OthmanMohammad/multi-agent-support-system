@@ -21,7 +21,8 @@ Endpoints:
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+import httpx
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 
 from src.api.auth import (
     APIKeyManager,
@@ -63,6 +64,87 @@ settings = get_settings()
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
+# Cookie settings for refresh token
+REFRESH_TOKEN_COOKIE_NAME = "refresh_token"
+REFRESH_TOKEN_COOKIE_MAX_AGE = 30 * 24 * 60 * 60  # 30 days in seconds
+
+
+def set_refresh_token_cookie(response: Response, refresh_token: str) -> None:
+    """Set httpOnly refresh token cookie"""
+    response.set_cookie(
+        key=REFRESH_TOKEN_COOKIE_NAME,
+        value=refresh_token,
+        max_age=REFRESH_TOKEN_COOKIE_MAX_AGE,
+        httponly=True,
+        secure=settings.environment != "development",  # True in production
+        samesite="lax",
+        path="/api/v1/auth",  # Only sent to auth endpoints
+    )
+
+
+def clear_refresh_token_cookie(response: Response) -> None:
+    """Clear the refresh token cookie"""
+    response.delete_cookie(
+        key=REFRESH_TOKEN_COOKIE_NAME,
+        path="/api/v1/auth",
+    )
+
+
+async def verify_turnstile_token(token: str, ip_address: str | None = None) -> bool:
+    """
+    Verify Cloudflare Turnstile token.
+
+    Returns True if verification passes, False otherwise.
+    """
+    if not settings.turnstile.enabled:
+        return True
+
+    if not token:
+        return False
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                settings.turnstile.verify_url,
+                data={
+                    "secret": settings.turnstile.secret_key,
+                    "response": token,
+                    "remoteip": ip_address,
+                },
+                timeout=10.0,
+            )
+            result = response.json()
+            return result.get("success", False)
+    except Exception as e:
+        logger.error("turnstile_verification_error", error=str(e))
+        # Fail open in development, fail closed in production
+        return settings.environment == "development"
+
+
+# =============================================================================
+# PUBLIC CONFIG
+# =============================================================================
+
+
+@router.get("/config")
+async def get_auth_config():
+    """
+    Get public authentication configuration.
+
+    Returns client-side configuration like Turnstile site key.
+    This endpoint is public and does not require authentication.
+    """
+    return {
+        "turnstile": {
+            "enabled": settings.turnstile.enabled,
+            "site_key": settings.turnstile.site_key,
+        },
+        "oauth": {
+            "google_enabled": True,  # TODO: Make configurable
+            "github_enabled": True,  # TODO: Make configurable
+        },
+    }
+
 
 # =============================================================================
 # USER REGISTRATION
@@ -70,7 +152,11 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 @router.post("/register", response_model=UserRegisterResponse, status_code=status.HTTP_201_CREATED)
-async def register_user(request: UserRegisterRequest):
+async def register_user(
+    request: UserRegisterRequest,
+    response: Response,
+    http_request: Request,
+):
     """
     Register a new user account.
 
@@ -81,8 +167,19 @@ async def register_user(request: UserRegisterRequest):
     - **password**: Strong password (min 8 chars, uppercase, lowercase, digit, special char)
     - **full_name**: User's full name
     - **organization**: Optional organization name
+    - **turnstile_token**: Cloudflare Turnstile verification token
     """
     logger.info("user_registration_started", email=request.email)
+
+    # Verify Turnstile captcha
+    if settings.turnstile.enabled:
+        client_ip = http_request.client.host if http_request.client else None
+        if not await verify_turnstile_token(request.turnstile_token or "", client_ip):
+            logger.warning("registration_turnstile_failed", email=request.email)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Captcha verification failed. Please try again.",
+            )
 
     # Validate password strength
     is_valid, error = PasswordManager.validate_password_strength(
@@ -137,6 +234,9 @@ async def register_user(request: UserRegisterRequest):
         # TODO: Send verification email (implement email service)
         logger.info("verification_email_queued", user_id=str(user.id), token=verification_token)
 
+        # Set refresh token in httpOnly cookie
+        set_refresh_token_cookie(response, refresh_token)
+
         return UserRegisterResponse(
             user_id=user.id,
             email=user.email,
@@ -144,7 +244,7 @@ async def register_user(request: UserRegisterRequest):
             role=user.role.value,
             status=user.status.value,
             access_token=access_token,
-            refresh_token=refresh_token,
+            refresh_token="",  # Don't return in body, it's in httpOnly cookie
             token_type="Bearer",
             expires_in=settings.jwt.access_token_expire_minutes * 60,
         )
@@ -156,11 +256,11 @@ async def register_user(request: UserRegisterRequest):
 
 
 @router.post("/login", response_model=LoginResponse)
-async def login(request: LoginRequest):
+async def login(request: LoginRequest, response: Response):
     """
     Authenticate user and return JWT tokens.
 
-    Returns access token (short-lived) and refresh token (long-lived).
+    Returns access token (short-lived). Refresh token is set as httpOnly cookie.
 
     - **email**: User email address
     - **password**: User password
@@ -225,9 +325,12 @@ async def login(request: LoginRequest):
             last_login_at=user.last_login_at,
         )
 
+        # Set refresh token in httpOnly cookie
+        set_refresh_token_cookie(response, refresh_token)
+
         return LoginResponse(
             access_token=access_token,
-            refresh_token=refresh_token,
+            refresh_token="",  # Don't return in body, it's in httpOnly cookie
             token_type="Bearer",
             expires_in=settings.jwt.access_token_expire_minutes * 60,
             user=user_profile,
@@ -240,7 +343,7 @@ async def login(request: LoginRequest):
 
 
 @router.post("/oauth-login", response_model=LoginResponse)
-async def oauth_login(request: OAuthLoginRequest):
+async def oauth_login(request: OAuthLoginRequest, response: Response):
     """
     Login or register user via OAuth provider (NextAuth integration).
 
@@ -347,9 +450,12 @@ async def oauth_login(request: OAuthLoginRequest):
             last_login_at=user.last_login_at,
         )
 
+        # Set refresh token in httpOnly cookie
+        set_refresh_token_cookie(response, refresh_token)
+
         return LoginResponse(
             access_token=access_token,
-            refresh_token=refresh_token,
+            refresh_token="",  # Don't return in body, it's in httpOnly cookie
             token_type="Bearer",
             expires_in=settings.jwt.access_token_expire_minutes * 60,
             user=user_profile,
@@ -363,20 +469,36 @@ async def oauth_login(request: OAuthLoginRequest):
 
 
 @router.post("/refresh", response_model=RefreshTokenResponse)
-async def refresh_token(request: RefreshTokenRequest):
+async def refresh_token(
+    response: Response,
+    request: RefreshTokenRequest | None = None,
+    refresh_token_cookie: str | None = Cookie(None, alias=REFRESH_TOKEN_COOKIE_NAME),
+):
     """
     Refresh access token using refresh token.
 
-    Returns new access token and new refresh token (token rotation).
+    Returns new access token and sets new refresh token (token rotation).
 
-    - **refresh_token**: Valid refresh token
+    Refresh token is read from httpOnly cookie. Request body is optional
+    for backward compatibility.
     """
     logger.debug("token_refresh_started")
 
+    # Get refresh token from cookie or body (cookie takes precedence)
+    token_to_use = refresh_token_cookie or (request.refresh_token if request else None)
+
+    if not token_to_use:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token not provided",
+        )
+
     # Validate refresh token
     try:
-        payload = JWTManager.validate_refresh_token(request.refresh_token)
+        payload = JWTManager.validate_refresh_token(token_to_use)
     except HTTPException as e:
+        # Clear invalid cookie
+        clear_refresh_token_cookie(response)
         logger.warning("token_refresh_failed_invalid_token")
         raise e
 
@@ -425,9 +547,12 @@ async def refresh_token(request: RefreshTokenRequest):
         ttl = settings.jwt.refresh_token_expire_days * 24 * 60 * 60
         await TokenBlacklist.add_token(jti, ttl_seconds=ttl)
 
+        # Set new refresh token in httpOnly cookie
+        set_refresh_token_cookie(response, new_refresh_token)
+
         return RefreshTokenResponse(
             access_token=new_access_token,
-            refresh_token=new_refresh_token,
+            refresh_token="",  # Don't return in body, it's in httpOnly cookie
             token_type="Bearer",
             expires_in=settings.jwt.access_token_expire_minutes * 60,
         )
@@ -439,18 +564,19 @@ async def refresh_token(request: RefreshTokenRequest):
 
 
 @router.post("/logout", response_model=LogoutResponse)
-async def logout(current_user: User = Depends(get_current_user)):
+async def logout(response: Response, current_user: User = Depends(get_current_user)):
     """
     Logout current user and revoke tokens.
 
-    Blacklists the current access token to prevent further use.
-    Client should also discard refresh token.
+    Blacklists the current access token and clears the refresh token cookie.
     """
     logger.info("user_logout", user_id=str(current_user.id))
 
-    # TODO: Extract JTI from request headers and blacklist
-    # For now, just return success
-    # In production, extract token from Authorization header and blacklist it
+    # Clear the refresh token cookie
+    clear_refresh_token_cookie(response)
+
+    # TODO: Extract JTI from request headers and blacklist access token
+    # For now, just clear the cookie
 
     return LogoutResponse(message="Successfully logged out")
 

@@ -1,226 +1,116 @@
+import type {
+  ForgotPasswordRequest,
+  LoginRequest,
+  LoginResponse,
+  RegisterRequest,
+  RegisterResponse,
+  ResetPasswordRequest,
+  User,
+} from '@/types';
+
+import { apiClient, setAccessToken } from './client';
+
+// =============================================================================
+// Auth API Functions
+// =============================================================================
+
 /**
- * Authentication API
- *
- * All authentication-related API calls.
- * Handles login, signup, logout, token refresh, OAuth.
+ * Login with email and password
+ * Sets access token in memory, refresh token is set as httpOnly cookie by backend
  */
+export async function login(data: LoginRequest): Promise<LoginResponse> {
+  const response = await apiClient.post<LoginResponse>('/auth/login', data);
+  setAccessToken(response.data.access_token);
+  return response.data;
+}
 
-import { apiClient, TokenManager } from "../api-client";
-import {
-  type LoginResponse,
-  LoginResponseSchema,
-  type RegisterRequest,
-  type RegisterResponse,
-  RegisterResponseSchema,
-  type Result,
-  type UserProfile,
-  UserProfileSchema,
-} from "../types/api";
+/**
+ * Register a new user
+ * Includes Turnstile captcha token for verification
+ */
+export async function register(data: RegisterRequest): Promise<RegisterResponse> {
+  const response = await apiClient.post<RegisterResponse>('/auth/register', data);
+  setAccessToken(response.data.access_token);
+  return response.data;
+}
 
-// =============================================================================
-// AUTHENTICATION
-// =============================================================================
+/**
+ * Logout - clears tokens
+ */
+export async function logout(): Promise<void> {
+  try {
+    await apiClient.post('/auth/logout');
+  } finally {
+    setAccessToken(null);
+  }
+}
 
-export const authAPI = {
-  /**
-   * Register new user
-   */
-  async register(data: RegisterRequest): Promise<Result<RegisterResponse>> {
-    const result = await apiClient.post<RegisterResponse>(
-      "/api/auth/register",
-      data
-    );
+/**
+ * Refresh access token
+ * Refresh token is sent via httpOnly cookie
+ */
+export async function refreshToken(): Promise<{ access_token: string }> {
+  const response = await apiClient.post<{ access_token: string }>('/auth/refresh');
+  setAccessToken(response.data.access_token);
+  return response.data;
+}
 
-    if (result.success) {
-      // Validate response
-      const validated = RegisterResponseSchema.safeParse(result.data);
-      if (!validated.success) {
-        console.error("Register response validation failed:", validated.error);
-        return { success: false, error: new Error("Invalid response format") };
-      }
+/**
+ * Get current user profile
+ */
+export async function getCurrentUser(): Promise<User> {
+  const response = await apiClient.get<User>('/auth/me');
+  return response.data;
+}
 
-      // Store tokens
-      TokenManager.setTokens(
-        validated.data.access_token,
-        validated.data.refresh_token
-      );
+/**
+ * Request password reset email
+ */
+export async function forgotPassword(data: ForgotPasswordRequest): Promise<{ message: string }> {
+  const response = await apiClient.post<{ message: string }>('/auth/reset-password', data);
+  return response.data;
+}
 
-      return { success: true, data: validated.data };
-    }
+/**
+ * Reset password with token
+ */
+export async function resetPassword(data: ResetPasswordRequest): Promise<{ message: string }> {
+  const response = await apiClient.post<{ message: string }>('/auth/reset-password/confirm', data);
+  return response.data;
+}
 
-    return result;
-  },
+/**
+ * Verify email with token
+ */
+export async function verifyEmail(token: string): Promise<{ message: string; user: User }> {
+  const response = await apiClient.post<{ message: string; user: User }>('/auth/verify-email', {
+    token,
+  });
+  return response.data;
+}
 
-  /**
-   * Login user
-   */
-  async login(email: string, password: string): Promise<Result<LoginResponse>> {
-    const result = await apiClient.post<LoginResponse>("/api/auth/login", {
-      email,
-      password,
-    });
+/**
+ * Resend verification email
+ */
+export async function resendVerificationEmail(email: string): Promise<{ message: string }> {
+  const response = await apiClient.post<{ message: string }>('/auth/resend-verification', {
+    email,
+  });
+  return response.data;
+}
 
-    if (result.success) {
-      // Validate response
-      const validated = LoginResponseSchema.safeParse(result.data);
-      if (!validated.success) {
-        return { success: false, error: new Error("Invalid response format") };
-      }
+/**
+ * OAuth login - redirect to provider
+ */
+export function oauthLogin(provider: 'google' | 'github'): void {
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  window.location.href = `${baseUrl}/api/oauth/${provider}`;
+}
 
-      // Store tokens
-      TokenManager.setTokens(
-        validated.data.access_token,
-        validated.data.refresh_token
-      );
-
-      return { success: true, data: validated.data };
-    }
-
-    return result;
-  },
-
-  /**
-   * Logout user
-   */
-  async logout(): Promise<Result<void>> {
-    try {
-      // Call backend logout (blacklists token)
-      await apiClient.post("/api/auth/logout");
-
-      // Clear local tokens
-      TokenManager.clearTokens();
-
-      return { success: true, data: undefined };
-    } catch (error) {
-      // Even if backend call fails, clear local tokens
-      TokenManager.clearTokens();
-      return { success: false, error: error as Error };
-    }
-  },
-
-  /**
-   * Get current user profile
-   */
-  async me(): Promise<Result<UserProfile>> {
-    const result = await apiClient.get<UserProfile>("/api/auth/me");
-
-    if (result.success) {
-      // Validate response
-      const validated = UserProfileSchema.safeParse(result.data);
-      if (!validated.success) {
-        return { success: false, error: new Error("Invalid response format") };
-      }
-
-      return { success: true, data: validated.data };
-    }
-
-    return result;
-  },
-
-  /**
-   * Refresh access token
-   */
-  async refresh(): Promise<
-    Result<{ access_token: string; refresh_token: string }>
-  > {
-    const refreshToken = TokenManager.getRefreshToken();
-
-    if (!refreshToken) {
-      return {
-        success: false,
-        error: new Error("No refresh token available"),
-      };
-    }
-
-    const result = await apiClient.post<{
-      access_token: string;
-      refresh_token: string;
-    }>("/api/auth/refresh", { refresh_token: refreshToken });
-
-    if (result.success) {
-      // Store new tokens
-      TokenManager.setTokens(
-        result.data.access_token,
-        result.data.refresh_token
-      );
-    }
-
-    return result;
-  },
-
-  /**
-   * Request password reset
-   */
-  async requestPasswordReset(
-    email: string
-  ): Promise<Result<{ message: string }>> {
-    return apiClient.post("/api/auth/request-password-reset", { email });
-  },
-
-  /**
-   * Reset password
-   */
-  async resetPassword(
-    token: string,
-    newPassword: string
-  ): Promise<Result<{ message: string }>> {
-    // Backend expects the confirm endpoint for actual password reset
-    return apiClient.post("/api/auth/reset-password/confirm", {
-      token,
-      new_password: newPassword,
-    });
-  },
-
-  /**
-   * Verify email
-   */
-  async verifyEmail(token: string): Promise<Result<{ message: string }>> {
-    return apiClient.post("/api/auth/verify-email", { token });
-  },
-};
-
-// =============================================================================
-// OAUTH
-// =============================================================================
-
-export const oauthAPI = {
-  /**
-   * Get available OAuth providers
-   */
-  async getProviders(): Promise<
-    Result<{
-      providers: Array<{
-        name: string;
-        display_name: string;
-        auth_url: string;
-        enabled: boolean;
-      }>;
-    }>
-  > {
-    return apiClient.get("/api/oauth/providers");
-  },
-
-  /**
-   * Initiate Google OAuth
-   */
-  initiateGoogle(redirectUri?: string): void {
-    const params = new URLSearchParams();
-    if (redirectUri) {
-      params.set("redirect_uri", redirectUri);
-    }
-
-    window.location.href = `${apiClient.getRawClient().defaults.baseURL}/api/oauth/google?${params}`;
-  },
-
-  /**
-   * Initiate GitHub OAuth
-   */
-  initiateGitHub(redirectUri?: string): void {
-    const params = new URLSearchParams();
-    if (redirectUri) {
-      params.set("redirect_uri", redirectUri);
-    }
-
-    window.location.href = `${apiClient.getRawClient().defaults.baseURL}/api/oauth/github?${params}`;
-  },
-};
+/**
+ * Handle OAuth callback - exchange token from URL params
+ */
+export async function handleOAuthCallback(accessToken: string): Promise<User> {
+  setAccessToken(accessToken);
+  return getCurrentUser();
+}

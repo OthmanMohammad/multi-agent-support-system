@@ -1,106 +1,75 @@
-/**
- * Auth Validation Schemas
- *
- * Zod schemas for form validation in authentication flows.
- */
-
-import { z } from "zod";
+import { z } from 'zod';
 
 // =============================================================================
-// SIGN IN
+// Password validation helper
 // =============================================================================
 
-export const signInSchema = z.object({
-  email: z
-    .string()
-    .min(1, "Email is required")
-    .email("Please enter a valid email address"),
-  password: z
-    .string()
-    .min(1, "Password is required")
-    .min(8, "Password must be at least 8 characters"),
+const passwordSchema = z
+  .string()
+  .min(8, 'Password must be at least 8 characters')
+  .max(128, 'Password must be less than 128 characters')
+  .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+  .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+  .regex(/[0-9]/, 'Password must contain at least one number')
+  .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character');
+
+// =============================================================================
+// Login Schema
+// =============================================================================
+
+export const loginSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(1, 'Password is required'),
 });
 
-export type SignInFormData = z.infer<typeof signInSchema>;
+export type LoginFormData = z.infer<typeof loginSchema>;
 
 // =============================================================================
-// SIGN UP
+// Register Schema
 // =============================================================================
 
-export const signUpSchema = z
+export const registerSchema = z
   .object({
-    fullName: z
+    email: z.string().email('Please enter a valid email address'),
+    full_name: z
       .string()
-      .min(1, "Full name is required")
-      .min(2, "Full name must be at least 2 characters"),
-    email: z
-      .string()
-      .min(1, "Email is required")
-      .email("Please enter a valid email address"),
-    password: z
-      .string()
-      .min(1, "Password is required")
-      .min(8, "Password must be at least 8 characters")
-      .regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-        "Password must contain at least one uppercase letter, one lowercase letter, and one number"
-      ),
-    confirmPassword: z.string().min(1, "Please confirm your password"),
-    organization: z.string().optional(),
+      .min(1, 'Full name is required')
+      .max(255, 'Full name must be less than 255 characters'),
+    organization: z.string().max(255, 'Organization must be less than 255 characters').optional(),
+    password: passwordSchema,
+    confirm_password: z.string().min(1, 'Please confirm your password'),
+    turnstile_token: z.string().min(1, 'Please complete the captcha'),
   })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
+  .refine((data) => data.password === data.confirm_password, {
+    message: 'Passwords do not match',
+    path: ['confirm_password'],
   });
 
-export type SignUpFormData = z.infer<typeof signUpSchema>;
+export type RegisterFormData = z.infer<typeof registerSchema>;
 
 // =============================================================================
-// FORGOT PASSWORD
+// Forgot Password Schema
 // =============================================================================
 
 export const forgotPasswordSchema = z.object({
-  email: z
-    .string()
-    .min(1, "Email is required")
-    .email("Please enter a valid email address"),
+  email: z.string().email('Please enter a valid email address'),
 });
 
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
 // =============================================================================
-// RESET PASSWORD
+// Reset Password Schema
 // =============================================================================
 
 export const resetPasswordSchema = z
   .object({
-    password: z
-      .string()
-      .min(1, "Password is required")
-      .min(8, "Password must be at least 8 characters")
-      .regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-        "Password must contain at least one uppercase letter, one lowercase letter, and one number"
-      ),
-    confirmPassword: z.string().min(1, "Please confirm your password"),
+    token: z.string().min(1, 'Reset token is required'),
+    new_password: passwordSchema,
+    confirm_password: z.string().min(1, 'Please confirm your password'),
   })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
+  .refine((data) => data.new_password === data.confirm_password, {
+    message: 'Passwords do not match',
+    path: ['confirm_password'],
   });
 
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
-
-// =============================================================================
-// PROFILE UPDATE
-// =============================================================================
-
-export const profileUpdateSchema = z.object({
-  fullName: z
-    .string()
-    .min(1, "Full name is required")
-    .min(2, "Full name must be at least 2 characters"),
-  organization: z.string().optional(),
-});
-
-export type ProfileUpdateFormData = z.infer<typeof profileUpdateSchema>;
