@@ -13,7 +13,6 @@ from langgraph.graph import END, StateGraph
 # CRITICAL: Import agents module to trigger registration decorators
 # This must happen before accessing AgentRegistry.get_agent()
 import src.agents  # noqa: F401 - Side effect import for agent registration
-
 from src.services.infrastructure.agent_registry import AgentRegistry
 from src.utils.logging.setup import get_logger
 from src.workflow.state import AgentState, create_initial_state
