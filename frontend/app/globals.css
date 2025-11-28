@@ -73,7 +73,7 @@
     --transition-slow: 200ms;
 
     /* Font - Mistral uses Arial exclusively */
-    --font-sans: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+    --font-sans: Arial, sans-serif;
 
     /* Font weights */
     --font-weight-normal: 400;
