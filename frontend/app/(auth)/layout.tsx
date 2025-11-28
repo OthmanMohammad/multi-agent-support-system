@@ -24,7 +24,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
   // Show nothing while checking auth
   if (!isInitialized || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-beige-light">
         <div className="animate-pulse">
           <Logo size="lg" />
         </div>
@@ -33,7 +33,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-beige-light">
       {/* Mistral Rainbow Bar */}
       <div className="flex h-1 w-full">
         <div className="flex-1 bg-mistral-red" />
@@ -53,7 +53,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center px-6 pb-12">
         <div className="w-full max-w-sm">
-          <div className="bg-surface rounded-2xl border border-border p-8">{children}</div>
+          <div className="bg-white border border-border p-8">{children}</div>
         </div>
       </main>
 

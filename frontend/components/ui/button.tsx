@@ -7,38 +7,39 @@ import { forwardRef, type ButtonHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
 // =============================================================================
-// TAP Button Component - Mistral.ai Inspired Design
+// TAP Button Component - Mistral.ai Style
+// SHARP CORNERS - 0 border radius on all buttons
 // =============================================================================
 
 const buttonVariants = cva(
-  // Base styles - Mistral uses clean, minimal buttons
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mistral-orange focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50',
+  // Base styles - SHARP CORNERS (no rounded-lg!)
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mistral-orange focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
-        // Primary: Orange background (Mistral's signature)
+        // Primary: Orange background (Mistral's signature #FF8205)
         primary:
-          'bg-mistral-orange text-white hover:bg-mistral-orange-dark active:scale-[0.98] shadow-sm',
+          'bg-mistral-orange text-white hover:bg-mistral-orange-dark active:scale-[0.98]',
 
-        // Secondary: Black/Dark background with white text
+        // Secondary: White background with dark text
         secondary:
-          'bg-white text-black hover:bg-mistral-beige-light active:scale-[0.98]',
+          'bg-white text-mistral-brown hover:bg-beige-light active:scale-[0.98] border border-border',
 
         // Outline: Transparent with border
         outline:
-          'border border-border bg-transparent text-text-primary hover:border-text-primary hover:bg-surface-hover',
+          'border border-border bg-transparent text-text-primary hover:border-mistral-tan hover:bg-beige-light',
 
         // Ghost: No background, subtle hover
-        ghost: 'text-text-secondary hover:text-text-primary hover:bg-surface-hover',
+        ghost: 'text-text-secondary hover:text-text-primary hover:bg-beige-light',
 
         // Danger: Red for destructive actions
-        danger: 'bg-error text-white hover:bg-mistral-red active:scale-[0.98]',
+        danger: 'bg-mistral-red text-white hover:bg-[#c00400] active:scale-[0.98]',
 
         // Link: Text only, underline on hover
-        link: 'text-text-primary underline-offset-4 hover:underline p-0 h-auto font-normal',
+        link: 'text-mistral-orange underline-offset-4 hover:underline p-0 h-auto font-normal',
 
-        // Dark: Black button (like Mistral's primary)
-        dark: 'bg-black text-white hover:bg-mistral-black-tinted active:scale-[0.98]',
+        // Dark: Black button
+        dark: 'bg-black text-white hover:bg-black-tinted active:scale-[0.98]',
 
         // Orange outline
         'orange-outline':

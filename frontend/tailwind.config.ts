@@ -1,8 +1,8 @@
 import type { Config } from 'tailwindcss';
 
 // =============================================================================
-// TAP Design System - Mistral.ai Inspired
-// Dark Mode First | Arial Font | Pixel Art Aesthetic
+// TAP Design System - CORRECT Mistral.ai Style
+// Beige/Cream Backgrounds | DM Sans Font | Sharp Corners
 // =============================================================================
 
 const config: Config = {
@@ -12,56 +12,76 @@ const config: Config = {
     './lib/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
-    // Mistral uses Arial for universal appeal and sustainability
+    // DM Sans everywhere
     fontFamily: {
-      sans: ['Arial', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+      sans: ['"DM Sans"', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
       mono: ['SF Mono', 'Monaco', 'Cascadia Mono', 'monospace'],
     },
     extend: {
       colors: {
         // =================================================================
-        // Mistral Rainbow - Primary Brand Colors
+        // CORRECT Mistral Rainbow - From Brand Guide
         // =================================================================
         mistral: {
-          red: '#EF4444',
-          'orange-dark': '#EA580C',
-          orange: '#F97316',
-          'orange-light': '#FB923C',
-          yellow: '#FACC15',
-          // Beige shades (for light mode sections if needed)
-          'beige-light': '#FEF3E2',
-          'beige-medium': '#E8DFD0',
-          'beige-dark': '#D4C4A8',
-          // Black shades
-          black: '#1E1E1E',
-          'black-tinted': '#2D2D2D',
+          red: '#E10500',
+          'orange-dark': '#FA500F',
+          orange: '#FF8205',        // Primary brand orange
+          'orange-light': '#FFAF00',
+          yellow: '#FFD800',
         },
 
         // =================================================================
-        // Dark Mode Colors (Default)
+        // Beige/Cream Backgrounds - Mistral's Actual Theme
+        // =================================================================
+        beige: {
+          light: '#FFFAEB',         // Main page background
+          medium: '#FFF0C3',        // Cards, elevated surfaces
+          dark: '#E9E2CB',          // Borders, dividers
+        },
+
+        // =================================================================
+        // From Mistral CSS Variables
+        // =================================================================
+        'mistral-brown': '#352B22',
+        'mistral-cream': '#FBF9E5',
+        'mistral-burnt': '#BA5417',
+        'mistral-amber': '#EE9926',
+        'mistral-tan': '#C9B390',
+        'mistral-gray': '#ADB4B4',
+
+        // =================================================================
+        // Light Theme Colors (Default - Mistral Style)
         // =================================================================
         background: {
-          DEFAULT: '#000000',
-          secondary: '#0A0A0A',
-          tertiary: '#111111',
-          card: '#1A1A1A',
+          DEFAULT: '#FFFAEB',       // Beige light
+          secondary: '#FFF0C3',     // Beige medium
+          tertiary: '#FBF9E5',      // Cream
+          card: '#FFFFFF',          // White cards
         },
         surface: {
-          DEFAULT: '#1A1A1A',
-          elevated: '#1F1F1F',
-          hover: '#252525',
+          DEFAULT: '#FFFFFF',       // White
+          elevated: '#FFFAEB',      // Beige light
+          hover: '#FFF0C3',         // Beige medium
         },
         border: {
-          DEFAULT: '#2A2A2A',
-          strong: '#3A3A3A',
-          hover: '#4A4A4A',
+          DEFAULT: '#E9E2CB',       // Beige dark
+          strong: '#C9B390',        // Tan
+          hover: '#BA5417',         // Burnt orange on hover
         },
         text: {
-          primary: '#FFFFFF',
-          secondary: '#A3A3A3',
-          tertiary: '#666666',
-          muted: '#525252',
-          inverse: '#000000',
+          primary: '#352B22',       // Dark brown
+          secondary: '#5A4A3A',     // Medium brown
+          tertiary: '#8A7A6A',      // Light brown
+          muted: '#ADB4B4',         // Gray
+          inverse: '#FFFFFF',       // White
+        },
+
+        // =================================================================
+        // Black (for specific dark sections)
+        // =================================================================
+        black: {
+          DEFAULT: '#000000',
+          tinted: '#1E1E1E',
         },
 
         // =================================================================
@@ -69,24 +89,24 @@ const config: Config = {
         // =================================================================
         success: {
           DEFAULT: '#22C55E',
-          light: '#166534',
+          light: '#DCFCE7',
         },
         error: {
-          DEFAULT: '#EF4444',
-          light: '#7F1D1D',
+          DEFAULT: '#E10500',
+          light: '#FEE2E2',
         },
         warning: {
-          DEFAULT: '#F97316',
-          light: '#7C2D12',
+          DEFAULT: '#FF8205',
+          light: '#FEF3C7',
         },
         info: {
           DEFAULT: '#3B82F6',
-          light: '#1E3A8A',
+          light: '#DBEAFE',
         },
       },
 
       // =================================================================
-      // Typography Scale (Mistral Style)
+      // Typography Scale
       // =================================================================
       fontSize: {
         xs: ['0.75rem', { lineHeight: '1rem' }],
@@ -105,37 +125,37 @@ const config: Config = {
       },
 
       // =================================================================
-      // Border Radius (Mistral Style - Minimal)
+      // Border Radius - SHARP CORNERS (Mistral Style)
       // =================================================================
       borderRadius: {
         none: '0',
-        sm: '4px',
-        DEFAULT: '8px',
-        md: '8px',
-        lg: '12px',
-        xl: '16px',
-        '2xl': '20px',
-        '3xl': '24px',
-        '4xl': '32px',
-        full: '9999px',
+        sm: '0',          // Sharp!
+        DEFAULT: '0',     // Sharp!
+        md: '0',          // Sharp!
+        lg: '0',          // Sharp!
+        xl: '0',          // Sharp!
+        '2xl': '0',       // Sharp!
+        '3xl': '0',       // Sharp!
+        '4xl': '0',       // Sharp!
+        full: '9999px',   // Only for avatars/badges
       },
 
       // =================================================================
-      // Shadows (Subtle for Dark Mode)
+      // Shadows (Light theme appropriate)
       // =================================================================
       boxShadow: {
-        sm: '0 1px 2px 0 rgb(0 0 0 / 0.3)',
-        DEFAULT: '0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4)',
-        md: '0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4)',
-        lg: '0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4)',
-        xl: '0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5)',
-        '2xl': '0 25px 50px -12px rgb(0 0 0 / 0.6)',
-        card: '0 25px 50px -12px rgb(0 0 0 / 0.25)',
-        inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.3)',
+        sm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+        DEFAULT: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+        md: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+        lg: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+        xl: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+        '2xl': '0 25px 50px -12px rgb(0 0 0 / 0.25)',
+        card: '0 4px 12px rgb(0 0 0 / 0.08)',
+        inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)',
       },
 
       // =================================================================
-      // Spacing (Consistent Scale)
+      // Spacing
       // =================================================================
       spacing: {
         '18': '4.5rem',
@@ -162,7 +182,7 @@ const config: Config = {
       },
 
       // =================================================================
-      // Animations (Mistral Style - Smooth & Purposeful)
+      // Animations
       // =================================================================
       animation: {
         'fade-in': 'fadeIn 0.4s ease-out',

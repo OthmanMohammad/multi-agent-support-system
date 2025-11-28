@@ -43,7 +43,7 @@ export function MarketingHeader() {
       className={cn(
         'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
         scrolled
-          ? 'bg-background/80 backdrop-blur-xl border-b border-border'
+          ? 'bg-beige-light/95 backdrop-blur-xl border-b border-border'
           : 'bg-transparent'
       )}
     >
@@ -58,7 +58,7 @@ export function MarketingHeader() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors rounded-lg hover:bg-surface-hover"
+                className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors hover:bg-beige-medium"
               >
                 {link.label}
               </Link>
@@ -66,19 +66,19 @@ export function MarketingHeader() {
 
             {/* Company Dropdown */}
             <div className="relative group">
-              <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors rounded-lg hover:bg-surface-hover">
+              <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors hover:bg-beige-medium">
                 Company
                 <Icon name="chevron-down" size={14} className="transition-transform group-hover:rotate-180" />
               </button>
 
               {/* Dropdown Menu */}
               <div className="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform group-hover:translate-y-0 translate-y-2">
-                <div className="bg-surface border border-border rounded-xl shadow-xl py-2 min-w-[180px]">
+                <div className="bg-white border border-border shadow-xl py-2 min-w-[180px]">
                   {companyLinks.map((link) => (
                     <Link
                       key={link.href}
                       href={link.href}
-                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors"
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:text-text-primary hover:bg-beige-light transition-colors"
                     >
                       {link.label}
                     </Link>
@@ -117,7 +117,7 @@ export function MarketingHeader() {
           {/* Mobile Menu Button */}
           <button
             type="button"
-            className="md:hidden p-2 text-text-secondary hover:text-text-primary transition-colors rounded-lg hover:bg-surface-hover"
+            className="md:hidden p-2 text-text-secondary hover:text-text-primary transition-colors hover:bg-beige-medium"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
           >
