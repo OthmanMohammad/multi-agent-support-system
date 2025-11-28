@@ -2,105 +2,125 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ============================================================================
-   THAT AGENTS PROJECT - MISTRAL-INSPIRED DESIGN SYSTEM
-   Clean white theme with orange rainbow accents
-   Arial typography (Mistral's choice for universal appeal)
-   ============================================================================ */
+/* =============================================================================
+   TAP DESIGN SYSTEM - MISTRAL.AI INSPIRED
+   Dark Mode First | Arial Font | Pixel Art Aesthetic
+   ============================================================================= */
 
 @layer base {
   :root {
-    /* Mistral Brand Colors - Rainbow Gradient */
-    --brand-red: #ee4b2b;
-    --brand-orange-dark: #ff5f1f;
-    --brand-orange: #ff7000;
-    --brand-orange-light: #ffa500;
-    --brand-yellow: #ffd700;
+    /* =========================================================================
+       Mistral Rainbow - Primary Brand Colors
+       ========================================================================= */
+    --mistral-red: #EF4444;
+    --mistral-orange-dark: #EA580C;
+    --mistral-orange: #F97316;
+    --mistral-orange-light: #FB923C;
+    --mistral-yellow: #FACC15;
 
-    /* Clean White Background (Mistral Style) */
-    --background: #ffffff;
-    --background-secondary: #fafafa;
-    --background-tertiary: #f5f5f5;
+    /* Beige Shades (for contrast sections) */
+    --mistral-beige-light: #FEF3E2;
+    --mistral-beige-medium: #E8DFD0;
+    --mistral-beige-dark: #D4C4A8;
 
-    /* Surface Colors */
-    --surface: #ffffff;
-    --surface-elevated: #fafafa;
+    /* Black Shades */
+    --mistral-black: #1E1E1E;
+    --mistral-black-tinted: #2D2D2D;
 
-    /* Border Colors */
-    --border: #e5e5e5;
-    --border-strong: #d4d4d4;
+    /* =========================================================================
+       Dark Mode Colors (Default)
+       ========================================================================= */
+    --background: #000000;
+    --background-secondary: #0A0A0A;
+    --background-tertiary: #111111;
+    --background-card: #1A1A1A;
 
-    /* Text Colors - High Contrast (Mistral uses pure black) */
-    --text-primary: #000000;
-    --text-secondary: #525252;
-    --text-tertiary: #a3a3a3;
-    --text-inverse: #ffffff;
+    --surface: #1A1A1A;
+    --surface-elevated: #1F1F1F;
+    --surface-hover: #252525;
+
+    --border: #2A2A2A;
+    --border-strong: #3A3A3A;
+    --border-hover: #4A4A4A;
+
+    --text-primary: #FFFFFF;
+    --text-secondary: #A3A3A3;
+    --text-tertiary: #666666;
+    --text-muted: #525252;
+    --text-inverse: #000000;
 
     /* Semantic Colors */
-    --success: #22c55e;
-    --success-light: #dcfce7;
-    --error: #ee4b2b;
-    --error-light: #fee2e2;
-    --warning: #ffa500;
-    --warning-light: #fef3c7;
-    --info: #3b82f6;
-    --info-light: #dbeafe;
+    --success: #22C55E;
+    --success-light: #166534;
+    --error: #EF4444;
+    --error-light: #7F1D1D;
+    --warning: #F97316;
+    --warning-light: #7C2D12;
+    --info: #3B82F6;
+    --info-light: #1E3A8A;
 
     /* Spacing Scale */
-    --spacing-xs: 0.25rem;
-    --spacing-sm: 0.5rem;
-    --spacing-md: 1rem;
-    --spacing-lg: 1.5rem;
-    --spacing-xl: 2rem;
-    --spacing-2xl: 3rem;
-    --spacing-3xl: 4rem;
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-10: 2.5rem;
+    --space-12: 3rem;
+    --space-16: 4rem;
+    --space-20: 5rem;
+    --space-24: 6rem;
+    --space-32: 8rem;
 
-    /* Border Radius - Minimal (Mistral prefers sharp/subtle) */
+    /* Border Radius */
     --radius-sm: 4px;
-    --radius-md: 6px;
-    --radius-lg: 8px;
-    --radius-xl: 12px;
-    --radius-2xl: 16px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-2xl: 20px;
     --radius-full: 9999px;
 
-    /* Shadows - Subtle */
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08);
+    /* Shadows (Subtle for Dark Mode) */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5);
+    --shadow-card: 0 25px 50px -12px rgb(0 0 0 / 0.5);
 
     /* Transitions */
     --transition-fast: 100ms;
-    --transition-normal: 150ms;
-    --transition-slow: 200ms;
+    --transition-normal: 200ms;
+    --transition-slow: 300ms;
 
-    /* Font - Arial (Mistral's choice) */
-    --font-sans: Arial, Helvetica, sans-serif;
-
-    /* Font weights */
-    --font-weight-normal: 400;
-    --font-weight-medium: 500;
-    --font-weight-semibold: 600;
-    --font-weight-bold: 700;
-    --font-weight-black: 900;
+    /* Font - Arial (Mistral's choice for universal appeal) */
+    --font-sans: Arial, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-mono: "SF Mono", Monaco, "Cascadia Mono", monospace;
   }
 
+  /* =========================================================================
+     Global Styles
+     ========================================================================= */
   html {
     font-family: var(--font-sans);
-    font-weight: var(--font-weight-normal);
     background-color: var(--background);
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
   }
 
   body {
     font-family: var(--font-sans);
     font-size: 16px;
-    font-weight: var(--font-weight-normal);
+    font-weight: 400;
     min-height: 100vh;
     line-height: 1.6;
     letter-spacing: -0.01em;
+    background-color: var(--background);
+    color: var(--text-primary);
   }
 
   /* Apply font to all elements */
@@ -108,51 +128,92 @@
   *::before,
   *::after {
     font-family: inherit;
+    box-sizing: border-box;
   }
 
-  /* Headings - Mistral style: bold/black with tight letter-spacing */
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
+  /* =========================================================================
+     Typography - Mistral Style
+     ========================================================================= */
+  h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-sans);
-    font-weight: var(--font-weight-bold);
+    font-weight: 700;
     letter-spacing: -0.02em;
     line-height: 1.1;
     color: var(--text-primary);
   }
 
   h1 {
-    font-size: 3.5rem;
-    font-weight: var(--font-weight-black);
-    letter-spacing: -0.04em;
+    font-size: 4.5rem; /* 72px */
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
   }
 
   h2 {
-    font-size: 2.5rem;
-    letter-spacing: -0.03em;
+    font-size: 2.5rem; /* 40px */
+    letter-spacing: -0.01em;
+    line-height: 1.2;
   }
 
   h3 {
-    font-size: 1.75rem;
-    letter-spacing: -0.02em;
+    font-size: 1.75rem; /* 28px */
+    font-weight: 600;
+    line-height: 1.3;
   }
 
   h4 {
-    font-size: 1.25rem;
+    font-size: 1.25rem; /* 20px */
+    font-weight: 600;
+    line-height: 1.4;
   }
 
   h5 {
     font-size: 1.125rem;
+    font-weight: 600;
   }
 
   h6 {
     font-size: 1rem;
+    font-weight: 600;
   }
 
-  /* Inputs and buttons */
+  p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  /* Body text variants */
+  .body-large {
+    font-size: 1.125rem;
+    line-height: 1.6;
+  }
+
+  .body {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .body-small {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  /* Labels & Captions */
+  .label {
+    font-size: 0.75rem;
+    line-height: 1.4;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .caption {
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+
+  /* Form elements */
   input,
   button,
   textarea,
@@ -160,24 +221,28 @@
     font-family: var(--font-sans);
   }
 
-  /* Remove default focus styles and add custom */
+  /* =========================================================================
+     Focus Styles
+     ========================================================================= */
   *:focus {
     outline: none;
   }
 
   *:focus-visible {
-    outline: 2px solid var(--brand-orange);
+    outline: 2px solid var(--mistral-orange);
     outline-offset: 2px;
   }
 
-  /* Scrollbar styling - Minimal */
+  /* =========================================================================
+     Scrollbar Styling - Minimal Dark Mode
+     ========================================================================= */
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
   }
 
   ::-webkit-scrollbar-track {
-    background: transparent;
+    background: var(--background-secondary);
   }
 
   ::-webkit-scrollbar-thumb {
@@ -189,46 +254,118 @@
     background: var(--text-tertiary);
   }
 
-  /* Selection - Orange highlight */
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) var(--background-secondary);
+  }
+
+  /* =========================================================================
+     Selection - Orange Highlight
+     ========================================================================= */
   ::selection {
-    background-color: var(--brand-orange);
-    color: var(--text-inverse);
+    background-color: var(--mistral-orange);
+    color: var(--text-primary);
+  }
+
+  /* =========================================================================
+     Links
+     ========================================================================= */
+  a {
+    color: inherit;
+    text-decoration: none;
   }
 }
 
 @layer components {
-  /* Container - Wide like Mistral */
+  /* =========================================================================
+     Container - Wide Layout (Mistral Style)
+     ========================================================================= */
   .container {
     @apply mx-auto w-full max-w-7xl px-6 sm:px-8 lg:px-12;
   }
 
-  /* Card - Minimal border */
-  .card {
-    @apply rounded-lg border border-border bg-surface p-6;
+  .container-narrow {
+    @apply mx-auto w-full max-w-4xl px-6 sm:px-8;
   }
 
-  /* Input base */
+  .container-wide {
+    @apply mx-auto w-full max-w-[1440px] px-6 sm:px-8 lg:px-16;
+  }
+
+  /* =========================================================================
+     Section Spacing
+     ========================================================================= */
+  .section {
+    @apply py-20 lg:py-32;
+  }
+
+  .section-sm {
+    @apply py-12 lg:py-20;
+  }
+
+  .section-lg {
+    @apply py-24 lg:py-40;
+  }
+
+  /* =========================================================================
+     Card - Dark Mode Style
+     ========================================================================= */
+  .card {
+    @apply rounded-2xl border border-border bg-surface p-6 transition-all duration-200;
+  }
+
+  .card-hover {
+    @apply hover:border-border-strong hover:-translate-y-1;
+  }
+
+  .card-interactive {
+    @apply cursor-pointer hover:border-border-strong hover:bg-surface-elevated transition-all duration-200;
+  }
+
+  /* =========================================================================
+     Input Base - Dark Mode
+     ========================================================================= */
   .input-base {
-    @apply h-11 w-full rounded-md border border-border bg-surface px-4 text-base text-text-primary
-           placeholder:text-text-tertiary transition-all duration-150
-           focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/20
+    @apply h-11 w-full rounded-lg border border-border bg-surface px-4 text-base text-text-primary
+           placeholder:text-text-tertiary transition-all duration-200
+           focus:border-mistral-orange focus:ring-2 focus:ring-mistral-orange/20
            disabled:cursor-not-allowed disabled:opacity-50;
   }
 
-  /* Button base */
+  /* =========================================================================
+     Button Base
+     ========================================================================= */
   .btn-base {
-    @apply inline-flex items-center justify-center gap-2 rounded-md font-semibold
-           transition-all duration-150 focus-visible:outline-none focus-visible:ring-2
-           focus-visible:ring-brand-orange focus-visible:ring-offset-2
+    @apply inline-flex items-center justify-center gap-2 rounded-lg font-semibold
+           transition-all duration-200 focus-visible:outline-none focus-visible:ring-2
+           focus-visible:ring-mistral-orange focus-visible:ring-offset-2 focus-visible:ring-offset-background
            disabled:pointer-events-none disabled:opacity-50;
   }
 
-  /* Link styles - Orange underline */
+  /* =========================================================================
+     Link Styles
+     ========================================================================= */
   .link {
-    @apply text-text-primary underline-offset-4 hover:underline transition-colors;
+    @apply text-text-primary underline-offset-4 hover:text-mistral-orange transition-colors;
   }
 
-  /* Mistral Rainbow Bar */
+  .link-animated {
+    @apply relative;
+  }
+
+  .link-animated::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-0 h-px bg-current transition-all duration-300;
+  }
+
+  .link-animated:hover::after {
+    @apply w-full;
+  }
+
+  /* =========================================================================
+     Mistral Rainbow Bar
+     ========================================================================= */
   .rainbow-bar {
     @apply flex h-1 w-full;
   }
@@ -237,13 +374,56 @@
     @apply flex-1;
   }
 
-  /* Prose for markdown content */
+  .rainbow-bar-animated > div {
+    @apply transition-transform duration-300;
+  }
+
+  /* =========================================================================
+     Gradient Background
+     ========================================================================= */
+  .gradient-mistral {
+    background: linear-gradient(
+      135deg,
+      var(--mistral-yellow) 0%,
+      var(--mistral-orange) 25%,
+      var(--mistral-orange-dark) 50%,
+      var(--mistral-red) 100%
+    );
+  }
+
+  /* =========================================================================
+     Gradient Text
+     ========================================================================= */
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background: linear-gradient(
+      90deg,
+      var(--mistral-red),
+      var(--mistral-orange-dark),
+      var(--mistral-orange),
+      var(--mistral-orange-light),
+      var(--mistral-yellow)
+    );
+  }
+
+  /* =========================================================================
+     Pixel Icon Styling
+     ========================================================================= */
+  .pixel-icon {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+  }
+
+  /* =========================================================================
+     Prose for Markdown Content
+     ========================================================================= */
   .prose {
     @apply text-text-primary leading-relaxed;
   }
 
   .prose h1 {
-    @apply text-4xl font-black mb-6 mt-10;
+    @apply text-4xl font-bold mb-6 mt-10;
   }
 
   .prose h2 {
@@ -251,7 +431,7 @@
   }
 
   .prose h3 {
-    @apply text-2xl font-bold mb-3 mt-6;
+    @apply text-2xl font-semibold mb-3 mt-6;
   }
 
   .prose p {
@@ -267,38 +447,37 @@
   }
 
   .prose code {
-    @apply bg-background-secondary px-1.5 py-0.5 rounded text-sm font-mono;
+    @apply bg-surface px-1.5 py-0.5 rounded text-sm font-mono text-mistral-orange;
   }
 
   .prose pre {
-    @apply bg-text-primary text-text-inverse p-4 rounded-lg overflow-x-auto mb-4;
+    @apply bg-surface border border-border p-4 rounded-lg overflow-x-auto mb-4;
   }
 
   .prose pre code {
-    @apply bg-transparent p-0 text-text-inverse;
+    @apply bg-transparent p-0 text-text-primary;
   }
 
   .prose a {
-    @apply text-brand-orange hover:text-brand-orange-dark underline underline-offset-4;
+    @apply text-mistral-orange hover:text-mistral-orange-light underline underline-offset-4;
   }
 
   .prose blockquote {
-    @apply border-l-4 border-brand-orange pl-4 italic my-4 text-text-secondary;
+    @apply border-l-4 border-mistral-orange pl-4 italic my-4 text-text-secondary;
   }
 }
 
 @layer utilities {
-  /* Text balance for headings */
+  /* =========================================================================
+     Text Utilities
+     ========================================================================= */
   .text-balance {
     text-wrap: balance;
   }
 
-  /* Gradient text - Mistral rainbow */
-  .gradient-text {
-    @apply bg-gradient-to-r from-brand-red via-brand-orange to-brand-yellow bg-clip-text text-transparent;
-  }
-
-  /* Hide scrollbar but keep functionality */
+  /* =========================================================================
+     Hide Scrollbar
+     ========================================================================= */
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -308,52 +487,68 @@
     display: none;
   }
 
-  /* Animated gradient background */
+  /* =========================================================================
+     Hover Effects - Mistral Style
+     ========================================================================= */
+  .hover-lift {
+    @apply transition-transform duration-200 ease-out hover:-translate-y-1;
+  }
+
+  .hover-lift-lg {
+    @apply transition-transform duration-200 ease-out hover:-translate-y-2;
+  }
+
+  .hover-scale {
+    @apply transition-transform duration-200 ease-out hover:scale-[1.02];
+  }
+
+  .hover-glow {
+    @apply transition-shadow duration-200 hover:shadow-xl;
+  }
+
+  /* =========================================================================
+     Animated Gradient Background
+     ========================================================================= */
   .animated-gradient {
-    background: linear-gradient(-45deg, #ffffff, #fafafa, #ffa500, #ff7000);
+    background: linear-gradient(
+      -45deg,
+      var(--background),
+      var(--background-secondary),
+      var(--mistral-orange-dark),
+      var(--mistral-orange)
+    );
     background-size: 400% 400%;
     animation: gradient 15s ease infinite;
   }
 
   @keyframes gradient {
-    0% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-    100% {
-      background-position: 0% 50%;
-    }
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
   }
 
-  /* Loading shimmer */
+  /* =========================================================================
+     Loading Shimmer
+     ========================================================================= */
   .shimmer {
     background: linear-gradient(
       90deg,
-      var(--background-secondary) 0%,
-      var(--background-tertiary) 50%,
-      var(--background-secondary) 100%
+      var(--surface) 0%,
+      var(--surface-elevated) 50%,
+      var(--surface) 100%
     );
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
   }
 
   @keyframes shimmer {
-    0% {
-      background-position: -200% 0;
-    }
-    100% {
-      background-position: 200% 0;
-    }
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
   }
 
-  /* Hover lift effect - Mistral style */
-  .hover-lift {
-    @apply transition-transform duration-200 ease-out hover:-translate-y-1;
-  }
-
-  /* Border gradient - Rainbow */
+  /* =========================================================================
+     Border Gradient - Rainbow
+     ========================================================================= */
   .border-gradient {
     position: relative;
   }
@@ -363,12 +558,41 @@
     position: absolute;
     inset: 0;
     padding: 1px;
-    background: linear-gradient(90deg, #ee4b2b, #ff5f1f, #ff7000, #ffa500, #ffd700);
+    background: linear-gradient(
+      90deg,
+      var(--mistral-red),
+      var(--mistral-orange-dark),
+      var(--mistral-orange),
+      var(--mistral-orange-light),
+      var(--mistral-yellow)
+    );
     border-radius: inherit;
-    mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask-composite: exclude;
     -webkit-mask-composite: xor;
+  }
+
+  /* =========================================================================
+     Glass Effect
+     ========================================================================= */
+  .glass {
+    @apply backdrop-blur-xl bg-background/80;
+  }
+
+  .glass-strong {
+    @apply backdrop-blur-2xl bg-background/90;
+  }
+
+  /* =========================================================================
+     Fade Mask
+     ========================================================================= */
+  .fade-bottom {
+    mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+  }
+
+  .fade-top {
+    mask-image: linear-gradient(to top, black 80%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to top, black 80%, transparent 100%);
   }
 }

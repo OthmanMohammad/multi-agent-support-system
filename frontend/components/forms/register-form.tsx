@@ -2,13 +2,12 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Turnstile } from '@marsidev/react-turnstile';
-import { Eye, EyeOff, Mail, User, Building } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { Button, Input, Label, Separator } from '@/components/ui';
+import { Button, Icon, Input, Label, Separator } from '@/components/ui';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { registerSchema, type RegisterFormData } from '@/lib/validations/auth';
 
@@ -87,7 +86,11 @@ export function RegisterForm() {
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Global Error */}
-        {error && <div className="rounded-md bg-error-light p-3 text-sm text-error">{error}</div>}
+        {error && (
+          <div className="rounded-lg bg-error-light p-3 text-sm text-error border border-error/20">
+            {error}
+          </div>
+        )}
 
         {/* Full Name Field */}
         <div className="space-y-2">
@@ -99,9 +102,10 @@ export function RegisterForm() {
               placeholder="John Doe"
               autoComplete="name"
               error={!!errors.full_name}
+              className="pr-10"
               {...register('full_name')}
             />
-            <User className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" />
+            <Icon name="user" size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
           </div>
           <FieldError message={errors.full_name?.message} />
         </div>
@@ -116,9 +120,10 @@ export function RegisterForm() {
               placeholder="you@example.com"
               autoComplete="email"
               error={!!errors.email}
+              className="pr-10"
               {...register('email')}
             />
-            <Mail className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" />
+            <Icon name="mail" size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
           </div>
           <FieldError message={errors.email?.message} />
         </div>
@@ -134,9 +139,10 @@ export function RegisterForm() {
               type="text"
               placeholder="Acme Corp"
               autoComplete="organization"
+              className="pr-10"
               {...register('organization')}
             />
-            <Building className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" />
+            <Icon name="building" size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
           </div>
           <FieldError message={errors.organization?.message} />
         </div>
@@ -151,6 +157,7 @@ export function RegisterForm() {
               placeholder="Create a strong password"
               autoComplete="new-password"
               error={!!errors.password}
+              className="pr-10"
               {...register('password')}
             />
             <button
@@ -158,7 +165,7 @@ export function RegisterForm() {
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-secondary transition-colors"
             >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              <Icon name={showPassword ? 'eye-off' : 'eye'} size={16} />
             </button>
           </div>
           <FieldError message={errors.password?.message} />
@@ -177,6 +184,7 @@ export function RegisterForm() {
               placeholder="Confirm your password"
               autoComplete="new-password"
               error={!!errors.confirm_password}
+              className="pr-10"
               {...register('confirm_password')}
             />
             <button
@@ -184,7 +192,7 @@ export function RegisterForm() {
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-secondary transition-colors"
             >
-              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              <Icon name={showConfirmPassword ? 'eye-off' : 'eye'} size={16} />
             </button>
           </div>
           <FieldError message={errors.confirm_password?.message} />
@@ -197,7 +205,7 @@ export function RegisterForm() {
               siteKey={TURNSTILE_SITE_KEY}
               onSuccess={handleTurnstileSuccess}
               options={{
-                theme: 'light',
+                theme: 'dark',
                 size: 'normal',
               }}
             />
@@ -214,11 +222,11 @@ export function RegisterForm() {
         {/* Terms */}
         <p className="text-center text-xs text-text-tertiary">
           By creating an account, you agree to our{' '}
-          <Link href="/terms" className="text-brand-orange-dark hover:underline">
+          <Link href="/terms" className="text-mistral-orange hover:text-mistral-orange-light transition-colors">
             Terms of Service
           </Link>{' '}
           and{' '}
-          <Link href="/privacy" className="text-brand-orange-dark hover:underline">
+          <Link href="/privacy" className="text-mistral-orange hover:text-mistral-orange-light transition-colors">
             Privacy Policy
           </Link>
         </p>
@@ -229,7 +237,7 @@ export function RegisterForm() {
         Already have an account?{' '}
         <Link
           href="/login"
-          className="font-medium text-brand-orange-dark hover:text-brand-orange transition-colors"
+          className="font-medium text-mistral-orange hover:text-mistral-orange-light transition-colors"
         >
           Sign in
         </Link>

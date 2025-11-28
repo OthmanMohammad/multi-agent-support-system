@@ -1,18 +1,27 @@
 'use client';
 
-import { ChevronDown, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { Logo } from '@/components/shared';
-import { Button } from '@/components/ui';
+import { Button, Icon } from '@/components/ui';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { cn } from '@/lib/utils';
 
+// =============================================================================
+// TAP Marketing Header - Mistral.ai Inspired Dark Navigation
+// =============================================================================
+
 const navLinks = [
-  { href: '#technology', label: 'Technology' },
-  { href: '#agents', label: 'Agents' },
-  { href: '/docs', label: 'Docs' },
+  { href: '/#technology', label: 'Technology' },
+  { href: '/#agents', label: 'Agents' },
+  { href: '/docs', label: 'Documentation' },
+];
+
+const companyLinks = [
+  { href: '/about', label: 'About' },
+  { href: '/blog', label: 'Blog' },
+  { href: '/careers', label: 'Careers' },
 ];
 
 export function MarketingHeader() {
@@ -20,7 +29,7 @@ export function MarketingHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  // Handle scroll effect
+  // Handle scroll effect for background blur
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
@@ -32,14 +41,16 @@ export function MarketingHeader() {
   return (
     <header
       className={cn(
-        'sticky top-0 z-50 transition-all duration-200',
-        scrolled ? 'bg-background/95 backdrop-blur-md border-b border-border' : 'bg-transparent'
+        'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
+        scrolled
+          ? 'bg-background/80 backdrop-blur-xl border-b border-border'
+          : 'bg-transparent'
       )}
     >
       <div className="container">
         <nav className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Logo />
+          <Logo size="md" />
 
           {/* Desktop Navigation - Center */}
           <div className="hidden md:flex md:items-center md:gap-1">
@@ -47,37 +58,31 @@ export function MarketingHeader() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors rounded-md hover:bg-background-secondary"
+                className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors rounded-lg hover:bg-surface-hover"
               >
                 {link.label}
               </Link>
             ))}
-            {/* Dropdown example - like Mistral */}
+
+            {/* Company Dropdown */}
             <div className="relative group">
-              <button className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors rounded-md hover:bg-background-secondary">
+              <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors rounded-lg hover:bg-surface-hover">
                 Company
-                <ChevronDown className="h-4 w-4 transition-transform group-hover:rotate-180" />
+                <Icon name="chevron-down" size={14} className="transition-transform group-hover:rotate-180" />
               </button>
-              <div className="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                <div className="bg-surface border border-border rounded-lg shadow-lg py-2 min-w-[160px]">
-                  <Link
-                    href="/about"
-                    className="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-background-secondary"
-                  >
-                    About
-                  </Link>
-                  <Link
-                    href="/blog"
-                    className="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-background-secondary"
-                  >
-                    Blog
-                  </Link>
-                  <Link
-                    href="/careers"
-                    className="block px-4 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-background-secondary"
-                  >
-                    Careers
-                  </Link>
+
+              {/* Dropdown Menu */}
+              <div className="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform group-hover:translate-y-0 translate-y-2">
+                <div className="bg-surface border border-border rounded-xl shadow-xl py-2 min-w-[180px]">
+                  {companyLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
                 </div>
               </div>
             </div>
@@ -87,7 +92,10 @@ export function MarketingHeader() {
           <div className="hidden md:flex md:items-center md:gap-3">
             {isAuthenticated ? (
               <Link href="/chat">
-                <Button size="sm">Dashboard</Button>
+                <Button size="sm">
+                  Dashboard
+                  <Icon name="arrow-right" size={14} />
+                </Button>
               </Link>
             ) : (
               <>
@@ -97,7 +105,10 @@ export function MarketingHeader() {
                   </Button>
                 </Link>
                 <Link href="/register">
-                  <Button size="sm">Get started</Button>
+                  <Button size="sm">
+                    Get started
+                    <Icon name="arrow-right" size={14} />
+                  </Button>
                 </Link>
               </>
             )}
@@ -106,11 +117,11 @@ export function MarketingHeader() {
           {/* Mobile Menu Button */}
           <button
             type="button"
-            className="md:hidden p-2 text-text-secondary hover:text-text-primary transition-colors"
+            className="md:hidden p-2 text-text-secondary hover:text-text-primary transition-colors rounded-lg hover:bg-surface-hover"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
           >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            <Icon name={mobileMenuOpen ? 'close' : 'menu'} size={20} />
           </button>
         </nav>
 
@@ -118,7 +129,7 @@ export function MarketingHeader() {
         <div
           className={cn(
             'md:hidden overflow-hidden transition-all duration-300 ease-out',
-            mobileMenuOpen ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'
+            mobileMenuOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
           )}
         >
           <div className="flex flex-col py-4 border-t border-border">
@@ -132,18 +143,32 @@ export function MarketingHeader() {
                 {link.label}
               </Link>
             ))}
-            <Link
-              href="/about"
-              className="py-3 text-base font-medium text-text-secondary hover:text-text-primary transition-colors"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              About
-            </Link>
 
-            <div className="flex flex-col gap-2 pt-4 mt-4 border-t border-border">
+            {/* Company links in mobile */}
+            <div className="py-3 border-t border-border mt-3">
+              <p className="text-xs font-medium text-text-tertiary uppercase tracking-wider mb-2">
+                Company
+              </p>
+              {companyLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="block py-2 text-base font-medium text-text-secondary hover:text-text-primary transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+
+            {/* Mobile CTAs */}
+            <div className="flex flex-col gap-3 pt-4 mt-3 border-t border-border">
               {isAuthenticated ? (
                 <Link href="/chat" onClick={() => setMobileMenuOpen(false)}>
-                  <Button className="w-full">Dashboard</Button>
+                  <Button className="w-full">
+                    Dashboard
+                    <Icon name="arrow-right" size={14} />
+                  </Button>
                 </Link>
               ) : (
                 <>
@@ -153,7 +178,10 @@ export function MarketingHeader() {
                     </Button>
                   </Link>
                   <Link href="/register" onClick={() => setMobileMenuOpen(false)}>
-                    <Button className="w-full">Get started</Button>
+                    <Button className="w-full">
+                      Get started
+                      <Icon name="arrow-right" size={14} />
+                    </Button>
                   </Link>
                 </>
               )}

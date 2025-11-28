@@ -2,40 +2,57 @@
 
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { Loader2 } from 'lucide-react';
 import { forwardRef, type ButtonHTMLAttributes } from 'react';
 
 import { cn } from '@/lib/utils';
 
+// =============================================================================
+// TAP Button Component - Mistral.ai Inspired Design
+// =============================================================================
+
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  // Base styles - Mistral uses clean, minimal buttons
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mistral-orange focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
-        // Mistral style: Black primary button with orange hover
-        primary: 'bg-text-primary text-text-inverse hover:bg-brand-orange active:scale-[0.98]',
-        // Orange variant for accent
-        orange: 'bg-brand-orange text-text-inverse hover:bg-brand-orange-dark active:scale-[0.98]',
-        // Secondary with subtle background
+        // Primary: Orange background (Mistral's signature)
+        primary:
+          'bg-mistral-orange text-white hover:bg-mistral-orange-dark active:scale-[0.98] shadow-sm',
+
+        // Secondary: Black/Dark background with white text
         secondary:
-          'bg-background-secondary text-text-primary hover:bg-background-tertiary border border-border',
-        // Clean outline style - Mistral uses thin borders
+          'bg-white text-black hover:bg-mistral-beige-light active:scale-[0.98]',
+
+        // Outline: Transparent with border
         outline:
-          'border border-border bg-transparent hover:border-text-primary hover:bg-text-primary hover:text-text-inverse text-text-primary',
-        // Ghost - minimal
-        ghost: 'hover:bg-background-secondary text-text-primary',
-        // Danger
-        danger: 'bg-error text-text-inverse hover:bg-brand-red active:scale-[0.98]',
-        // Link style
-        link: 'text-text-primary underline-offset-4 hover:underline p-0 h-auto',
+          'border border-border bg-transparent text-text-primary hover:border-text-primary hover:bg-surface-hover',
+
+        // Ghost: No background, subtle hover
+        ghost: 'text-text-secondary hover:text-text-primary hover:bg-surface-hover',
+
+        // Danger: Red for destructive actions
+        danger: 'bg-error text-white hover:bg-mistral-red active:scale-[0.98]',
+
+        // Link: Text only, underline on hover
+        link: 'text-text-primary underline-offset-4 hover:underline p-0 h-auto font-normal',
+
+        // Dark: Black button (like Mistral's primary)
+        dark: 'bg-black text-white hover:bg-mistral-black-tinted active:scale-[0.98]',
+
+        // Orange outline
+        'orange-outline':
+          'border border-mistral-orange bg-transparent text-mistral-orange hover:bg-mistral-orange/10',
       },
       size: {
         sm: 'h-9 px-4 text-sm',
         md: 'h-10 px-5 text-sm',
         lg: 'h-11 px-6 text-base',
         xl: 'h-12 px-8 text-base',
+        '2xl': 'h-14 px-10 text-lg',
         icon: 'h-10 w-10',
         'icon-sm': 'h-8 w-8',
+        'icon-lg': 'h-12 w-12',
       },
     },
     defaultVariants: {
@@ -46,13 +63,30 @@ const buttonVariants = cva(
 );
 
 export interface ButtonProps
-  extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
+  extends ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
   asChild?: boolean;
   isLoading?: boolean;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, isLoading, children, disabled, ...props }, ref) => {
+  (
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      isLoading,
+      leftIcon,
+      rightIcon,
+      children,
+      disabled,
+      ...props
+    },
+    ref
+  ) => {
     const Comp = asChild ? Slot : 'button';
 
     return (
@@ -64,11 +98,30 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {isLoading ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin" />
+            {/* Pixel-art style loading spinner */}
+            <svg
+              className="h-4 w-4 animate-spin"
+              viewBox="0 0 24 24"
+              fill="none"
+              style={{ imageRendering: 'pixelated' }}
+            >
+              <rect x="11" y="2" width="2" height="4" fill="currentColor" />
+              <rect x="16" y="4" width="2" height="2" fill="currentColor" opacity="0.8" />
+              <rect x="18" y="8" width="4" height="2" fill="currentColor" opacity="0.6" />
+              <rect x="18" y="14" width="2" height="2" fill="currentColor" opacity="0.4" />
+              <rect x="11" y="18" width="2" height="4" fill="currentColor" opacity="0.3" />
+              <rect x="4" y="14" width="2" height="2" fill="currentColor" opacity="0.4" />
+              <rect x="2" y="8" width="4" height="2" fill="currentColor" opacity="0.6" />
+              <rect x="4" y="4" width="2" height="2" fill="currentColor" opacity="0.8" />
+            </svg>
             <span>Loading...</span>
           </>
         ) : (
-          children
+          <>
+            {leftIcon && <span className="flex-shrink-0">{leftIcon}</span>}
+            {children}
+            {rightIcon && <span className="flex-shrink-0">{rightIcon}</span>}
+          </>
         )}
       </Comp>
     );
