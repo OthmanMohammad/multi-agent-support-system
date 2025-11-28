@@ -1,122 +1,189 @@
 'use client';
 
 import { motion, useInView } from 'framer-motion';
-import { ArrowRight, Cpu, MessageSquare, Shield, Zap } from 'lucide-react';
 import Link from 'next/link';
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-import { Button } from '@/components/ui';
+import { Button, Icon } from '@/components/ui';
 
 // =============================================================================
-// Mistral-Style Rainbow Bar
+// Mistral-Style Animated Rainbow Bar
 // =============================================================================
 
 function RainbowBar() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
+
   return (
-    <div className="flex h-1 w-full">
-      <div className="flex-1 bg-brand-red" />
-      <div className="flex-1 bg-brand-orange-dark" />
-      <div className="flex-1 bg-brand-orange" />
-      <div className="flex-1 bg-brand-orange-light" />
-      <div className="flex-1 bg-brand-yellow" />
+    <div ref={ref} className="flex h-1 w-full overflow-hidden">
+      {['mistral-red', 'mistral-orange-dark', 'mistral-orange', 'mistral-orange-light', 'mistral-yellow'].map((color, i) => (
+        <motion.div
+          key={color}
+          className={`flex-1 bg-${color}`}
+          initial={{ scaleX: 0 }}
+          animate={isInView ? { scaleX: 1 } : { scaleX: 0 }}
+          transition={{ duration: 0.4, delay: i * 0.1, ease: 'easeOut' }}
+          style={{ transformOrigin: 'left' }}
+        />
+      ))}
     </div>
   );
 }
 
 // =============================================================================
-// Hero Section - Mistral Style Large Typography
+// Typewriter Effect Hook
+// =============================================================================
+
+function useTypewriter(text: string, speed: number = 80, delay: number = 500) {
+  const [displayedText, setDisplayedText] = useState('');
+  const [isComplete, setIsComplete] = useState(false);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      let currentIndex = 0;
+      const interval = setInterval(() => {
+        if (currentIndex <= text.length) {
+          setDisplayedText(text.slice(0, currentIndex));
+          currentIndex++;
+        } else {
+          clearInterval(interval);
+          setIsComplete(true);
+        }
+      }, speed);
+
+      return () => clearInterval(interval);
+    }, delay);
+
+    return () => clearTimeout(timeout);
+  }, [text, speed, delay]);
+
+  return { displayedText, isComplete };
+}
+
+// =============================================================================
+// Hero Section - Mistral Style with Typewriter
 // =============================================================================
 
 function HeroSection() {
+  const { displayedText, isComplete } = useTypewriter('customer support', 60, 800);
+
   return (
-    <section className="relative pt-20 pb-32 lg:pt-32 lg:pb-40">
+    <section className="relative pt-24 pb-32 lg:pt-36 lg:pb-48 overflow-hidden">
       <div className="container">
-        <div className="max-w-4xl">
-          {/* Eyebrow */}
-          <motion.p
-            className="text-sm font-semibold text-brand-orange uppercase tracking-wider mb-6"
+        <div className="max-w-5xl">
+          {/* Eyebrow Badge */}
+          <motion.div
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface border border-border mb-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            Introducing That Agents Project
-          </motion.p>
+            <Icon name="logo" size={16} className="text-mistral-orange" />
+            <span className="text-sm font-medium text-text-secondary">
+              Introducing That Agents Project
+            </span>
+          </motion.div>
 
-          {/* Main Headline */}
+          {/* Main Headline with Typewriter */}
           <motion.h1
-            className="text-5xl md:text-6xl lg:text-7xl font-black text-text-primary tracking-tight leading-[1.05]"
-            initial={{ opacity: 0, y: 20 }}
+            className="text-5xl md:text-6xl lg:text-8xl font-black text-text-primary tracking-tighter leading-[0.95]"
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
           >
             AI agents for
             <br />
-            <span className="text-brand-orange">customer support</span>
+            <span className="text-mistral-orange">
+              {displayedText}
+              <span className={`inline-block w-[3px] h-[0.9em] bg-mistral-orange ml-1 ${isComplete ? 'animate-pulse' : ''}`} />
+            </span>
           </motion.h1>
 
           {/* Subheadline */}
           <motion.p
             className="mt-8 text-xl md:text-2xl text-text-secondary max-w-2xl leading-relaxed"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
           >
-            Deploy specialized AI agents to handle support, sales, and customer success. Scale your
-            operations without scaling your team.
+            Deploy 243+ specialized AI agents to handle support, sales, and customer success.
+            Scale your operations without scaling your team.
           </motion.p>
 
           {/* CTA Buttons */}
           <motion.div
-            className="mt-10 flex flex-wrap items-center gap-4"
-            initial={{ opacity: 0, y: 20 }}
+            className="mt-12 flex flex-wrap items-center gap-4"
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
           >
             <Link href="/register">
-              <Button size="lg" className="group">
-                Get started
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              <Button size="xl" className="group">
+                Get started free
+                <Icon name="arrow-right" size={18} className="transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
             <Link href="#technology">
-              <Button size="lg" variant="outline">
-                Learn more
+              <Button size="xl" variant="outline">
+                Explore the platform
               </Button>
             </Link>
+          </motion.div>
+
+          {/* Trust Indicator */}
+          <motion.div
+            className="mt-12 flex items-center gap-6 text-sm text-text-tertiary"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+          >
+            <span className="flex items-center gap-2">
+              <Icon name="check" size={16} className="text-mistral-orange" />
+              No credit card required
+            </span>
+            <span className="flex items-center gap-2">
+              <Icon name="check" size={16} className="text-mistral-orange" />
+              Free tier available
+            </span>
+            <span className="flex items-center gap-2">
+              <Icon name="check" size={16} className="text-mistral-orange" />
+              Deploy in minutes
+            </span>
           </motion.div>
         </div>
       </div>
 
-      {/* Background gradient decoration */}
-      <div className="absolute top-0 right-0 -z-10 w-1/2 h-full opacity-30 bg-gradient-to-l from-brand-yellow/20 via-brand-orange/10 to-transparent" />
+      {/* Background Gradient Orbs */}
+      <div className="absolute top-20 right-0 -z-10 w-[600px] h-[600px] opacity-20 blur-3xl bg-gradient-radial from-mistral-orange via-mistral-yellow/50 to-transparent" />
+      <div className="absolute bottom-0 left-1/4 -z-10 w-[400px] h-[400px] opacity-10 blur-3xl bg-gradient-radial from-mistral-red to-transparent" />
     </section>
   );
 }
 
 // =============================================================================
-// Features Section - Clean Grid
+// Features Section - Clean Grid with Pixel Icons
 // =============================================================================
 
 const features = [
   {
-    icon: Zap,
+    icon: 'zap',
     title: 'Instant responses',
-    description: 'AI agents respond in seconds, not minutes. Handle peak loads effortlessly.',
+    description: 'AI agents respond in milliseconds, not minutes. Handle thousands of concurrent conversations.',
   },
   {
-    icon: MessageSquare,
-    title: 'Multi-channel',
-    description: 'Deploy across chat, email, and web. Meet customers where they are.',
+    icon: 'chat',
+    title: 'Multi-channel support',
+    description: 'Deploy across chat, email, SMS, and web. Meet customers wherever they are.',
   },
   {
-    icon: Cpu,
+    icon: 'agent-router',
     title: 'Smart routing',
-    description: 'Automatically route conversations to the right agent or escalate to humans.',
+    description: 'Automatically route conversations to the right agent or escalate to humans when needed.',
   },
   {
-    icon: Shield,
+    icon: 'settings',
     title: 'Enterprise security',
-    description: 'SOC 2 compliant with end-to-end encryption and role-based access control.',
+    description: 'SOC 2 compliant with end-to-end encryption, SSO, and role-based access control.',
   },
 ];
 
@@ -125,42 +192,49 @@ function FeaturesSection() {
   const isInView = useInView(ref, { once: true, margin: '-100px' });
 
   return (
-    <section id="technology" className="py-24 bg-background-secondary" ref={ref}>
+    <section id="technology" className="py-24 lg:py-32 bg-surface" ref={ref}>
       <div className="container">
         <div className="grid lg:grid-cols-2 gap-16 items-start">
           {/* Left - Text */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 40 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.7 }}
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-text-primary tracking-tight">
-              Built for scale
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-text-primary tracking-tight">
+              Built for
+              <br />
+              <span className="text-mistral-orange">enterprise scale</span>
             </h2>
-            <p className="mt-6 text-lg text-text-secondary max-w-md">
-              Our platform handles millions of conversations daily with enterprise-grade reliability
-              and performance.
+            <p className="mt-6 text-lg text-text-secondary max-w-md leading-relaxed">
+              Our platform handles millions of conversations daily with enterprise-grade reliability,
+              security, and performance.
             </p>
             <Link href="/register" className="inline-block mt-8">
-              <Button>
+              <Button size="lg" className="group">
                 Start building
-                <ArrowRight className="h-4 w-4" />
+                <Icon name="arrow-right" size={16} className="transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
           </motion.div>
 
           {/* Right - Features Grid */}
-          <div className="grid sm:grid-cols-2 gap-8">
+          <div className="grid sm:grid-cols-2 gap-6">
             {features.map((feature, index) => (
               <motion.div
                 key={feature.title}
-                className="group"
-                initial={{ opacity: 0, y: 30 }}
+                className="group p-6 rounded-2xl bg-background border border-border hover:border-mistral-orange/50 transition-all duration-300"
+                initial={{ opacity: 0, y: 40 }}
                 animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
+                transition={{ duration: 0.5, delay: 0.1 + index * 0.1 }}
+                whileHover={{ y: -4 }}
               >
-                <feature.icon className="h-6 w-6 text-brand-orange mb-4" />
-                <h3 className="text-lg font-semibold text-text-primary mb-2">{feature.title}</h3>
+                <div className="w-12 h-12 rounded-xl bg-surface flex items-center justify-center mb-4 group-hover:bg-mistral-orange/10 transition-colors">
+                  <Icon name={feature.icon} size={24} className="text-mistral-orange" />
+                </div>
+                <h3 className="text-lg font-semibold text-text-primary mb-2 group-hover:text-mistral-orange transition-colors">
+                  {feature.title}
+                </h3>
                 <p className="text-text-secondary text-sm leading-relaxed">{feature.description}</p>
               </motion.div>
             ))}
@@ -172,24 +246,31 @@ function FeaturesSection() {
 }
 
 // =============================================================================
-// Agents Section - Showcase
+// Agents Section - Showcase 243+ Agents
 // =============================================================================
 
-const agents = [
-  { name: 'Support Agent', description: 'Handle tickets and inquiries', color: 'bg-brand-red' },
+const agentTiers = [
   {
-    name: 'Sales Agent',
-    description: 'Qualify leads and book demos',
-    color: 'bg-brand-orange-dark',
+    tier: 'Essential',
+    icon: 'tier-essential',
+    count: 45,
+    agents: ['Support Agent', 'FAQ Bot', 'Ticket Triage'],
+    color: 'mistral-orange',
   },
-  { name: 'Success Agent', description: 'Onboarding and retention', color: 'bg-brand-orange' },
   {
-    name: 'Analytics Agent',
-    description: 'Insights and reporting',
-    color: 'bg-brand-orange-light',
+    tier: 'Professional',
+    icon: 'tier-professional',
+    count: 78,
+    agents: ['Sales Qualifier', 'Demo Scheduler', 'Lead Scorer'],
+    color: 'mistral-orange-light',
   },
-  { name: 'Security Agent', description: 'Threat detection', color: 'bg-brand-yellow' },
-  { name: 'Custom Agent', description: 'Build your own', color: 'bg-text-primary' },
+  {
+    tier: 'Enterprise',
+    icon: 'tier-enterprise',
+    count: 120,
+    agents: ['Custom Workflows', 'API Integration', 'Analytics'],
+    color: 'mistral-yellow',
+  },
 ];
 
 function AgentsSection() {
@@ -197,58 +278,87 @@ function AgentsSection() {
   const isInView = useInView(ref, { once: true, margin: '-100px' });
 
   return (
-    <section id="agents" className="py-24" ref={ref}>
+    <section id="agents" className="py-24 lg:py-32" ref={ref}>
       <div className="container">
         <motion.div
           className="text-center mb-16"
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.7 }}
         >
-          <h2 className="text-4xl md:text-5xl font-bold text-text-primary tracking-tight">
-            Specialized agents
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-text-primary tracking-tight">
+            243+ specialized agents
           </h2>
-          <p className="mt-4 text-lg text-text-secondary">
-            Purpose-built for every customer interaction
+          <p className="mt-6 text-lg text-text-secondary max-w-2xl mx-auto">
+            Purpose-built AI agents for every customer interaction, organized into tiers for your needs.
           </p>
         </motion.div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {agents.map((agent, index) => (
+        {/* Agent Tier Cards */}
+        <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
+          {agentTiers.map((tier, index) => (
             <motion.div
-              key={agent.name}
-              className="group p-6 rounded-lg border border-border bg-surface hover:border-brand-orange transition-all duration-200 cursor-pointer"
-              initial={{ opacity: 0, y: 30 }}
+              key={tier.tier}
+              className="group relative p-8 rounded-2xl bg-surface border border-border hover:border-mistral-orange transition-all duration-300"
+              initial={{ opacity: 0, y: 40 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: index * 0.08 }}
-              whileHover={{ y: -2 }}
+              transition={{ duration: 0.5, delay: index * 0.15 }}
+              whileHover={{ y: -6 }}
             >
-              <div className="flex items-start gap-4">
-                <div className={`w-3 h-3 rounded-full ${agent.color} mt-1.5`} />
-                <div>
-                  <h3 className="font-semibold text-text-primary group-hover:text-brand-orange transition-colors">
-                    {agent.name}
-                  </h3>
-                  <p className="text-sm text-text-secondary mt-1">{agent.description}</p>
-                </div>
+              {/* Tier Icon */}
+              <div className={`w-16 h-16 rounded-2xl bg-${tier.color}/10 flex items-center justify-center mb-6`}>
+                <Icon name={tier.icon} size={32} className={`text-${tier.color}`} />
               </div>
+
+              {/* Tier Info */}
+              <h3 className="text-2xl font-bold text-text-primary mb-2">{tier.tier}</h3>
+              <p className="text-4xl font-black text-mistral-orange mb-4">{tier.count}+</p>
+              <p className="text-sm text-text-tertiary mb-6">specialized agents</p>
+
+              {/* Sample Agents */}
+              <ul className="space-y-2">
+                {tier.agents.map((agent) => (
+                  <li key={agent} className="flex items-center gap-2 text-sm text-text-secondary">
+                    <Icon name="check" size={14} className="text-mistral-orange" />
+                    {agent}
+                  </li>
+                ))}
+              </ul>
+
+              {/* Hover Glow */}
+              <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-br from-mistral-orange/5 to-transparent" />
             </motion.div>
           ))}
         </div>
+
+        {/* View All CTA */}
+        <motion.div
+          className="text-center mt-12"
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : {}}
+          transition={{ duration: 0.5, delay: 0.6 }}
+        >
+          <Link href="/docs">
+            <Button variant="outline" size="lg" className="group">
+              View all agents
+              <Icon name="arrow-right" size={16} className="transition-transform group-hover:translate-x-1" />
+            </Button>
+          </Link>
+        </motion.div>
       </div>
     </section>
   );
 }
 
 // =============================================================================
-// Stats Section - Bold Numbers
+// Stats Section - Bold Numbers on Dark
 // =============================================================================
 
 const stats = [
-  { value: '99.9%', label: 'Uptime SLA' },
-  { value: '<2s', label: 'Response time' },
-  { value: '85%', label: 'Auto-resolution' },
-  { value: '24/7', label: 'Availability' },
+  { value: '99.9%', label: 'Uptime SLA', icon: 'check' },
+  { value: '<100ms', label: 'Response time', icon: 'zap' },
+  { value: '85%', label: 'Auto-resolution', icon: 'agent-router' },
+  { value: '24/7', label: 'Availability', icon: 'clock' },
 ];
 
 function StatsSection() {
@@ -256,21 +366,24 @@ function StatsSection() {
   const isInView = useInView(ref, { once: true, margin: '-50px' });
 
   return (
-    <section className="py-20 bg-text-primary" ref={ref}>
+    <section className="py-20 lg:py-24 bg-white" ref={ref}>
       <div className="container">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
           {stats.map((stat, index) => (
             <motion.div
               key={stat.label}
               className="text-center"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: index * 0.1 }}
             >
-              <div className="text-4xl md:text-5xl font-black text-text-inverse tracking-tight">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-black/5 mb-4">
+                <Icon name={stat.icon} size={24} className="text-mistral-orange" />
+              </div>
+              <div className="text-4xl md:text-5xl lg:text-6xl font-black text-black tracking-tight">
                 {stat.value}
               </div>
-              <div className="mt-2 text-sm text-text-inverse/60">{stat.label}</div>
+              <div className="mt-2 text-sm font-medium text-black/60">{stat.label}</div>
             </motion.div>
           ))}
         </div>
@@ -280,17 +393,28 @@ function StatsSection() {
 }
 
 // =============================================================================
-// How It Works Section
+// How It Works Section - Numbered Steps
 // =============================================================================
 
 const steps = [
-  { number: '01', title: 'Connect', description: 'Integrate with your existing tools in minutes.' },
   {
-    number: '02',
-    title: 'Train',
-    description: 'Upload your knowledge base. AI learns your products.',
+    number: '1',
+    title: 'Connect',
+    description: 'Integrate with your existing tools - Zendesk, Intercom, Salesforce, and more. Takes minutes, not days.',
+    icon: 'connect',
   },
-  { number: '03', title: 'Deploy', description: 'Go live and watch AI handle customer inquiries.' },
+  {
+    number: '2',
+    title: 'Train',
+    description: 'Upload your knowledge base, FAQs, and product docs. AI learns your brand voice and policies.',
+    icon: 'book',
+  },
+  {
+    number: '3',
+    title: 'Deploy',
+    description: 'Go live instantly. Watch AI agents handle customer inquiries while you focus on growth.',
+    icon: 'send',
+  },
 ];
 
 function HowItWorksSection() {
@@ -298,30 +422,49 @@ function HowItWorksSection() {
   const isInView = useInView(ref, { once: true, margin: '-100px' });
 
   return (
-    <section className="py-24 bg-background-secondary" ref={ref}>
+    <section className="py-24 lg:py-32 bg-surface" ref={ref}>
       <div className="container">
         <motion.div
           className="mb-16"
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.7 }}
         >
-          <h2 className="text-4xl md:text-5xl font-bold text-text-primary tracking-tight">
-            Up and running in minutes
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-text-primary tracking-tight">
+            Up and running
+            <br />
+            <span className="text-mistral-orange">in minutes</span>
           </h2>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-12">
+        <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
           {steps.map((step, index) => (
             <motion.div
               key={step.number}
-              initial={{ opacity: 0, y: 30 }}
+              className="relative"
+              initial={{ opacity: 0, y: 40 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: index * 0.15 }}
+              transition={{ duration: 0.5, delay: index * 0.2 }}
             >
-              <div className="text-6xl font-black text-brand-orange mb-4">{step.number}</div>
-              <h3 className="text-2xl font-bold text-text-primary mb-2">{step.title}</h3>
-              <p className="text-text-secondary">{step.description}</p>
+              {/* Large Number */}
+              <motion.div
+                className="text-[120px] lg:text-[160px] font-black text-mistral-orange/20 leading-none select-none"
+                animate={isInView ? {
+                  color: ['rgba(249, 115, 22, 0.1)', 'rgba(249, 115, 22, 0.3)', 'rgba(249, 115, 22, 0.1)']
+                } : {}}
+                transition={{ duration: 2, delay: index * 0.3, repeat: Infinity, repeatDelay: 3 }}
+              >
+                {step.number}
+              </motion.div>
+
+              {/* Content */}
+              <div className="-mt-16 lg:-mt-20 relative z-10">
+                <div className="w-12 h-12 rounded-xl bg-mistral-orange/10 flex items-center justify-center mb-4">
+                  <Icon name={step.icon} size={24} className="text-mistral-orange" />
+                </div>
+                <h3 className="text-2xl lg:text-3xl font-bold text-text-primary mb-3">{step.title}</h3>
+                <p className="text-text-secondary leading-relaxed">{step.description}</p>
+              </div>
             </motion.div>
           ))}
         </div>
@@ -331,7 +474,7 @@ function HowItWorksSection() {
 }
 
 // =============================================================================
-// CTA Section
+// CTA Section - Final Push
 // =============================================================================
 
 function CTASection() {
@@ -339,33 +482,56 @@ function CTASection() {
   const isInView = useInView(ref, { once: true, margin: '-100px' });
 
   return (
-    <section className="py-24" ref={ref}>
+    <section className="py-24 lg:py-32" ref={ref}>
       <div className="container">
         <motion.div
-          className="max-w-3xl mx-auto text-center"
-          initial={{ opacity: 0, y: 30 }}
+          className="relative max-w-4xl mx-auto text-center p-12 lg:p-16 rounded-3xl bg-surface border border-border overflow-hidden"
+          initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.7 }}
         >
-          <h2 className="text-4xl md:text-5xl font-bold text-text-primary tracking-tight">
-            Ready to scale your support?
-          </h2>
-          <p className="mt-6 text-lg text-text-secondary">
-            Join companies using AI-powered support to deliver better customer experiences.
-          </p>
+          {/* Background Gradient */}
+          <div className="absolute inset-0 bg-gradient-to-br from-mistral-orange/5 via-transparent to-mistral-yellow/5 pointer-events-none" />
 
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-            <Link href="/register">
-              <Button size="lg">
-                Get started
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-            <Link href="/login">
-              <Button size="lg" variant="outline">
-                Sign in
-              </Button>
-            </Link>
+          <div className="relative z-10">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-text-primary tracking-tight">
+              Ready to scale
+              <br />
+              <span className="text-mistral-orange">your support?</span>
+            </h2>
+            <p className="mt-6 text-lg text-text-secondary max-w-xl mx-auto">
+              Join hundreds of companies using AI-powered support to deliver exceptional customer experiences.
+            </p>
+
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+              <Link href="/register">
+                <Button size="xl" className="group">
+                  Get started free
+                  <Icon name="arrow-right" size={18} className="transition-transform group-hover:translate-x-1" />
+                </Button>
+              </Link>
+              <Link href="/login">
+                <Button size="xl" variant="outline">
+                  Sign in
+                </Button>
+              </Link>
+            </div>
+
+            {/* Trust Badges */}
+            <div className="mt-10 flex items-center justify-center gap-8 text-sm text-text-tertiary">
+              <span className="flex items-center gap-2">
+                <Icon name="settings" size={16} />
+                SOC 2 Compliant
+              </span>
+              <span className="flex items-center gap-2">
+                <Icon name="check" size={16} />
+                GDPR Ready
+              </span>
+              <span className="flex items-center gap-2">
+                <Icon name="lock" size={16} />
+                Enterprise SSO
+              </span>
+            </div>
           </div>
         </motion.div>
       </div>

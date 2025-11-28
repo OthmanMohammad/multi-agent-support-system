@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { useEffect, type ReactNode } from 'react';
 
@@ -33,30 +34,32 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Rainbow bar */}
+      {/* Mistral Rainbow Bar */}
       <div className="flex h-1 w-full">
-        <div className="flex-1 bg-brand-red" />
-        <div className="flex-1 bg-brand-orange-dark" />
-        <div className="flex-1 bg-brand-orange" />
-        <div className="flex-1 bg-brand-orange-light" />
-        <div className="flex-1 bg-brand-yellow" />
+        <div className="flex-1 bg-mistral-red" />
+        <div className="flex-1 bg-mistral-orange-dark" />
+        <div className="flex-1 bg-mistral-orange" />
+        <div className="flex-1 bg-mistral-orange-light" />
+        <div className="flex-1 bg-mistral-yellow" />
       </div>
 
       {/* Header */}
       <header className="p-6 lg:p-8">
-        <Logo />
+        <Link href="/">
+          <Logo />
+        </Link>
       </header>
 
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center px-6 pb-12">
         <div className="w-full max-w-sm">
-          <div className="bg-surface rounded-lg border border-border p-8">{children}</div>
+          <div className="bg-surface rounded-2xl border border-border p-8">{children}</div>
         </div>
       </main>
 
       {/* Footer */}
       <footer className="p-6 text-center text-sm text-text-tertiary">
-        <p>{new Date().getFullYear()} That Agents Project</p>
+        <p>&copy; {new Date().getFullYear()} That Agents Project. All rights reserved.</p>
       </footer>
     </div>
   );

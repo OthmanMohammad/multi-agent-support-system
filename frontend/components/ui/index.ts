@@ -10,5 +10,6 @@ export * from './scroll-area';
 export * from './separator';
 export * from './skeleton';
 export * from './spinner';
+export * from './tap-icons';
 export * from './textarea';
 export * from './tooltip';

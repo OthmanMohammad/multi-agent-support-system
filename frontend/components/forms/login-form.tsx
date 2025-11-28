@@ -1,13 +1,12 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { Button, Input, Label, Separator } from '@/components/ui';
+import { Button, Icon, Input, Label, Separator } from '@/components/ui';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { loginSchema, type LoginFormData } from '@/lib/validations/auth';
 
@@ -66,7 +65,7 @@ export function LoginForm() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Global Error */}
         {error && (
-          <div className="rounded-md bg-error-light p-3 text-sm text-error border border-error/20">
+          <div className="rounded-lg bg-error-light p-3 text-sm text-error border border-error/20">
             {error}
           </div>
         )}
@@ -91,7 +90,7 @@ export function LoginForm() {
             <Label htmlFor="password">Password</Label>
             <Link
               href="/forgot-password"
-              className="text-sm text-text-secondary hover:text-text-primary transition-colors"
+              className="text-sm text-mistral-orange hover:text-mistral-orange-light transition-colors"
             >
               Forgot?
             </Link>
@@ -112,7 +111,7 @@ export function LoginForm() {
               className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-secondary transition-colors"
               tabIndex={-1}
             >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              <Icon name={showPassword ? 'eye-off' : 'eye'} size={16} />
             </button>
           </div>
           <FieldError message={errors.password?.message} />
@@ -127,7 +126,10 @@ export function LoginForm() {
       {/* Register Link */}
       <p className="text-center text-sm text-text-secondary">
         Don&apos;t have an account?{' '}
-        <Link href="/register" className="font-medium text-text-primary hover:underline">
+        <Link
+          href="/register"
+          className="font-medium text-mistral-orange hover:text-mistral-orange-light transition-colors"
+        >
           Sign up
         </Link>
       </p>
