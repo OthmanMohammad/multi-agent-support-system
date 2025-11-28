@@ -72,22 +72,33 @@
     --transition-normal: 150ms;
     --transition-slow: 200ms;
 
-    /* Font */
+    /* Font - Mistral uses Arial exclusively */
     --font-sans: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+
+    /* Font weights */
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
   }
 
   html {
     font-family: var(--font-sans);
+    font-weight: var(--font-weight-normal);
     background-color: var(--background);
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   body {
     font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: var(--font-weight-normal);
     min-height: 100vh;
-    line-height: 1.5;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
   }
 
   /* Apply font to all elements */
@@ -97,7 +108,7 @@
     font-family: inherit;
   }
 
-  /* Headings */
+  /* Headings - Mistral style: bold with tight letter-spacing */
   h1,
   h2,
   h3,
@@ -105,7 +116,35 @@
   h5,
   h6 {
     font-family: var(--font-sans);
-    font-weight: 700;
+    font-weight: var(--font-weight-bold);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  h1 {
+    font-size: 3rem;
+    letter-spacing: -0.03em;
+  }
+
+  h2 {
+    font-size: 2.25rem;
+    letter-spacing: -0.025em;
+  }
+
+  h3 {
+    font-size: 1.5rem;
+  }
+
+  h4 {
+    font-size: 1.25rem;
+  }
+
+  h5 {
+    font-size: 1.125rem;
+  }
+
+  h6 {
+    font-size: 1rem;
   }
 
   /* Inputs and buttons */
