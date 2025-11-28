@@ -7,10 +7,10 @@ const config: Config = {
     './lib/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
-    // Override default fontFamily (not extend) to use Arial as primary
+    // Completely override fontFamily - Mistral uses ONLY Arial
     fontFamily: {
-      sans: ['Arial', 'Helvetica Neue', 'Helvetica', 'sans-serif'],
-      mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+      sans: ['Arial', 'sans-serif'],
+      mono: ['monospace'],
     },
     extend: {
       colors: {

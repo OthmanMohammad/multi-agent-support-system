@@ -8,24 +8,30 @@ import { forwardRef, type ButtonHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
+        // Mistral style: Black primary button with orange hover
         primary:
+          'bg-text-primary text-white hover:bg-brand-orange active:bg-brand-orange-dark shadow-sm',
+        // Orange variant for accent
+        orange:
           'bg-brand-orange text-white hover:bg-brand-orange-dark active:bg-brand-red shadow-sm',
         secondary:
           'bg-background-secondary text-text-primary hover:bg-background-tertiary border border-border',
+        // Clean outline style
         outline:
-          'border border-border bg-transparent hover:bg-background-secondary text-text-primary',
+          'border-2 border-text-primary bg-transparent hover:bg-text-primary hover:text-white text-text-primary',
         ghost: 'hover:bg-background-secondary text-text-primary',
         danger: 'bg-error text-white hover:bg-brand-red',
-        link: 'text-brand-orange-dark underline-offset-4 hover:underline hover:text-brand-orange',
+        link: 'text-text-primary underline-offset-4 hover:underline',
       },
       size: {
-        sm: 'h-8 px-3 text-xs',
-        md: 'h-10 px-4 text-sm',
-        lg: 'h-12 px-6 text-base',
+        sm: 'h-9 px-4 text-sm',
+        md: 'h-11 px-5 text-sm',
+        lg: 'h-12 px-8 text-base',
+        xl: 'h-14 px-10 text-lg',
         icon: 'h-10 w-10',
         'icon-sm': 'h-8 w-8',
       },

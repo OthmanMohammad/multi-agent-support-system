@@ -1,69 +1,72 @@
-import {
-  Zap,
-  Shield,
-  BarChart3,
-  Users,
-  MessageSquare,
-  Cpu,
-  ArrowRight,
-  CheckCircle,
-} from 'lucide-react';
+'use client';
+
+import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
-import { Button, Card, CardContent } from '@/components/ui';
+import {
+  PixelAgentIcon,
+  PixelChartIcon,
+  PixelChatIcon,
+  PixelLightningIcon,
+  PixelMLogoIcon,
+  PixelShieldIcon,
+  PixelSparkleIcon,
+  PixelUsersIcon,
+} from '@/components/icons';
+import { Button } from '@/components/ui';
 
 // =============================================================================
-// Hero Section
+// Rainbow Gradient Bar - Mistral signature element
+// =============================================================================
+
+function RainbowBar() {
+  return (
+    <div className="flex h-1 w-full overflow-hidden">
+      <div className="flex-1 bg-brand-red" />
+      <div className="flex-1 bg-brand-orange-dark" />
+      <div className="flex-1 bg-brand-orange" />
+      <div className="flex-1 bg-brand-orange-light" />
+      <div className="flex-1 bg-brand-yellow" />
+    </div>
+  );
+}
+
+// =============================================================================
+// Hero Section - Mistral Style
 // =============================================================================
 
 function HeroSection() {
   return (
-    <section className="relative overflow-hidden py-20 md:py-32">
-      {/* Background gradient */}
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-gradient-to-b from-background-secondary/50 to-background" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-brand-orange/10 rounded-full blur-3xl" />
-      </div>
-
+    <section className="relative py-24 md:py-32 lg:py-40">
       <div className="container">
-        <div className="mx-auto max-w-3xl text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 rounded-full bg-background-secondary px-4 py-1.5 text-sm font-medium text-text-secondary mb-6">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-orange opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-orange" />
-            </span>
-            243+ Specialized AI Agents
-          </div>
-
-          {/* Headline */}
-          <h1 className="text-4xl md:text-6xl font-bold text-text-primary tracking-tight text-balance">
-            Customer support that <span className="gradient-text">actually scales</span>
+        <div className="mx-auto max-w-4xl">
+          {/* Headline - Large, bold, tight tracking */}
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-text-primary tracking-tight leading-[0.95]">
+            AI agents for
+            <br />
+            <span className="text-brand-orange">customer support</span>
           </h1>
 
-          {/* Subheadline */}
-          <p className="mt-6 text-lg md:text-xl text-text-secondary max-w-2xl mx-auto">
-            Deploy an army of AI agents trained for support, sales, and customer success. Handle 10x
-            more requests without hiring 10x more people.
+          {/* Subheadline - Clean and simple */}
+          <p className="mt-8 text-xl md:text-2xl text-text-secondary max-w-2xl leading-relaxed">
+            Deploy 243+ specialized AI agents to handle support, sales, and success. Scale without
+            limits.
           </p>
 
-          {/* CTA Buttons */}
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+          {/* CTA Buttons - Mistral style */}
+          <div className="mt-12 flex flex-wrap items-center gap-4">
             <Link href="/register">
-              <Button size="lg" className="px-8">
-                Start Free Trial
-                <ArrowRight className="h-4 w-4" />
+              <Button size="lg" className="group">
+                Get started free
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
-            <Link href="#how-it-works">
+            <Link href="/login">
               <Button size="lg" variant="outline">
-                See How It Works
+                Sign in
               </Button>
             </Link>
           </div>
-
-          {/* Social Proof */}
-          <p className="mt-8 text-sm text-text-tertiary">Trusted by 500+ companies worldwide</p>
         </div>
       </div>
     </section>
@@ -71,72 +74,181 @@ function HeroSection() {
 }
 
 // =============================================================================
-// Features Section
+// Models/Agents Section - Pixelated icons grid
+// =============================================================================
+
+const agents = [
+  {
+    icon: PixelChatIcon,
+    name: 'Support Agent',
+    description: 'Handle tickets and inquiries',
+    color: 'text-brand-red',
+  },
+  {
+    icon: PixelLightningIcon,
+    name: 'Speed Agent',
+    description: 'Instant response times',
+    color: 'text-brand-orange-dark',
+  },
+  {
+    icon: PixelAgentIcon,
+    name: 'Smart Agent',
+    description: 'Context-aware responses',
+    color: 'text-brand-orange',
+  },
+  {
+    icon: PixelShieldIcon,
+    name: 'Security Agent',
+    description: 'Enterprise-grade protection',
+    color: 'text-brand-orange-light',
+  },
+  {
+    icon: PixelChartIcon,
+    name: 'Analytics Agent',
+    description: 'Real-time insights',
+    color: 'text-brand-yellow',
+  },
+  {
+    icon: PixelUsersIcon,
+    name: 'Team Agent',
+    description: 'Human escalation built-in',
+    color: 'text-brand-orange',
+  },
+];
+
+function AgentsSection() {
+  return (
+    <section className="py-24 bg-surface">
+      <div className="container">
+        {/* Section Header */}
+        <div className="mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold text-text-primary tracking-tight">
+            Specialized agents
+          </h2>
+          <p className="mt-4 text-xl text-text-secondary">
+            Purpose-built for every customer interaction
+          </p>
+        </div>
+
+        {/* Agents Grid */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {agents.map((agent) => (
+            <div
+              key={agent.name}
+              className="group p-6 rounded-xl border border-border bg-background hover:border-brand-orange transition-colors cursor-pointer"
+            >
+              <agent.icon size={48} className={`${agent.color} mb-4`} />
+              <h3 className="text-lg font-semibold text-text-primary mb-1">{agent.name}</h3>
+              <p className="text-text-secondary">{agent.description}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* View all link */}
+        <div className="mt-12">
+          <Link
+            href="#features"
+            className="inline-flex items-center gap-2 text-text-primary font-medium hover:text-brand-orange transition-colors"
+          >
+            View all 243 agents
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// =============================================================================
+// Features Section - Clean cards
 // =============================================================================
 
 const features = [
   {
-    icon: Cpu,
-    title: '243+ Specialized Agents',
-    description:
-      'Purpose-built AI agents for every scenario: billing, technical support, sales, onboarding, and more.',
+    icon: PixelSparkleIcon,
+    title: 'Instant responses',
+    description: 'AI agents respond in seconds, not minutes. Handle peak loads effortlessly.',
   },
   {
-    icon: Zap,
-    title: 'Instant Responses',
-    description:
-      'AI agents respond in seconds, not minutes. Handle peak loads without breaking a sweat.',
+    icon: PixelChatIcon,
+    title: 'Multi-channel',
+    description: 'Deploy across chat, email, and web. Meet customers where they are.',
   },
   {
-    icon: MessageSquare,
-    title: 'Multi-Channel Support',
-    description: 'Deploy across chat, email, and web. Your customers get help wherever they are.',
+    icon: PixelChartIcon,
+    title: 'Real-time analytics',
+    description: 'Track performance, satisfaction, and identify improvement opportunities.',
   },
   {
-    icon: BarChart3,
-    title: 'Real-Time Analytics',
-    description:
-      'Track agent performance, customer satisfaction, and identify improvement opportunities.',
-  },
-  {
-    icon: Shield,
-    title: 'Enterprise Security',
-    description: 'SOC 2 compliant, end-to-end encryption, and role-based access control built-in.',
-  },
-  {
-    icon: Users,
-    title: 'Human Escalation',
-    description:
-      'Complex issues automatically escalate to your team. AI handles the volume, humans handle the edge cases.',
+    icon: PixelShieldIcon,
+    title: 'Enterprise security',
+    description: 'SOC 2 compliant with end-to-end encryption and role-based access.',
   },
 ];
 
 function FeaturesSection() {
   return (
-    <section id="features" className="py-20 bg-background-secondary/30">
+    <section id="features" className="py-24">
       <div className="container">
-        {/* Section Header */}
-        <div className="mx-auto max-w-2xl text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-text-primary">
-            Everything you need to scale support
-          </h2>
-          <p className="mt-4 text-lg text-text-secondary">
-            A complete platform that grows with your business
-          </p>
-        </div>
+        <div className="grid gap-8 lg:grid-cols-2">
+          {/* Left column - Header */}
+          <div>
+            <h2 className="text-4xl md:text-5xl font-bold text-text-primary tracking-tight">
+              Built for scale
+            </h2>
+            <p className="mt-4 text-xl text-text-secondary max-w-md">
+              Everything you need to transform customer support
+            </p>
 
-        {/* Features Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {features.map((feature) => (
-            <Card key={feature.title} className="group hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-brand-orange/10 text-brand-orange mb-4 group-hover:bg-brand-orange group-hover:text-white transition-colors">
-                  <feature.icon className="h-6 w-6" />
-                </div>
+            <div className="mt-8">
+              <Link href="/register">
+                <Button>
+                  Start building
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          {/* Right column - Features */}
+          <div className="grid gap-6 sm:grid-cols-2">
+            {features.map((feature) => (
+              <div key={feature.title} className="p-6">
+                <feature.icon size={32} className="text-brand-orange mb-4" />
                 <h3 className="text-lg font-semibold text-text-primary mb-2">{feature.title}</h3>
-                <p className="text-text-secondary">{feature.description}</p>
-              </CardContent>
-            </Card>
+                <p className="text-text-secondary text-sm">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// =============================================================================
+// Stats Section - Bold numbers
+// =============================================================================
+
+const stats = [
+  { value: '243+', label: 'Specialized agents' },
+  { value: '99.9%', label: 'Uptime SLA' },
+  { value: '<2s', label: 'Response time' },
+  { value: '85%', label: 'Auto-resolution' },
+];
+
+function StatsSection() {
+  return (
+    <section className="py-24 bg-text-primary">
+      <div className="container">
+        <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+          {stats.map((stat) => (
+            <div key={stat.label} className="text-center">
+              <div className="text-5xl md:text-6xl font-bold text-white tracking-tight">
+                {stat.value}
+              </div>
+              <div className="mt-2 text-white/60 text-sm">{stat.label}</div>
+            </div>
           ))}
         </div>
       </div>
@@ -145,56 +257,46 @@ function FeaturesSection() {
 }
 
 // =============================================================================
-// How It Works Section
+// How it Works Section - Steps
 // =============================================================================
 
 const steps = [
   {
-    step: '01',
-    title: 'Connect Your Channels',
-    description: 'Integrate with your existing support channels in minutes. No code required.',
+    number: '1',
+    title: 'Connect',
+    description: 'Integrate with your existing support channels in minutes.',
   },
   {
-    step: '02',
-    title: 'Train Your Agents',
-    description: 'Upload your knowledge base and FAQs. Our AI learns your products and processes.',
+    number: '2',
+    title: 'Train',
+    description: 'Upload your knowledge base. AI learns your products.',
   },
   {
-    step: '03',
-    title: 'Go Live',
-    description:
-      'Deploy AI agents to handle customer inquiries. Monitor and optimize in real-time.',
+    number: '3',
+    title: 'Deploy',
+    description: 'Go live and watch AI handle customer inquiries.',
   },
 ];
 
 function HowItWorksSection() {
   return (
-    <section id="how-it-works" className="py-20">
+    <section className="py-24">
       <div className="container">
-        {/* Section Header */}
-        <div className="mx-auto max-w-2xl text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-text-primary">
+        <div className="mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold text-text-primary tracking-tight">
             Up and running in minutes
           </h2>
-          <p className="mt-4 text-lg text-text-secondary">
-            Three simple steps to transform your customer support
-          </p>
         </div>
 
-        {/* Steps */}
         <div className="grid gap-8 md:grid-cols-3">
-          {steps.map((step, index) => (
-            <div key={step.step} className="relative">
-              {/* Connector Line */}
-              {index < steps.length - 1 && (
-                <div className="hidden md:block absolute top-8 left-1/2 w-full h-0.5 bg-border" />
-              )}
-              <div className="relative bg-background p-6 rounded-xl text-center">
-                <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-brand-orange text-white text-2xl font-bold mb-4">
-                  {step.step}
-                </div>
-                <h3 className="text-xl font-semibold text-text-primary mb-2">{step.title}</h3>
-                <p className="text-text-secondary">{step.description}</p>
+          {steps.map((step) => (
+            <div key={step.number} className="relative">
+              <div className="text-8xl font-bold text-background-tertiary leading-none">
+                {step.number}
+              </div>
+              <div className="mt-4">
+                <h3 className="text-2xl font-semibold text-text-primary">{step.title}</h3>
+                <p className="mt-2 text-text-secondary">{step.description}</p>
               </div>
             </div>
           ))}
@@ -205,70 +307,40 @@ function HowItWorksSection() {
 }
 
 // =============================================================================
-// Stats Section
+// CTA Section - Final call to action
 // =============================================================================
-
-const stats = [
-  { value: '243+', label: 'AI Agents' },
-  { value: '99.9%', label: 'Uptime SLA' },
-  { value: '<2s', label: 'Response Time' },
-  { value: '85%', label: 'Auto-Resolution' },
-];
-
-function StatsSection() {
-  return (
-    <section className="py-16 bg-brand-orange">
-      <div className="container">
-        <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
-          {stats.map((stat) => (
-            <div key={stat.label} className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-white">{stat.value}</div>
-              <div className="mt-2 text-white/80">{stat.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// =============================================================================
-// CTA Section
-// =============================================================================
-
-const benefits = ['No credit card required', '14-day free trial', 'Cancel anytime'];
 
 function CTASection() {
   return (
-    <section id="pricing" className="py-20 bg-background-secondary/50">
+    <section className="py-24 bg-background-secondary">
       <div className="container">
         <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-text-primary">
-            Ready to transform your support?
+          <PixelMLogoIcon size={64} className="mx-auto mb-8" />
+
+          <h2 className="text-4xl md:text-5xl font-bold text-text-primary tracking-tight">
+            Ready to scale?
           </h2>
-          <p className="mt-4 text-lg text-text-secondary">
-            Join hundreds of companies already using Multi-Agent Support to deliver better customer
-            experiences at scale.
+          <p className="mt-4 text-xl text-text-secondary">
+            Join hundreds of companies using AI-powered support
           </p>
 
-          <div className="mt-8">
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
             <Link href="/register">
-              <Button size="lg" className="px-8">
-                Start Your Free Trial
+              <Button size="lg">
+                Start free trial
                 <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+            <Link href="/login">
+              <Button size="lg" variant="outline">
+                Talk to sales
               </Button>
             </Link>
           </div>
 
-          {/* Benefits */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-6">
-            {benefits.map((benefit) => (
-              <div key={benefit} className="flex items-center gap-2 text-sm text-text-secondary">
-                <CheckCircle className="h-4 w-4 text-success" />
-                {benefit}
-              </div>
-            ))}
-          </div>
+          <p className="mt-6 text-sm text-text-tertiary">
+            No credit card required · 14-day free trial · Cancel anytime
+          </p>
         </div>
       </div>
     </section>
@@ -282,11 +354,14 @@ function CTASection() {
 export default function HomePage() {
   return (
     <>
+      <RainbowBar />
       <HeroSection />
+      <AgentsSection />
       <FeaturesSection />
-      <HowItWorksSection />
       <StatsSection />
+      <HowItWorksSection />
       <CTASection />
+      <RainbowBar />
     </>
   );
 }
