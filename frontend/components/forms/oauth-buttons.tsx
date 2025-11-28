@@ -1,7 +1,7 @@
 'use client';
 
-import { useAuthStore } from '@/lib/stores/auth-store';
 import { Button } from '@/components/ui';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 // Google Icon
 function GoogleIcon({ className }: { className?: string }) {

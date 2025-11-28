@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
 import { Send, Plus, MoreHorizontal } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 
 import {

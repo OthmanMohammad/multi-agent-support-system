@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import {
   Zap,
   Shield,
@@ -9,6 +8,7 @@ import {
   ArrowRight,
   CheckCircle,
 } from 'lucide-react';
+import Link from 'next/link';
 
 import { Button, Card, CardContent } from '@/components/ui';
 

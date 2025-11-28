@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
-import { MarketingHeader } from '@/components/layout/marketing-header';
 import { MarketingFooter } from '@/components/layout/marketing-footer';
+import { MarketingHeader } from '@/components/layout/marketing-header';
 
 interface MarketingLayoutProps {
   children: ReactNode;

@@ -7,6 +7,11 @@ const config: Config = {
     './lib/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
+    // Override default fontFamily (not extend) to use Arial as primary
+    fontFamily: {
+      sans: ['Arial', 'Helvetica Neue', 'Helvetica', 'sans-serif'],
+      mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+    },
     extend: {
       colors: {
         // Mistral Brand Colors
@@ -54,9 +59,6 @@ const config: Config = {
           DEFAULT: '#3B82F6',
           light: '#DBEAFE',
         },
-      },
-      fontFamily: {
-        sans: ['Arial', 'Helvetica', 'sans-serif'],
       },
       fontSize: {
         xs: ['0.75rem', { lineHeight: '1rem' }],
