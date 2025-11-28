@@ -42,7 +42,7 @@ export function Logo({ className, size = 'md', showText = true }: LogoProps) {
         </svg>
       </div>
       {showText && (
-        <span className={cn('font-bold text-text-primary', textSizes[size])}>Multi-Agent</span>
+        <span className={cn('font-bold text-text-primary', textSizes[size])}>That Agents</span>
       )}
     </Link>
   );
