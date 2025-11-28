@@ -84,9 +84,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Error */}
-        {error && (
-          <div className="rounded-md bg-error-light p-3 text-sm text-error">{error}</div>
-        )}
+        {error && <div className="rounded-md bg-error-light p-3 text-sm text-error">{error}</div>}
 
         {/* Hidden Token Field */}
         <input type="hidden" {...register('token')} />

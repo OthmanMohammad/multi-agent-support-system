@@ -10,40 +10,40 @@
 @layer base {
   :root {
     /* Brand Colors */
-    --brand-red: #E10500;
-    --brand-orange-dark: #FA500F;
-    --brand-orange: #FF8205;
-    --brand-orange-light: #FFAF00;
-    --brand-yellow: #FFD800;
+    --brand-red: #e10500;
+    --brand-orange-dark: #fa500f;
+    --brand-orange: #ff8205;
+    --brand-orange-light: #ffaf00;
+    --brand-yellow: #ffd800;
 
     /* Background Colors */
-    --background: #FFFAEB;
-    --background-secondary: #FFF0C3;
-    --background-tertiary: #E9E2CB;
+    --background: #fffaeb;
+    --background-secondary: #fff0c3;
+    --background-tertiary: #e9e2cb;
 
     /* Surface Colors */
-    --surface: #FFFFFF;
-    --surface-elevated: #FFFAEB;
+    --surface: #ffffff;
+    --surface-elevated: #fffaeb;
 
     /* Border Colors */
-    --border: #E9E2CB;
-    --border-strong: #D4CDB8;
+    --border: #e9e2cb;
+    --border-strong: #d4cdb8;
 
     /* Text Colors */
-    --text-primary: #1A1A1A;
+    --text-primary: #1a1a1a;
     --text-secondary: #666666;
     --text-tertiary: #999999;
-    --text-inverse: #FFFFFF;
+    --text-inverse: #ffffff;
 
     /* Semantic Colors */
-    --success: #22C55E;
-    --success-light: #DCFCE7;
-    --error: #E10500;
-    --error-light: #FEE2E2;
-    --warning: #FFAF00;
-    --warning-light: #FEF3C7;
-    --info: #3B82F6;
-    --info-light: #DBEAFE;
+    --success: #22c55e;
+    --success-light: #dcfce7;
+    --error: #e10500;
+    --error-light: #fee2e2;
+    --warning: #ffaf00;
+    --warning-light: #fef3c7;
+    --info: #3b82f6;
+    --info-light: #dbeafe;
 
     /* Spacing Scale */
     --spacing-xs: 0.25rem;
@@ -73,7 +73,7 @@
     --transition-slow: 200ms;
 
     /* Font */
-    --font-sans: Arial, "Helvetica Neue", Helvetica, sans-serif;
+    --font-sans: Arial, 'Helvetica Neue', Helvetica, sans-serif;
   }
 
   html {
@@ -91,18 +91,28 @@
   }
 
   /* Apply font to all elements */
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     font-family: inherit;
   }
 
   /* Headings */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-sans);
     font-weight: 700;
   }
 
   /* Inputs and buttons */
-  input, button, textarea, select {
+  input,
+  button,
+  textarea,
+  select {
     font-family: var(--font-sans);
   }
 
@@ -248,7 +258,7 @@
 
   /* Animated gradient background */
   .animated-gradient {
-    background: linear-gradient(-45deg, #FFFAEB, #FFF0C3, #FFAF00, #FF8205);
+    background: linear-gradient(-45deg, #fffaeb, #fff0c3, #ffaf00, #ff8205);
     background-size: 400% 400%;
     animation: gradient 15s ease infinite;
   }

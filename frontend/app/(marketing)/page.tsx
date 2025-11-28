@@ -38,14 +38,13 @@ function HeroSection() {
 
           {/* Headline */}
           <h1 className="text-4xl md:text-6xl font-bold text-text-primary tracking-tight text-balance">
-            Customer support that{' '}
-            <span className="gradient-text">actually scales</span>
+            Customer support that <span className="gradient-text">actually scales</span>
           </h1>
 
           {/* Subheadline */}
           <p className="mt-6 text-lg md:text-xl text-text-secondary max-w-2xl mx-auto">
-            Deploy an army of AI agents trained for support, sales, and customer success.
-            Handle 10x more requests without hiring 10x more people.
+            Deploy an army of AI agents trained for support, sales, and customer success. Handle 10x
+            more requests without hiring 10x more people.
           </p>
 
           {/* CTA Buttons */}
@@ -64,9 +63,7 @@ function HeroSection() {
           </div>
 
           {/* Social Proof */}
-          <p className="mt-8 text-sm text-text-tertiary">
-            Trusted by 500+ companies worldwide
-          </p>
+          <p className="mt-8 text-sm text-text-tertiary">Trusted by 500+ companies worldwide</p>
         </div>
       </div>
     </section>
@@ -93,8 +90,7 @@ const features = [
   {
     icon: MessageSquare,
     title: 'Multi-Channel Support',
-    description:
-      'Deploy across chat, email, and web. Your customers get help wherever they are.',
+    description: 'Deploy across chat, email, and web. Your customers get help wherever they are.',
   },
   {
     icon: BarChart3,
@@ -105,8 +101,7 @@ const features = [
   {
     icon: Shield,
     title: 'Enterprise Security',
-    description:
-      'SOC 2 compliant, end-to-end encryption, and role-based access control built-in.',
+    description: 'SOC 2 compliant, end-to-end encryption, and role-based access control built-in.',
   },
   {
     icon: Users,
@@ -157,14 +152,12 @@ const steps = [
   {
     step: '01',
     title: 'Connect Your Channels',
-    description:
-      'Integrate with your existing support channels in minutes. No code required.',
+    description: 'Integrate with your existing support channels in minutes. No code required.',
   },
   {
     step: '02',
     title: 'Train Your Agents',
-    description:
-      'Upload your knowledge base and FAQs. Our AI learns your products and processes.',
+    description: 'Upload your knowledge base and FAQs. Our AI learns your products and processes.',
   },
   {
     step: '03',
@@ -243,11 +236,7 @@ function StatsSection() {
 // CTA Section
 // =============================================================================
 
-const benefits = [
-  'No credit card required',
-  '14-day free trial',
-  'Cancel anytime',
-];
+const benefits = ['No credit card required', '14-day free trial', 'Cancel anytime'];
 
 function CTASection() {
   return (

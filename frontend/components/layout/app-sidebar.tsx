@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  MessageSquare,
-  Users,
-  Settings,
-  LogOut,
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react';
+import { MessageSquare, Users, Settings, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';

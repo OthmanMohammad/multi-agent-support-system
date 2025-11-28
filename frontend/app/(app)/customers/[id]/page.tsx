@@ -168,7 +168,9 @@ export default function CustomerDetailPage() {
                       <MessageSquare className="h-4 w-4 text-text-secondary" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-text-primary">{activity.description}</p>
+                      <p className="text-sm font-medium text-text-primary">
+                        {activity.description}
+                      </p>
                       <p className="text-xs text-text-tertiary capitalize">{activity.type}</p>
                     </div>
                   </div>

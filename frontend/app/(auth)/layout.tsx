@@ -41,9 +41,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center px-4 pb-12">
         <div className="w-full max-w-md">
-          <div className="bg-surface rounded-xl border border-border p-8 shadow-sm">
-            {children}
-          </div>
+          <div className="bg-surface rounded-xl border border-border p-8 shadow-sm">{children}</div>
         </div>
       </main>
 
