@@ -3,45 +3,45 @@
 @tailwind utilities;
 
 /* ============================================================================
-   THAT AGENTS PROJECT - DESIGN SYSTEM
-   Light/Beige theme with orange accents
-   DM Sans typography (like Databricks)
+   THAT AGENTS PROJECT - MISTRAL-INSPIRED DESIGN SYSTEM
+   Clean white theme with orange rainbow accents
+   Arial typography (Mistral's choice for universal appeal)
    ============================================================================ */
 
 @layer base {
   :root {
-    /* Brand Colors */
-    --brand-red: #e10500;
-    --brand-orange-dark: #fa500f;
-    --brand-orange: #ff8205;
-    --brand-orange-light: #ffaf00;
-    --brand-yellow: #ffd800;
+    /* Mistral Brand Colors - Rainbow Gradient */
+    --brand-red: #ee4b2b;
+    --brand-orange-dark: #ff5f1f;
+    --brand-orange: #ff7000;
+    --brand-orange-light: #ffa500;
+    --brand-yellow: #ffd700;
 
-    /* Background Colors */
-    --background: #fffaeb;
-    --background-secondary: #fff0c3;
-    --background-tertiary: #e9e2cb;
+    /* Clean White Background (Mistral Style) */
+    --background: #ffffff;
+    --background-secondary: #fafafa;
+    --background-tertiary: #f5f5f5;
 
     /* Surface Colors */
     --surface: #ffffff;
-    --surface-elevated: #fffaeb;
+    --surface-elevated: #fafafa;
 
     /* Border Colors */
-    --border: #e9e2cb;
-    --border-strong: #d4cdb8;
+    --border: #e5e5e5;
+    --border-strong: #d4d4d4;
 
-    /* Text Colors */
-    --text-primary: #1a1a1a;
-    --text-secondary: #666666;
-    --text-tertiary: #999999;
+    /* Text Colors - High Contrast (Mistral uses pure black) */
+    --text-primary: #000000;
+    --text-secondary: #525252;
+    --text-tertiary: #a3a3a3;
     --text-inverse: #ffffff;
 
     /* Semantic Colors */
     --success: #22c55e;
     --success-light: #dcfce7;
-    --error: #e10500;
+    --error: #ee4b2b;
     --error-light: #fee2e2;
-    --warning: #ffaf00;
+    --warning: #ffa500;
     --warning-light: #fef3c7;
     --info: #3b82f6;
     --info-light: #dbeafe;
@@ -55,32 +55,33 @@
     --spacing-2xl: 3rem;
     --spacing-3xl: 4rem;
 
-    /* Border Radius */
+    /* Border Radius - Minimal (Mistral prefers sharp/subtle) */
     --radius-sm: 4px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
-    --radius-xl: 16px;
-    --radius-2xl: 24px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
+    --radius-2xl: 16px;
     --radius-full: 9999px;
 
-    /* Shadows */
+    /* Shadows - Subtle */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08);
 
     /* Transitions */
     --transition-fast: 100ms;
     --transition-normal: 150ms;
     --transition-slow: 200ms;
 
-    /* Font - DM Sans (like Databricks) */
-    --font-sans: var(--font-dm-sans), system-ui, sans-serif;
+    /* Font - Arial (Mistral's choice) */
+    --font-sans: Arial, Helvetica, sans-serif;
 
     /* Font weights */
     --font-weight-normal: 400;
     --font-weight-medium: 500;
     --font-weight-semibold: 600;
     --font-weight-bold: 700;
+    --font-weight-black: 900;
   }
 
   html {
@@ -109,7 +110,7 @@
     font-family: inherit;
   }
 
-  /* Headings - Mistral style: bold with tight letter-spacing */
+  /* Headings - Mistral style: bold/black with tight letter-spacing */
   h1,
   h2,
   h3,
@@ -119,21 +120,24 @@
     font-family: var(--font-sans);
     font-weight: var(--font-weight-bold);
     letter-spacing: -0.02em;
-    line-height: 1.2;
+    line-height: 1.1;
+    color: var(--text-primary);
   }
 
   h1 {
-    font-size: 3rem;
-    letter-spacing: -0.03em;
+    font-size: 3.5rem;
+    font-weight: var(--font-weight-black);
+    letter-spacing: -0.04em;
   }
 
   h2 {
-    font-size: 2.25rem;
-    letter-spacing: -0.025em;
+    font-size: 2.5rem;
+    letter-spacing: -0.03em;
   }
 
   h3 {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
+    letter-spacing: -0.02em;
   }
 
   h4 {
@@ -166,15 +170,14 @@
     outline-offset: 2px;
   }
 
-  /* Scrollbar styling */
+  /* Scrollbar styling - Minimal */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
 
   ::-webkit-scrollbar-track {
-    background: var(--background-secondary);
-    border-radius: var(--radius-full);
+    background: transparent;
   }
 
   ::-webkit-scrollbar-thumb {
@@ -186,43 +189,52 @@
     background: var(--text-tertiary);
   }
 
-  /* Selection */
+  /* Selection - Orange highlight */
   ::selection {
-    background-color: var(--brand-orange-light);
-    color: var(--text-primary);
+    background-color: var(--brand-orange);
+    color: var(--text-inverse);
   }
 }
 
 @layer components {
-  /* Container */
+  /* Container - Wide like Mistral */
   .container {
-    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+    @apply mx-auto w-full max-w-7xl px-6 sm:px-8 lg:px-12;
   }
 
-  /* Card */
+  /* Card - Minimal border */
   .card {
-    @apply rounded-lg border border-border bg-surface p-6 shadow-sm;
+    @apply rounded-lg border border-border bg-surface p-6;
   }
 
   /* Input base */
   .input-base {
-    @apply h-10 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary
-           placeholder:text-text-tertiary transition-colors duration-150
-           focus:border-brand-orange focus:ring-1 focus:ring-brand-orange
+    @apply h-11 w-full rounded-md border border-border bg-surface px-4 text-base text-text-primary
+           placeholder:text-text-tertiary transition-all duration-150
+           focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/20
            disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   /* Button base */
   .btn-base {
-    @apply inline-flex items-center justify-center gap-2 rounded-md font-medium
-           transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2
+    @apply inline-flex items-center justify-center gap-2 rounded-md font-semibold
+           transition-all duration-150 focus-visible:outline-none focus-visible:ring-2
            focus-visible:ring-brand-orange focus-visible:ring-offset-2
            disabled:pointer-events-none disabled:opacity-50;
   }
 
-  /* Link styles */
+  /* Link styles - Orange underline */
   .link {
-    @apply text-brand-orange-dark hover:text-brand-orange underline-offset-4 hover:underline transition-colors;
+    @apply text-text-primary underline-offset-4 hover:underline transition-colors;
+  }
+
+  /* Mistral Rainbow Bar */
+  .rainbow-bar {
+    @apply flex h-1 w-full;
+  }
+
+  .rainbow-bar > div {
+    @apply flex-1;
   }
 
   /* Prose for markdown content */
@@ -231,27 +243,27 @@
   }
 
   .prose h1 {
-    @apply text-3xl font-bold mb-4 mt-8;
+    @apply text-4xl font-black mb-6 mt-10;
   }
 
   .prose h2 {
-    @apply text-2xl font-semibold mb-3 mt-6;
+    @apply text-3xl font-bold mb-4 mt-8;
   }
 
   .prose h3 {
-    @apply text-xl font-semibold mb-2 mt-4;
+    @apply text-2xl font-bold mb-3 mt-6;
   }
 
   .prose p {
-    @apply mb-4;
+    @apply mb-4 text-text-secondary;
   }
 
   .prose ul {
-    @apply list-disc list-inside mb-4 space-y-1;
+    @apply list-disc list-inside mb-4 space-y-2 text-text-secondary;
   }
 
   .prose ol {
-    @apply list-decimal list-inside mb-4 space-y-1;
+    @apply list-decimal list-inside mb-4 space-y-2 text-text-secondary;
   }
 
   .prose code {
@@ -259,19 +271,19 @@
   }
 
   .prose pre {
-    @apply bg-background-tertiary p-4 rounded-lg overflow-x-auto mb-4;
+    @apply bg-text-primary text-text-inverse p-4 rounded-lg overflow-x-auto mb-4;
   }
 
   .prose pre code {
-    @apply bg-transparent p-0;
+    @apply bg-transparent p-0 text-text-inverse;
   }
 
   .prose a {
-    @apply link;
+    @apply text-brand-orange hover:text-brand-orange-dark underline underline-offset-4;
   }
 
   .prose blockquote {
-    @apply border-l-4 border-brand-orange pl-4 italic my-4;
+    @apply border-l-4 border-brand-orange pl-4 italic my-4 text-text-secondary;
   }
 }
 
@@ -281,9 +293,9 @@
     text-wrap: balance;
   }
 
-  /* Gradient text */
+  /* Gradient text - Mistral rainbow */
   .gradient-text {
-    @apply bg-gradient-to-r from-brand-orange-dark to-brand-orange bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-brand-red via-brand-orange to-brand-yellow bg-clip-text text-transparent;
   }
 
   /* Hide scrollbar but keep functionality */
@@ -298,7 +310,7 @@
 
   /* Animated gradient background */
   .animated-gradient {
-    background: linear-gradient(-45deg, #fffaeb, #fff0c3, #ffaf00, #ff8205);
+    background: linear-gradient(-45deg, #ffffff, #fafafa, #ffa500, #ff7000);
     background-size: 400% 400%;
     animation: gradient 15s ease infinite;
   }
@@ -334,5 +346,29 @@
     100% {
       background-position: 200% 0;
     }
+  }
+
+  /* Hover lift effect - Mistral style */
+  .hover-lift {
+    @apply transition-transform duration-200 ease-out hover:-translate-y-1;
+  }
+
+  /* Border gradient - Rainbow */
+  .border-gradient {
+    position: relative;
+  }
+
+  .border-gradient::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    background: linear-gradient(90deg, #ee4b2b, #ff5f1f, #ff7000, #ffa500, #ffd700);
+    border-radius: inherit;
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: xor;
   }
 }

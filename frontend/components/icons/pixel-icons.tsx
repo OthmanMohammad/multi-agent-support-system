@@ -211,17 +211,17 @@ export function PixelMLogoIcon({ className = '', size = 32 }: PixelIconProps) {
       style={{ imageRendering: 'pixelated' }}
     >
       {/* Left vertical */}
-      <rect x="1" y="3" width="3" height="10" fill="#E10500" />
+      <rect x="1" y="3" width="3" height="10" fill="#EE4B2B" />
       {/* Left diagonal up */}
-      <rect x="4" y="3" width="2" height="2" fill="#FA500F" />
-      <rect x="5" y="5" width="2" height="2" fill="#FF8205" />
+      <rect x="4" y="3" width="2" height="2" fill="#FF5F1F" />
+      <rect x="5" y="5" width="2" height="2" fill="#FF7000" />
       {/* Center peak */}
-      <rect x="6" y="7" width="4" height="2" fill="#FFAF00" />
+      <rect x="6" y="7" width="4" height="2" fill="#FFA500" />
       {/* Right diagonal down */}
-      <rect x="9" y="5" width="2" height="2" fill="#FF8205" />
-      <rect x="10" y="3" width="2" height="2" fill="#FA500F" />
+      <rect x="9" y="5" width="2" height="2" fill="#FF7000" />
+      <rect x="10" y="3" width="2" height="2" fill="#FF5F1F" />
       {/* Right vertical */}
-      <rect x="12" y="3" width="3" height="10" fill="#FFD800" />
+      <rect x="12" y="3" width="3" height="10" fill="#FFD700" />
     </svg>
   );
 }

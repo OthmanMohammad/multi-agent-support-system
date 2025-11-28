@@ -7,39 +7,39 @@ const config: Config = {
     './lib/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
-    // Use DM Sans font (like Databricks)
+    // Mistral uses Arial for universal appeal
     fontFamily: {
-      sans: ['var(--font-dm-sans)', 'system-ui', 'sans-serif'],
-      mono: ['monospace'],
+      sans: ['Arial', 'Helvetica', 'sans-serif'],
+      mono: ['Monaco', 'Consolas', 'monospace'],
     },
     extend: {
       colors: {
-        // Mistral Brand Colors
+        // Mistral Brand Colors - Rainbow Gradient
         brand: {
-          red: '#E10500',
-          'orange-dark': '#FA500F',
-          orange: '#FF8205',
-          'orange-light': '#FFAF00',
-          yellow: '#FFD800',
+          red: '#EE4B2B',
+          'orange-dark': '#FF5F1F',
+          orange: '#FF7000',
+          'orange-light': '#FFA500',
+          yellow: '#FFD700',
         },
-        // Light Theme (Primary)
+        // Clean White Theme (Mistral Style)
         background: {
-          DEFAULT: '#FFFAEB',
-          secondary: '#FFF0C3',
-          tertiary: '#E9E2CB',
+          DEFAULT: '#FFFFFF',
+          secondary: '#FAFAFA',
+          tertiary: '#F5F5F5',
         },
         surface: {
           DEFAULT: '#FFFFFF',
-          elevated: '#FFFAEB',
+          elevated: '#FAFAFA',
         },
         border: {
-          DEFAULT: '#E9E2CB',
-          strong: '#D4CDB8',
+          DEFAULT: '#E5E5E5',
+          strong: '#D4D4D4',
         },
         text: {
-          primary: '#1A1A1A',
-          secondary: '#666666',
-          tertiary: '#999999',
+          primary: '#000000',
+          secondary: '#525252',
+          tertiary: '#A3A3A3',
           inverse: '#FFFFFF',
         },
         // Semantic Colors
@@ -48,7 +48,7 @@ const config: Config = {
           light: '#DCFCE7',
         },
         error: {
-          DEFAULT: '#E10500',
+          DEFAULT: '#EE4B2B',
           light: '#FEE2E2',
         },
         warning: {
@@ -69,8 +69,11 @@ const config: Config = {
         '2xl': ['1.5rem', { lineHeight: '2rem' }],
         '3xl': ['1.875rem', { lineHeight: '2.25rem' }],
         '4xl': ['2.25rem', { lineHeight: '2.5rem' }],
-        '5xl': ['3rem', { lineHeight: '1.16' }],
-        '6xl': ['3.75rem', { lineHeight: '1.1' }],
+        '5xl': ['3rem', { lineHeight: '1.1' }],
+        '6xl': ['3.75rem', { lineHeight: '1.05' }],
+        '7xl': ['4.5rem', { lineHeight: '1' }],
+        '8xl': ['6rem', { lineHeight: '1' }],
+        '9xl': ['8rem', { lineHeight: '0.95' }],
       },
       borderRadius: {
         DEFAULT: '8px',

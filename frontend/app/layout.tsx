@@ -1,17 +1,9 @@
 import type { Metadata, Viewport } from 'next';
-import { DM_Sans } from 'next/font/google';
 import { Toaster } from 'sonner';
 
 import { Providers } from '@/components/shared/providers';
 
 import './globals.css';
-
-const dmSans = DM_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-dm-sans',
-  display: 'swap',
-});
 
 export const metadata: Metadata = {
   title: {
@@ -20,7 +12,14 @@ export const metadata: Metadata = {
   },
   description:
     'Enterprise-grade AI-powered customer support platform with 243+ specialized agents. Handle support, sales, and success at scale.',
-  keywords: ['AI', 'customer support', 'multi-agent', 'chatbot', 'enterprise', 'that agents project'],
+  keywords: [
+    'AI',
+    'customer support',
+    'multi-agent',
+    'chatbot',
+    'enterprise',
+    'that agents project',
+  ],
   authors: [{ name: 'That Agents Project' }],
   openGraph: {
     type: 'website',
@@ -55,7 +54,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={dmSans.variable}>
+    <html lang="en">
       <body className="min-h-screen bg-background font-sans antialiased">
         <Providers>
           {children}
