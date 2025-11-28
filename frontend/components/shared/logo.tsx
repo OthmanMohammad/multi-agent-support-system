@@ -10,39 +10,42 @@ interface LogoProps {
 
 const sizes = {
   sm: 'h-6 w-6',
-  md: 'h-8 w-8',
-  lg: 'h-10 w-10',
+  md: 'h-7 w-7',
+  lg: 'h-9 w-9',
 };
 
 const textSizes = {
-  sm: 'text-lg',
-  md: 'text-xl',
-  lg: 'text-2xl',
+  sm: 'text-base',
+  md: 'text-lg',
+  lg: 'text-xl',
 };
 
 export function Logo({ className, size = 'md', showText = true }: LogoProps) {
   return (
-    <Link href="/" className={cn('flex items-center gap-2', className)}>
-      {/* Pixel Art Style Logo - Inspired by Mistral */}
-      <div className={cn('relative', sizes[size])}>
+    <Link href="/" className={cn('flex items-center gap-2.5', className)}>
+      {/* Pixel Art Style Logo - Mistral Inspired */}
+      <div className={cn('relative flex-shrink-0', sizes[size])}>
         <svg
           viewBox="0 0 32 32"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className="h-full w-full"
+          style={{ imageRendering: 'pixelated' }}
         >
-          {/* Pixel art M shape */}
-          <rect x="2" y="8" width="4" height="20" fill="#FF8205" />
-          <rect x="6" y="4" width="4" height="4" fill="#FA500F" />
-          <rect x="10" y="8" width="4" height="4" fill="#FF8205" />
-          <rect x="14" y="12" width="4" height="4" fill="#FFAF00" />
-          <rect x="18" y="8" width="4" height="4" fill="#FF8205" />
-          <rect x="22" y="4" width="4" height="4" fill="#FA500F" />
-          <rect x="26" y="8" width="4" height="20" fill="#FF8205" />
+          {/* Pixel art M shape with rainbow gradient */}
+          <rect x="2" y="6" width="4" height="22" fill="#EE4B2B" />
+          <rect x="6" y="2" width="4" height="4" fill="#FF5F1F" />
+          <rect x="10" y="6" width="4" height="4" fill="#FF7000" />
+          <rect x="14" y="10" width="4" height="4" fill="#FFA500" />
+          <rect x="18" y="6" width="4" height="4" fill="#FF7000" />
+          <rect x="22" y="2" width="4" height="4" fill="#FF5F1F" />
+          <rect x="26" y="6" width="4" height="22" fill="#FFD700" />
         </svg>
       </div>
       {showText && (
-        <span className={cn('font-bold text-text-primary', textSizes[size])}>That Agents</span>
+        <span className={cn('font-bold tracking-tight text-text-primary', textSizes[size])}>
+          That Agents
+        </span>
       )}
     </Link>
   );

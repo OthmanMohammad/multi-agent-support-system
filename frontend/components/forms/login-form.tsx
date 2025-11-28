@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye, EyeOff, Mail } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -42,11 +42,11 @@ export function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md space-y-6">
+    <div className="w-full space-y-6">
       {/* Header */}
-      <div className="text-center space-y-2">
-        <h1 className="text-2xl font-bold text-text-primary">Welcome back</h1>
-        <p className="text-text-secondary">Sign in to your account to continue</p>
+      <div className="space-y-1">
+        <h1 className="text-2xl font-bold text-text-primary">Sign in</h1>
+        <p className="text-sm text-text-secondary">Welcome back to That Agents Project</p>
       </div>
 
       {/* OAuth Buttons */}
@@ -57,30 +57,31 @@ export function LoginForm() {
         <div className="absolute inset-0 flex items-center">
           <Separator />
         </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-surface px-2 text-text-tertiary">Or continue with email</span>
+        <div className="relative flex justify-center text-xs">
+          <span className="bg-surface px-2 text-text-tertiary">or</span>
         </div>
       </div>
 
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Global Error */}
-        {error && <div className="rounded-md bg-error-light p-3 text-sm text-error">{error}</div>}
+        {error && (
+          <div className="rounded-md bg-error-light p-3 text-sm text-error border border-error/20">
+            {error}
+          </div>
+        )}
 
         {/* Email Field */}
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
-          <div className="relative">
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              autoComplete="email"
-              error={!!errors.email}
-              {...register('email')}
-            />
-            <Mail className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" />
-          </div>
+          <Input
+            id="email"
+            type="email"
+            placeholder="name@example.com"
+            autoComplete="email"
+            error={!!errors.email}
+            {...register('email')}
+          />
           <FieldError message={errors.email?.message} />
         </div>
 
@@ -90,24 +91,26 @@ export function LoginForm() {
             <Label htmlFor="password">Password</Label>
             <Link
               href="/forgot-password"
-              className="text-sm text-brand-orange-dark hover:text-brand-orange transition-colors"
+              className="text-sm text-text-secondary hover:text-text-primary transition-colors"
             >
-              Forgot password?
+              Forgot?
             </Link>
           </div>
           <div className="relative">
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
-              placeholder="Enter your password"
+              placeholder="Enter password"
               autoComplete="current-password"
               error={!!errors.password}
+              className="pr-10"
               {...register('password')}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-secondary transition-colors"
+              tabIndex={-1}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -124,11 +127,8 @@ export function LoginForm() {
       {/* Register Link */}
       <p className="text-center text-sm text-text-secondary">
         Don&apos;t have an account?{' '}
-        <Link
-          href="/register"
-          className="font-medium text-brand-orange-dark hover:text-brand-orange transition-colors"
-        >
-          Create one
+        <Link href="/register" className="font-medium text-text-primary hover:underline">
+          Sign up
         </Link>
       </p>
     </div>
