@@ -7,9 +7,9 @@ const config: Config = {
     './lib/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
-    // Completely override fontFamily - Mistral uses ONLY Arial
+    // Use DM Sans font (like Databricks)
     fontFamily: {
-      sans: ['Arial', 'sans-serif'],
+      sans: ['var(--font-dm-sans)', 'system-ui', 'sans-serif'],
       mono: ['monospace'],
     },
     extend: {

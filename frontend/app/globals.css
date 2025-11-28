@@ -3,8 +3,9 @@
 @tailwind utilities;
 
 /* ============================================================================
-   MISTRAL AI DESIGN SYSTEM
+   THAT AGENTS PROJECT - DESIGN SYSTEM
    Light/Beige theme with orange accents
+   DM Sans typography (like Databricks)
    ============================================================================ */
 
 @layer base {
@@ -72,8 +73,8 @@
     --transition-normal: 150ms;
     --transition-slow: 200ms;
 
-    /* Font - Mistral uses Arial exclusively */
-    --font-sans: Arial, sans-serif;
+    /* Font - DM Sans (like Databricks) */
+    --font-sans: var(--font-dm-sans), system-ui, sans-serif;
 
     /* Font weights */
     --font-weight-normal: 400;
