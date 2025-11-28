@@ -25,7 +25,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           type={type}
           className={cn(
             // Base styles
-            'flex h-11 w-full rounded-lg border bg-surface px-4 text-base text-text-primary',
+            'flex h-11 w-full border bg-surface px-4 text-base text-text-primary', // Sharp corners!
             'placeholder:text-text-tertiary',
             'transition-all duration-200',
             // Focus styles

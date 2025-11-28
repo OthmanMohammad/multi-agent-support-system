@@ -44,7 +44,7 @@ const socialLinks = [
 
 export function MarketingFooter() {
   return (
-    <footer className="border-t border-border bg-background">
+    <footer className="border-t border-border bg-white">
       {/* Main Footer Content */}
       <div className="container py-16 lg:py-20">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-6 lg:gap-12">

@@ -34,7 +34,7 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
       <div
         ref={ref}
         className={cn(
-          'rounded-2xl transition-all duration-200',
+          'transition-all duration-200', // Sharp corners - no rounded!
           variants[variant],
           paddings[padding],
           interactive &&
