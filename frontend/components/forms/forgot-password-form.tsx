@@ -70,17 +70,13 @@ export function ForgotPasswordForm() {
       {/* Header */}
       <div className="text-center space-y-2">
         <h1 className="text-2xl font-bold text-text-primary">Forgot your password?</h1>
-        <p className="text-text-secondary">
-          Enter your email and we&apos;ll send you a reset link
-        </p>
+        <p className="text-text-secondary">Enter your email and we&apos;ll send you a reset link</p>
       </div>
 
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Error */}
-        {error && (
-          <div className="rounded-md bg-error-light p-3 text-sm text-error">{error}</div>
-        )}
+        {error && <div className="rounded-md bg-error-light p-3 text-sm text-error">{error}</div>}
 
         {/* Email Field */}
         <div className="space-y-2">

@@ -65,11 +65,7 @@ export function LoginForm() {
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Global Error */}
-        {error && (
-          <div className="rounded-md bg-error-light p-3 text-sm text-error">
-            {error}
-          </div>
-        )}
+        {error && <div className="rounded-md bg-error-light p-3 text-sm text-error">{error}</div>}
 
         {/* Email Field */}
         <div className="space-y-2">

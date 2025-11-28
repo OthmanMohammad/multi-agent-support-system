@@ -25,11 +25,7 @@ export function EmptyState({ icon: Icon, title, description, action, children }:
         </div>
         <h3 className="text-lg font-semibold text-text-primary mb-2">{title}</h3>
         <p className="text-text-secondary max-w-sm mx-auto mb-6">{description}</p>
-        {action && (
-          <Button onClick={action.onClick}>
-            {action.label}
-          </Button>
-        )}
+        {action && <Button onClick={action.onClick}>{action.label}</Button>}
         {children}
       </CardContent>
     </Card>
@@ -46,11 +42,10 @@ export function SearchEmptyState({ query, onClear }: SearchEmptyStateProps) {
   return (
     <div className="py-12 text-center">
       <p className="text-text-secondary mb-2">
-        No results found for <span className="font-medium text-text-primary">&ldquo;{query}&rdquo;</span>
+        No results found for{' '}
+        <span className="font-medium text-text-primary">&ldquo;{query}&rdquo;</span>
       </p>
-      <p className="text-sm text-text-tertiary mb-4">
-        Try adjusting your search or filters
-      </p>
+      <p className="text-sm text-text-tertiary mb-4">Try adjusting your search or filters</p>
       {onClear && (
         <Button variant="outline" size="sm" onClick={onClear}>
           Clear Search

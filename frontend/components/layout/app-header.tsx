@@ -30,11 +30,7 @@ export function AppHeader() {
       {/* Search */}
       <div className="relative w-full max-w-md">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" />
-        <Input
-          type="search"
-          placeholder="Search conversations, customers..."
-          className="pl-10"
-        />
+        <Input type="search" placeholder="Search conversations, customers..." className="pl-10" />
       </div>
 
       {/* Right Section */}
@@ -50,9 +46,7 @@ export function AppHeader() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
               <Avatar>
-                <AvatarFallback className="bg-brand-orange text-white">
-                  {initials}
-                </AvatarFallback>
+                <AvatarFallback className="bg-brand-orange text-white">{initials}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
@@ -68,10 +62,7 @@ export function AppHeader() {
               <a href="/settings">Settings</a>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => logout()}
-              className="text-error focus:text-error"
-            >
+            <DropdownMenuItem onClick={() => logout()} className="text-error focus:text-error">
               Sign Out
             </DropdownMenuItem>
           </DropdownMenuContent>

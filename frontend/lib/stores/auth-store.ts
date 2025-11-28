@@ -96,8 +96,8 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       checkAuth: async () => {
-        // Don't check if already initialized and not authenticated
-        if (get().isInitialized && !get().isAuthenticated) {
+        // Don't check if already initialized or currently loading
+        if (get().isInitialized || get().isLoading) {
           return;
         }
 
@@ -155,11 +155,13 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'auth-storage',
-      storage: createJSONStorage(() => localStorage),
-      // Only persist user data, not loading states
+      storage: createJSONStorage(() => sessionStorage),
+      // Persist auth state but not loading states
+      // Using sessionStorage so auth is checked on new browser session
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
+        isInitialized: state.isInitialized,
       }),
     }
   )

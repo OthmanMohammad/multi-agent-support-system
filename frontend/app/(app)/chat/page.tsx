@@ -4,15 +4,7 @@ import { Send, Plus, MoreHorizontal } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 
-import {
-  Button,
-  Input,
-  Avatar,
-  AvatarFallback,
-  Card,
-  ScrollArea,
-  Skeleton,
-} from '@/components/ui';
+import { Button, Input, Avatar, AvatarFallback, Card, ScrollArea, Skeleton } from '@/components/ui';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { cn } from '@/lib/utils';
 
