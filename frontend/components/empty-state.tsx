@@ -46,7 +46,7 @@ export function SearchEmptyState({ query, onClear }: SearchEmptyStateProps) {
   return (
     <div className="py-12 text-center">
       <p className="text-text-secondary mb-2">
-        No results found for <span className="font-medium text-text-primary">"{query}"</span>
+        No results found for <span className="font-medium text-text-primary">&ldquo;{query}&rdquo;</span>
       </p>
       <p className="text-sm text-text-tertiary mb-4">
         Try adjusting your search or filters

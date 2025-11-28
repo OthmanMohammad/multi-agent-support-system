@@ -73,7 +73,7 @@
     --transition-slow: 200ms;
 
     /* Font */
-    --font-sans: Arial, Helvetica, sans-serif;
+    --font-sans: Arial, "Helvetica Neue", Helvetica, sans-serif;
   }
 
   html {

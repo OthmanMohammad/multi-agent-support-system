@@ -3,8 +3,8 @@
 import { redirect } from 'next/navigation';
 import { useEffect, type ReactNode } from 'react';
 
-import { AppSidebar } from '@/components/layout/app-sidebar';
 import { AppHeader } from '@/components/layout/app-header';
+import { AppSidebar } from '@/components/layout/app-sidebar';
 import { Spinner } from '@/components/ui';
 import { useAuthStore } from '@/lib/stores/auth-store';
 
